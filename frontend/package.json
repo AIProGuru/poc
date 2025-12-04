@@ -57,6 +57,7 @@
     "sass": "^1.82.0",
     "simplebar": "^6.2.5",
     "simplebar-react": "^3.2.4",
+    "styled-components": "^6.1.19",
     "swiper": "^11.1.15",
     "tailwindcss": "^4.0.9",
     "tw-elements": "^1.1.0",

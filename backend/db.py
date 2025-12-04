@@ -62,13 +62,13 @@ def get_connection(base_url):
     if rebound_conn is None or medevolve_conn is None:
         raise Exception("Database connection not available. Please check your MySQL configuration.")
     
-    if 'rebound' in base_url:
-        conn = rebound_conn.get_connection()
-        cursor = conn.cursor(dictionary=True)
-        # Set SQL mode to be more permissive with dates
-        cursor.execute("SET SESSION sql_mode = '';")
-        return conn, cursor, 'rebound'
-    elif 'medevolve' in base_url:
+    # if 'rebound' in base_url:
+    #     conn = rebound_conn.get_connection()
+    #     cursor = conn.cursor(dictionary=True)
+    #     # Set SQL mode to be more permissive with dates
+    #     cursor.execute("SET SESSION sql_mode = '';")
+    #     return conn, cursor, 'rebound'
+    if 'medevolve' in base_url:
         conn = medevolve_conn.get_connection()
         cursor = conn.cursor(dictionary=True)
         # Set SQL mode to be more permissive with dates
