@@ -1,0 +1,34 @@
+.radar-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .radar {
+    padding: 14px;
+    border-radius: 50%;
+    display: block;
+    position: relative;
+  }
+  
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 50%;
+    display: block;
+  }
+  
+  .radar-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 16px;
+    /* font-weight: bold; */
+    text-align: center;
+  }

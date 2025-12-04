@@ -1,0 +1,17 @@
+
+
+.char {
+    font-family: 'Poppins', sans-serif;
+    font-size: 6rem; /* Equivalent to text-9xl */
+    font-weight: bold;
+    color: rgba(64, 81, 212, 0); /* Equivalent to text-[#0b0c1400] */
+    -webkit-text-stroke: 1px #ebedf0; /* Equivalent to text-stroke */
+    text-stroke: 1px #fa0000; /* For other browsers that support text-stroke */
+    letter-spacing: 10px;
+  }
+  
+  .char.highlight {
+    -webkit-text-stroke: 1px #002fff; /* Equivalent to text-stroke */
+  }
+  
+  

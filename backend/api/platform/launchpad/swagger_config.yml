@@ -1,0 +1,89 @@
+swagger: '2.0'
+info:
+  title: Rebound Data API
+  description: API for fetching rebound data
+  version: "1.0"
+basePath: /api/v1
+schemes:
+  - http
+paths:
+  /rebound/data_all:
+    post:
+      tags:
+        - Rebound Data
+      summary: Fetch rebound data
+      description: Fetch rebound data with pagination and filtering options
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: JSON payload
+          required: true
+          schema:
+            type: object
+            properties:
+              currentPage:
+                type: integer
+                example: 1
+              perPage:
+                type: integer
+                example: 50
+              selectedTags:
+                type: array
+                items:
+                  type: string
+                example: ["Other Non-Specific", "Duplicate", "Medical Coding"]
+              keyword:
+                type: string
+                example: ""
+              tabIndex:
+                type: integer
+                example: 0
+              startDate:
+                type: string
+                format: date
+                example: null
+              endDate:
+                type: string
+                format: date
+                example: null
+              code:
+                type: string
+                example: ""
+              remark:
+                type: string
+                example: ""
+              procedure:
+                type: string
+                example: ""
+              pos:
+                type: string
+                example: ""
+              extra:
+                type: object
+                example: {}
+              sort:
+                type: string
+                example: "ClaimNo"
+      responses:
+        200:
+          description: Successful response
+          schema:
+            type: object
+            properties:
+              maxPage:
+                type: integer
+              data:
+                type: array
+                items:
+                  type: object
+        500:
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string

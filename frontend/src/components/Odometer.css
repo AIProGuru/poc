@@ -1,0 +1,472 @@
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes glow {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+  }
+  
+  @keyframes particle {
+    0% { 
+      transform: translateY(0) translateX(0) rotate(0deg); 
+      opacity: 0;
+    }
+    20% { opacity: 1; }
+    100% { 
+      transform: translateY(-100px) translateX(var(--x)) rotate(var(--r)); 
+      opacity: 0;
+    }
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  .odometer-wrapper {
+    position: relative;
+    padding: 3rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
+    margin: 0 auto;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .odometer-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2.5rem 2rem;
+    background: linear-gradient(135deg, rgba(11, 12, 20, 0.95), rgba(20, 32, 71, 0.95));
+    border-radius: 20px;
+    box-shadow: 
+      0 15px 35px -5px rgba(4, 75, 217, 0.3),
+      0 8px 15px rgba(0, 0, 0, 0.2),
+      inset 0 0 20px rgba(5, 175, 242, 0.15);
+    overflow: hidden;
+    transform: perspective(1200px) rotateX(5deg);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: float 6s ease-in-out infinite;
+    border: 1px solid rgba(108, 155, 224, 0.2);
+  }
+  
+  .odometer-container:hover {
+    transform: perspective(1200px) rotateX(0deg) scale(1.02);
+    box-shadow: 
+      0 20px 40px -10px rgba(4, 75, 217, 0.4),
+      0 10px 20px rgba(0, 0, 0, 0.3),
+      inset 0 0 25px rgba(5, 175, 242, 0.2);
+  }
+  
+  .odometer-container.finished {
+    box-shadow: 
+      0 15px 35px -5px rgba(4, 217, 137, 0.3),
+      0 8px 15px rgba(0, 0, 0, 0.2),
+      inset 0 0 20px rgba(5, 242, 124, 0.15);
+    border: 1px solid rgba(5, 242, 124, 0.3);
+  }
+  
+  .odometer-glass-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.15),
+      rgba(255, 255, 255, 0.05)
+    );
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+  }
+  
+  .odometer-inner {
+    position: relative;
+    padding: 2rem 2.5rem;
+    z-index: 2;
+  }
+  
+  .odometer-highlight {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 70px;
+    transform: translateY(-50%);
+    background: linear-gradient(
+      to bottom,
+      rgba(5, 175, 242, 0.1),
+      rgba(4, 75, 217, 0.25),
+      rgba(5, 175, 242, 0.1)
+    );
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    z-index: -1;
+    box-shadow: inset 0 0 15px rgba(4, 75, 217, 0.3);
+  }
+  
+  .odometer-digits {
+    display: flex;
+    font-weight: bold;
+    font-size: 3.5rem;
+    line-height: 1;
+    text-shadow: 0 0 15px rgba(5, 175, 242, 0.7);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  }
+  
+  .digit-column {
+    position: relative;
+    overflow: hidden;
+    height: 70px;
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .thousand-separator {
+    margin-left: 12px;
+    position: relative;
+  }
+  
+  .digit-column-inner {
+    position: relative;
+    height: 70px;
+    overflow: hidden;
+  }
+  
+  .digit-number {
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-shadow: 0 0 15px currentColor;
+  }
+  
+  .comma-separator {
+    position: absolute;
+    right: -10px;
+    bottom: 2px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .odometer-decorations {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  .decoration {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    opacity: 0.15;
+  }
+  
+  .decoration.left {
+    top: -50px;
+    left: -50px;
+    background: radial-gradient(circle, rgba(5, 175, 242, 1), rgba(5, 175, 242, 0));
+  }
+  
+  .decoration.right {
+    bottom: -50px;
+    right: -50px;
+    background: radial-gradient(circle, rgba(4, 75, 217, 1), rgba(4, 75, 217, 0));
+  }
+  
+  .odometer-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1.5rem;
+    color: #6C9BE0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.6s ease-out 1s forwards;
+  }
+  
+  .plus-sign {
+    margin-left: 10px;
+    color: #05AFF2;
+    font-size: 1.75rem;
+    font-weight: bold;
+    animation: pulse 1.5s infinite;
+  }
+  
+  .odometer-total {
+    margin-top: 2rem;
+    font-size: 1.25rem;
+    color: #6C9BE0;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.6s ease-out 1.5s forwards;
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(11, 12, 20, 0.7);
+    border-radius: 12px;
+    border: 1px solid rgba(108, 155, 224, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .total-icon {
+    margin-right: 12px;
+    width: 24px;
+    height: 24px;
+    color: #05AFF2;
+  }
+  
+  .total-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .total-label {
+    font-size: 1rem;
+    color: #6C9BE0;
+  }
+  
+  .total-value {
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+    background: linear-gradient(90deg, #6C9BE0, #05AFF2);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 2s linear infinite;
+  }
+  
+  .odometer-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('/bg-optimized.png') no-repeat center;
+    background-size: cover;
+    opacity: 0.15;
+    mix-blend-mode: overlay;
+    z-index: -1;
+  }
+  
+  .odometer-glow {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(4, 75, 217, 0.6), rgba(4, 75, 217, 0));
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    filter: blur(30px);
+    animation: glow 2s infinite ease-in-out;
+    z-index: -1;
+  }
+  
+  .odometer-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    z-index: 0;
+  }
+  
+  .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #05AFF2;
+    border-radius: 50%;
+    bottom: -10px;
+    opacity: 0;
+    box-shadow: 0 0 10px 2px rgba(5, 175, 242, 0.7);
+  }
+  
+  .odometer-container.finished .particle {
+    background: #05F27C;
+    box-shadow: 0 0 10px 2px rgba(5, 242, 124, 0.7);
+  }
+  
+  .particle:nth-child(odd) {
+    background: #0048FF;
+    box-shadow: 0 0 10px 2px rgba(0, 72, 255, 0.7);
+  }
+  
+  .odometer-container.finished .particle:nth-child(odd) {
+    background: #00FF8C;
+    box-shadow: 0 0 10px 2px rgba(0, 255, 140, 0.7);
+  }
+  
+  .particle:nth-child(1) { left: 10%; --x: 20px; --r: 30deg; animation: particle 3s 0.1s infinite; }
+  .particle:nth-child(2) { left: 20%; --x: -15px; --r: -20deg; animation: particle 2.5s 0.3s infinite; }
+  .particle:nth-child(3) { left: 30%; --x: 35px; --r: 45deg; animation: particle 2.8s 0.5s infinite; }
+  .particle:nth-child(4) { left: 40%; --x: -25px; --r: -50deg; animation: particle 2.2s 0.7s infinite; }
+  .particle:nth-child(5) { left: 50%; --x: 15px; --r: 25deg; animation: particle 2.7s 0.9s infinite; }
+  .particle:nth-child(6) { left: 60%; --x: -30px; --r: -35deg; animation: particle 3.1s 1.1s infinite; }
+  .particle:nth-child(7) { left: 70%; --x: 25px; --r: 40deg; animation: particle 2.6s 1.3s infinite; }
+  .particle:nth-child(8) { left: 80%; --x: -20px; --r: -30deg; animation: particle 2.9s 1.5s infinite; }
+  .particle:nth-child(9) { left: 90%; --x: 35px; --r: 50deg; animation: particle 2.4s 1.7s infinite; }
+  .particle:nth-child(10) { left: 15%; --x: -25px; --r: -45deg; animation: particle 2.8s 1.9s infinite; }
+  .particle:nth-child(11) { left: 25%; --x: 20px; --r: 35deg; animation: particle 3.2s 2.1s infinite; }
+  .particle:nth-child(12) { left: 35%; --x: -30px; --r: -40deg; animation: particle 2.5s 2.3s infinite; }
+  .particle:nth-child(13) { left: 45%; --x: 25px; --r: 30deg; animation: particle 2.7s 2.5s infinite; }
+  .particle:nth-child(14) { left: 55%; --x: -15px; --r: -25deg; animation: particle 3s 2.7s infinite; }
+  .particle:nth-child(15) { left: 65%; --x: 30px; --r: 45deg; animation: particle 2.3s 2.9s infinite; }
+  .particle:nth-child(16) { left: 75%; --x: -20px; --r: -35deg; animation: particle 2.6s 3.1s infinite; }
+  .particle:nth-child(17) { left: 85%; --x: 15px; --r: 25deg; animation: particle 2.9s 3.3s infinite; }
+  .particle:nth-child(18) { left: 95%; --x: -25px; --r: -40deg; animation: particle 3.1s 3.5s infinite; }
+  .particle:nth-child(19) { left: 5%; --x: 30px; --r: 45deg; animation: particle 2.4s 3.7s infinite; }
+  .particle:nth-child(20) { left: 10%; --x: -15px; --r: -30deg; animation: particle 2.7s 3.9s infinite; }
+  
+  .success-message {
+    position: absolute;
+    top: 10px;
+    right: 0;
+    background: rgba(5, 242, 124, 0.2);
+    border-left: 3px solid #05F27C;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transform: translateX(150%);
+    transition: transform 0.5s ease-out;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .success-message.show {
+    transform: translateX(0);
+  }
+  
+  .success-icon {
+    background: #05F27C;
+    color: #0B0C14;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    font-weight: bold;
+  }
+  
+  .success-text {
+    color: white;
+    font-weight: 500;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    .odometer-digits {
+      font-size: 2.5rem;
+    }
+    
+    .digit-column {
+      min-width: 32px;
+      height: 60px;
+    }
+    
+    .digit-number {
+      height: 60px;
+    }
+    
+    .odometer-highlight {
+      height: 60px;
+    }
+    
+    .digit-column-inner {
+      height: 60px;
+    }
+    
+    .odometer-label {
+      font-size: 1.25rem;
+    }
+    
+    .success-message {
+      top: auto;
+      bottom: 10px;
+      right: 10px;
+      left: 10px;
+      transform: translateY(150%);
+    }
+    
+    .success-message.show {
+      transform: translateY(0);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .odometer-digits {
+      font-size: 2rem;
+    }
+    
+    .digit-column {
+      min-width: 24px;
+      height: 50px;
+    }
+    
+    .digit-number {
+      height: 50px;
+    }
+    
+    .odometer-highlight {
+      height: 50px;
+    }
+    
+    .digit-column-inner {
+      height: 50px;
+    }
+    
+    .thousand-separator {
+      margin-left: 6px;
+    }
+    
+    .comma-separator {
+      right: -6px;
+    }
+    
+    .odometer-label {
+      font-size: 1.1rem;
+    }
+    
+    .plus-sign {
+      font-size: 1.4rem;
+    }
+    
+    .total-value {
+      font-size: 1.2rem;
+    }
+  }
