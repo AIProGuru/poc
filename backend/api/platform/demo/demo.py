@@ -2,20 +2,25 @@ import os
 import time
 from mysql.connector import pooling, Error
 from flask import Blueprint, request, jsonify
+from dotenv import load_dotenv
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Simplified connection config
+# Load environment variables
+load_dotenv()
+
+# RDS connection config
 config = {
-    "host": "database-1.c9ym48eueeio.us-west-2.rds.amazonaws.com",
-    "user": "admin",
-    "password": "Password456$%^",
+    "host": os.getenv('RDS_HOST', 'database-1.c9ym48eueeio.us-west-2.rds.amazonaws.com'),
+    "user": os.getenv('RDS_USER', 'admin'),
+    "password": os.getenv('RDS_PASSWORD', ''),
+    "port": int(os.getenv('RDS_PORT', '3306')),
     "pool_size": 32,
-    "connection_timeout": 20,  # Increased timeout
-    "buffered": True  # Keeping this for the cursor Behevior
+    "connection_timeout": 20,
+    "buffered": True
 }
 
 def create_connection_pool(database_name, pool_name):
@@ -38,12 +43,12 @@ def create_connection_pool(database_name, pool_name):
         logger.error(f"Failed to create connection pool: {e}")
         raise
 
-try:
-    demo_conn = create_connection_pool("aaftaab", "demo_pool")
-    logger.info("Demo Connection pools created successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize connection pools: {e}")
-    raise
+# try:
+#     demo_conn = create_connection_pool("aaftaab", "demo_pool")
+#     logger.info("Demo Connection pools created successfully")
+# except Exception as e:
+#     logger.error(f"Failed to initialize connection pools: {e}")
+#     raise
 
 def get_connection():
     conn = demo_conn.get_connection()

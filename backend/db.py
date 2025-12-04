@@ -50,7 +50,7 @@ rebound_conn = None
 medevolve_conn = None
 
 try:
-    rebound_conn = create_connection_pool("r2", "rebound_pool")
+    # rebound_conn = create_connection_pool("r2", "rebound_pool")
     medevolve_conn = create_connection_pool("medevolve", "medevolve_pool")
     logger.info("Connection pools created successfully")
 except Exception as e:
