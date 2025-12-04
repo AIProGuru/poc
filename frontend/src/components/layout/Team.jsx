@@ -7,9 +7,9 @@ import "../../pages/careers.scss";
 
 const leaders = [
   {
-    name: "Divyang Sheth",
+    name: "David Anderson",
     role: "Co-founder & CTO",
-    link: "https://www.linkedin.com/in/divyang-sheth",
+    link: "https://www.linkedin.com/in/david-anderson12345",
     description:
       "Veteran Bay Area technology leader with deep expertise building platforms 12+ years at Google. Head of Google Cloud Engineering Product & Services",
   },

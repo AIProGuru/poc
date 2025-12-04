@@ -242,7 +242,7 @@ const Footer = () => {
           </div>
           
           {/* Column 4: Contact - Only Divyang */}
-          <div>
+          {/* <div>
             <div className="mt-0 mb-5">
               <h3 className="text-sm font-bold mb-2 text-primary-400">
                 Contact
@@ -263,7 +263,7 @@ const Footer = () => {
                 </a>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
         
         {/* Bottom Section */}
