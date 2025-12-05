@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -34,13 +34,26 @@ import {
   setRecoveryLoading,
 } from "../../../redux/reducers/app.reducer";
 import { setSelectedTags, setTags, setAllPayers } from "../../../redux/reducers/tag.reducer";
-import { setTableData } from '../../../redux/reducers/app.reducer';
+import { setTableData, setTheme } from '../../../redux/reducers/app.reducer';
 import { setCategoryLabel, setCategoryValue } from '../../../redux/reducers/statistics.reducer';
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 
 const ReboundDash = () => {
   const apiUrl = useApiEndpoint();
   const [showInsights, setShowInsights] = useState(false);
+  const [selectedNav, setSelectedNav] = useState('home');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const tableScrollRef = useRef(null);
+
+  const scrollTable = (direction) => {
+    if (tableScrollRef.current) {
+      const scrollAmount = 300;
+      tableScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
   const dispatch = useDispatch();
   const theme = useSelector((state) => state.app.theme);
   const count = useSelector((state) => state.count.count);
@@ -53,7 +66,6 @@ const ReboundDash = () => {
   const recoveryLoading = useSelector((state) => state.app.recoveryLoading);
 
   console.log('apiUrl', apiUrl);
-
 
   let params = useParams();
   let { token } = params;
@@ -224,127 +236,253 @@ const ReboundDash = () => {
   }
 
   return (
-    <div className={`flex flex-col  sm:ml-[0] gap-3 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-black'}`}>
-  <div className="text-sm font-medium text-left text-gray-500 border-gray-200 dark:text-gray-400 dark:border-gray-700 gap-7 overflow-x-auto whitespace-nowrap hide-scrollbar">
-    <ul className="inline-flex -mb-px">
-      <li className="me-2">
-        <a
-          href="#"
-          className={`inline-block py-4 mr-3 border-b-2 text-md ${tabIndex === 0
-            ? "text-[#005DE2] border-b-2 w-[80px] flex justify-center border-[#005DE2] rounded-t-lg active"
-            : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-            }`}
-          onClick={() => changeTab(0)}
-        >
-          Recoverable
-        </a>
-      </li>
-      <li className="me-2">
-        <a
-          href="#"
-          className={`inline-block py-4 mr-3 border-b-2 ${tabIndex === 5
-            ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
-            : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-            }`}
-          aria-current="page"
-          onClick={() => changeTab(5)}
-        >
-          AI Automation
-        </a>
-      </li>
-      <li className="me-2">
-        <a
-          href="#"
-          className={`inline-block py-4 mr-3 border-b-2 ${tabIndex === 1
-            ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
-            : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-            }`}
-          aria-current="page"
-          onClick={() => changeTab(1)}
-        >
-          Non-Recoverable
-        </a>
-      </li>
-      <li className="me-2">
-        <a
-          href="#"
-          className={`inline-block py-4 mr-3 border-b-2 ${tabIndex === 2
-            ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
-            : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-            }`}
-          aria-current="page"
-          onClick={() => changeTab(2)}
-        >
-          Patient Responsibility 
-        </a>
-      </li>
-      <li className="me-2">
-        <a
-          href="#"
-          className={`inline-block py-4 mr-3 border-b-2 ${tabIndex === 3
-            ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
-            : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-            }`}
-          aria-current="page"
-          onClick={() => changeTab(3)}
-        >
-          Delinquent
-        </a>
-      </li>
-      <li className="me-2">
-        <a
-          href="#"
-          className={`inline-block py-4 mr-3 border-b-2 ${tabIndex === 4
-            ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
-            : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-            }`}
-          aria-current="page"
-          onClick={() => changeTab(4)}
-        >
-          Underpaid
-        </a>
-      </li>
-      <li className="me-2">
-        <a
-          href="#"
-          className={`inline-block py-4 mr-3 border-b-2 ${tabIndex === 6
-            ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
-            : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-            }`}
-          aria-current="page"
-          onClick={() => changeTab(6)}
-        >
-          All 
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div className="flex flex-row gap-4 sm:justify-normal justify-between items-center">
-    <div className={`text-[20px]  font-semibold`}>Insights</div>
-    <div
-      onClick={() => setShowInsights((value) => !value)}
-      className="flex justify-center items-center cursor-pointer text-blue-600 font-semibold"
-    >
-      <span>
-        {showInsights ? "Hide" : "Open"}
-      </span>
-      <span className="ml-auto">
-        {showInsights}
-      </span>
-    </div>
-  </div>
-  {
-    showInsights && (
-      <div className="flex flex-col md:flex-row sm:justify-between sm:gap-5 justify-evenly">
-        <Part1 className="flex-1" />
-        <Part2 className="flex-1" />
+    <div className={`flex ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-black'} relative`}>
+      {/* Profile Section - Top Right */}
+      <div className="absolute top-4 right-4 z-50">
+        <div className="relative">
+          <div 
+            className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+          >
+            <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <svg className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`} fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </div>
+          {showProfileMenu && (
+            <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-50 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'));
+                    setShowProfileMenu(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                >
+                  {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+                </button>
+                <button className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  👤 Profile
+                </button>
+                <button className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  🚪 Logout
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    )
-  }
-  <div className="flex flex-col">
-    <DataTable />
-  </div>
-</div>
+      {/* Left Sidebar with Navigation */}
+      <div className={`w-80 p-4 flex flex-col ${
+        theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900 border-r border-gray-200'
+      }`}>
+        {/* Logo */}
+        <div className="flex items-center mb-8">
+          <img src="/helio-logo.svg" alt="HELIO RCM" className="h-8" />
+        </div>
+        
+        {/* Navigation Menu */}
+        <nav className="flex-1">
+          <ul className="space-y-1">
+            <li>
+              <a
+                href="#"
+                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
+                  selectedNav === 'home' 
+                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                }`}
+                onClick={() => { changeTab(0); setSelectedNav('home'); }}
+              >
+                <span className="mr-3">🏠</span>
+                Home
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
+                  selectedNav === 'dashboard' 
+                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                }`}
+                onClick={() => setSelectedNav('dashboard')}
+              >
+                <span className="mr-3">📊</span>
+                Dashboard
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
+                  selectedNav === 'claim-edits' 
+                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                }`}
+                onClick={() => setSelectedNav('claim-edits')}
+              >
+                <span className="mr-3">✏️</span>
+                Claim Edits <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">15</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
+                  selectedNav === 'claim-status' 
+                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                }`}
+                onClick={() => setSelectedNav('claim-status')}
+              >
+                <span className="mr-3">📋</span>
+                Claim Status <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">10</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
+                  selectedNav === 'denials' 
+                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                }`}
+                onClick={() => setSelectedNav('denials')}
+              >
+                <span className="mr-3">❌</span>
+                Denials <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">25</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={`flex items-center px-3 py-2 rounded-xl text-sm whitespace-nowrap ${
+                  selectedNav === 'patient-responsibility' 
+                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                }`}
+                onClick={() => { changeTab(2); setSelectedNav('patient-responsibility'); }}
+              >
+                <span className="mr-3">👤</span>
+                Patient Responsibility <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">25</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={`flex items-center px-3 py-2 rounded-xl text-sm whitespace-nowrap ${
+                  selectedNav === 'payment-variance' 
+                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                }`}
+                onClick={() => { changeTab(4); setSelectedNav('payment-variance'); }}
+              >
+                <span className="mr-3">💰</span>
+                Payment Variance <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">57</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={`flex items-center px-3 py-2 rounded-xl text-sm whitespace-nowrap ${
+                  selectedNav === 'payment-posting' 
+                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                }`}
+                onClick={() => setSelectedNav('payment-posting')}
+              >
+                <span className="mr-3">📮</span>
+                Payment Posting <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">10</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
+                  selectedNav === 'support' 
+                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                }`}
+                onClick={() => setSelectedNav('support')}
+              >
+                <span className="mr-3">👥</span>
+                Support
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
+                  selectedNav === 'settings' 
+                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
+                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                }`}
+                onClick={() => setSelectedNav('settings')}
+              >
+                <span className="mr-3">⚙️</span>
+                Settings
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+      
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col gap-3 p-6 min-w-0 overflow-hidden">
+        <div className="flex flex-row gap-4 sm:justify-normal justify-between items-center">
+          <div className={`text-[20px] font-semibold`}>Insights</div>
+          <div
+            onClick={() => setShowInsights((value) => !value)}
+            className="flex justify-center items-center cursor-pointer text-blue-600 font-semibold"
+          >
+            <span>
+              {showInsights ? "Hide" : "Open"}
+            </span>
+          </div>
+        </div>
+        {
+          showInsights && (
+            <div className="flex flex-col md:flex-row sm:justify-between sm:gap-5 justify-evenly">
+              <Part1 className="flex-1" />
+              <Part2 className="flex-1" />
+            </div>
+          )
+        }
+        <div className="flex flex-col min-w-0">
+          <div className="bg-gray-800 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-white text-lg font-semibold">Payment Variance &gt; Underpaid</h2>
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                <button 
+                  className="p-1 text-gray-400 hover:text-white"
+                  onClick={() => scrollTable('left')}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                  </svg>
+                </button>
+                <button 
+                  className="p-1 text-gray-400 hover:text-white"
+                  onClick={() => scrollTable('right')}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto" ref={tableScrollRef}>
+              <DataTable />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

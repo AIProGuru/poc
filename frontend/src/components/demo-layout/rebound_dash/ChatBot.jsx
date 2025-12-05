@@ -897,7 +897,7 @@ const ChatBot = () => {
         <div className="p-6 flex flex-col gap-2 h-[100vh]">
           <div className="flex flex-row justify-between items-center">
             <span className="text-[32px] font-semibold text-[#072F40]">
-              Aaftaab Assistant
+              Helio RCM Assistant
             </span>
             <div className="flex items-center gap-5">
               <div>

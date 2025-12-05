@@ -142,7 +142,7 @@ const Timeline = () => {
             <div className="relative p-6 rounded-xl  backdrop-blur-sm border border-[#0C0F27]">
             
               <h3 className="text-xl font-bold text-white mb-2">Rapid growth, recruiting top talent to expand our team.</h3>
-              <p className="text-[#A9C5ED]">Aaftaab Corp experienced rapid growth, attracting top talent to build a world-class team and drive innovation in healthcare revenue management.</p>
+              <p className="text-[#A9C5ED]">Helio RCM Corp experienced rapid growth, attracting top talent to build a world-class team and drive innovation in healthcare revenue management.</p>
             </div>
           </motion.div>
 
@@ -159,8 +159,8 @@ const Timeline = () => {
               2023 - 2024
             </h1>
             <div className="relative p-6 rounded-xl  backdrop-blur-sm border border-[#0C0F27]">
-              <h3 className="text-xl font-bold text-white mb-2">Aaftaab Corp incorporated in Delaware</h3>
-              <p className="text-[#A9C5ED]">Aaftaab began its journey to transform healthcare revenue management by developing AI-driven solutions, leveraging advanced technology and top talent to address key industry challenges.</p>
+              <h3 className="text-xl font-bold text-white mb-2">Helio RCM Corp incorporated in Delaware</h3>
+              <p className="text-[#A9C5ED]">Helio RCM began its journey to transform healthcare revenue management by developing AI-driven solutions, leveraging advanced technology and top talent to address key industry challenges.</p>
             </div>
           </motion.div>
 

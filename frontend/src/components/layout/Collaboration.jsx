@@ -17,7 +17,7 @@ export default function Collaboration() {
   const testimonials = [
     {
       quote:
-        "“Partnering with Aaftaab has been a game-changer for us. Their AI didn't just automate our workflows—it recovered lost revenue by overturning denials we had written off as unrecoverable. In fact, 50% of all overturns during the pilot came from those write-offs. Their expertise and dedication have made a real difference, and we're truly grateful for their partnership.”",
+        "“Partnering with Helio RCM has been a game-changer for us. Their AI didn't just automate our workflows—it recovered lost revenue by overturning denials we had written off as unrecoverable. In fact, 50% of all overturns during the pilot came from those write-offs. Their expertise and dedication have made a real difference, and we're truly grateful for their partnership.”",
       name: "Clay Foster",
       role: "Director of Business Services, Rebound Orthopedics",
       image: "",

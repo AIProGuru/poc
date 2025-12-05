@@ -43,7 +43,7 @@ const RCM = () => {
             </h1>
             <p className="text-[22px] text-[#6C9BE0] leading-[30.8px] md:w-[72%] w-full z-20">
               Your customers in the healthcare industry are relying on you to
-              deliver measurable ROI. <u className="text-[#0048FF]">Aaftaab</u>{" "}
+              deliver measurable ROI. <u className="text-[#0048FF]">Helio RCM</u>{" "}
               can help you do just that.
             </p>
 
@@ -89,7 +89,7 @@ const RCM = () => {
             <p className="text-[20px] text-[#6C9BE0] leading-[28px]">
               Clients are relying on you to do the heavy lifting for their
               revenue cycle management.{" "}
-              <u className="text-[#0048FF]">Aaftaab</u> enables you to
+              <u className="text-[#0048FF]">Helio RCM</u> enables you to
               significantly improve your denial recovery services with powerful
               AI-driven solutions that increase client satisfaction and ROI.
             </p>
@@ -155,7 +155,7 @@ const RCM = () => {
             <p className="text-[20px] leading-[24px] text-[#6C9BE0]">
               Our AI solutions enhance optimization across your entire
               organization, freeing up valuable human resource for more
-              important tasks. <u className="text-[#0048FF]">Aaftaab's</u> AI
+              important tasks. <u className="text-[#0048FF]">Helio RCM's</u> AI
               agents work autonomously to handle the entire resubmissions and
               appeals process.
             </p>
@@ -170,7 +170,7 @@ const RCM = () => {
                 "-webkit-text-stroke": "1px white",
               }}
             >
-              The Aaftaab Advantage
+              The Helio RCM Advantage
             </h1>
 
             <p className="text-[20px] leading-[24px] text-[#6C9BE0]">
@@ -236,7 +236,7 @@ const RCM = () => {
                       What Our Clients Say
                     </h4>
                     <p className="text-[20px] leading-[28px] text-[#6C9BE0]">
-                      Partnering with Aaftaab has been a game-changer for us.
+                      Partnering with Helio RCM has been a game-changer for us.
                       Their AI didn't just automate our workflows—it recovered
                       lost revenue by overturning denials we had written off as
                       unrecoverable. In fact, 50% of all overturns during the

@@ -112,7 +112,7 @@ const MySidebar = () => {
     },
     // {
     //   path: (type === 0 ? "/rebound" : "/medevolve") + "/rcmgpt",
-    //   title: "Aaftaab Assistant",
+    //   title: "Helio RCM Assistant",
     //   rightIcon: "<svg width='48' height='48' viewBox='0 0 835 462' fill='none' xmlns='http://www.w3.org/2000/svg'>\
     //     <path d='M417.431 245.818C484.709 245.818 539.249 191.278 539.249 124C539.249 56.7217 484.709 2.18182 417.431 2.18182C350.153 2.18182 295.613 56.7217 295.613 124C295.613 191.278 350.153 245.818 417.431 245.818Z' stroke='#E1E1EA' strokeWidth='3.63636'/>\
     //     <rect x='341.067' y='47.6365' width='40' height='40' rx='14.5455' fill='#1E47D1'/>\
@@ -151,7 +151,7 @@ const MySidebar = () => {
       dispatch(setAppTitle('Claims'));
       setActive(0);
     } else if (location.pathname.endsWith('/rcmgpt')) {
-      dispatch(setAppTitle('Aaftaab Assistant'));
+      dispatch(setAppTitle('Helio RCM Assistant'));
       setActive(3);
     }
   }, [location, dispatch]);
@@ -179,7 +179,7 @@ const MySidebar = () => {
 
               <div className="flex flex-row p-8 justify-between">
                 <div className="flex sm:hidden  cursor-pointer" onClick={() => navigate('/')}>
-                  <img src="/aaftaab.svg" alt="Logo" />
+                  {/* <img src="/aaftaab.svg" alt="Logo" /> */}
                 </div>
                 <button onClick={toggleMenu} className=" self-end">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -436,7 +436,7 @@ const MySidebar = () => {
     <div className="relative w-[300px] h-full flex flex-col justify-between">
       <div>
         <div className="flex items-center pt-9 pb-9 pl-4 cursor-pointer" onClick={() => navigate('/')}>
-          <img src="/aaftaab.svg" alt="Logo" />
+          {/* <img src="/aaftaab.svg" alt="Logo" /> */}
         </div>
         <div>
           {sidebarMenus.map((menu, idx) => (

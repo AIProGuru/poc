@@ -137,7 +137,7 @@ function CalculateSavingsPage() {
       <div className="container flex justify-center">
         <div className="w-full">
           <h1 className="md:text-[54px] md:leading-[54px] text-[38px] leading-[54px] text-[#EBEDF0] font-bold text-center">
-            Calculate Savings With Aaftaab
+            Calculate Savings With Helio RCM
           </h1>
           {/* Input Form */}
           <div className="grid md:grid-cols-2 gap-4 grid-cols-1 mt-8">
@@ -364,7 +364,7 @@ function CalculateSavingsPage() {
         </div>
       </div>
 
-      {/* Display Aaftaab results based on the condition */}
+      {/* Display Helio RCM results based on the condition */}
       {projected_cost_saving > 0 ? (
         <div className="container">
           <div className="bg-gradient-to-r from-[#3849D866] to-[#0048FF] text-center w-full rounded-t-3xl h-full gap-4 flex flex-col pb-10">
@@ -372,7 +372,7 @@ function CalculateSavingsPage() {
               Congratulations!
             </h2>
             <p className="text-[#6C9BE0] text-[22px]">
-            Aaftaab has identified efficiencies in your process that can
+            Helio RCM has identified efficiencies in your process that can
               annually save you:
             </p>
             <div className="bg-gradient-to-r from-[#0B0C14] to-[#3025FF] w-fit p-5 justify-center mx-auto rounded-xl min-w-[70%]">
@@ -404,7 +404,7 @@ function CalculateSavingsPage() {
           <div className="bg-gradient-to-r from-[#0080FF] to-[#0048FF] text-center rounded-t-3xl h-full gap-4 flex flex-col pb-10">
             <h2 className="text-[54px] font-bold text-[#EBEDF0]">Sorry!</h2>
             <p>
-              Seems like your operations are already efficient; Aaftaab can't help
+              Seems like your operations are already efficient; Helio RCM can't help
               optimize cost savings any further. Thanks for trying us!
             </p>
           </div>

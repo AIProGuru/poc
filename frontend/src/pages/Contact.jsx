@@ -17,7 +17,7 @@ const QACard = ({ defaultExpanded = false, title, content }) => {
       >
         <span className="text-gray-800 text-[20px]">
           {title.split(" ").map((word, index) =>
-            word === "Aaftaab" ? (
+            word === "Helio RCM" ? (
               <React.Fragment key={`title-${index}`}>
                 <u className="text-[#002FFF]">{word}</u>{" "}
               </React.Fragment>
@@ -51,7 +51,7 @@ const QACard = ({ defaultExpanded = false, title, content }) => {
       <div className="py-3">
         <span className="text-gray-700 text-[16px]">
           {content.split(" ").map((word, index) =>
-            word === "Aaftaab" ? (
+            word === "Helio RCM" ? (
               <React.Fragment key={`content-${index}`}>
                 <u className="text-[#002FFF]">{word}</u>{" "}
               </React.Fragment>
@@ -70,7 +70,7 @@ const QACard = ({ defaultExpanded = false, title, content }) => {
       >
         <span className="text-gray-800 text-[20px]">
           {title.split(" ").map((word, index) =>
-            word === "Aaftaab" ? (
+            word === "Helio RCM" ? (
               <React.Fragment key={`title-collapsed-${index}`}>
                 <u className="text-[#002FFF]">{word}</u>{" "}
               </React.Fragment>
@@ -120,7 +120,7 @@ const Contact = () => {
               Contact Us:
             </span>
             <span className="text-gray-600 font-normal text-[22px] leading-[30.8px]">
-              Let's discuss how Aaftaab can transform your denial management.
+              Let's discuss how Helio RCM can transform your denial management.
               Whether you're looking for a demo, have questions about our
               platform, or want to explore a partnership, our team is here to
               help
@@ -220,7 +220,7 @@ const Contact = () => {
                 <span className="text-gray-800 font-medium">Address</span>
 
                 <span className="text-gray-600 z-10 gap-2 w-[70%] flex flex-col">
-                  <p>Aaftaab HQ Address</p>
+                  <p>Helio RCM HQ Address</p>
                   <p>691 S Milpitas Blvd Suite 217, Milpitas, CA 95035</p>
                 </span>
               </div>

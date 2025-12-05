@@ -38,7 +38,7 @@ const Hospitals = () => {
               Maximize Revenue, Minimize Effort
             </h1>
             <p className="text-[20px] text-[#475569] leading-[28px] md:w-[72%] w-full z-20">
-              Learn how <u className="text-[#0048FF]">Aaftaab</u> can help
+              Learn how <u className="text-[#0048FF]">Helio RCM</u> can help
               reduce manual effort and significantly increase revenue recovery
               through powerful AI{" "}
             </p>
@@ -63,7 +63,7 @@ const Hospitals = () => {
               className="sm:absolute -top-6 right-0 z-0 md:w-[1099px] w-[160%] h-[100%] max-w-none sm:ml-0 -ml-40"
             /> */}
             <p className="md:px-7 md:py-[40.5px] px-1 py-2 border-l-[#0048FF] border-l text-[20px] leading-[28px] text-[#475569] md:w-[92%] w-full z-20 sm:mt-0 -mt-64 text-left">
-              <u className="text-[#0048FF]">Aaftaab</u> transforms denial
+              <u className="text-[#0048FF]">Helio RCM</u> transforms denial
               management for hospitals and health systems with cutting-edge
               AI-driven automation. Our AI agents work 24/7 to help your team
               recover lost revenue and reduce days in A/R while minimizing
@@ -138,7 +138,7 @@ const Hospitals = () => {
             <h1
               className="md:text-[48px] md:leading-[52px] text-[34px] leading-[38px] font-bold text-[#0F172A] md:mt-0 -mt-[50]"
             >
-              The Aaftaab Advantage
+              The Helio RCM Advantage
             </h1>
             <p className="text-[20px] leading-[24px] text-[#475569]">
               <strong className="text-[#0F172A] font-bold">
@@ -181,7 +181,7 @@ const Hospitals = () => {
                       What Our Clients Say
                     </h4>
                     <p className="text-[20px] leading-[28px] text-[#6C9BE0]">
-                      “Partnering with Aaftaab has been a game-changer for us.
+                      “Partnering with Helio RCM has been a game-changer for us.
                       Their AI didn't just automate our workflows—it recovered
                       lost revenue by overturning denials we had written off as
                       unrecoverable. In fact, 50% of all overturns during the

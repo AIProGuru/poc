@@ -61,7 +61,7 @@ const Footer = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start lg:items-center ml-0 sm:ml-5 mb-10 gap-4">
           <div className="one mb-6 sm:mb-0">
             <Link to={"/"} onClick={scrollToTop}>
-              <h2 className="text-2xl font-bold text-white">Aaftaab</h2>
+              <h2 className="text-2xl font-bold text-white">Helio RCM</h2>
             </Link>
             <p className="text-neutral-400 mt-4 max-w-md">
               AI-powered healthcare revenue cycle management platform that transforms denied claims into recovered revenue.
@@ -268,7 +268,7 @@ const Footer = () => {
         
         {/* Bottom Section */}
         <div className="mt-10 border-t border-gray-600 pt-6 text-sm flex flex-col sm:flex-row justify-between">
-          <p>Aaftaab © 2025. All rights reserved.</p>
+          <p>Helio RCM © 2025. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 sm:mt-0">
             <Link to="/privacy" onClick={scrollToTop} className="hover:opacity-75">
               Privacy Policy

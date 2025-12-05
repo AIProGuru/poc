@@ -23,14 +23,14 @@ const members = [
     name: "Patricia Sanders",
     role: "Product Manager",
     description:
-      "Working at Aaftaab has been a career-defining experience. As a Product Manager, I lead innovative projects that directly influence the healthcare industry. The collaborative environment inspires teams to transform ambitious ideas into impactful, cutting-edge solutions.",
+      "Working at Helio RCM has been a career-defining experience. As a Product Manager, I lead innovative projects that directly influence the healthcare industry. The collaborative environment inspires teams to transform ambitious ideas into impactful, cutting-edge solutions.",
   },
   {
     image: "/rodger.png",
     name: "Rodger Struck",
     role: "Data Engineer",
     description:
-      "As a Data Engineer at Aaftaab, I enjoy tackling technical challenges with meaningful impact. Building systems that improve healthcare efficiency is incredibly rewarding, and the collaborative team values my contributions to a seamless platform.",
+      "As a Data Engineer at Helio RCM, I enjoy tackling technical challenges with meaningful impact. Building systems that improve healthcare efficiency is incredibly rewarding, and the collaborative team values my contributions to a seamless platform.",
   },
 ];
 
@@ -132,7 +132,7 @@ const Careers = () => {
         "Proficient in leveraging revenue cycle management platforms, you bring technical precision and a systematic approach to optimizing claim recovery processes.",
         "Your ability to interpret large datasets and translate them into actionable financial insights ensures maximized recoveries and streamlined workflows. If you're technically adept and solution-oriented, we're eager to collaborate with you.",
       ],
-      subtitle: "Join Aaftaab as a Product Manager",
+      subtitle: "Join Helio RCM as a Product Manager",
       description:
         "Lead AI-driven solutions for healthcare revenue recovery, collaborate with teams to define strategies, prioritize features, and deliver innovative tools to address industry challenges.",
     },
@@ -153,7 +153,7 @@ const Careers = () => {
         "Your ability to interpret large datasets and translate them into actionable financial insights ensures maximized recoveries and streamlined workflows. If you're technically adept and solution-oriented, we're eager to collaborate with you.",
       ],
       title: "Data Engineer",
-      subtitle: "Join Aaftaab as a Data Engineer",
+      subtitle: "Join Helio RCM as a Data Engineer",
       description:
         "Design and maintain scalable data infrastructure for our AI-powered platform. Ensure data integrity, accessibility, and performance to support advanced analytics and machine learning solutions.",
     },
@@ -174,7 +174,7 @@ const Careers = () => {
         "Your ability to interpret large datasets and translate them into actionable financial insights ensures maximized recoveries and streamlined workflows. If you're technically adept and solution-oriented, we're eager to collaborate with you.",
       ],
       title: "Product manager",
-      subtitle: "Join Aaftaab as a Product Manager",
+      subtitle: "Join Helio RCM as a Product Manager",
       description:
         "Lead AI-driven solutions for healthcare revenue recovery, collaborate with teams to define strategies, prioritize features, and deliver innovative tools to address industry challenges.",
     },
@@ -195,7 +195,7 @@ const Careers = () => {
         "Your ability to interpret large datasets and translate them into actionable financial insights ensures maximized recoveries and streamlined workflows. If you're technically adept and solution-oriented, we're eager to collaborate with you.",
       ],
       title: "Machine Learning Specialist",
-      subtitle: "Join Aaftaab as a Machine Learning Specialist",
+      subtitle: "Join Helio RCM as a Machine Learning Specialist",
       description:
         "Design and implement AI models for denial recovery solutions. Work on cutting-edge projects, tackle complex challenges, and push the boundaries of AI in healthcare.",
     },

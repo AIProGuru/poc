@@ -109,7 +109,7 @@ US healthcare systems are at a critical juncture. New ways of working, enabled b
       },
       2: {
         title: "Claim Denial Prediction: Harnessing AI For Healthcare Revenue Cycle Management",
-        content: "This article discusses how Aaftaab AI addresses and fixes issues in denials...",
+        content: "This article discusses how Helio RCM AI addresses and fixes issues in denials...",
         header_image: "https://imageio.forbes.com/specials-images/imageserve/66d9f69afbda5c12b7d194e8//960x0.jpg?format=jpg&width=1440",
         data: [
           {
@@ -168,7 +168,7 @@ Forbes Technology Council`,
       },
       3: {
         title: "AI is just one piece of healthcare's RCM puzzle",
-        content: "This article discusses how Aaftaab AI addresses and fixes issues in denials...",
+        content: "This article discusses how Helio RCM AI addresses and fixes issues in denials...",
         header_image: "https://res.cloudinary.com/alixpartners/image/upload/v1719329556/Imagery/Insights/Healthcare%20revenue%20cycle%20%282024%29/HC_test_-_revenue_cycle-01_xzbxj7.jpg",
         data: [
           {

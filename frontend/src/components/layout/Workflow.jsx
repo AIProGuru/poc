@@ -14,7 +14,7 @@ const Workflow = () => {
       </div>
       <div className="hidden xl:flex flex-col">
         <p className="font-poppins font-normal pt-10">
-        Aaftaab Denial management process
+        Helio RCM Denial management process
         </p>
         <div className="flex justify-between">
           <div className="flex items-end gap-4">
@@ -102,7 +102,7 @@ const Workflow = () => {
       </div>
       <div className="flex flex-col gap-y-12 pt-12 xl:hidden">
         <p className="font-poppins font-semibold">
-        Aaftaab Denial management process
+        Helio RCM Denial management process
         </p>
         <div className="flex flex-col gap-y-3">
           <div className="w-full h-16 bg-blue-500 rounded-lg flex items-center justify-center">

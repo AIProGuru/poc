@@ -194,7 +194,7 @@ const routesConfig = [
   },
   {
     path: "/forgot-password",
-    element: <PrivateRoute role={["demo", "admin"]} element={ForgotPassword} />,
+    element: <ForgotPassword />,
   },
   {
     path: "/waiting",

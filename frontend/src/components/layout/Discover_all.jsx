@@ -11,7 +11,7 @@ export default function Discover_all({ title, desc, link, button }) {
         </h1>
         <p className="text-[#C6D4FF] text-[22px] font-poppins mb-6 leading-[30.8px] z-10">
           {desc.split(" ").map((word, index) =>
-            word === "Aaftaab" ? (
+            word === "Helio RCM" ? (
               <React.Fragment key={index}>
                  {word}{" "}
               </React.Fragment>

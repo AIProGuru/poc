@@ -567,7 +567,7 @@ export default function Header(props) {
                 >
                   <div className="font-semibold">Blog</div>
                   <span className="text-sm text-neutral-600">
-                    Read the latest news and articles from Aaftaab.
+                    Read the latest news and articles from Helio RCM.
                   </span>
                 </Link>
               </li>
@@ -637,7 +637,7 @@ export default function Header(props) {
                 >
                   <div className="font-semibold">Data & Compliance</div>
                   <span className="text-sm text-neutral-600">
-                    Learn more about how Aaftaab protects your data
+                    Learn more about how Helio RCM protects your data
                   </span>
                 </Link>
               </li>

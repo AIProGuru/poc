@@ -63,7 +63,7 @@ const Header = () => {
           className="flex sm:hidden pt-2 pb-9  cursor-pointer"
           onClick={() => navigate("/")}
         >
-          <img src="/aaftaab.svg" alt="Logo" />
+          {/* <img src="/aaftaab.svg" alt="Logo" /> */}
         </div>
         <div className="mt-3  text-2xl sm:text-2xl">{appTitle}</div>
       </div>

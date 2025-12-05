@@ -36,7 +36,7 @@ const PracticeManagement = () => {
             </h1>
             <p className="text-[20px] text-[#475569] leading-[28px] md:w-[72%] w-full z-20">
               Simplify denial management with{" "}
-              <u className="text-[#0048FF]">Aaftaab's</u> innovative solutions.
+              <u className="text-[#0048FF]">Helio RCM's</u> innovative solutions.
             </p>
 
             <button className="h-[70px] md:w-[240px] w-full bg-[#0048FF] shadow-xl shadow-[#0048FF]/50 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[42px] justify-center gap-2 z-20">
@@ -55,7 +55,7 @@ const PracticeManagement = () => {
             </button>
             
             <p className="md:px-7 md:py-[40.5px] px-1 py-2 border-l-[#0048FF] border-l text-[20px] leading-[28px] text-[#475569] md:w-[92%] w-full z-20 sm:mt-0 -mt-48 text-left">
-              <u className="text-[#0048FF]">Aaftaab's</u> provides AI-powered
+              <u className="text-[#0048FF]">Helio RCM's</u> provides AI-powered
               solutions for managing denials, which seamlessly integrate with
               your existing platforms. This enhances your service offerings
               while maintaining ease of use and increasing efficiency.
@@ -165,7 +165,7 @@ const PracticeManagement = () => {
             <h1
               className="md:text-[48px] md:leading-[52px] text-[34px] leading-[38px] font-bold text-[#0F172A] md:mt-0 -mt-[50]"
             >
-              The Aaftaab Advantage
+              The Helio RCM Advantage
             </h1>
             <p className="text-[20px] leading-[24px] text-[#475569]">
               <strong className="text-[#0F172A] font-bold">
@@ -211,7 +211,7 @@ const PracticeManagement = () => {
                       What Our Clients Say
                     </h4>
                     <p className="text-[20px] leading-[28px] text-[#6C9BE0]">
-                      “Partnering with Aaftaab has been a game-changer for us.
+                      “Partnering with Helio RCM has been a game-changer for us.
                       Their AI didn't just automate our workflows—it recovered
                       lost revenue by overturning denials we had written off as
                       unrecoverable. In fact, 50% of all overturns during the
@@ -283,7 +283,7 @@ const PracticeManagement = () => {
       <div className="mx-[1rem] sm:mx-[2rem] lg:mx-[4rem] xl:mx-[5rem] 2xl:mx-[6rem] flex justify-center mt-20 mb-10 sm:mb-32">
         <Discover_all
           title="Redefining Revenue Cycle Management"
-          desc="Discover how Aaftaab can transform your revenue cycle management today."
+          desc="Discover how Helio RCM can transform your revenue cycle management today."
           link="/#aidenial"
           button="Explore More"
         />

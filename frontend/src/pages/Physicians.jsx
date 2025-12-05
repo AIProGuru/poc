@@ -59,7 +59,7 @@ const Physicians = () => {
               Balancing quality patient care and revenue cycle management is a
               major challenge for high-volume practices, specialty clinics, and
               independent physician groups.{" "}
-              <u className="text-[#0048FF]">Aaftaab</u> can help reduce manual
+              <u className="text-[#0048FF]">Helio RCM</u> can help reduce manual
               effort and significantly increase revenue recovery through
               powerful AI.
             </p>
@@ -145,7 +145,7 @@ const Physicians = () => {
             <h1
               className="text-[#0F172A] font-bold lg:text-[48px] lg:leading-[52px] text-[34px] leading-[38px] w-full"
             >
-              The Aaftaab Advantage
+              The Helio RCM Advantage
             </h1>
 
             <p className="text-[20px] leading-[24px] text-[#475569]">
@@ -211,7 +211,7 @@ const Physicians = () => {
                       What Our Clients Say
                     </h4>
                     <p className="text-[20px] leading-[28px] text-[#6C9BE0]">
-                      “Partnering with Aaftaab has been a game-changer for us.
+                      “Partnering with Helio RCM has been a game-changer for us.
                       Their AI didn't just automate our workflows—it recovered
                       lost revenue by overturning denials we had written off as
                       unrecoverable. In fact, 50% of all overturns during the
@@ -283,7 +283,7 @@ const Physicians = () => {
       <div className="mx-[1rem] sm:mx-[2rem] lg:mx-[4rem] xl:mx-[5rem] 2xl:mx-[6rem] flex justify-center mt-20 mb-10 sm:mb-32">
         <Discover_all
           title="Simplify Revenue Optimization for Your Practice"
-          desc="Let Aaftaab handle the mundane details of revenue cycle management so you can focus on delivering exceptional care."
+          desc="Let Helio RCM handle the mundane details of revenue cycle management so you can focus on delivering exceptional care."
           link="/#aidenial"
           button="Explore More"
         />

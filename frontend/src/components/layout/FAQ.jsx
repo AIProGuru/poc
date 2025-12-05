@@ -10,30 +10,30 @@ export default function FAQ() {
   const faqs = [
     {
       question:
-        "What makes Aaftaab different from other revenue recovery solutions?",
+        "What makes Helio RCM different from other revenue recovery solutions?",
       answer:
-        "Aaftaab specializes in backend revenue recovery with a laser focus on denied claims and zero-balance recoveries. Unlike broader automation providers, we use human-capable AI agents to pursue claim resubmissions and appeals, ensuring no revenue is left unclaimed.",
+        "Helio RCM specializes in backend revenue recovery with a laser focus on denied claims and zero-balance recoveries. Unlike broader automation providers, we use human-capable AI agents to pursue claim resubmissions and appeals, ensuring no revenue is left unclaimed.",
     },
     {
-      question: "How does Aaftaab's platform help reduce denial rates?",
+      question: "How does Helio RCM's platform help reduce denial rates?",
       answer:
         "Our platform includes AI-driven solutions that proactively scrub claims for errors before submission, minimising the risk of denials. These systems adapt continuously based on real-time insights, ensuring compliance with payer-specific requirements and reducing overall denial rates.",
     },
     {
-      question: "What types of denials can Aaftaab's AI agents handle?",
+      question: "What types of denials can Helio RCM's AI agents handle?",
       answer:
-        "Aaftaab's AI solutions can manage both soft and hard denials. They are trained to resubmit and appeal claims autonomously, generating customised responses based on specific denial reasons to maximise recovery potential.",
+        "Helio RCM's AI solutions can manage both soft and hard denials. They are trained to resubmit and appeal claims autonomously, generating customised responses based on specific denial reasons to maximise recovery potential.",
     },
     {
-      question: "How quickly can Aaftaab recover denied revenue?",
+      question: "How quickly can Helio RCM recover denied revenue?",
       answer:
-        "With AI solutions working around the clock, Aaftaab accelerates cash recovery significantly. Our systems can reduce the typical 90-day resubmission process to just 20 days, bringing denied revenue back into your cash flow faster.",
+        "With AI solutions working around the clock, Helio RCM accelerates cash recovery significantly. Our systems can reduce the typical 90-day resubmission process to just 20 days, bringing denied revenue back into your cash flow faster.",
     },
     {
       question:
-        "Is Aaftaab's platform compatible with existing EHR and practice management systems?",
+        "Is Helio RCM's platform compatible with existing EHR and practice management systems?",
       answer:
-        "Yes, Aaftaab integrates seamlessly with major EHR and practice management systems, including Epic, Cerner, and AthenaHealth, allowing your organisation to optimise denial management without workflow disruptions.",
+        "Yes, Helio RCM integrates seamlessly with major EHR and practice management systems, including Epic, Cerner, and AthenaHealth, allowing your organisation to optimise denial management without workflow disruptions.",
     },
   ];
 
@@ -106,7 +106,7 @@ export default function FAQ() {
               Still Have Questions?
             </h3>
             <p className="text-neutral-600 mb-8 text-lg font-montserrat">
-              Our team is here to help you understand how Aaftaab can transform your revenue cycle.
+              Our team is here to help you understand how Helio RCM can transform your revenue cycle.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-4 rounded-2xl font-semibold shadow-medium hover:shadow-large transition-all duration-300 hover-lift">

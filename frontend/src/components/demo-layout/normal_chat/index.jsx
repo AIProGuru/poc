@@ -22,7 +22,7 @@ const NormalChat = () => {
   const ref = useRef();
   const [messages, setMessages] = useState([
     {
-      message: "Hello, I am Aaftaab assistant bot. How can I help you?",
+      message: "Hello, I am Helio RCM assistant bot. How can I help you?",
       sender: "ChatGPT",
     },
   ]);
@@ -167,7 +167,7 @@ const NormalChat = () => {
   const clearMessage = () => {
     setMessages([
       {
-        message: "Hello, I am Aaftaab assistant bot. How can I help you?",
+        message: "Hello, I am Helio RCM assistant bot. How can I help you?",
         sender: "ChatGPT",
       },
     ]);
@@ -183,7 +183,7 @@ const NormalChat = () => {
       <div className="flex justify-center">
         <TEToast open={open} autohide={true} delay={3000} setOpen={setOpen}>
           <div className="flex items-center justify-between rounded-t-lg border-b-2 border-neutral-100 border-opacity-100 bg-blue-600 px-4 pb-2 pt-2.5">
-            <p className="font-bold text-white">Aaftaab Alert</p>
+            <p className="font-bold text-white">Helio RCM Alert</p>
             <div className="flex items-center">
               <p className="text-xs text-white">Just now</p>
               <button
@@ -260,7 +260,7 @@ const NormalChat = () => {
             >
               {row.sender === "ChatGPT" && (
                 <div className="cursor-pointer">
-                  <img src="/favicon.png" alt="Aaftaab" className="w-8" />
+                  <img src="/favicon.png" alt="Helio RCM" className="w-8" />
                 </div>
               )}
               <div
@@ -289,17 +289,17 @@ const NormalChat = () => {
               )}
               {row.sender === "ChatGPT" && index !== 0 && (
                 <div className="cursor-pointer" onClick={() => setThumb(false)}>
-                  <img src="/up.png" alt="Aaftaab" className="w-8" />
+                  <img src="/up.png" alt="Helio RCM" className="w-8" />
                 </div>
               )}
               {row.sender === "ChatGPT" && index !== 0 && (
                 <div className="cursor-pointer" onClick={() => setThumb(true)}>
-                  <img src="/down.png" alt="Aaftaab" className="w-8" />
+                  <img src="/down.png" alt="Helio RCM" className="w-8" />
                 </div>
               )}
               {row.sender === "user" && index !== 0 && (
                 <div className="cursor-pointer">
-                  <img src="/user.png" alt="Aaftaab" className="w-8" />
+                  <img src="/user.png" alt="Helio RCM" className="w-8" />
                 </div>
               )}
             </div>
@@ -324,7 +324,7 @@ const NormalChat = () => {
       {isLoading && (
         <div className="flex items-center">
           <img src="/pen.gif" alt="pen" className="h-16" />
-          <span>Aaftaab Bot is typing....</span>
+          <span>Helio RCM Bot is typing....</span>
         </div>
       )}
       <div className="flex flex-col gap-3">

@@ -134,7 +134,7 @@ const TestimonialPage = () => {
                       What Our Clients Say
                     </h4>
                     <p className="text-[20px] leading-[28px] text-[#6C9BE0]">
-                      “Partnering with Aaftaab has been a game-changer for us.
+                      “Partnering with Helio RCM has been a game-changer for us.
                       Their AI didn't just automate our workflows—it recovered
                       lost revenue by overturning denials we had written off as
                       unrecoverable. In fact, 50% of all overturns during the

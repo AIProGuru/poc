@@ -23,18 +23,9 @@ const Demo = () => {
       }
       <div className="w-full h-full flex relative">
 
-        <div className={` ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-black'} sm:w-[300px] w-0`}>
-          <MySidebar />
-        </div>
+        {/* Original sidebar hidden for dashboard */}
         <div className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-black'} overflow-x-auto grow flex flex-col`}>
-          <div className="grow flex flex-col">
-            <div className="pl-10 pr-10">
-              <Header />
-            </div>
-            <div className="p-10 grow flex flex-col">
-              <Outlet />
-            </div>
-          </div>
+          <Outlet />
         </div>
         
       </div>

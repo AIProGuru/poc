@@ -35,7 +35,7 @@ const BillingAgencies = () => {
               Fewer Denials. More Revenue.
             </h1>
             <p className="text-[20px] text-[#475569] leading-[28px] md:w-[72%] w-full z-20">
-              <u className="text-[#0048FF]">Aaftaab</u> boosts denial recovery
+              <u className="text-[#0048FF]">Helio RCM</u> boosts denial recovery
               with smarter workflows and improved financial outcomes for your
               business.
             </p>
@@ -60,7 +60,7 @@ const BillingAgencies = () => {
               Whether that's meeting payer-specific requirements or changing
               policies, the manual handling of this crucial process can lead to
               inefficiencies and subsequently, financial losses.{" "}
-              <u className="text-[#0048FF]">Aaftaab's</u> is here to change
+              <u className="text-[#0048FF]">Helio RCM's</u> is here to change
               that for good.
             </p>
           </div>
@@ -77,7 +77,7 @@ const BillingAgencies = () => {
             </h1>
 
             <p className="text-[20px] text-[#475569] leading-[28px]">
-              <u className="text-[#0048FF]">Aaftaab's</u> cutting-edge
+              <u className="text-[#0048FF]">Helio RCM's</u> cutting-edge
               AI-powered platform overhauls the denial recovery workflow by
               eliminating manual errors and reducing the need for human
               interventions in the appeals and recovery process.
@@ -169,7 +169,7 @@ const BillingAgencies = () => {
             <h1
               className="md:text-[48px] md:leading-[52px] text-[34px] leading-[38px] font-bold text-[#0F172A] md:mt-0 -mt-[50]"
             >
-              The Aaftaab Advantage
+              The Helio RCM Advantage
             </h1>
             <p className="text-[20px] leading-[24px] text-[#475569]">
               <strong className="text-[#0F172A] font-bold">
@@ -213,7 +213,7 @@ const BillingAgencies = () => {
                       What Our Clients Say
                     </h4>
                     <p className="text-[20px] leading-[28px] text-[#6C9BE0]">
-                      “Partnering with Aaftaab has been a game-changer for us.
+                      “Partnering with Helio RCM has been a game-changer for us.
                       Their AI didn't just automate our workflows—it recovered
                       lost revenue by overturning denials we had written off as
                       unrecoverable. In fact, 50% of all overturns during the
@@ -285,7 +285,7 @@ const BillingAgencies = () => {
       <div className="mx-[1rem] sm:mx-[2rem] lg:mx-[4rem] xl:mx-[5rem] 2xl:mx-[6rem] flex justify-center mt-20 mb-10 sm:mb-32">
         <Discover_all
           title="Redefining Revenue Cycle Management"
-          desc="Discover how Aaftaab can transform your revenue cycle management today."
+          desc="Discover how Helio RCM can transform your revenue cycle management today."
           link="/#aidenial"
           button="Explore More"
         />

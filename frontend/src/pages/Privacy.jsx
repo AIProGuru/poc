@@ -27,11 +27,11 @@ const Privacy = () => {
     {
       img: "data-min.png",
       title: "Data Minimization",
-      description: "Aaftaab adheres to data minimization principles, collecting and processing only the data necessary to deliver powerful denial management insights."
+      description: "Helio RCM adheres to data minimization principles, collecting and processing only the data necessary to deliver powerful denial management insights."
     },
     {
       img: "soc2.png",
-      title: "SOC 2 Certification in Progress ",
+      title: "SOC 2 Certification in Progress",
       description: "We are in the process of obtaining SOC 2 certification, further demonstrating our commitment to the highest security and operational standards.  "
     },
     {
@@ -67,7 +67,7 @@ const Privacy = () => {
               Committed to Excellence in Healthcare Data Security
             </p>
             <p className="font-poppins text-[#475569] w-[90%] max-w-[1014px] text-center text-[22px]  mt-5">
-              Description: At Aaftaab, we understand that data privacy is paramount in healthcare. Our platform is built to meet the highest standards of data protection and regulatory compliance, ensuring that your organization’s information—and your patients’ sensitive data—remain secure and confidential.
+              Description: Helio RCM, we understand that data privacy is paramount in healthcare. Our platform is built to meet the highest standards of data protection and regulatory compliance, ensuring that your organization’s information—and your patients’ sensitive data—remain secure and confidential.
             </p>
             <img src="/data_compliance.png" className="mt-10 hidden sm:block" />
           </div>
