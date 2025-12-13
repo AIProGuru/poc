@@ -16,6 +16,14 @@ const reboundRoutes = [
     element: <PrivateRoute role={['demo', 'admin']} element={ReboundDash} />
   },
   {
+    path: "denials",
+    element: <PrivateRoute role={['demo', 'admin']} element={ReboundDash} />
+  },
+  {
+    path: "denials/:token",
+    element: <PrivateRoute role={['demo', 'admin']} element={ReboundDash} />
+  },
+  {
     path: "statistics",
     element: <PrivateRoute role={['demo', 'admin']} element={ReboundStatistics} />
   },

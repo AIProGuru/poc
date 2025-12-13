@@ -1,15 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  KeyboardArrowDown,
-  KeyboardArrowUp,
-} from "@mui/icons-material";
-import Part1 from "./Part1";
-import Part2 from "./Part2";
 import DataTable from "./DataTable";
-import { samplifyInteger } from "../../../utils/config";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { setCount, setPart1Count, setPart2Count, setRecovery } from "../../../redux/reducers/count.reducer";
 import {
   setCurrentPage,
@@ -37,25 +30,24 @@ import { setSelectedTags, setTags, setAllPayers } from "../../../redux/reducers/
 import { setTableData, setTheme } from '../../../redux/reducers/app.reducer';
 import { setCategoryLabel, setCategoryValue } from '../../../redux/reducers/statistics.reducer';
 import { useApiEndpoint } from "../../../ApiEndpointContext";
+import ArIntel from "./ArIntel";
 
 const ReboundDash = () => {
   const apiUrl = useApiEndpoint();
-  const [showInsights, setShowInsights] = useState(false);
-  const [selectedNav, setSelectedNav] = useState('home');
+  const location = useLocation();
+  const params = useParams();
+  const rawToken = params.token ?? null;
+  const [selectedNav, setSelectedNav] = useState(() => (location.pathname.includes('/denials') ? 'denials' : 'home'));
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const tableScrollRef = useRef(null);
+  const inputKeywordRef = useRef();
+  const navigate = useNavigate();
 
-  const scrollTable = (direction) => {
-    if (tableScrollRef.current) {
-      const scrollAmount = 300;
-      tableScrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
-  };
   const dispatch = useDispatch();
   const theme = useSelector((state) => state.app.theme);
+  const appType = useSelector((state) => state.app.type);
+  const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/medevolve' : '/demo';
+  const isDenialsRoute = location.pathname.includes('/denials');
+  const showDenialModels = isDenialsRoute && !rawToken;
   const count = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   let tabIndex = useSelector((state) => state.app.tabIndex);
@@ -64,57 +56,242 @@ const ReboundDash = () => {
   const statisticsLoading = useSelector((state) => state.app.statisticsLoading);
   const payerLoading = useSelector((state) => state.app.payerLoading);
   const recoveryLoading = useSelector((state) => state.app.recoveryLoading);
+  const firstname = useSelector((state) => state.auth.firstname);
+  const lastname = useSelector((state) => state.auth.lastname);
+  const keyword = useSelector((state) => state.app.keyword);
 
   console.log('apiUrl', apiUrl);
 
-  let params = useParams();
-  let { token } = params;
+  const filterByKeyword = () => {
+    dispatch(setExtraFilter({}));
+    dispatch(setPart1Loading(true));
+    dispatch(setPart2Loading(true));
+    dispatch(setTableLoading(true));
+    dispatch(setKeyword(inputKeywordRef.current.value));
+    dispatch(setCurrentPage(1));
+  };
+
+  useEffect(() => {
+    if (inputKeywordRef.current) {
+      inputKeywordRef.current.value = keyword;
+    }
+  }, [keyword]);
+
+  useEffect(() => {
+    if (location.pathname.includes('/denials')) {
+      if (selectedNav !== 'denials') {
+        setSelectedNav('denials');
+      }
+    } else if (selectedNav === 'denials') {
+      setSelectedNav('home');
+    }
+  }, [location.pathname, selectedNav]);
+
+  const formatDisplay = (value, type = 'number') => {
+    const numeric = Number(value ?? 0);
+    if (type === 'currency') {
+      return `$${numeric.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+    }
+    return numeric.toLocaleString('en-US');
+  };
+
+  const getMetricValue = (idx, key) => {
+    if (!Array.isArray(count) || !count[idx]) return 0;
+    return count[idx][key] ?? 0;
+  };
+
+  const insightCards = [
+    { id: 'count', label: 'Count', value: getMetricValue(0, 'count'), format: 'number', gradient: 'from-[#1CB5E0] to-[#46E5B9]' },
+    { id: 'charges', label: 'Charges', value: getMetricValue(0, 'amount'), format: 'currency', gradient: 'from-[#2DD5A5] to-[#61F1CD]' },
+    { id: 'exp', label: 'Exp Reimbursement', value: getMetricValue(1, 'amount'), format: 'currency', gradient: 'from-[#22B8CF] to-[#5C7CFA]' },
+    { id: 'allowed', label: 'Allowed Amt', value: getMetricValue(2, 'amount'), format: 'currency', gradient: 'from-[#7C4DFF] to-[#C471ED]' },
+    { id: 'variance', label: 'Payment Variance', value: getMetricValue(3, 'amount'), format: 'currency', gradient: 'from-[#B24592] to-[#F15F79]' },
+  ];
+
+  const models = useSelector((state) => state.app.models);
+  const denialCount = models.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
+
+  const navItems = [
+    { id: 'home', label: 'Home', badge: null, icon: 'home', tab: 0 },
+    { id: 'dashboard', label: 'Dashboard', badge: null, icon: 'dashboard' },
+    { id: 'claim-edits', label: 'Claim Edits', badge: 45, icon: 'clipboard' },
+    { id: 'claim-status', label: 'Claim Status', badge: 96, icon: 'list' },
+    { id: 'denials', label: 'Denials', badge: denialCount || null, icon: 'shield-x' },
+    { id: 'patient-responsibility', label: 'Patient Responsibility', badge: 23, icon: 'user', tab: 2 },
+    { id: 'payment-variance', label: 'Payment Variance', badge: 67, icon: 'chart', tab: 4 },
+    { id: 'payment-posting', label: 'Payment Posting', badge: 36, icon: 'card' },
+    { id: 'support', label: 'Support', badge: null, icon: 'lifebuoy' },
+    { id: 'settings', label: 'Settings', badge: null, icon: 'cog' },
+  ];
+
+  const isDark = theme === 'dark';
+
+  const renderNavIcon = (name, active) => {
+    const tone = active ? 'text-white' : 'text-[#8A8FB1]';
+    const strokeProps = {
+      stroke: 'currentColor',
+      strokeWidth: 1.5,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      fill: 'none',
+    };
+
+    switch (name) {
+      case 'home':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <path d="M3.25 9.5L10 3.75L16.75 9.5V16C16.75 16.5523 16.3023 17 15.75 17H12V12.25H8V17H4.25C3.69772 17 3.25 16.5523 3.25 16V9.5Z" {...strokeProps} />
+          </svg>
+        );
+      case 'dashboard':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <rect x="3" y="3" width="6" height="6" rx="1.2" {...strokeProps} />
+            <rect x="11" y="3" width="6" height="4.5" rx="1.2" {...strokeProps} />
+            <rect x="3" y="12" width="5.5" height="5.5" rx="1.2" {...strokeProps} />
+            <rect x="10.5" y="9" width="6.5" height="8.5" rx="1.2" {...strokeProps} />
+          </svg>
+        );
+      case 'clipboard':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <path d="M7 4H13C14.1046 4 15 4.89543 15 6V15C15 16.1046 14.1046 17 13 17H7C5.89543 17 5 16.1046 5 15V6C5 4.89543 5.89543 4 7 4Z" {...strokeProps} />
+            <path d="M7 5.5H13" {...strokeProps} />
+            <path d="M8.25 3H11.75C12.1642 3 12.5 3.33579 12.5 3.75V5.5H7.5V3.75C7.5 3.33579 7.83579 3 8.25 3Z" {...strokeProps} />
+          </svg>
+        );
+      case 'list':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <path d="M7 6H16" {...strokeProps} />
+            <path d="M7 10H16" {...strokeProps} />
+            <path d="M7 14H16" {...strokeProps} />
+            <circle cx="4" cy="6" r="0.9" {...strokeProps} />
+            <circle cx="4" cy="10" r="0.9" {...strokeProps} />
+            <circle cx="4" cy="14" r="0.9" {...strokeProps} />
+          </svg>
+        );
+      case 'shield-x':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <path d="M10 3L16 5.25V10C16 13.5 13.5 16.75 10 17.5C6.5 16.75 4 13.5 4 10V5.25L10 3Z" {...strokeProps} />
+            <path d="M8 9L12 13" {...strokeProps} />
+            <path d="M12 9L8 13" {...strokeProps} />
+          </svg>
+        );
+      case 'user':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <circle cx="10" cy="7" r="3" {...strokeProps} />
+            <path d="M5 15.5C5 13.567 7.23858 12 10 12C12.7614 12 15 13.567 15 15.5" {...strokeProps} />
+          </svg>
+        );
+      case 'chart':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <path d="M4 14V9" {...strokeProps} />
+            <path d="M8 14V6" {...strokeProps} />
+            <path d="M12 14V11" {...strokeProps} />
+            <path d="M16 14V4" {...strokeProps} />
+            <path d="M3.5 16H16.5" {...strokeProps} />
+          </svg>
+        );
+      case 'card':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <rect x="3" y="5" width="14" height="10" rx="2" {...strokeProps} />
+            <path d="M3 9H17" {...strokeProps} />
+            <path d="M6 13H8M10 13H14" {...strokeProps} />
+          </svg>
+        );
+      case 'lifebuoy':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="6.5" {...strokeProps} />
+            <circle cx="10" cy="10" r="3" {...strokeProps} />
+            <path d="M5.5 5.5L7.5 7.5" {...strokeProps} />
+            <path d="M14.5 5.5L12.5 7.5" {...strokeProps} />
+            <path d="M5.5 14.5L7.5 12.5" {...strokeProps} />
+            <path d="M14.5 14.5L12.5 12.5" {...strokeProps} />
+          </svg>
+        );
+      case 'cog':
+      default:
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="2.5" {...strokeProps} />
+            <path d="M10 4V6" {...strokeProps} />
+            <path d="M10 14V16" {...strokeProps} />
+            <path d="M4 10H6" {...strokeProps} />
+            <path d="M14 10H16" {...strokeProps} />
+            <path d="M6.343 6.343L7.757 7.757" {...strokeProps} />
+            <path d="M12.243 12.243L13.657 13.657" {...strokeProps} />
+            <path d="M13.657 6.343L12.243 7.757" {...strokeProps} />
+            <path d="M7.757 12.243L6.343 13.657" {...strokeProps} />
+          </svg>
+        );
+    }
+  };
+
+  const profileInitials = [firstname, lastname]
+    .filter(Boolean)
+    .map((name) => name[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || 'HR';
   useEffect(() => {
     console.log('apiUrl', apiUrl);
     if (apiUrl === '') return;
 
-    if (token) {
-      token = JSON.parse(atob(token));
-      console.log(token);
-      if (token.selectedTags != undefined) {
-        dispatch(setSelectedTags(token.selectedTags));
+    if (rawToken) {
+      let tokenObj;
+      try {
+        tokenObj = JSON.parse(atob(rawToken));
+      } catch (err) {
+        console.error('Invalid token payload', err);
+        tokenObj = null;
       }
-      if (token.keyword != undefined) {
-        dispatch(setKeyword(token.keyword));
+      if (tokenObj) {
+        if (tokenObj.selectedTags != undefined) {
+          dispatch(setSelectedTags(tokenObj.selectedTags));
+        }
+        if (tokenObj.keyword != undefined) {
+          dispatch(setKeyword(tokenObj.keyword));
+        }
+        if (tokenObj.code != undefined) {
+          dispatch(setCode(tokenObj.code));
+        }
+        if (tokenObj.remark != undefined) {
+          dispatch(setRemark(tokenObj.remark));
+        }
+        if (tokenObj.pos != undefined) {
+          dispatch(setPOS(tokenObj.pos));
+        }
+        if (tokenObj.procedure != undefined) {
+          dispatch(setProcedure(tokenObj.procedure));
+        }
+        if (tokenObj.startDate != undefined) {
+          dispatch(setStartDate(tokenObj.startDate));
+        }
+        if (tokenObj.endDate != undefined) {
+          dispatch(setEndDate(tokenObj.endDate));
+        }
+        if (tokenObj.currentPage != undefined) {
+          dispatch(setCurrentPage(tokenObj.currentPage));
+        }
+        if (tokenObj.extra != undefined) {
+          dispatch(setExtraFilter(tokenObj.extra));
+        }
+        if (tokenObj.tabIndex != undefined) {
+          dispatch(setTabIndex(tokenObj.tabIndex));
+        }
+        dispatch(setTableLoading(true));
+        dispatch(setPart1Loading(true));
+        dispatch(setPart2Loading(true));
+        dispatch(setTableData([]));
+        dispatch(setPart1Count([]));
+        dispatch(setPart2Count([]));
       }
-      if (token.code != undefined) {
-        dispatch(setCode(token.code));
-      }
-      if (token.remark != undefined) {
-        dispatch(setRemark(token.remark));
-      }
-      if (token.pos != undefined) {
-        dispatch(setPOS(token.pos));
-      }
-      if (token.procedure != undefined) {
-        dispatch(setProcedure(token.procedure));
-      }
-      if (token.startDate != undefined) {
-        dispatch(setStartDate(token.startDate));
-      }
-      if (token.endDate != undefined) {
-        dispatch(setEndDate(token.endDate));
-      }
-      if (token.currentPage != undefined) {
-        dispatch(setCurrentPage(token.currentPage));
-      }
-      if (token.extra != undefined) {
-        dispatch(setExtraFilter(token.extra));
-      }
-      if (token.tabIndex != undefined) {
-        dispatch(setTabIndex(token.tabIndex));
-      }
-      dispatch(setTableLoading(true));
-      dispatch(setPart1Loading(true));
-      dispatch(setPart2Loading(true));
-      dispatch(setTableData([]));
-      dispatch(setPart1Count([]));
-      dispatch(setPart2Count([]));
     }
 
     if (tagLoading) {
@@ -201,7 +378,7 @@ const ReboundDash = () => {
         dispatch(setRecoveryLoading(false))
       })
     }
-  }, [apiUrl])
+  }, [apiUrl, rawToken])
 
   const changeTab = (index) => {
     dispatch(setTabIndex(index));
@@ -236,250 +413,144 @@ const ReboundDash = () => {
   }
 
   return (
-    <div className={`flex ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-black'} relative`}>
-      {/* Profile Section - Top Right */}
-      <div className="absolute top-4 right-4 z-50">
-        <div className="relative">
-          <div 
-            className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-          >
-            <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <svg className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`} fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </div>
-          {showProfileMenu && (
-            <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-50 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
-              <div className="py-1">
-                <button
-                  onClick={() => {
-                    dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'));
-                    setShowProfileMenu(false);
-                  }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
-                >
-                  {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
-                </button>
-                <button className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  👤 Profile
-                </button>
-                <button className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  🚪 Logout
-                </button>
-              </div>
-            </div>
-          )}
+    <div className={`min-h-screen flex ${isDark ? 'bg-[#07090F] text-white' : 'bg-slate-50 text-slate-900'}`}>
+      <aside className={`hidden md:flex flex-col w-72 border-r px-2 py-6 ${isDark ? 'bg-[#0B0E17] border-[#1F2231] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+        <div className="flex items-center justify-center gap-3 mt-6 mb-10">
+          <img
+            src="/helio-logo.svg"
+            alt="Helio RCM logo"
+            className="h-16 w-auto"
+            loading="lazy"
+          />
         </div>
-      </div>
-      {/* Left Sidebar with Navigation */}
-      <div className={`w-80 p-4 flex flex-col ${
-        theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900 border-r border-gray-200'
-      }`}>
-        {/* Logo */}
-        <div className="flex items-center mb-8">
-          <img src="/helio-logo.svg" alt="HELIO RCM" className="h-8" />
-        </div>
-        
-        {/* Navigation Menu */}
-        <nav className="flex-1">
-          <ul className="space-y-1">
-            <li>
-              <a
-                href="#"
-                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
-                  selectedNav === 'home' 
-                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
-                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
-                }`}
-                onClick={() => { changeTab(0); setSelectedNav('home'); }}
+        <nav className="flex-1 space-y-1">
+          {navItems.map((item) => {
+            const isActive = selectedNav === item.id;
+            const navStateClass = isActive
+              ? (isDark ? 'bg-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'bg-slate-900 text-white shadow-lg')
+              : (isDark ? 'text-[#8A8FB1] hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100');
+            const iconWrapperClass = isActive
+              ? (isDark ? 'border-white/20 bg-white/10' : 'border-slate-700 bg-slate-800')
+              : (isDark ? 'border-white/5 bg-white/5' : 'border-slate-200 bg-white');
+            const badgeClass = isActive
+              ? (isDark ? 'bg-white/20 text-white' : 'bg-white text-slate-900')
+              : (isDark ? 'bg-[#1F2231] text-[#B3B8D6]' : 'bg-slate-200 text-slate-700');
+            return (
+              <button
+                type="button"
+                key={item.id}
+                className={`w-full flex items-center justify-between rounded-2xl px-2 py-2 transition-colors text-left ${navStateClass}`}
+                onClick={() => {
+                  if (item.id === 'denials') {
+                    const denialsBase = `${baseAppPath}/denials`;
+                    if (location.pathname !== denialsBase) {
+                      navigate(denialsBase);
+                    }
+                    setSelectedNav('denials');
+                    return;
+                  }
+                  if (location.pathname.includes('/denials')) {
+                    navigate(baseAppPath);
+                  }
+                  if (typeof item.tab === 'number') {
+                    changeTab(item.tab);
+                  }
+                  setSelectedNav(item.id);
+                }}
               >
-                <span className="mr-3">🏠</span>
-                Home
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
-                  selectedNav === 'dashboard' 
-                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
-                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
-                }`}
-                onClick={() => setSelectedNav('dashboard')}
-              >
-                <span className="mr-3">📊</span>
-                Dashboard
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
-                  selectedNav === 'claim-edits' 
-                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
-                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
-                }`}
-                onClick={() => setSelectedNav('claim-edits')}
-              >
-                <span className="mr-3">✏️</span>
-                Claim Edits <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">15</span>
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
-                  selectedNav === 'claim-status' 
-                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
-                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
-                }`}
-                onClick={() => setSelectedNav('claim-status')}
-              >
-                <span className="mr-3">📋</span>
-                Claim Status <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">10</span>
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
-                  selectedNav === 'denials' 
-                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
-                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
-                }`}
-                onClick={() => setSelectedNav('denials')}
-              >
-                <span className="mr-3">❌</span>
-                Denials <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">25</span>
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className={`flex items-center px-3 py-2 rounded-xl text-sm whitespace-nowrap ${
-                  selectedNav === 'patient-responsibility' 
-                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
-                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
-                }`}
-                onClick={() => { changeTab(2); setSelectedNav('patient-responsibility'); }}
-              >
-                <span className="mr-3">👤</span>
-                Patient Responsibility <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">25</span>
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className={`flex items-center px-3 py-2 rounded-xl text-sm whitespace-nowrap ${
-                  selectedNav === 'payment-variance' 
-                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
-                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
-                }`}
-                onClick={() => { changeTab(4); setSelectedNav('payment-variance'); }}
-              >
-                <span className="mr-3">💰</span>
-                Payment Variance <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">57</span>
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className={`flex items-center px-3 py-2 rounded-xl text-sm whitespace-nowrap ${
-                  selectedNav === 'payment-posting' 
-                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
-                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
-                }`}
-                onClick={() => setSelectedNav('payment-posting')}
-              >
-                <span className="mr-3">📮</span>
-                Payment Posting <span className="ml-auto bg-gray-700 text-xs px-2 py-1 rounded">10</span>
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
-                  selectedNav === 'support' 
-                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
-                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
-                }`}
-                onClick={() => setSelectedNav('support')}
-              >
-                <span className="mr-3">👥</span>
-                Support
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className={`flex items-center px-3 py-2 rounded-xl text-sm ${
-                  selectedNav === 'settings' 
-                    ? (theme === 'dark' ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100')
-                    : (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900')
-                }`}
-                onClick={() => setSelectedNav('settings')}
-              >
-                <span className="mr-3">⚙️</span>
-                Settings
-              </a>
-            </li>
-          </ul>
+                <span className="flex items-center gap-3 min-w-0">
+                  <span className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${iconWrapperClass}`}>
+                    {renderNavIcon(item.icon, isActive)}
+                  </span>
+                  <span className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
+                </span>
+                {item.badge && (
+                  <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}>
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
-      </div>
-      
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col gap-3 p-6 min-w-0 overflow-hidden">
-        <div className="flex flex-row gap-4 sm:justify-normal justify-between items-center">
-          <div className={`text-[20px] font-semibold`}>Insights</div>
-          <div
-            onClick={() => setShowInsights((value) => !value)}
-            className="flex justify-center items-center cursor-pointer text-blue-600 font-semibold"
-          >
-            <span>
-              {showInsights ? "Hide" : "Open"}
-            </span>
+      </aside>
+
+      <div className="flex-1 flex flex-col gap-8 px-6 md:px-10 py-10 min-w-0 overflow-hidden">
+        <div className="flex flex-wrap items-center justify-end gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7B80A1]">
+                <svg width="18" height="18" fill="none" viewBox="0 0 20 20">
+                  <path d="M9 15C12.3137 15 15 12.3137 15 9C15 5.68629 12.3137 3 9 3C5.68629 3 3 5.68629 3 9C3 12.3137 5.68629 15 9 15Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M15.5 15.5L18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                placeholder="Search"
+                defaultValue={keyword}
+                ref={inputKeywordRef}
+                onKeyDown={(e) => e.key === 'Enter' && filterByKeyword()}
+                className={`h-12 w-64 rounded-full border pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#6C63FF] ${
+                  isDark
+                    ? 'bg-[#11131B] border-[#1F2231] text-white placeholder:text-[#7B80A1]'
+                    : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'
+                }`}
+              />
+            </div>
+            <div className="relative">
+              <button
+                type="button"
+                className={`flex items-center gap-3 rounded-full px-2 py-1 border ${isDark ? 'border-white/10 bg-[#11131B]' : 'border-slate-200 bg-white'}`}
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+              >
+                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FFD3A5] to-[#FD6585] text-[#1A1D2B] font-semibold flex items-center justify-center">
+                  {profileInitials}
+                </div>
+                <svg className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-180' : ''} ${isDark ? 'text-white' : 'text-slate-600'}`} viewBox="0 0 20 20" fill="none">
+                  <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {showProfileMenu && (
+                <div className={`absolute right-0 mt-3 w-56 rounded-2xl border shadow-2xl ${isDark ? 'bg-[#0F1119] border-[#1F2231] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                  <button
+                    type="button"
+                    className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}
+                    onClick={() => {
+                      dispatch(setTheme(isDark ? 'light' : 'dark'));
+                      setShowProfileMenu(false);
+                    }}
+                  >
+                    Switch to {isDark ? 'Light' : 'Dark'} Mode
+                  </button>
+                  <button type="button" className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
+                    View Profile
+                  </button>
+                  <button type="button" className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        {
-          showInsights && (
-            <div className="flex flex-col md:flex-row sm:justify-between sm:gap-5 justify-evenly">
-              <Part1 className="flex-1" />
-              <Part2 className="flex-1" />
-            </div>
-          )
-        }
-        <div className="flex flex-col min-w-0">
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white text-lg font-semibold">Payment Variance &gt; Underpaid</h2>
-              <div className="flex items-center space-x-2 flex-shrink-0">
-                <button 
-                  className="p-1 text-gray-400 hover:text-white"
-                  onClick={() => scrollTable('left')}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                  </svg>
-                </button>
-                <button 
-                  className="p-1 text-gray-400 hover:text-white"
-                  onClick={() => scrollTable('right')}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-                  </svg>
-                </button>
+
+        <div className={`rounded-[48px] p-6 ${isDark ? 'bg-gradient-to-r from-[#4B9187] via-[#1D2540] to-[#6911AC80]' : 'bg-white'} shadow-[0_20px_60px_rgba(0,0,0,0.25)]`}>
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
+            {insightCards.map((card) => (
+              <div
+                key={card.id}
+                className={`rounded-[32px] px-6 py-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] bg-gradient-to-br ${card.gradient}`}
+              >
+                <p className="text-xs uppercase tracking-[0.25em] text-white/70">{card.label}</p>
+                <p className="mt-3 text-2xl font-semibold">{formatDisplay(card.value, card.format)}</p>
               </div>
-            </div>
-            <div className="overflow-x-auto" ref={tableScrollRef}>
-              <DataTable />
-            </div>
+            ))}
           </div>
+        </div>
+
+        <div className="flex flex-col min-w-0">
+          {showDenialModels ? <ArIntel /> : <DataTable />}
         </div>
       </div>
     </div>
