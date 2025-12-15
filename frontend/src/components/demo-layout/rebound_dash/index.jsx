@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import DataTable from "./DataTable";
@@ -31,13 +31,15 @@ import { setTableData, setTheme } from '../../../redux/reducers/app.reducer';
 import { setCategoryLabel, setCategoryValue } from '../../../redux/reducers/statistics.reducer';
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import ArIntel from "./ArIntel";
+import UserManagement from "./UserManagement";
+import { AccountContext } from "../../../utils/Account";
 
 const ReboundDash = () => {
   const apiUrl = useApiEndpoint();
   const location = useLocation();
   const params = useParams();
   const rawToken = params.token ?? null;
-  const isManagementRoute = location.pathname.startsWith('/management');
+  const isManagementRoute = location.pathname === '/management' || location.pathname.endsWith('/management');
   const [selectedNav, setSelectedNav] = useState(() => {
     if (isManagementRoute) return 'user-management';
     return location.pathname.includes('/denials') ? 'denials' : 'home';
@@ -45,6 +47,7 @@ const ReboundDash = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const inputKeywordRef = useRef();
   const navigate = useNavigate();
+  const { logout } = useContext(AccountContext);
 
   const dispatch = useDispatch();
   const theme = useSelector((state) => state.app.theme);
@@ -52,7 +55,8 @@ const ReboundDash = () => {
   const role = useSelector((state) => state.auth.role);
   const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/medevolve' : '/demo';
   const isDenialsRoute = location.pathname.includes('/denials');
-  const showDenialModels = isDenialsRoute && !rawToken;
+  const isUserManagementView = selectedNav === 'user-management';
+  const showDenialModels = !isUserManagementView && isDenialsRoute && !rawToken;
   const count = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   let tabIndex = useSelector((state) => state.app.tabIndex);
@@ -471,11 +475,11 @@ const ReboundDash = () => {
                     return;
                   }
                   if (item.id === 'user-management') {
-                    navigate('/management');
+                    navigate(`/management`);
                     setSelectedNav('user-management');
                     return;
                   }
-                  if (location.pathname.includes('/denials')) {
+                  if (location.pathname.includes('/denials') || location.pathname.includes('/management')) {
                     navigate(baseAppPath);
                   }
                   if (typeof item.tab === 'number') {
@@ -502,82 +506,120 @@ const ReboundDash = () => {
       </aside>
 
       <div className="flex-1 flex flex-col gap-8 px-6 md:px-10 py-10 min-w-0 overflow-hidden">
-        <div className="flex flex-wrap items-center justify-end gap-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7B80A1]">
-                <svg width="18" height="18" fill="none" viewBox="0 0 20 20">
-                  <path d="M9 15C12.3137 15 15 12.3137 15 9C15 5.68629 12.3137 3 9 3C5.68629 3 3 5.68629 3 9C3 12.3137 5.68629 15 9 15Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M15.5 15.5L18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-              <input
-                type="text"
-                placeholder="Search"
-                defaultValue={keyword}
-                ref={inputKeywordRef}
-                onKeyDown={(e) => e.key === 'Enter' && filterByKeyword()}
-                className={`h-12 w-64 rounded-full border pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#6C63FF] ${
-                  isDark
-                    ? 'bg-[#11131B] border-[#1F2231] text-white placeholder:text-[#7B80A1]'
-                    : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'
-                }`}
-              />
-            </div>
-            <div className="relative">
+        {isUserManagementView ? (
+          <div className={`rounded-[40px] border ${isDark ? 'bg-[#070B18] border-[#161B2D] text-white' : 'bg-white border-slate-200 text-slate-900'} shadow-[0_35px_80px_rgba(3,7,18,0.35)]`}>
+            <div className={`flex flex-wrap items-center justify-between gap-4 px-6 py-5 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <div>
+                <p className={`${isDark ? 'text-white/50' : 'text-slate-400'} text-sm uppercase tracking-[0.35em]`}>Administration</p>
+                <h2 className="text-3xl font-semibold mt-2">User Management</h2>
+                <p className={`${isDark ? 'text-white/60' : 'text-slate-500'} text-sm mt-1`}>
+                  Manage access, roles, and assignments without leaving the dashboard.
+                </p>
+              </div>
               <button
                 type="button"
-                className={`flex items-center gap-3 rounded-full px-2 py-1 border ${isDark ? 'border-white/10 bg-[#11131B]' : 'border-slate-200 bg-white'}`}
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                onClick={() => navigate(baseAppPath)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold border ${isDark ? 'border-white/20 text-white/80 hover:bg-white/10' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
               >
-                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FFD3A5] to-[#FD6585] text-[#1A1D2B] font-semibold flex items-center justify-center">
-                  {profileInitials}
-                </div>
-                <svg className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-180' : ''} ${isDark ? 'text-white' : 'text-slate-600'}`} viewBox="0 0 20 20" fill="none">
-                  <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                Back to Dashboard
               </button>
-              {showProfileMenu && (
-                <div className={`absolute right-0 mt-3 w-56 rounded-2xl border shadow-2xl ${isDark ? 'bg-[#0F1119] border-[#1F2231] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+            </div>
+            <UserManagement embedded />
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center justify-end gap-4">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7B80A1]">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 20 20">
+                      <path d="M9 15C12.3137 15 15 12.3137 15 9C15 5.68629 12.3137 3 9 3C5.68629 3 3 5.68629 3 9C3 12.3137 5.68629 15 9 15Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M15.5 15.5L18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    defaultValue={keyword}
+                    ref={inputKeywordRef}
+                    onKeyDown={(e) => e.key === 'Enter' && filterByKeyword()}
+                    className={`h-12 w-64 rounded-full border pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#6C63FF] ${
+                      isDark
+                        ? 'bg-[#11131B] border-[#1F2231] text-white placeholder:text-[#7B80A1]'
+                        : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'
+                    }`}
+                  />
+                </div>
+                <div className="relative">
                   <button
                     type="button"
-                    className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}
-                    onClick={() => {
-                      dispatch(setTheme(isDark ? 'light' : 'dark'));
-                      setShowProfileMenu(false);
-                    }}
+                    className={`flex items-center gap-3 rounded-full px-2 py-1 border ${isDark ? 'border-white/10 bg-[#11131B]' : 'border-slate-200 bg-white'}`}
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
                   >
-                    Switch to {isDark ? 'Light' : 'Dark'} Mode
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FFD3A5] to-[#FD6585] text-[#1A1D2B] font-semibold flex items-center justify-center">
+                      {profileInitials}
+                    </div>
+                    <svg className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-180' : ''} ${isDark ? 'text-white' : 'text-slate-600'}`} viewBox="0 0 20 20" fill="none">
+                      <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </button>
-                  <button type="button" className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
-                    View Profile
-                  </button>
-                  <button type="button" className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
-                    Logout
-                  </button>
+                  {showProfileMenu && (
+                    <div className={`absolute right-0 mt-3 w-56 rounded-2xl border shadow-2xl ${isDark ? 'bg-[#0F1119] border-[#1F2231] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+                      <button
+                        type="button"
+                        className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}
+                        onClick={() => {
+                          dispatch(setTheme(isDark ? 'light' : 'dark'));
+                          setShowProfileMenu(false);
+                        }}
+                      >
+                        Switch to {isDark ? 'Light' : 'Dark'} Mode
+                      </button>
+                      <button
+                        type="button"
+                        className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}
+                        onClick={() => {
+                          navigate('/account-settings');
+                          setShowProfileMenu(false);
+                        }}
+                      >
+                        View Profile
+                      </button>
+                      <button
+                        type="button"
+                        className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}
+                        onClick={() => {
+                          logout();
+                          setShowProfileMenu(false);
+                        }}
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className={`rounded-[48px] p-6 ${isDark ? 'bg-gradient-to-r from-[#4B9187] via-[#1D2540] to-[#6911AC80]' : 'bg-white'} shadow-[0_20px_60px_rgba(0,0,0,0.25)]`}>
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
-            {insightCards.map((card) => (
-              <div
-                key={card.id}
-                className={`rounded-[32px] px-6 py-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] bg-gradient-to-br ${card.gradient}`}
-              >
-                <p className="text-xs uppercase tracking-[0.25em] text-white/70">{card.label}</p>
-                <p className="mt-3 text-2xl font-semibold">{formatDisplay(card.value, card.format)}</p>
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        <div className="flex flex-col min-w-0">
-          {showDenialModels ? <ArIntel /> : <DataTable />}
-        </div>
+            <div className={`rounded-[48px] p-6 ${isDark ? 'bg-gradient-to-r from-[#4B9187] via-[#1D2540] to-[#6911AC80]' : 'bg-white'} shadow-[0_20px_60px_rgba(0,0,0,0.25)]`}>
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
+                {insightCards.map((card) => (
+                  <div
+                    key={card.id}
+                    className={`rounded-[32px] px-6 py-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] bg-gradient-to-br ${card.gradient}`}
+                  >
+                    <p className="text-xs uppercase tracking-[0.25em] text-white/70">{card.label}</p>
+                    <p className="mt-3 text-2xl font-semibold">{formatDisplay(card.value, card.format)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col min-w-0">
+              {showDenialModels ? <ArIntel /> : <DataTable />}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

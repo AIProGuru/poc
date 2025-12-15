@@ -17,23 +17,20 @@ import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { auth } from '../../../FirebaseConfig';
 import { SERVER_URL } from '../../../utils/config';
-import axios from 'axios';
-import { deleteUser } from 'firebase/auth';
 
 
 const UserRoleCell = ({ row, onUpdateRole,theme }) => {
-  const [selectedRole, setSelectedRole] = useState(row.role);
+  const [selectedRole, setSelectedRole] = useState(row.role || 'user');
+
+  useEffect(() => {
+    setSelectedRole(row.role || 'user');
+  }, [row.role]);
 
   const handleRoleChange = (event) => {
     const newRole = event.target.value;
     setSelectedRole(newRole);
     onUpdateRole(row.id, newRole);
   };
-  const isGabeoEmail = (email) => {
-    return email?.toLowerCase().endsWith('@gabeo.ai');
-  };
-
-
   return (
     <td>
       <div className="flex items-center space-x-2">
@@ -51,15 +48,7 @@ const UserRoleCell = ({ row, onUpdateRole,theme }) => {
   }}
 >
   <option value="user" className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}>User</option>
-      
-      {!isGabeoEmail(row.email) && (
-    <option value="super-admin" className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}>
-    Super Admin
-  </option>
-  )}
-  {isGabeoEmail(row.email) && (
-    <option value="admin" className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}>Admin</option>
-  )}
+      <option value="admin" className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}>Admin</option>
 </select>
       </div>
     </td>
@@ -69,7 +58,7 @@ const UserRoleCell = ({ row, onUpdateRole,theme }) => {
 
 
 
-const UserManagement = () => {
+const UserManagement = ({ embedded = false }) => {
   const [assignFilter, setAssignFilter] = useState({
     client: ['Rebound','Medevolve'],
     selectedClient: [],
@@ -287,12 +276,7 @@ const UserManagement = () => {
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
                 <option value="user">User</option>
-                {!formData.email?.toLowerCase().endsWith('@gabeo.ai') && (
-                  <option value="super-admin">Super Admin</option>
-                )}
-                {formData.email?.toLowerCase().endsWith('@gabeo.ai') && (
-                  <option value="admin">Admin</option>
-                )}
+                <option value="admin">Admin</option>
               </select>
             </div>
   
@@ -527,10 +511,6 @@ const DeleteConfirmationModal = () => (
   }, [searchKeyword, totalUsers, currentPageSize, activeFilter]);
   const theme = useSelector((state) => state.app.theme);
 
-  const isGabeoEmail = (email) => {
-    return email?.toLowerCase().endsWith('@gabeo.ai');
-  };
-
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   // Add this component within your UserManagement component
@@ -597,12 +577,20 @@ const DeleteConfirmationModal = () => (
   );
 
 
+  const shellClasses = embedded
+    ? "w-full"
+    : "px-3 sm:px-8 py-8 w-full";
+
+  const panelClasses = `flex flex-col gap-6 rounded-[32px] ${
+    theme === 'dark'
+      ? 'bg-[#0E1018] text-white border border-[#1F2231] shadow-[0_25px_60px_rgba(0,0,0,0.35)]'
+      : 'bg-white text-slate-900 border border-slate-200 shadow-[0_25px_60px_rgba(15,23,42,0.12)]'
+  }`;
+
   return (
-    <div className={`flex flex-col  rounded-lg   gap-6 ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'}`}
-    style={{
-    'fontFamily':'nunito'
-    }}>
-     <div className="flex flex-col gap-4 px-3">
+    <div className={shellClasses} style={{ fontFamily: 'Nunito, sans-serif' }}>
+     <div className={panelClasses}>
+     <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4">
   {/* Desktop and Mobile Container */}
   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
     {/* Filter Pills - Left side on desktop, top on mobile */}
@@ -668,8 +656,8 @@ const DeleteConfirmationModal = () => (
   </div>
 </div>
 
-      <div className={`flex flex-col ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} rounded-xl p-2 `}>
-      <div className="w-full overflow-x-auto rounded-lg" style={{ maxHeight: '500px' }}>
+      <div className={`flex flex-col rounded-3xl border ${theme === 'dark' ? 'border-[#1F2231] bg-[#111525]' : 'border-slate-200 bg-white'} p-2`}>
+      <div className="w-full overflow-x-auto rounded-2xl" style={{ maxHeight: '500px' }}>
   <table className="min-w-full  font-nunito">
     <thead className=" sticky top-0 z-10">
       <tr>
@@ -1106,17 +1094,9 @@ const DeleteConfirmationModal = () => (
     <option value="user" className={theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}>
       User
     </option>
-    
-      {!isGabeoEmail(user.email) && (
-      <option value="super-admin" className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}>
-      Super Admin
-    </option>
-    )}
-    {isGabeoEmail(user.email) && (
-      <option value="admin" className={theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}>
+    <option value="admin" className={theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}>
       Admin
     </option>
-    )}
   </select>
 </div>
 
@@ -1348,6 +1328,7 @@ const DeleteConfirmationModal = () => (
           </div>
         </Box>
       </Modal>
+    </div>
     </div >
   )
 }

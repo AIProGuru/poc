@@ -35,6 +35,9 @@ import ClientManagement from "../pages/ClientManagement";
 import ClientDashboard from "../pages/ClientDashboard";
 import Edit_client from "../pages/Client/Edit_client";
 import demoRoutes from "./demo";
+import AccountSettings from "../pages/AccountSettings";
+
+const AUTH_ROLES = ["demo", "admin", "user", "super-admin"];
 
 const routesConfig = [
   {
@@ -52,35 +55,35 @@ const routesConfig = [
   },
   {
     path: "/demo",
-    element: <PrivateRoute role={["demo", "admin"]} element={Demo} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Demo} />,
     children: demoRoutes,
   },
   {
     path: "/rebound",
-    element: <PrivateRoute role={["demo", "admin"]} element={Demo} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Demo} />,
     children: reboundRoutes,
   },
   {
     path: "/medevolve",
-    element: <PrivateRoute role={["demo", "admin"]} element={Demo} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Demo} />,
     children: reboundRoutes,
   },
   {
     path: "/medevolve/resubmitted_claims",
     element: (
-      <PrivateRoute role={["demo", "admin"]} element={ResubmittedClaims} />
+      <PrivateRoute role={AUTH_ROLES} element={ResubmittedClaims} />
     ),
     children: reboundRoutes,
   },
 
   {
     path: "/blog",
-    element: <PrivateRoute role={["demo", "admin"]} element={Blog} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Blog} />,
     children: reboundRoutes,
   },
   {
     path: "/blog/:id",
-    element: <PrivateRoute role={["demo", "admin"]} element={BlogDetail} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={BlogDetail} />,
     children: reboundRoutes,
   },
 
@@ -99,21 +102,21 @@ const routesConfig = [
   },
   {
     path: "/clientmanagement",
-    element: <PrivateRoute role={["demo", "admin"]} element={ClientManagement} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={ClientManagement} />,
   },
   {
     path: "/client/:clientId",
-    element: <PrivateRoute role={["demo", "admin"]} element={ClientDashboard} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={ClientDashboard} />,
   },
   {
     path: "/client/:id/edit",
-    element: <PrivateRoute role={["demo", "admin"]} element={Edit_client} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Edit_client} />,
   },
   {
     // path: "/home",
     path: "/",
     element: <Home />
-    // element: <PrivateRoute role={["demo", "admin"]} element={Home} />,
+    // element: <PrivateRoute role={AUTH_ROLES} element={Home} />,
   },
   {
     path: "/signup",
@@ -122,47 +125,47 @@ const routesConfig = [
   {
     path: "/contact",
     element: <Contact />
-    // element: <PrivateRoute role={["demo", "admin"]} element={Contact} />,
+    // element: <PrivateRoute role={AUTH_ROLES} element={Contact} />,
   },
   {
     path: "/careers",
-    element: <PrivateRoute role={["demo", "admin"]} element={Careers} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Careers} />,
   },
   {
     path: "/clients/hospitals-and-health-systems",
-    element: <PrivateRoute role={["demo", "admin"]} element={Hospitals} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Hospitals} />,
   },
   {
     path: "/clients/physician-practices-and-providers",
-    element: <PrivateRoute role={["demo", "admin"]} element={Physicians} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Physicians} />,
   },
   {
     path: "/clients/revenue-cycle-management-rcm-vendors",
-    element: <PrivateRoute role={["demo", "admin"]} element={RCM} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={RCM} />,
   },
   {
     path: "/clients/practice-management-systems-and-ehr-vendors",
-    element: <PrivateRoute role={["demo", "admin"]} element={PracticeManagement} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={PracticeManagement} />,
   },
   {
     path: "/clients/billing-agencies-msos-and-tpas",
-    element: <PrivateRoute role={["demo", "admin"]} element={BillingAgencies} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={BillingAgencies} />,
   },
   {
     path: "/whitepaper",
-    element: <PrivateRoute role={["demo", "admin"]} element={WhitePaper} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={WhitePaper} />,
   },
   {
     path: "/apply/:token",
-    element: <PrivateRoute role={["demo", "admin"]} element={Apply} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Apply} />,
   },
   {
     path: "/privacy",
-    element: <PrivateRoute role={["demo", "admin"]} element={Privacy} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Privacy} />,
   },
   {
     path: "/integrations",
-    element: <PrivateRoute role={["demo", "admin"]} element={Integrations} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Integrations} />,
   },
   {
     path: "/signin",
@@ -170,27 +173,27 @@ const routesConfig = [
   },
   {
     path: "/features",
-    element: <PrivateRoute role={["demo", "admin"]} element={Feature} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Feature} />,
   },
   {
     path: "/about",
-    element: <PrivateRoute role={["demo", "admin"]} element={About} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={About} />,
   },
   {
     path: "/calculate_savings",
-    element: <PrivateRoute role={["demo", "admin"]} element={CalculateSavingsPage} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={CalculateSavingsPage} />,
   },
   {
     path: "/verify_email",
-    element: <PrivateRoute role={["demo", "admin"]} element={VerifyPage} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={VerifyPage} />,
   },
   {
     path: "/update_password",
-    element: <PrivateRoute role={["demo", "admin"]} element={UpdatePassword} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={UpdatePassword} />,
   },
   {
     path: "error-404",
-    element: <PrivateRoute role={["demo", "admin"]} element={Error404} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Error404} />,
   },
   {
     path: "/forgot-password",
@@ -198,7 +201,7 @@ const routesConfig = [
   },
   {
     path: "/waiting",
-    element: <PrivateRoute role={["demo", "admin"]} element={Waiting} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Waiting} />,
   },
 
   {
@@ -206,8 +209,12 @@ const routesConfig = [
     element: <Error404 message={"Verify error"} />,
   },
   {
+    path: "/account-settings",
+    element: <PrivateRoute role={AUTH_ROLES} element={AccountSettings} />,
+  },
+  {
     path: "*",
-    element: <PrivateRoute role={["demo", "admin"]} element={Notfound} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={Notfound} />,
   },
 ];
 

@@ -6,42 +6,44 @@ import ArIntel from "../components/demo-layout/rebound_dash/ArIntel";
 import AIDetail from "../components/demo-layout/rebound_dash/AIDetail";
 import RCMGPT from "../components/demo-layout/rebound_dash/RCMGPT";
 
+const AUTH_ROLES = ["demo", "admin", "user", "super-admin"];
+
 const reboundRoutes = [
   {
     path: "",
-    element: <PrivateRoute role={['demo', 'admin']} element={ReboundDash} />
+    element: <PrivateRoute role={AUTH_ROLES} element={ReboundDash} />
   },
   {
     path: ":token",
-    element: <PrivateRoute role={['demo', 'admin']} element={ReboundDash} />
+    element: <PrivateRoute role={AUTH_ROLES} element={ReboundDash} />
   },
   {
     path: "denials",
-    element: <PrivateRoute role={['demo', 'admin']} element={ReboundDash} />
+    element: <PrivateRoute role={AUTH_ROLES} element={ReboundDash} />
   },
   {
     path: "denials/:token",
-    element: <PrivateRoute role={['demo', 'admin']} element={ReboundDash} />
+    element: <PrivateRoute role={AUTH_ROLES} element={ReboundDash} />
   },
   {
     path: "statistics",
-    element: <PrivateRoute role={['demo', 'admin']} element={ReboundStatistics} />
+    element: <PrivateRoute role={AUTH_ROLES} element={ReboundStatistics} />
   },
   {
     path: "detail/:token",
-    element: <PrivateRoute role={['demo', 'admin']} element={ReboundDetailView} />
+    element: <PrivateRoute role={AUTH_ROLES} element={ReboundDetailView} />
   },
   {
     path: "artificial-intelligence",
-    element: <PrivateRoute role={['demo', 'admin']} element={ArIntel} />
+    element: <PrivateRoute role={AUTH_ROLES} element={ArIntel} />
   },
   {
     path: "artificial-intelligence/:token",
-    element: <PrivateRoute role={['demo', 'admin']} element={AIDetail} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={AIDetail} />,
   },
   {
     path: 'rcmgpt',
-    element: <PrivateRoute role={['demo', 'admin']} element={RCMGPT} />,
+    element: <PrivateRoute role={AUTH_ROLES} element={RCMGPT} />,
   }
 ];
 

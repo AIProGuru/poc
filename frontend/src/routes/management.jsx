@@ -1,10 +1,10 @@
 import PrivateRoute from "../components/private-routes/PrivateRoutes";
-import UserManagement from "../components/demo-layout/rebound_dash/UserManagement";
+import ReboundDash from "../components/demo-layout/rebound_dash";
 
 const managementRoutes = [
   {
     path: "",
-    element: <PrivateRoute role={['admin']} element={UserManagement} />
+    element: <PrivateRoute role={['admin']} element={ReboundDash} />
   },
 ];
 

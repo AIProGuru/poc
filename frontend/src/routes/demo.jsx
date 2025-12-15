@@ -8,6 +8,8 @@ import RCMGPT from "../components/demo-layout/rebound_dash/RCMGPT";
 import DemoDash from "../demo/DemoDash";
 import DetailView from "../demo/DetailView";
 
+const AUTH_ROLES = ["demo", "admin", "user", "super-admin"];
+
 const demoRoutes = [
   {
     path: "",
@@ -15,7 +17,7 @@ const demoRoutes = [
   },
   {
     path: "detail/:token",
-    element: <PrivateRoute role={['demo', 'admin']} element={DetailView} />
+    element: <PrivateRoute role={AUTH_ROLES} element={DetailView} />
   },
 ];
 
