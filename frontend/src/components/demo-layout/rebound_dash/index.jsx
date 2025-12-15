@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useContext } from "react";
+import React, { useEffect, useState, useRef, useContext, useMemo } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import DataTable from "./DataTable";
@@ -44,6 +44,7 @@ const ReboundDash = () => {
     if (isManagementRoute) return 'user-management';
     return location.pathname.includes('/denials') ? 'denials' : 'home';
   });
+  const [expandedNav, setExpandedNav] = useState(() => new Set());
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const inputKeywordRef = useRef();
   const navigate = useNavigate();
@@ -88,14 +89,18 @@ const ReboundDash = () => {
 
   useEffect(() => {
     if (location.pathname.includes('/denials')) {
-      if (selectedNav !== 'denials') {
+      if (!selectedNav.startsWith('denials')) {
         setSelectedNav('denials');
       }
     } else if (isManagementRoute) {
       if (selectedNav !== 'user-management') {
         setSelectedNav('user-management');
       }
-    } else if (selectedNav === 'denials' || selectedNav === 'user-management') {
+    } else if (
+      selectedNav === 'denials' ||
+      selectedNav.startsWith('denials:') ||
+      selectedNav === 'user-management'
+    ) {
       setSelectedNav('home');
     }
   }, [location.pathname, selectedNav, isManagementRoute]);
@@ -124,21 +129,79 @@ const ReboundDash = () => {
   const models = useSelector((state) => state.app.models);
   const denialCount = models.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { id: 'home', label: 'Home', badge: null, icon: 'home', tab: 0 },
     { id: 'dashboard', label: 'Dashboard', badge: null, icon: 'dashboard' },
-    { id: 'claim-edits', label: 'Claim Edits', badge: 45, icon: 'clipboard' },
-    { id: 'claim-status', label: 'Claim Status', badge: 96, icon: 'list' },
-    { id: 'denials', label: 'Denials', badge: denialCount || null, icon: 'shield-x' },
-    { id: 'patient-responsibility', label: 'Patient Responsibility', badge: 23, icon: 'user', tab: 2 },
+    {
+      id: 'claim-edits',
+      label: 'Claim Edits',
+      badge: 45,
+      icon: 'clipboard',
+      children: [
+        { id: 'claim-edits:ch-rejection', label: 'CH Rejection' },
+        { id: 'claim-edits:payer-rejection', label: 'Payer Rejection' },
+      ],
+    },
+    {
+      id: 'claim-status',
+      label: 'Claim Status',
+      badge: 96,
+      icon: 'list',
+      children: [
+        { id: 'claim-status:pend-277', label: 'Pend 277' },
+        { id: 'claim-status:pend-835', label: 'Pend 835' },
+      ],
+    },
+    {
+      id: 'denials',
+      label: 'Denials',
+      badge: denialCount || null,
+      icon: 'shield-x',
+      children: [
+        { id: 'denials:authorization', label: 'Authorization' },
+        { id: 'denials:billing', label: 'Billing' },
+        { id: 'denials:cob', label: 'Coordination of Benefits' },
+        { id: 'denials:documentation', label: 'Documentation' },
+        { id: 'denials:duplicate', label: 'Duplicate' },
+        { id: 'denials:eligibility', label: 'Eligibility' },
+        { id: 'denials:loc', label: 'Level of Care' },
+        { id: 'denials:medical-coding', label: 'Medical Coding' },
+        { id: 'denials:medical-necessity', label: 'Medical Necessity' },
+        { id: 'denials:non-covered', label: 'Non-Covered' },
+        { id: 'denials:other', label: 'Other Non-Specific' },
+        { id: 'denials:provider', label: 'Provider' },
+        { id: 'denials:timely-filing', label: 'Timely Filing' },
+      ],
+    },
+    {
+      id: 'patient-responsibility',
+      label: 'Patient Responsibility',
+      badge: 23,
+      icon: 'user',
+      tab: 2,
+      children: [
+        { id: 'patient-responsibility:bal-due', label: 'Bal Due from PT' },
+      ],
+    },
     { id: 'payment-variance', label: 'Payment Variance', badge: 67, icon: 'chart', tab: 4 },
-    { id: 'payment-posting', label: 'Payment Posting', badge: 36, icon: 'card' },
+    {
+      id: 'payment-posting',
+      label: 'Payment Posting',
+      badge: 36,
+      icon: 'card',
+      children: [
+        { id: 'payment-posting:overpaid', label: 'Payer Overpaid' },
+        { id: 'payment-posting:underpaid', label: 'Payer Underpaid' },
+        { id: 'payment-posting:writeoff', label: 'Write-off' },
+        { id: 'payment-posting:refund', label: 'Refund' },
+      ],
+    },
     { id: 'support', label: 'Support', badge: null, icon: 'lifebuoy' },
     { id: 'settings', label: 'Settings', badge: null, icon: 'cog' },
     ...(role === 'admin'
       ? [{ id: 'user-management', label: 'User Management', badge: null, icon: 'users' }]
       : []),
-  ];
+  ], [denialCount, role]);
 
   const isDark = theme === 'dark';
 
@@ -437,6 +500,67 @@ const ReboundDash = () => {
     dispatch(setPart2Loading(true));
   }
 
+  const toggleExpand = (id) => {
+    setExpandedNav((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const ensureExpanded = (id) => {
+    setExpandedNav((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  };
+
+  const handleNavSelection = (item) => {
+    if (item.id === 'denials') {
+      const denialsBase = `${baseAppPath}/denials`;
+      if (location.pathname !== denialsBase) {
+        navigate(denialsBase);
+      }
+      setSelectedNav('denials');
+      return;
+    }
+    if (item.id === 'user-management') {
+      navigate('/management');
+      setSelectedNav('user-management');
+      return;
+    }
+    if (location.pathname.includes('/denials') || location.pathname.includes('/management')) {
+      navigate(baseAppPath);
+    }
+    if (typeof item.tab === 'number') {
+      changeTab(item.tab);
+    }
+    setSelectedNav(item.id);
+  };
+
+  const handleChildSelection = (parentId, child) => {
+    setSelectedNav(child.id);
+    ensureExpanded(parentId);
+    const parentItem = navItems.find((nav) => nav.id === parentId);
+    if (parentId === 'denials') {
+      const denialsBase = `${baseAppPath}/denials`;
+      if (location.pathname !== denialsBase) {
+        navigate(denialsBase);
+      }
+    } else if (location.pathname.includes('/denials') || location.pathname.includes('/management')) {
+      navigate(baseAppPath);
+    }
+    if (typeof parentItem?.tab === 'number') {
+      changeTab(parentItem.tab);
+    }
+  };
+
   return (
     <div className={`min-h-screen flex ${isDark ? 'bg-[#07090F] text-white' : 'bg-slate-50 text-slate-900'}`}>
       <aside className={`hidden md:flex flex-col w-72 border-r px-2 py-6 ${isDark ? 'bg-[#0B0E17] border-[#1F2231] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
@@ -450,7 +574,10 @@ const ReboundDash = () => {
         </div>
         <nav className="flex-1 space-y-1">
           {navItems.map((item) => {
-            const isActive = selectedNav === item.id;
+            const hasChildren = Array.isArray(item.children) && item.children.length > 0;
+            const childActive = hasChildren && selectedNav.startsWith(`${item.id}:`);
+            const isActive = selectedNav === item.id || childActive;
+            const isExpanded = expandedNav.has(item.id);
             const navStateClass = isActive
               ? (isDark ? 'bg-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'bg-slate-900 text-white shadow-lg')
               : (isDark ? 'text-[#8A8FB1] hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100');
@@ -461,45 +588,66 @@ const ReboundDash = () => {
               ? (isDark ? 'bg-white/20 text-white' : 'bg-white text-slate-900')
               : (isDark ? 'bg-[#1F2231] text-[#B3B8D6]' : 'bg-slate-200 text-slate-700');
             return (
-              <button
-                type="button"
-                key={item.id}
-                className={`w-full flex items-center justify-between rounded-2xl px-2 py-2 transition-colors text-left ${navStateClass}`}
-                onClick={() => {
-                  if (item.id === 'denials') {
-                    const denialsBase = `${baseAppPath}/denials`;
-                    if (location.pathname !== denialsBase) {
-                      navigate(denialsBase);
-                    }
-                    setSelectedNav('denials');
-                    return;
-                  }
-                  if (item.id === 'user-management') {
-                    navigate(`/management`);
-                    setSelectedNav('user-management');
-                    return;
-                  }
-                  if (location.pathname.includes('/denials') || location.pathname.includes('/management')) {
-                    navigate(baseAppPath);
-                  }
-                  if (typeof item.tab === 'number') {
-                    changeTab(item.tab);
-                  }
-                  setSelectedNav(item.id);
-                }}
-              >
-                <span className="flex items-center gap-3 min-w-0">
-                  <span className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${iconWrapperClass}`}>
-                    {renderNavIcon(item.icon, isActive)}
+              <div key={item.id}>
+                <button
+                  type="button"
+                  className={`w-full flex items-center justify-between rounded-2xl px-2 py-2 transition-colors text-left ${navStateClass}`}
+                  onClick={() => handleNavSelection(item)}
+                >
+                  <span className="flex items-center gap-3 min-w-0">
+                    <span className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${iconWrapperClass}`}>
+                      {renderNavIcon(item.icon, isActive)}
+                    </span>
+                    <span className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
                   </span>
-                  <span className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
-                </span>
-                {item.badge && (
-                  <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}>
-                    {item.badge}
+                  <span className="flex items-center gap-2">
+                    {item.badge && (
+                      <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}>
+                        {item.badge}
+                      </span>
+                    )}
+                    {hasChildren && (
+                      <button
+                        type="button"
+                        className={`p-1 rounded-full ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpand(item.id);
+                        }}
+                      >
+                        <svg
+                          className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          viewBox="0 0 20 20"
+                          fill="none"
+                        >
+                          <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    )}
                   </span>
+                </button>
+                {hasChildren && isExpanded && (
+                  <div className="ml-14 mt-1 mb-2 space-y-1">
+                    {item.children.map((child) => {
+                      const childActive = selectedNav === child.id;
+                      return (
+                        <button
+                          type="button"
+                          key={child.id}
+                          className={`w-full text-left text-xs font-medium px-3 py-2 rounded-xl transition-colors ${
+                            childActive
+                              ? (isDark ? 'bg-white/10 text-white' : 'bg-slate-900 text-white')
+                              : (isDark ? 'text-[#8A8FB1] hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100')
+                          }`}
+                          onClick={() => handleChildSelection(item.id, child)}
+                        >
+                          {child.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
-              </button>
+              </div>
             );
           })}
         </nav>
