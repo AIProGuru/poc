@@ -1,20 +1,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore/lite";
+import { auth, db } from "../FirebaseConfig";
 
 export default function SignUp() {
   const navigate = useNavigate();
   const [agreed, setAgreed] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [picture, setPicture] = useState("aaa");
   const [password, setPassword] = useState("");
   const [rpassword, setRpassword] = useState("");
-  const [verifyProcess, setVerifyProcess] = useState(false);
-  const [OTP, setOTP] = useState("");
+  const [role, setRole] = useState("user");
   const [pass, setPass] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordResult, setPasswordResult] = useState({
     length: false,
     containsNumber: false,
@@ -23,24 +24,69 @@ export default function SignUp() {
     containsLowercase: false,
   });
 
-  const validatePassword = (password) => {
-    setPass(true);
+  const validatePassword = (value) => {
     const results = {
-      length: password.length >= 8,
-      containsNumber: /\d/.test(password),
-      containsSpecialCharacter: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-      containsUppercase: /[A-Z]/.test(password),
-      containsLowercase: /[a-z]/.test(password)
+      length: value.length >= 8,
+      containsNumber: /\d/.test(value),
+      containsSpecialCharacter: /[!@#$%^&*(),.?":{}|<>]/.test(value),
+      containsUppercase: /[A-Z]/.test(value),
+      containsLowercase: /[a-z]/.test(value)
     };
     setPasswordResult(results);
-    return results;
+    return Object.values(results).every(Boolean);
   }
 
   const onChangePassword = (e) => {
+    const value = e.target.value;
+    setPassword(value);
     setPass(true);
-    setPassword(e.target.value);
-    validatePassword(e.target.value);
+    validatePassword(value);
   }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    if (!agreed) {
+      toast.error("Please agree to the privacy policy.");
+      return;
+    }
+
+    if (password !== rpassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      toast.error("Password does not meet requirements.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      await setDoc(doc(db, "users", cred.user.uid), {
+        firstname: firstName.trim(),
+        lastname: lastName.trim(),
+        email: email.trim().toLowerCase(),
+        role,
+        status: 1,        // pending by default
+        client: [],
+      });
+      toast.success("Account created. You can sign in now.");
+      navigate("/signin");
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.message || "Failed to sign up.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
@@ -49,11 +95,10 @@ export default function SignUp() {
           Sign Up
         </h2>
       </div>
-      {verifyProcess === false ? (
         <form
           method="POST"
           className="mx-auto mt-16 max-w-xl sm:mt-20"
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={handleSubmit}
         >
           <div className="flex flex-col gap-2">
             <div className='flex gap-4'>
@@ -92,7 +137,6 @@ export default function SignUp() {
             </div>
 
             <div className="sm:col-span-2">
-              {/* Email field */}
               <label htmlFor="email" className="block text-sm font-semibold leading-6 text-gray-900">
                 Email
               </label>
@@ -101,14 +145,28 @@ export default function SignUp() {
                   type="email"
                   name="email"
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setUsername(e.target.value.split('@')[0]);
-                  }}
+                  onChange={(e) => setEmail(e.target.value)}
                   id="email"
                   autoComplete="email"
                   className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
+              </div>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label htmlFor="role" className="block text-sm font-semibold leading-6 text-gray-900">
+                Role
+              </label>
+              <div className="mt-2.5">
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
               </div>
             </div>
 
@@ -194,33 +252,6 @@ export default function SignUp() {
             </button>
           </div>
         </form>
-      ) : (
-        <form method="POST" className="mx-auto mt-16 max-w-xl sm:mt-20">
-          <div className="sm:col-span-2">
-            <label htmlFor="OTP" className="block text-sm font-semibold leading-6 text-gray-900">
-              Input verification code here:
-            </label>
-            <div className="mt-2.5">
-              <input
-                type="text"
-                name="OTP"
-                value={OTP}
-                onChange={(e) => setOTP(e.target.value)}
-                id="OTP"
-                className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              />
-            </div>
-          </div>
-          <div className="mt-10">
-            <button
-              type="submit"
-              className="block w-full rounded-md bg-blue-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-600/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
-            >
-              Verify
-            </button>
-          </div>
-        </form>
-      )}
     </div>
   );
 }

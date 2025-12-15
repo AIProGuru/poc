@@ -36,11 +36,19 @@ def create_app():
     # Initialize Flask-RESTful
     api = Api(app)
     
+    allowed_origins = [
+        "https://heliorcm.ai",
+        "https://www.heliorcm.ai",
+        "https://test.heliorcm.ai",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
     CORS(app, resources={
-        r"/*": {
-            "origins": "*",
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
+        r"/api/*": {
+            "origins": allowed_origins,
+            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
             "supports_credentials": True
         }
     })

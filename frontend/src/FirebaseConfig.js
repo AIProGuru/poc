@@ -1,6 +1,6 @@
-import { initializeApp } from 'firebase/app';
+import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore/lite';
 
 const firebaseConfig = {
     apiKey: "AIzaSyAgc1FYHNse7kW4QC4jlSt8jTLdoVd5hxw",
@@ -22,7 +22,27 @@ const firebaseConfig = {
 //   };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+const logPayload = {
+    projectId: firebaseConfig.projectId,
+    authDomain: firebaseConfig.authDomain,
+    storageBucket: firebaseConfig.storageBucket,
+    apiKeyDefined: Boolean(firebaseConfig.apiKey),
+};
+
+const logConfig = () => {
+    console.log('[FirebaseConfig] Using project configuration:', logPayload);
+};
+
+if (typeof window !== 'undefined') {
+    if (!window.__FIREBASE_CONFIG_LOGGED__) {
+        logConfig();
+        window.__FIREBASE_CONFIG_LOGGED__ = true;
+    }
+} else {
+    logConfig();
+}
 
 // Initialize Authentication
 const auth = getAuth(app);

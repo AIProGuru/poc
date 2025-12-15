@@ -4,11 +4,11 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 import { Pie, Bar } from 'react-chartjs-2';
 import './ClientManagement.css';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore/lite';
 import { db } from '../FirebaseConfig';
-import {  addDoc, serverTimestamp } from 'firebase/firestore';
+import {  addDoc, serverTimestamp } from 'firebase/firestore/lite';
 // First import the necessary Firestore functions at the top of your file
-import {  doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import {  doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore/lite';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -1197,4 +1197,3 @@ const handleQuickAction = async (action, clientId, e) => {
 };
 
 export default ClientManagement;
-

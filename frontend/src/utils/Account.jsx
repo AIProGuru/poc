@@ -14,7 +14,7 @@ import {
   setRole,
   setPermission,
 } from '../redux/reducers/auth.reducer';
-import {  doc, getDoc } from 'firebase/firestore'; // Import Firestore methods
+import {  doc, getDoc } from 'firebase/firestore/lite'; // Import Firestore methods
 import { db } from '../FirebaseConfig';
 
 const AccountContext = createContext();

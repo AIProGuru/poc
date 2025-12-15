@@ -117,7 +117,7 @@ const routesConfig = [
   },
   {
     path: "/signup",
-    element: <PrivateRoute role={["demo", "admin"]} element={SignUp} />,
+    element: <SignUp />,
   },
   {
     path: "/contact",

@@ -5,7 +5,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import './ClientManagement.css';
 import { db } from '../FirebaseConfig';
-import { doc, getDoc ,updateDoc,collection,query,where,getDocs} from 'firebase/firestore';
+import { doc, getDoc ,updateDoc,collection,query,where,getDocs} from 'firebase/firestore/lite';
 
 
 // Register Chart.js components

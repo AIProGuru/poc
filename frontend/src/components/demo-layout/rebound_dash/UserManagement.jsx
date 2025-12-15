@@ -15,10 +15,7 @@ import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { db } from '../../../FirebaseConfig';
 import { auth } from '../../../FirebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
-import { doc, setDoc } from 'firebase/firestore';
 import { SERVER_URL } from '../../../utils/config';
 import axios from 'axios';
 import { deleteUser } from 'firebase/auth';
@@ -117,6 +114,46 @@ const UserManagement = () => {
     value: [],
   });
 
+  const requireAuthToken = async () => {
+    if (!auth.currentUser) {
+      throw new Error("Your session expired. Please sign in again.");
+    }
+    return auth.currentUser.getIdToken();
+  };
+
+  const patchUserProfile = async (userId, updates, successMessage) => {
+    try {
+      const token = await requireAuthToken();
+      const response = await fetch(`${SERVER_URL}/api/v1/user/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token,
+        },
+        body: JSON.stringify(updates),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.error || "Failed to update user.");
+      }
+
+      const updatedUser = result?.user ?? { id: userId, ...updates };
+      const mergeUsers = (list) =>
+        list.map((row) => (row.id === userId ? { ...row, ...updatedUser } : row));
+
+      setUsers((prev) => mergeUsers(prev));
+      setTotalUsers((prev) => mergeUsers(prev));
+
+      if (successMessage) {
+        toast.success(successMessage);
+      }
+      return updatedUser;
+    } catch (error) {
+      toast.error(error?.message || "Failed to update user.");
+      throw error;
+    }
+  };
+
   const generatePassword = (length) => {
     const numbers = '0123456789';
     const upperCase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -146,47 +183,18 @@ const UserManagement = () => {
   }
 
   const handleUpdateRole = (userId, newRole) => {
-    // Update the user's role in Firestore or any other source
-    const userRef = doc(db, 'users', userId);
-    setDoc(userRef, { role: newRole }, { merge: true })
-      .then(() => {
-        setUsers(prevUsers =>
-          prevUsers.map(user =>
-            user.id === userId ? { ...user, role: newRole } : user
-          )
-        );
-        toast.success('Role updated successfully');
-      })
-      .catch(error => {
-        toast.error('Failed to update role');
-        console.error('Error updating role:', error);
-      });
+    patchUserProfile(userId, { role: newRole }, 'Role updated successfully').catch((error) => {
+      console.error('Error updating role:', error);
+    });
   };
 
   const [update_user_id,setUpdate_user_id]=useState('')
   
 
   const handleUserUpdate = (userId, updatedUser) => {
-    // Log the data being sent
-    console.log("Updating user with ID:", userId);
-    console.log("Updated user data:", updatedUser);
-    console.log("Previous user data:", users.find(user => user.id === userId));
-  
-    const userRef = doc(db, 'users', userId);
-    setDoc(userRef, updatedUser, { merge: true })
-      .then(() => {
-        console.log("Update successful!");
-        setUsers(prevUsers =>
-          prevUsers.map(user =>
-            user.id === userId ? { ...user, ...updatedUser } : user
-          )
-        );
-        toast.success('User updated successfully');
-      })
-      .catch(error => {
-        console.error('Error updating user:', error);
-        toast.error('Failed to update user');
-      });
+    patchUserProfile(userId, updatedUser, 'User updated successfully').catch((error) => {
+      console.error('Error updating user:', error);
+    });
   };
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -454,8 +462,8 @@ const DeleteConfirmationModal = () => (
       console.log(data)
       if (data.status === 200) {
         toast.success("User deleted!")
-        const newUsers = users.filter(user => user.id !== userId);
-        setUsers(newUsers);
+        setUsers((prev) => prev.filter((user) => user.id !== userId));
+        setTotalUsers((prev) => prev.filter((user) => user.id !== userId));
       }
 
     } catch (error) {
@@ -466,27 +474,33 @@ const DeleteConfirmationModal = () => (
   };
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const usersCollection = collection(db, 'users');
-      const usersSnapshot = await getDocs(usersCollection);
-      const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const token = await requireAuthToken();
+      const response = await fetch(`${SERVER_URL}/api/v1/users`, {
+        headers: {
+          "Authorization": token,
+        },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || 'Failed to fetch users.');
+      }
+      const usersList = data?.users ?? [];
       setTotalUsers(usersList);
       setUsers(usersList.slice(0, currentPageSize));
       setTotalPage(Math.ceil(usersList.length / currentPageSize));
-      console.log(usersList)
     } catch (error) {
-      toast.error('Error fetching users');
       console.error('Error fetching users:', error);
+      toast.error(error?.message || 'Error fetching users');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPageSize]);
-
-  useEffect(() => {
-    setTotalPage(Math.ceil(users.length / currentPageSize))
-  }, [currentPageSize]);
+  }, []);
 
   useEffect(() => {
     const searchTerm = searchKeyword.toLowerCase();
