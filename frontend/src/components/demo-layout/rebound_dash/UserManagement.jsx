@@ -350,20 +350,24 @@ const UserManagement = () => {
         lastname: user.lastname,
         role: user.role,
         status: user.status
-
       })
     })
-    console.log(data)
+    const res = await data.json().catch(() => ({}));
     if (data.status === 200) {
       toast.success("User created!")
       setShowUserModal(false);
       setUser({
+        user_id:'',
         firstname: '',
         lastname: '',
         email: '',
-        role: '',
+        role: 'user',
+        password: '',
         status: 0
       })
+      fetchUsers();
+    } else {
+      toast.error(res?.error || 'Failed to create user');
     }
   }
 
@@ -1020,10 +1024,11 @@ const DeleteConfirmationModal = () => (
         onClose={() => {
           setShowUserModal(false)
           setUser({
+            user_id:'',
             firstname: '',
             lastname: '',
             email: '',
-            role: '',
+            role: 'user',
             password: '',
             status: 0
           })

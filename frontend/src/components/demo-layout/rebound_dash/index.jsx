@@ -37,7 +37,11 @@ const ReboundDash = () => {
   const location = useLocation();
   const params = useParams();
   const rawToken = params.token ?? null;
-  const [selectedNav, setSelectedNav] = useState(() => (location.pathname.includes('/denials') ? 'denials' : 'home'));
+  const isManagementRoute = location.pathname.startsWith('/management');
+  const [selectedNav, setSelectedNav] = useState(() => {
+    if (isManagementRoute) return 'user-management';
+    return location.pathname.includes('/denials') ? 'denials' : 'home';
+  });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const inputKeywordRef = useRef();
   const navigate = useNavigate();
@@ -45,6 +49,7 @@ const ReboundDash = () => {
   const dispatch = useDispatch();
   const theme = useSelector((state) => state.app.theme);
   const appType = useSelector((state) => state.app.type);
+  const role = useSelector((state) => state.auth.role);
   const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/medevolve' : '/demo';
   const isDenialsRoute = location.pathname.includes('/denials');
   const showDenialModels = isDenialsRoute && !rawToken;
@@ -82,10 +87,14 @@ const ReboundDash = () => {
       if (selectedNav !== 'denials') {
         setSelectedNav('denials');
       }
-    } else if (selectedNav === 'denials') {
+    } else if (isManagementRoute) {
+      if (selectedNav !== 'user-management') {
+        setSelectedNav('user-management');
+      }
+    } else if (selectedNav === 'denials' || selectedNav === 'user-management') {
       setSelectedNav('home');
     }
-  }, [location.pathname, selectedNav]);
+  }, [location.pathname, selectedNav, isManagementRoute]);
 
   const formatDisplay = (value, type = 'number') => {
     const numeric = Number(value ?? 0);
@@ -122,6 +131,9 @@ const ReboundDash = () => {
     { id: 'payment-posting', label: 'Payment Posting', badge: 36, icon: 'card' },
     { id: 'support', label: 'Support', badge: null, icon: 'lifebuoy' },
     { id: 'settings', label: 'Settings', badge: null, icon: 'cog' },
+    ...(role === 'admin'
+      ? [{ id: 'user-management', label: 'User Management', badge: null, icon: 'users' }]
+      : []),
   ];
 
   const isDark = theme === 'dark';
@@ -202,6 +214,15 @@ const ReboundDash = () => {
             <rect x="3" y="5" width="14" height="10" rx="2" {...strokeProps} />
             <path d="M3 9H17" {...strokeProps} />
             <path d="M6 13H8M10 13H14" {...strokeProps} />
+          </svg>
+        );
+      case 'users':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <circle cx="7" cy="7" r="3" {...strokeProps} />
+            <circle cx="13" cy="7" r="3" {...strokeProps} />
+            <path d="M3.5 16C3.5 13.5147 5.51472 11.5 8 11.5H9" {...strokeProps} />
+            <path d="M16.5 16C16.5 13.5147 14.4853 11.5 12 11.5H11" {...strokeProps} />
           </svg>
         );
       case 'lifebuoy':
@@ -447,6 +468,11 @@ const ReboundDash = () => {
                       navigate(denialsBase);
                     }
                     setSelectedNav('denials');
+                    return;
+                  }
+                  if (item.id === 'user-management') {
+                    navigate('/management');
+                    setSelectedNav('user-management');
                     return;
                   }
                   if (location.pathname.includes('/denials')) {
