@@ -98,7 +98,6 @@ const ReboundDash = () => {
       }
     } else if (
       selectedNav === 'denials' ||
-      selectedNav.startsWith('denials:') ||
       selectedNav === 'user-management'
     ) {
       setSelectedNav('home');
@@ -242,9 +241,9 @@ const ReboundDash = () => {
         { id: 'payment-posting:payment', label: 'Payment' },
         { id: 'payment-posting:writeoff', label: 'Write-off' },
         { id: 'payment-posting:refund', label: 'Refund' },
-        { id: 'payment-posting:ai-library', label: 'AI Library' },
       ],
     },
+    { id: 'ai-library', label: 'AI Library', badge: null, icon: 'book' },
     { id: 'support', label: 'Support', badge: null, icon: 'lifebuoy' },
     { id: 'settings', label: 'Settings', badge: null, icon: 'cog' },
     ...(role === 'admin'
@@ -254,17 +253,38 @@ const ReboundDash = () => {
   const navExtraFilters = useMemo(() => ({
     'claim-status:pend-835': { Missing835: true },
   }), []);
+  const navTagFilters = useMemo(() => ({
+    'denials:authorization': ['Authorization'],
+    'denials:billing': ['Billing'],
+    'denials:cob': ['Coordination of Benefits'],
+    'denials:documentation': ['Documentation'],
+    'denials:duplicate': ['Duplicate'],
+    'denials:eligibility': ['Eligibility'],
+    'denials:loc': ['Level of Care'],
+    'denials:medical-coding': ['Medical Coding'],
+    'denials:medical-necessity': ['Medical Necessity'],
+    'denials:non-covered': ['Non-Covered'],
+    'denials:other': ['Other Non-Specific'],
+    'denials:provider': ['Provider'],
+    'denials:timely-filing': ['Timely Filing'],
+    'payment-posting:contractual-adj': ['Contractual Adj'],
+  }), []);
 
   const applyNavFilters = useCallback((navId) => {
     if (!navId) return;
-    if (navId === 'user-management' || navId.startsWith('denials')) {
+    if (navId === 'user-management') {
       return;
     }
     const filterPayload = navExtraFilters[navId] || {};
+    const tagOverride = navTagFilters[navId];
     dispatch(setExtraFilter(filterPayload));
+    if (tagOverride) {
+      dispatch(setSelectedTags(tagOverride));
+      dispatch(setTabIndex(6));
+    }
     dispatch(setCurrentPage(1));
     dispatch(setTableLoading(true));
-  }, [dispatch, navExtraFilters]);
+  }, [dispatch, navExtraFilters, navTagFilters]);
 
   const isDark = theme === 'dark';
 
@@ -364,6 +384,15 @@ const ReboundDash = () => {
             <path d="M14.5 5.5L12.5 7.5" {...strokeProps} />
             <path d="M5.5 14.5L7.5 12.5" {...strokeProps} />
             <path d="M14.5 14.5L12.5 12.5" {...strokeProps} />
+          </svg>
+        );
+      case 'book':
+        return (
+          <svg className={`w-5 h-5 ${tone}`} viewBox="0 0 20 20">
+            <path d="M4.5 4.5C4.5 3.67157 5.17157 3 6 3H15.5V15.5C15.5 16.3284 14.8284 17 14 17H6C5.17157 17 4.5 16.3284 4.5 15.5V4.5Z" {...strokeProps} />
+            <path d="M4.5 4.5C4.5 3.67157 3.82843 3 3 3H2.5V15.5C2.5 16.3284 3.17157 17 4 17H4.5V4.5Z" {...strokeProps} />
+            <path d="M8 6H12" {...strokeProps} />
+            <path d="M8 8.5H12" {...strokeProps} />
           </svg>
         );
       case 'cog':
@@ -612,11 +641,8 @@ const ReboundDash = () => {
     setSelectedNav(child.id);
     ensureExpanded(parentId);
     const parentItem = navItems.find((nav) => nav.id === parentId);
-    if (parentId === 'denials') {
-      const denialsBase = `${baseAppPath}/denials`;
-      if (location.pathname !== denialsBase) {
-        navigate(denialsBase);
-      }
+    if (parentId === 'denials' && location.pathname.includes('/denials')) {
+      navigate(baseAppPath);
     } else if (location.pathname.includes('/denials') || location.pathname.includes('/management')) {
       navigate(baseAppPath);
     }
