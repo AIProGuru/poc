@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setAppTitle, setModels } from '../../../redux/reducers/app.reducer';
+import { setAppTitle } from '../../../redux/reducers/app.reducer';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
 import { useApiEndpoint } from '../../../ApiEndpointContext';
 
 const ArIntel = () => {
@@ -17,28 +16,9 @@ const ArIntel = () => {
   console.log('apiUrl', apiUrl)
 
   useEffect(() => {
-    if (apiUrl === "") return;
+    if (!apiUrl) return;
     dispatch(setAppTitle("AI Automation"));
-    if (models.length === 0) {
-      axios.get(`${apiUrl}/get_artificial_intelligence`).then(res => {
-        dispatch(setModels(res.data.map((row, index) => ({
-          ...row,
-          Group: (() => {
-            switch (row.Category) {
-              case "Contractual Adj":
-                return "Non-Recoverable";
-              case "Patient Resp":
-                return "Patient Resp";
-              case null:
-                return "Delinquent";
-              default:
-                return "Recoverable";
-            }
-          })()
-        }))))
-      })
-    }
-  }, [apiUrl])
+  }, [apiUrl, dispatch]);
 
   const formatAmount = (value) => {
     const numeric = Number(value ?? 0);

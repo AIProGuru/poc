@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useContext, useMemo } from "react";
+import React, { useEffect, useState, useRef, useContext, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import DataTable from "./DataTable";
@@ -27,7 +27,7 @@ import {
   setRecoveryLoading,
 } from "../../../redux/reducers/app.reducer";
 import { setSelectedTags, setTags, setAllPayers } from "../../../redux/reducers/tag.reducer";
-import { setTableData, setTheme } from '../../../redux/reducers/app.reducer';
+import { setTableData, setTheme, setModels } from '../../../redux/reducers/app.reducer';
 import { setCategoryLabel, setCategoryValue } from '../../../redux/reducers/statistics.reducer';
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import ArIntel from "./ArIntel";
@@ -129,6 +129,44 @@ const ReboundDash = () => {
   const models = useSelector((state) => state.app.models);
   const denialCount = models.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
 
+  useEffect(() => {
+    if (!apiUrl || models.length > 0) return;
+    let cancelled = false;
+
+    const mapModels = (rows) =>
+      rows.map((row) => ({
+        ...row,
+        Group: (() => {
+          switch (row.Category) {
+            case 'Contractual Adj':
+              return 'Non-Recoverable';
+            case 'Patient Resp':
+              return 'Patient Resp';
+            case null:
+              return 'Delinquent';
+            default:
+              return 'Recoverable';
+          }
+        })(),
+      }));
+
+    const fetchModels = async () => {
+      try {
+        const res = await axios.get(`${apiUrl}/get_artificial_intelligence`);
+        if (!cancelled) {
+          dispatch(setModels(mapModels(res.data)));
+        }
+      } catch (error) {
+        console.error('Failed to load AI models', error);
+      }
+    };
+
+    fetchModels();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiUrl, dispatch, models.length]);
+
   const navItems = useMemo(() => [
     { id: 'home', label: 'Home', badge: null, icon: 'home', tab: 0 },
     { id: 'dashboard', label: 'Dashboard', badge: null, icon: 'dashboard' },
@@ -183,17 +221,28 @@ const ReboundDash = () => {
         { id: 'patient-responsibility:bal-due', label: 'Bal Due from PT' },
       ],
     },
-    { id: 'payment-variance', label: 'Payment Variance', badge: 67, icon: 'chart', tab: 4 },
+    {
+      id: 'payment-variance',
+      label: 'Payment Variance',
+      badge: 67,
+      icon: 'chart',
+      tab: 4,
+      children: [
+        { id: 'payment-variance:payer-overpaid', label: 'Payer Overpaid' },
+        { id: 'payment-variance:payer-underpaid', label: 'Payer Underpaid' },
+      ],
+    },
     {
       id: 'payment-posting',
       label: 'Payment Posting',
       badge: 36,
       icon: 'card',
       children: [
-        { id: 'payment-posting:overpaid', label: 'Payer Overpaid' },
-        { id: 'payment-posting:underpaid', label: 'Payer Underpaid' },
+        { id: 'payment-posting:contractual-adj', label: 'Contractual Adj' },
+        { id: 'payment-posting:payment', label: 'Payment' },
         { id: 'payment-posting:writeoff', label: 'Write-off' },
         { id: 'payment-posting:refund', label: 'Refund' },
+        { id: 'payment-posting:ai-library', label: 'AI Library' },
       ],
     },
     { id: 'support', label: 'Support', badge: null, icon: 'lifebuoy' },
@@ -202,6 +251,20 @@ const ReboundDash = () => {
       ? [{ id: 'user-management', label: 'User Management', badge: null, icon: 'users' }]
       : []),
   ], [denialCount, role]);
+  const navExtraFilters = useMemo(() => ({
+    'claim-status:pend-835': { Missing835: true },
+  }), []);
+
+  const applyNavFilters = useCallback((navId) => {
+    if (!navId) return;
+    if (navId === 'user-management' || navId.startsWith('denials')) {
+      return;
+    }
+    const filterPayload = navExtraFilters[navId] || {};
+    dispatch(setExtraFilter(filterPayload));
+    dispatch(setCurrentPage(1));
+    dispatch(setTableLoading(true));
+  }, [dispatch, navExtraFilters]);
 
   const isDark = theme === 'dark';
 
@@ -542,6 +605,7 @@ const ReboundDash = () => {
       changeTab(item.tab);
     }
     setSelectedNav(item.id);
+    applyNavFilters(item.id);
   };
 
   const handleChildSelection = (parentId, child) => {
@@ -559,6 +623,7 @@ const ReboundDash = () => {
     if (typeof parentItem?.tab === 'number') {
       changeTab(parentItem.tab);
     }
+    applyNavFilters(child.id);
   };
 
   return (

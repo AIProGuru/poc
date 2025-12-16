@@ -121,6 +121,8 @@ def generate_sql(
         query += f"and CUSTOM_ALL.PayerName LIKE '%{extra['PayerNameAll']}%' "
     if "InsuranceType" in extra:
         query += f"and CUSTOM_ALL.InsuranceType='{extra['InsuranceType']}' "
+    if extra.get("Missing835"):
+        query += "AND CUSTOM_ALL.id_835 IS NULL "
     if code != "":
         query += f"""
             AND EXISTS (
