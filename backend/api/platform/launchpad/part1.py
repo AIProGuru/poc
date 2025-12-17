@@ -17,8 +17,12 @@ rebound_api_part1.api_name = 'rebound_api_part1'
 medevolve_api_part1 = Blueprint('medevolve_api_part1', __name__, url_prefix='/api/v1/medevolve')
 medevolve_api_part1.api_name = 'medevolve_api_part1'
 
+pilotcustomer_api_part1 = Blueprint('pilotcustomer_api_part1', __name__, url_prefix='/api/v1/pilotcustomer')
+pilotcustomer_api_part1.api_name = 'pilotcustomer_api_part1'
+
 @rebound_api_part1.route("/part1_all", methods=["POST"])
 @medevolve_api_part1.route("/part1_all", methods=["POST"])
+@pilotcustomer_api_part1.route("/part1_all", methods=["POST"])
 def get_rebound_data_part1_all():
     """
     This endpoint fetches platform data part 1 with filtering options.

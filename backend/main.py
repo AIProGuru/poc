@@ -10,11 +10,20 @@ from api.platform.launchpad.tags import (
     medevolve_api_tags,
     pilotcustomer_api_tags,
 )
-from api.platform.launchpad.part1 import rebound_api_part1, medevolve_api_part1
-from api.platform.launchpad.part2 import rebound_api_part2, medevolve_api_part2
+from api.platform.launchpad.part1 import (
+    rebound_api_part1,
+    medevolve_api_part1,
+    pilotcustomer_api_part1,
+)
+from api.platform.launchpad.part2 import (
+    rebound_api_part2,
+    medevolve_api_part2,
+    pilotcustomer_api_part2,
+)
 from api.platform.launchpad.stratification_details import (
     rebound_api_stratification,
     medevolve_api_stratification,
+    pilotcustomer_api_stratification,
 )
 from api.platform.claim_details.get_claim_detail import (
     rebound_api_get_claim,
@@ -116,10 +125,13 @@ def create_app():
     app.register_blueprint(pilotcustomer_api_tags)
     app.register_blueprint(rebound_api_part1)
     app.register_blueprint(medevolve_api_part1)
+    app.register_blueprint(pilotcustomer_api_part1)
     app.register_blueprint(rebound_api_part2)
     app.register_blueprint(medevolve_api_part2)
+    app.register_blueprint(pilotcustomer_api_part2)
     app.register_blueprint(rebound_api_stratification)
     app.register_blueprint(medevolve_api_stratification)
+    app.register_blueprint(pilotcustomer_api_stratification)
     app.register_blueprint(rebound_api_get_claim)
     app.register_blueprint(medevolve_api_get_claim)
     app.register_blueprint(pilotcustomer_api_get_claim)
@@ -148,6 +160,7 @@ def create_app():
     app.register_blueprint(pilotcustomer_api_combined)
     app.register_blueprint(rebound_api_payer)
     app.register_blueprint(medevolve_api_payer)
+    app.register_blueprint(pilotcustomer_api_payer)
     app.register_blueprint(rebound_api_counts)
     app.register_blueprint(medevolve_api_counts)
     app.register_blueprint(pilotcustomer_api_counts)

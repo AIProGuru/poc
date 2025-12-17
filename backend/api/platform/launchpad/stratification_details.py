@@ -17,9 +17,13 @@ rebound_api_stratification.api_name = 'rebound_api_stratification'
 medevolve_api_stratification = Blueprint('medevolve_api_stratification', __name__, url_prefix='/api/v1/medevolve')
 medevolve_api_stratification.api_name = 'medevolve_api_stratification'
 
+pilotcustomer_api_stratification = Blueprint('pilotcustomer_api_stratification', __name__, url_prefix='/api/v1/pilotcustomer')
+pilotcustomer_api_stratification.api_name = 'pilotcustomer_api_stratification'
+
 # Define the endpoint for fetching rebound data
 @rebound_api_stratification.route("/data_all", methods=["POST"])
 @medevolve_api_stratification.route("/data_all", methods=["POST"])
+@pilotcustomer_api_stratification.route("/data_all", methods=["POST"])
 def get_rebound_data_all():
     """
     This endpoint fetches platform data with pagination and filtering options.
