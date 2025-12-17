@@ -62,18 +62,21 @@ def get_connection(base_url):
     if medevolve_conn is None:
         raise Exception("Database connection not available. Please check your MySQL configuration.")
     
+    base_url = base_url or ""
+
     # if 'rebound' in base_url:
     #     conn = rebound_conn.get_connection()
     #     cursor = conn.cursor(dictionary=True)
     #     # Set SQL mode to be more permissive with dates
     #     cursor.execute("SET SESSION sql_mode = '';")
     #     return conn, cursor, 'rebound'
-    elif 'medevolve' in base_url:
+    if 'medevolve' in base_url or 'pilotcustomer' in base_url:
         conn = medevolve_conn.get_connection()
         cursor = conn.cursor(dictionary=True)
         # Set SQL mode to be more permissive with dates
         cursor.execute("SET SESSION sql_mode = '';")
-        return conn, cursor, 'medevolve'
+        database_name = 'pilotcustomer' if 'pilotcustomer' in base_url else 'medevolve'
+        return conn, cursor, database_name
     else:
         raise ValueError("Invalid base URL")
 

@@ -9,9 +9,11 @@ logger = logging.getLogger(__name__)
 # Define Blueprints for different APIs
 rebound_api_resubmitted = Blueprint('rebound_api_resubmitted', __name__, url_prefix='/api/v1/rebound')
 medevolve_api_resubmitted = Blueprint('medevolve_api_resubmitted', __name__, url_prefix='/api/v1/medevolve')
+pilotcustomer_api_resubmitted = Blueprint('pilotcustomer_api_resubmitted', __name__, url_prefix='/api/v1/pilotcustomer')
 
 @rebound_api_resubmitted.route("/resubmitted_claims", methods=["GET"])
 @medevolve_api_resubmitted.route("/resubmitted_claims", methods=["GET"])
+@pilotcustomer_api_resubmitted.route("/resubmitted_claims", methods=["GET"])
 def get_resubmitted_claims():
     """
     This endpoint fetches resubmitted claims data.

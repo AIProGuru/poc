@@ -10,9 +10,11 @@ logger = logging.getLogger(__name__)
 # Define Blueprints
 rebound_api_counts = Blueprint('rebound_api_counts', __name__, url_prefix='/api/v1/rebound')
 medevolve_api_counts = Blueprint('medevolve_api_counts', __name__, url_prefix='/api/v1/medevolve')
+pilotcustomer_api_counts = Blueprint('pilotcustomer_api_counts', __name__, url_prefix='/api/v1/pilotcustomer')
 
 @rebound_api_counts.route("/get_counts", methods=["GET"])
 @medevolve_api_counts.route("/get_counts", methods=["GET"])
+@pilotcustomer_api_counts.route("/get_counts", methods=["GET"])
 def get_counts():
     """
     This endpoint fetches various counts and amounts from the system.
