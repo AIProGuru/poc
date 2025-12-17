@@ -56,7 +56,7 @@ const MySidebar = () => {
 
   // const sidebarMenus = [
   //   {
-  //     path: type === 0 ? "/rebound" : (type === 1 ? "/medevolve": "/demo"),
+  //     path: type === 0 ? "/rebound" : (type === 1 ? "/pilotcustomer": "/demo"),
   //     title: "Launchpad",
   //     icon: [<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
   //       <path d="M16.9438 7.58637V4.43359C16.9438 3.45443 16.4993 3.05859 15.3952 3.05859H12.5896C11.4855 3.05859 11.041 3.45443 11.041 4.43359V7.57943C11.041 8.56554 11.4855 8.95443 12.5896 8.95443H15.3952C16.4993 8.96137 16.9438 8.56554 16.9438 7.58637Z" fill="#005DE2" />
@@ -76,7 +76,7 @@ const MySidebar = () => {
   //     appTitle: "Launchpad"
   //   },
   //   {
-  //     path: type === 0 ? "/rebound" : (type === 1 ? "/medevolve": "/demo") + "/artificial-intelligence",
+  //     path: type === 0 ? "/rebound" : (type === 1 ? "/pilotcustomer": "/demo") + "/artificial-intelligence",
   //     title: "AI Automation",
   //     icon: [<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
   //       <path d="M11.0755 15.6658C10.8949 15.7422 10.7005 15.8116 10.4922 15.8811L9.39493 16.2422C6.63799 17.1311 5.1866 16.388 4.29076 13.6311L3.40188 10.888C2.51299 8.13108 3.2491 6.67274 6.00604 5.78385L7.07549 5.42969C6.94354 5.76302 6.83243 6.14497 6.72826 6.57552L6.04771 9.48524C5.28382 12.7561 6.40188 14.5616 9.67271 15.3394L10.8394 15.6172C10.9158 15.638 10.9991 15.6519 11.0755 15.6658Z" fill="#005DE2" />
@@ -90,7 +90,7 @@ const MySidebar = () => {
   //     appTitle: "AI Automation"
   //   },
   //   {
-  //     path: type === 0 ? "/rebound" : (type === 1 ? "/medevolve": "/demo") + "/statistics",
+  //     path: type === 0 ? "/rebound" : (type === 1 ? "/pilotcustomer": "/demo") + "/statistics",
   //     title: "Dashboard Insights",
   //     icon: [
   //       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -111,7 +111,7 @@ const MySidebar = () => {
   //     appTitle: "Insights"
   //   },
   //   // {
-  //   //   path: (type === 0 ? "/rebound" : "/medevolve") + "/rcmgpt",
+  //   //   path: (type === 0 ? "/rebound" : "/pilotcustomer") + "/rcmgpt",
   //   //   title: "Helio RCM Assistant",
   //   //   rightIcon: "<svg width='48' height='48' viewBox='0 0 835 462' fill='none' xmlns='http://www.w3.org/2000/svg'>\
   //   //     <path d='M417.431 245.818C484.709 245.818 539.249 191.278 539.249 124C539.249 56.7217 484.709 2.18182 417.431 2.18182C350.153 2.18182 295.613 56.7217 295.613 124C295.613 191.278 350.153 245.818 417.431 245.818Z' stroke='#E1E1EA' strokeWidth='3.63636'/>\

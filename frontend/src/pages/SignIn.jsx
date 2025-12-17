@@ -45,7 +45,7 @@ export default function SignIn() {
         dispatch(setRole(userDoc.data().role));
         dispatch(setPermission(""));
         dispatch(setUsername(userDoc.data().firstname ?? ""));
-        navigate("/medevolve");
+        navigate("/pilotcustomer");
         toast.success("Login Successful!");
         }
       } else {

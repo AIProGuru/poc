@@ -15,9 +15,12 @@ rebound_api_get_claim.api_name = 'rebound_api_get_claim'
 
 medevolve_api_get_claim = Blueprint('medevolve_api_get_claim', __name__, url_prefix='/api/v1/medevolve')
 medevolve_api_get_claim.api_name = 'medevolve_api_get_claim'
+pilotcustomer_api_get_claim = Blueprint('pilotcustomer_api_get_claim', __name__, url_prefix='/api/v1/pilotcustomer')
+pilotcustomer_api_get_claim.api_name = 'pilotcustomer_api_get_claim'
 
 @rebound_api_get_claim.route("/get_claim", methods=["GET"])
 @medevolve_api_get_claim.route("/get_claim", methods=["GET"])
+@pilotcustomer_api_get_claim.route("/get_claim", methods=["GET"])
 def get_rebound_claim():
     """
     This endpoint fetches claim details based on the claim number.

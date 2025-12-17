@@ -76,7 +76,7 @@ function App() {
       console.log(finalPageName);
 
       // Call the backend endpoint
-      // axios.post(`${SERVER_URL}/v2/medevolve/analysis/update-view`, {
+      // axios.post(`${SERVER_URL}/v2/pilotcustomer/analysis/update-view`, {
       //   page_name: finalPageName,
       // })
       //   .then(response => response.json())

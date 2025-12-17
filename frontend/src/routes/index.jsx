@@ -64,12 +64,12 @@ const routesConfig = [
     children: reboundRoutes,
   },
   {
-    path: "/medevolve",
+    path: "/pilotcustomer",
     element: <PrivateRoute role={AUTH_ROLES} element={Demo} />,
     children: reboundRoutes,
   },
   {
-    path: "/medevolve/resubmitted_claims",
+    path: "/pilotcustomer/resubmitted_claims",
     element: (
       <PrivateRoute role={AUTH_ROLES} element={ResubmittedClaims} />
     ),

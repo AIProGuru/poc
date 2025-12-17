@@ -78,7 +78,7 @@ const ChatBot = () => {
     if (email) {
       // Fetch chats from the backend
       axios
-        .get(`${SERVER_URL}/v2/medevolve/chats`, {
+        .get(`${SERVER_URL}/v2/pilotcustomer/chats`, {
           params: { user_email: email },
         })
         .then((response) => {
@@ -142,7 +142,7 @@ const ChatBot = () => {
     dispatch(setGenerating(true));
     setPrompt("");
     axios
-      .post(`${SERVER_URL}/v2/medevolve/chat`, {
+      .post(`${SERVER_URL}/v2/pilotcustomer/chat`, {
         email: email,
         query: value,
         isFirst: messages.length === 0,
@@ -185,7 +185,7 @@ const ChatBot = () => {
   const loadChats = (chatUuid) => {
     setActiveChat(chatUuid);
     axios
-      .get(`${SERVER_URL}/v2/medevolve/chat`, {
+      .get(`${SERVER_URL}/v2/pilotcustomer/chat`, {
         params: { chatUuid: chatUuid },
       })
       .then((response) => {

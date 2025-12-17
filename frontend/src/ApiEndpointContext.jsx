@@ -34,8 +34,8 @@ export const ApiEndpointProvider = ({ children }) => {
     if (location.pathname.startsWith('/rebound')) {
       setApiUrl(`${SERVER_URL}/api/v1/rebound`)
       dispatch(setType(0))
-    } else if (location.pathname.startsWith('/medevolve')) {
-      setApiUrl(`${SERVER_URL}/api/v1/medevolve`)
+    } else if (location.pathname.startsWith('/pilotcustomer')) {
+      setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
       dispatch(setType(1))
     } else if(location.pathname.startsWith('/demo')) {
       // setApiUrl(`${SERVER_URL}/api/v1/demo`)

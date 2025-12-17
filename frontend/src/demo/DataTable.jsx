@@ -53,7 +53,7 @@ const DataTable = (props) => {
       claimNo
     }
     console.log(location.pathname)
-    navigate(`${type === 0 ? '/rebound' : (type == 1 ? '/medevolve' : "/demo")}/detail/${btoa(JSON.stringify(token))}`);
+    navigate(`${type === 0 ? '/rebound' : (type == 1 ? '/pilotcustomer' : "/demo")}/detail/${btoa(JSON.stringify(token))}`);
   }
 
   useEffect(() => {

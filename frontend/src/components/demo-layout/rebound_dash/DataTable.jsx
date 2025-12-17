@@ -72,7 +72,7 @@ const DataTable = (props) => {
       claimNo
     }
     console.log(location.pathname)
-    navigate(`${type === 0 ? '/rebound' : '/medevolve'}/detail/${btoa(JSON.stringify(token))}`);
+    navigate(`${type === 0 ? '/rebound' : '/pilotcustomer'}/detail/${btoa(JSON.stringify(token))}`);
   }
 
   useEffect(() => {
@@ -186,7 +186,7 @@ const DataTable = (props) => {
 
     // Define the CSV headers based on the table headers
     const tableHeaders = [
-      'Claim ID', 'Provider Tax ID', 'Provider NPI', 'Payer Name', 'Payer ID', 'PayerSeq', 'Patient Name', 'Load Date', 'Service Date', 'Place Of Service', 'Charges', 'Allowed Amt', 'Category', 'Denial Code', 'Primary Diagnosis', 'Primary Service', 'Remark Code', 'Action Date', 'Last Action'
+      'Claim ID', 'Provider Tax ID', 'Provider NPI', 'Payer Name', 'Payer ID', 'PayerSeq', 'Patient Name', 'Load Date', 'Service Date', 'Place Of Service', 'Charges', 'Allowed Amt', 'Category', 'Denial Code', 'Primary Diagnosis', 'Primary Service', 'Remark Code'
     ];
     let csv_data = [tableHeaders.join(',')];
 
@@ -210,9 +210,7 @@ const DataTable = (props) => {
         `${row.PrimaryGroup || ''} ${row.PrimaryCode || ''}`,
         row.PrimaryDX ? row.PrimaryDX.split("::")[0] : '',
         row.PrimaryProcedure || '',
-        remark,
-        row.ActionDate ? new Date(row.ActionDate).toLocaleDateString('en-US') : '',
-        row.ActionTaken === 'resubmit' ? 'Resubmitted to Payer' : '' // Assuming row.ActionTaken is the Last Action
+        remark
       ];
 
       csv_data.push(value.join(','));
@@ -423,18 +421,6 @@ const DataTable = (props) => {
                     {renderSortIcon('PrimaryProcedure')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("ActionDate")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Action Date
-                    {renderSortIcon('ActionDate')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("ActionTaken")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Last Action
-                    {renderSortIcon('ActionTaken')}
-                  </div>
-                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody className="relative">
@@ -504,14 +490,6 @@ const DataTable = (props) => {
                   </TableCell>
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
                     <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`} key={index}>{row.PrimaryProcedure}</span>
-                  </TableCell>
-                  <TableCell style={{ ...bodyCellStyle, minWidth: "200px" }}>
-                    <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`} key={index}>
-                      {row.ActionDate ? samplifyString(row.ActionDate.replace(/ \d{2}:\d{2}:\d{2} GMT$/, '')) : ''}
-                    </span>
-                  </TableCell>
-                  <TableCell style={{ ...bodyCellStyle, minWidth: "200px" }}>
-                    <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`} key={index}>{samplifyString(row.ActionTaken === 'resubmit' ? 'Resubmitted to Payer' : '')}</span>
                   </TableCell>
                 </TableRow>)
               }
@@ -722,5 +700,3 @@ const DataTable = (props) => {
 };
 
 export default DataTable;
-
-

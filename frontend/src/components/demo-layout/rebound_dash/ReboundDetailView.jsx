@@ -129,7 +129,7 @@ const ReboundDetailView = () => {
       claimNo
     }
     console.log(location.pathname)
-    navigate(`${type === 0 ? '/rebound' : '/medevolve'}/detail/${btoa(JSON.stringify(token))}`);
+    navigate(`${type === 0 ? '/rebound' : '/pilotcustomer'}/detail/${btoa(JSON.stringify(token))}`);
   }
 
 

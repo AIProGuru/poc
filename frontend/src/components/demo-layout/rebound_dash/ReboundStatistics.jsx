@@ -188,7 +188,7 @@ const ReboundStatistics = () => {
   const recoveryClick = (data) => {
     if (data && data.activeLabel === 'Actioned') {
       const filter = { claim_status: 'resubmit' };
-      navigate('/medevolve/resubmitted_claims');
+      navigate('/pilotcustomer/resubmitted_claims');
     }
     if (data.activeTooltipIndex && data.activeTooltipIndex === 2) {
       const token = btoa(JSON.stringify({
@@ -198,7 +198,7 @@ const ReboundStatistics = () => {
           Recovery: ""
         }
       }))
-      navigate(`${type === 0 ? '/rebound' : '/medevolve'}/${token}`)
+      navigate(`${type === 0 ? '/rebound' : '/pilotcustomer'}/${token}`)
     }
   }
 
@@ -533,21 +533,21 @@ const ReboundStatistics = () => {
                               tabIndex: 1,
                               selectedTags: ['Contractual Adj']
                             }))
-                            navigate(`${type === 0 ? '/rebound' : '/medevolve'}/${token}`)
+                            navigate(`${type === 0 ? '/rebound' : '/pilotcustomer'}/${token}`)
                           }
                           else if (label === 'Patient Resp') {
                             const token = btoa(JSON.stringify({
                               tabIndex: 2,
                               selectedTags: ['Patient Resp']
                             }))
-                            navigate(`${type === 0 ? '/rebound' : '/medevolve'}/${token}`)
+                            navigate(`${type === 0 ? '/rebound' : '/pilotcustomer'}/${token}`)
                           }
                           else {
                             const token = btoa(JSON.stringify({
                               tabIndex: 0,
                               selectedTags: [label]
                             }))
-                            navigate(`${type === 0 ? '/rebound' : '/medevolve'}/${token}`)
+                            navigate(`${type === 0 ? '/rebound' : '/pilotcustomer'}/${token}`)
                           }
                         }}
                       />

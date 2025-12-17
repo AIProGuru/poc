@@ -34,7 +34,7 @@ export default function SingleBarWithList({ data_pie, type = 1 }) {
         }));
       }
 
-      const path = `${type === 0 ? '/rebound' : '/medevolve'}/${token}`;
+      const path = `${type === 0 ? '/rebound' : '/pilotcustomer'}/${token}`;
       await navigate(path);
       
     } catch (error) {

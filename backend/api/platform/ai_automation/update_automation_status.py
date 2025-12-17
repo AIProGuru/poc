@@ -10,9 +10,11 @@ logger = logging.getLogger(__name__)
 # Define Blueprints for different APIs
 rebound_api_status = Blueprint('rebound_api_status', __name__, url_prefix='/api/v1/rebound')
 medevolve_api_status = Blueprint('medevolve_api_status', __name__, url_prefix='/api/v1/medevolve')
+pilotcustomer_api_status = Blueprint('pilotcustomer_api_status', __name__, url_prefix='/api/v1/pilotcustomer')
 
 @medevolve_api_status.route("/change_model_status", methods=["GET", "POST"])
 @rebound_api_status.route("/change_model_status", methods=["GET", "POST"])
+@pilotcustomer_api_status.route("/change_model_status", methods=["GET", "POST"])
 def change_model_status():
     """
     This endpoint changes the status of an AI model.

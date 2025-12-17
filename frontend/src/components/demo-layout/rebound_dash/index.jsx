@@ -54,7 +54,7 @@ const ReboundDash = () => {
   const theme = useSelector((state) => state.app.theme);
   const appType = useSelector((state) => state.app.type);
   const role = useSelector((state) => state.auth.role);
-  const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/medevolve' : '/demo';
+  const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/pilotcustomer' : '/demo';
   const isDenialsRoute = location.pathname.includes('/denials');
   const isUserManagementView = selectedNav === 'user-management';
   const showDenialModels = !isUserManagementView && isDenialsRoute && !rawToken;
@@ -680,43 +680,40 @@ const ReboundDash = () => {
               : (isDark ? 'bg-[#1F2231] text-[#B3B8D6]' : 'bg-slate-200 text-slate-700');
             return (
               <div key={item.id}>
-                <button
-                  type="button"
-                  className={`w-full flex items-center justify-between rounded-2xl px-2 py-2 transition-colors text-left ${navStateClass}`}
-                  onClick={() => handleNavSelection(item)}
-                >
-                  <span className="flex items-center gap-3 min-w-0">
-                    <span className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${iconWrapperClass}`}>
-                      {renderNavIcon(item.icon, isActive)}
+                <div className={`w-full flex items-center rounded-2xl px-2 py-2 transition-colors ${navStateClass}`}>
+                  <button
+                    type="button"
+                    className="flex-1 flex items-center justify-between gap-2 text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                    onClick={() => handleNavSelection(item)}
+                  >
+                    <span className="flex items-center gap-3 min-w-0">
+                      <span className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${iconWrapperClass}`}>
+                        {renderNavIcon(item.icon, isActive)}
+                      </span>
+                      <span className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
                     </span>
-                    <span className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
-                  </span>
-                  <span className="flex items-center gap-2">
                     {item.badge && (
                       <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}>
                         {item.badge}
                       </span>
                     )}
-                    {hasChildren && (
-                      <button
-                        type="button"
-                        className={`p-1 rounded-full ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleExpand(item.id);
-                        }}
+                  </button>
+                  {hasChildren && (
+                    <button
+                      type="button"
+                      className={`p-1 rounded-full ml-2 ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+                      onClick={() => toggleExpand(item.id)}
+                    >
+                      <svg
+                        className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        viewBox="0 0 20 20"
+                        fill="none"
                       >
-                        <svg
-                          className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                          viewBox="0 0 20 20"
-                          fill="none"
-                        >
-                          <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                    )}
-                  </span>
-                </button>
+                        <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
                 {hasChildren && isExpanded && (
                   <div className="ml-14 mt-1 mb-2 space-y-1">
                     {item.children.map((child) => {

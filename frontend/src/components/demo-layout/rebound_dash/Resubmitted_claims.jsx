@@ -95,7 +95,7 @@ const ResubmittedClaims = () => {
 
   const handleClaimClick = (claimId) => {
     const encodedClaimId = btoa(JSON.stringify({ claimNo: claimId }));
-    navigate(`/medevolve/detail/${encodedClaimId}`);
+    navigate(`/pilotcustomer/detail/${encodedClaimId}`);
   };
 
   const toggleSortOrder = () => {
