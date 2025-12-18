@@ -169,12 +169,14 @@ def generate_sql(
         query += f"AND CUSTOM_ALL.ServiceDate >= '{startDate}' "
     elif endDate != None:
         query += f"AND CUSTOM_ALL.ServiceDate <= '{endDate}' "
-    if "All" not in extra or tab_index != 5:
-        if tab_index != 6:
-            if tab_index == 5:
-                query += f"AND CUSTOM_ALL.Automation!=0"
-            else:
-                query += f"AND CUSTOM_ALL.Automation=0"
+    skip_automation_filter = include_all_categories and tab_index == TabIndex.MAIN
+    if not skip_automation_filter:
+        if "All" not in extra or tab_index != 5:
+            if tab_index != 6:
+                if tab_index == 5:
+                    query += f"AND CUSTOM_ALL.Automation!=0"
+                else:
+                    query += f"AND CUSTOM_ALL.Automation=0"
     if extra.get("ExcludeAutomationZero"):
         query += " AND (CUSTOM_ALL.Automation IS NULL OR CUSTOM_ALL.Automation != 0)"
     if sort != "":
