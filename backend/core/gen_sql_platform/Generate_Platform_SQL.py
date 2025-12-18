@@ -24,10 +24,13 @@ def generate_sql(
     extra={},
     sort = "",
 ):
+    include_all_categories = extra.get("IncludeAllCategories", False)
     tags = ""
     flag = False
     filteredTags = []
     for item in selectedTags:
+        if not item:
+            continue
         if tab_index == 0:
             if item == os.getenv('DELIQUENT') or item == "Contractual Adj" or item == "Patient Resp":
                 continue
@@ -44,11 +47,12 @@ def generate_sql(
         elif tab_index == 6 or tab_index == 5:
             filteredTags.append(item)
     for tag in filteredTags:
-        if tag != os.getenv('DELIQUENT'):
-            tags += f"'{tag}',"
-        else:
+        if tag == os.getenv('DELIQUENT'):
             flag = True
-    tags = tags[: len(tags) - 1]
+        else:
+            tags += f"'{tag}',"
+    if tags.endswith(","):
+        tags = tags[: len(tags) - 1]
     group = ""
     if code != "":
         group = code[:2].upper()
@@ -57,24 +61,27 @@ def generate_sql(
         from CUSTOM_ALL
         where CUSTOM_ALL.ClaimNo LIKE '{keyword}%' AND 
     """
-    if tags == "":
-        if flag == True:
-            query += f"""
-                CUSTOM_ALL.Category IS NULL
-            """
-        else:
-            query += f"""
-                CUSTOM_ALL.Category='A'
-            """
+    if include_all_categories:
+        query += "1=1"
     else:
-        if flag == True:
-            query += f"""
-                (CUSTOM_ALL.Category IS NULL OR CUSTOM_ALL.Category IN ({tags}))
-            """
+        if tags == "":
+            if flag == True:
+                query += f"""
+                    CUSTOM_ALL.Category IS NULL
+                """
+            else:
+                query += f"""
+                    CUSTOM_ALL.Category='A'
+                """
         else:
-            query += f"""
-                CUSTOM_ALL.Category IN ({tags})
-            """
+            if flag == True:
+                query += f"""
+                    (CUSTOM_ALL.Category IS NULL OR CUSTOM_ALL.Category IN ({tags}))
+                """
+            else:
+                query += f"""
+                    CUSTOM_ALL.Category IN ({tags})
+                """
     if pos != "":
         query += f"and CUSTOM_ALL.PlaceOfService='{pos}' "
     if remark != "":

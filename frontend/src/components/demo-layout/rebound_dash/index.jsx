@@ -536,7 +536,10 @@ const ReboundDash = () => {
       dispatch(increaseLoading())
       axios.get(`${apiUrl}/get_all_tags`).then((res) => {
         dispatch(setTags(res.data));
-        dispatch(setSelectedTags(res.data.filter(row => row !== '')));
+        dispatch(setSelectedTags(res.data));
+        if (!rawToken && tabIndex === 0) {
+          dispatch(setExtraFilter({ IncludeAllCategories: true }));
+        }
         dispatch(decreaseLoading())
         dispatch(setTagLoading(false));
       }).catch(err => {
@@ -623,7 +626,7 @@ const ReboundDash = () => {
     dispatch(setCurrentPage(1));
     dispatch(setKeyword(''));
     if (index == 0) {
-      dispatch(setSelectedTags(tags.filter(row => row !== '')));
+      dispatch(setSelectedTags(tags));
     } else if (index == 1) {
       dispatch(setSelectedTags(['Contractual Adj']))
     } else if (index == 2) {
@@ -644,7 +647,7 @@ const ReboundDash = () => {
     dispatch(setPOS(''));
     dispatch(setProcedure(''));
     dispatch(setKeyword(''));
-    dispatch(setExtraFilter({}));
+    dispatch(setExtraFilter(index === 0 ? { IncludeAllCategories: true } : {}));
     dispatch(setTableLoading(true));
     dispatch(setPart1Loading(true));
     dispatch(setPart2Loading(true));
