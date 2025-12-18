@@ -535,10 +535,15 @@ const ReboundDash = () => {
     if (tagLoading) {
       dispatch(increaseLoading())
       axios.get(`${apiUrl}/get_all_tags`).then((res) => {
-        dispatch(setTags(res.data));
-        dispatch(setSelectedTags(res.data));
-        if (!rawToken && tabIndex === 0) {
+        const allTags = res.data;
+        const shouldIncludeAll = !rawToken && tabIndex === 0;
+        if (shouldIncludeAll) {
           dispatch(setExtraFilter({ IncludeAllCategories: true }));
+        }
+        dispatch(setTags(allTags));
+        dispatch(setSelectedTags(allTags));
+        if (shouldIncludeAll) {
+          dispatch(setTableLoading(true));
         }
         dispatch(decreaseLoading())
         dispatch(setTagLoading(false));
@@ -647,7 +652,8 @@ const ReboundDash = () => {
     dispatch(setPOS(''));
     dispatch(setProcedure(''));
     dispatch(setKeyword(''));
-    dispatch(setExtraFilter(index === 0 ? { IncludeAllCategories: true } : {}));
+    const extraPayload = index === 0 ? { IncludeAllCategories: true } : {};
+    dispatch(setExtraFilter(extraPayload));
     dispatch(setTableLoading(true));
     dispatch(setPart1Loading(true));
     dispatch(setPart2Loading(true));

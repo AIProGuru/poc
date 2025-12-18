@@ -107,7 +107,7 @@ const DataTable = (props) => {
       dispatch(setTotalPage(res.data.maxPage));
       dispatch(setTableLoading(false))
     })
-  }, [tableLoading, selectedTags, order])
+  }, [tableLoading, selectedTags, order, extra])
 
   const setOrder = (ord) => {
     const ordName = order[order.length - 1] === '-' ? order.substring(0, order.length - 1) : order;
