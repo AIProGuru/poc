@@ -114,6 +114,7 @@ def get_rebound_data_all():
         perPage = request.json.get("perPage")
         keyword = request.json.get("keyword")
         selectedTags = request.json.get("selectedTags") or []
+        print(selectedTags)
         startDate = request.json.get("startDate")
         endDate = request.json.get("endDate")
         extra = request.json.get("extra", {})
