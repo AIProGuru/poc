@@ -123,6 +123,29 @@ def generate_sql(
         query += f"and CUSTOM_ALL.InsuranceType='{extra['InsuranceType']}' "
     if extra.get("Missing835"):
         query += "AND CUSTOM_ALL.id_835 IS NULL "
+    exclude_ai_models = extra.get("ExcludeAiModels")
+    if exclude_ai_models:
+        conditions = []
+        for item in exclude_ai_models:
+            group = (item.get("group") or item.get("GroupCode") or "").strip()
+            code = (item.get("code") or item.get("AdjustmentReason") or "").strip()
+            if not group or not code:
+                continue
+            group_safe = group.replace("'", "''")
+            code_safe = code.replace("'", "''")
+            conditions.append(
+                f"(CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentGroup='{group_safe}' AND CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentReason='{code_safe}')"
+            )
+        if len(conditions) > 0:
+            conditions_sql = " OR ".join(conditions)
+            query += f"""
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM CUSTOM_SERVICE_CODE_FOR_TABLE
+                    WHERE CUSTOM_SERVICE_CODE_FOR_TABLE.id_837=CUSTOM_ALL.ID
+                      AND ({conditions_sql})
+                )
+            """
     if code != "":
         query += f"""
             AND EXISTS (
@@ -145,6 +168,8 @@ def generate_sql(
                 query += f"AND CUSTOM_ALL.Automation!=0"
             else:
                 query += f"AND CUSTOM_ALL.Automation=0"
+    if extra.get("ExcludeAutomation"):
+        query += " AND CUSTOM_ALL.Automation=0"
     if sort != "":
         if sort[-1] == '-':
             query += f" ORDER BY CUSTOM_ALL.{sort[:-1]} DESC"

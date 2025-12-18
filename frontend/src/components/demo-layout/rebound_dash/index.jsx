@@ -45,6 +45,7 @@ const ReboundDash = () => {
     return location.pathname.includes('/denials') ? 'denials' : 'home';
   });
   const [expandedNav, setExpandedNav] = useState(() => new Set());
+  const [aiLibraryDrilldown, setAiLibraryDrilldown] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const inputKeywordRef = useRef();
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ const ReboundDash = () => {
   const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/pilotcustomer' : '/demo';
   const isDenialsRoute = location.pathname.includes('/denials');
   const isUserManagementView = selectedNav === 'user-management';
-  const showDenialModels = !isUserManagementView && isDenialsRoute && !rawToken;
+  const showAiModels = !isUserManagementView && selectedNav === 'ai-library' && !rawToken;
   const count = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   let tabIndex = useSelector((state) => state.app.tabIndex);
@@ -88,8 +89,13 @@ const ReboundDash = () => {
   }, [keyword]);
 
   useEffect(() => {
-    if (location.pathname.includes('/denials')) {
-      if (!selectedNav.startsWith('denials')) {
+    const onDenialsRoute = location.pathname.includes('/denials');
+    if (onDenialsRoute) {
+      if (aiLibraryDrilldown) {
+        if (selectedNav !== 'ai-library') {
+          setSelectedNav('ai-library');
+        }
+      } else if (!selectedNav.startsWith('denials')) {
         setSelectedNav('denials');
       }
     } else if (isManagementRoute) {
@@ -102,7 +108,11 @@ const ReboundDash = () => {
     ) {
       setSelectedNav('home');
     }
-  }, [location.pathname, selectedNav, isManagementRoute]);
+
+    if (!onDenialsRoute && aiLibraryDrilldown) {
+      setAiLibraryDrilldown(false);
+    }
+  }, [location.pathname, selectedNav, isManagementRoute, aiLibraryDrilldown]);
 
   const formatDisplay = (value, type = 'number') => {
     const numeric = Number(value ?? 0);
@@ -126,6 +136,23 @@ const ReboundDash = () => {
   ];
 
   const models = useSelector((state) => state.app.models);
+  const aiModelFilters = useMemo(() => {
+    const seen = new Set();
+    return models.reduce((acc, row) => {
+      const group = (row.GroupCode || '').trim();
+      const code = (row.Code || '').trim();
+      if (!group || !code) {
+        return acc;
+      }
+      const key = `${group}:${code}`;
+      if (seen.has(key)) {
+        return acc;
+      }
+      seen.add(key);
+      acc.push({ group, code });
+      return acc;
+    }, []);
+  }, [models]);
   const denialCount = models.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
 
   useEffect(() => {
@@ -192,7 +219,7 @@ const ReboundDash = () => {
     {
       id: 'denials',
       label: 'Denials',
-      badge: denialCount || null,
+      badge: null,
       icon: 'shield-x',
       children: [
         { id: 'denials:authorization', label: 'Authorization' },
@@ -243,7 +270,7 @@ const ReboundDash = () => {
         { id: 'payment-posting:refund', label: 'Refund' },
       ],
     },
-    { id: 'ai-library', label: 'AI Library', badge: null, icon: 'book' },
+    { id: 'ai-library', label: 'AI Library', badge: denialCount || null, icon: 'book' },
     { id: 'support', label: 'Support', badge: null, icon: 'lifebuoy' },
     { id: 'settings', label: 'Settings', badge: null, icon: 'cog' },
     ...(role === 'admin'
@@ -271,12 +298,19 @@ const ReboundDash = () => {
   }), []);
 
   const applyNavFilters = useCallback((navId) => {
-    if (!navId) return;
-    if (navId === 'user-management') {
+    if (!navId || navId === 'user-management') {
       return;
     }
-    const filterPayload = navExtraFilters[navId] || {};
+    const basePayload = navExtraFilters[navId] || {};
+    const filterPayload = { ...basePayload };
     const tagOverride = navTagFilters[navId];
+    const isDenialsNav = navId === 'denials' || navId.startsWith('denials:');
+    if (isDenialsNav) {
+      filterPayload.ExcludeAutomation = true;
+      if (aiModelFilters.length > 0) {
+        filterPayload.ExcludeAiModels = aiModelFilters;
+      }
+    }
     dispatch(setExtraFilter(filterPayload));
     if (tagOverride) {
       dispatch(setSelectedTags(tagOverride));
@@ -284,7 +318,22 @@ const ReboundDash = () => {
     }
     dispatch(setCurrentPage(1));
     dispatch(setTableLoading(true));
-  }, [dispatch, navExtraFilters, navTagFilters]);
+  }, [aiModelFilters, dispatch, navExtraFilters, navTagFilters]);
+
+  const aiFilterSignature = useMemo(() => JSON.stringify(aiModelFilters), [aiModelFilters]);
+  const lastAiFilterSignatureRef = useRef(aiFilterSignature);
+
+  useEffect(() => {
+    const isDenialsNav = selectedNav === 'denials' || selectedNav.startsWith('denials:');
+    if (!isDenialsNav) {
+      lastAiFilterSignatureRef.current = aiFilterSignature;
+      return;
+    }
+    if (lastAiFilterSignatureRef.current !== aiFilterSignature) {
+      lastAiFilterSignatureRef.current = aiFilterSignature;
+      applyNavFilters(selectedNav);
+    }
+  }, [aiFilterSignature, applyNavFilters, selectedNav]);
 
   const isDark = theme === 'dark';
 
@@ -465,6 +514,10 @@ const ReboundDash = () => {
         if (tokenObj.tabIndex != undefined) {
           dispatch(setTabIndex(tokenObj.tabIndex));
         }
+        if (tokenObj.source === 'ai-library') {
+          setAiLibraryDrilldown(true);
+          setSelectedNav('ai-library');
+        }
         dispatch(setTableLoading(true));
         dispatch(setPart1Loading(true));
         dispatch(setPart2Loading(true));
@@ -614,12 +667,16 @@ const ReboundDash = () => {
   };
 
   const handleNavSelection = (item) => {
+    if (item.id !== 'ai-library') {
+      setAiLibraryDrilldown(false);
+    }
     if (item.id === 'denials') {
       const denialsBase = `${baseAppPath}/denials`;
       if (location.pathname !== denialsBase) {
         navigate(denialsBase);
       }
       setSelectedNav('denials');
+      applyNavFilters('denials');
       return;
     }
     if (item.id === 'user-management') {
@@ -638,6 +695,7 @@ const ReboundDash = () => {
   };
 
   const handleChildSelection = (parentId, child) => {
+    setAiLibraryDrilldown(false);
     setSelectedNav(child.id);
     ensureExpanded(parentId);
     const parentItem = navItems.find((nav) => nav.id === parentId);
@@ -852,7 +910,7 @@ const ReboundDash = () => {
             </div>
 
             <div className="flex flex-col min-w-0">
-              {showDenialModels ? <ArIntel /> : <DataTable />}
+              {showAiModels ? <ArIntel onModelSelect={() => setAiLibraryDrilldown(true)} /> : <DataTable />}
             </div>
           </>
         )}

@@ -4,7 +4,7 @@ import { setAppTitle } from '../../../redux/reducers/app.reducer';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApiEndpoint } from '../../../ApiEndpointContext';
 
-const ArIntel = () => {
+const ArIntel = ({ onModelSelect }) => {
   const apiUrl = useApiEndpoint();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -47,8 +47,12 @@ const ArIntel = () => {
       tabIndex: 5,
       extra: row.extra,
       selectedTags: tags,
+      source: 'ai-library',
     };
     dispatch(setAppTitle(row.Title));
+    if (typeof onModelSelect === 'function') {
+      onModelSelect(row);
+    }
     const tenantBase = location.pathname.split('/')[1] || 'rebound';
     navigate(`/${tenantBase}/denials/${btoa(JSON.stringify(payload))}`);
   };
