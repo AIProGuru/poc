@@ -147,8 +147,8 @@ def get_rebound_data_all():
         cursor.execute(count_sql)
         result = cursor.fetchone()
         maxPage = int((result["cnt"] - 1) / perPage) + 1
-        print(count_sql)
-        print(result['cnt'])
+        print("aaaaaaaaaaaaaaaaaaaaaaa", count_sql)
+        print("bbbbbbbbbbbbbbbbbbbbbbb", result['cnt'])
         # Generate SQL query to fetch the data with pagination
         data_sql = f"""select
             CUSTOM_ALL.ClaimNo, CUSTOM_ALL.ProvTaxID, CUSTOM_ALL.ProvNPI,
