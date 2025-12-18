@@ -171,7 +171,8 @@ def get_rebound_data_all():
                 extra,
                 sort
             )} LIMIT {perPage} OFFSET {(currentPage-1)*perPage}"""
-        
+
+        print("ccccccccccccccccccccc", data_sql)
         cursor.execute(data_sql)
         results = cursor.fetchall()
         
