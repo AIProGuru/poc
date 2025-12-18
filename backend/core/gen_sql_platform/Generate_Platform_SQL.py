@@ -168,8 +168,6 @@ def generate_sql(
                 query += f"AND CUSTOM_ALL.Automation!=0"
             else:
                 query += f"AND CUSTOM_ALL.Automation=0"
-    if extra.get("ExcludeAutomation"):
-        query += " AND CUSTOM_ALL.Automation=0"
     if sort != "":
         if sort[-1] == '-':
             query += f" ORDER BY CUSTOM_ALL.{sort[:-1]} DESC"

@@ -305,11 +305,8 @@ const ReboundDash = () => {
     const filterPayload = { ...basePayload };
     const tagOverride = navTagFilters[navId];
     const isDenialsNav = navId === 'denials' || navId.startsWith('denials:');
-    if (isDenialsNav) {
-      filterPayload.ExcludeAutomation = true;
-      if (aiModelFilters.length > 0) {
-        filterPayload.ExcludeAiModels = aiModelFilters;
-      }
+    if (isDenialsNav && aiModelFilters.length > 0) {
+      filterPayload.ExcludeAiModels = aiModelFilters;
     }
     dispatch(setExtraFilter(filterPayload));
     if (tagOverride) {
