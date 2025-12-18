@@ -25,34 +25,36 @@ def generate_sql(
     sort = "",
 ):
     include_all_categories = extra.get("IncludeAllCategories", False)
+    apply_tag_filters = not (include_all_categories and tab_index == TabIndex.MAIN)
     tags = ""
     flag = False
     filteredTags = []
-    for item in selectedTags:
-        if not item:
-            continue
-        if tab_index == 0:
-            if item == os.getenv('DELIQUENT') or item == "Contractual Adj" or item == "Patient Resp":
+    if apply_tag_filters:
+        for item in selectedTags:
+            if not item:
                 continue
-            filteredTags.append(item)
-        elif tab_index == 1:
-            if item == "Contractual Adj":
+            if tab_index == 0:
+                if item == os.getenv('DELIQUENT') or item == "Contractual Adj" or item == "Patient Resp":
+                    continue
                 filteredTags.append(item)
-        elif tab_index == 2:
-            if item == "Patient Resp":
+            elif tab_index == 1:
+                if item == "Contractual Adj":
+                    filteredTags.append(item)
+            elif tab_index == 2:
+                if item == "Patient Resp":
+                    filteredTags.append(item)
+            elif tab_index == 3:
+                if item == os.getenv('DELIQUENT'):
+                    filteredTags.append(item)
+            elif tab_index == 6 or tab_index == 5:
                 filteredTags.append(item)
-        elif tab_index == 3:
-            if item == os.getenv('DELIQUENT'):
-                filteredTags.append(item)
-        elif tab_index == 6 or tab_index == 5:
-            filteredTags.append(item)
-    for tag in filteredTags:
-        if tag == os.getenv('DELIQUENT'):
-            flag = True
-        else:
-            tags += f"'{tag}',"
-    if tags.endswith(","):
-        tags = tags[: len(tags) - 1]
+        for tag in filteredTags:
+            if tag == os.getenv('DELIQUENT'):
+                flag = True
+            else:
+                tags += f"'{tag}',"
+        if tags.endswith(","):
+            tags = tags[: len(tags) - 1]
     group = ""
     if code != "":
         group = code[:2].upper()
@@ -61,7 +63,7 @@ def generate_sql(
         from CUSTOM_ALL
         where CUSTOM_ALL.ClaimNo LIKE '{keyword}%' AND 
     """
-    if include_all_categories:
+    if include_all_categories and tab_index == TabIndex.MAIN:
         query += "1=1"
     else:
         if tags == "":

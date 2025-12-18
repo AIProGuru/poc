@@ -113,7 +113,7 @@ def get_rebound_data_all():
         currentPage = request.json.get("currentPage")
         perPage = request.json.get("perPage")
         keyword = request.json.get("keyword")
-        selectedTags = request.json.get("selectedTags")
+        selectedTags = request.json.get("selectedTags") or []
         startDate = request.json.get("startDate")
         endDate = request.json.get("endDate")
         extra = request.json.get("extra", {})
@@ -123,10 +123,8 @@ def get_rebound_data_all():
         pos = request.json.get("pos", "")
         sort = request.json.get("sort", "")
         
-        if (extra.get("IncludeAllCategories") and tab_index == 0) or selectedTags:
-            pass
-        else:
-            qty = []
+        include_all_categories = extra.get("IncludeAllCategories") and tab_index == 0
+        if not include_all_categories and not selectedTags:
             return jsonify({"maxPage": 0, "data": []}), 200
         
         # Generate SQL query to count the total number of records
