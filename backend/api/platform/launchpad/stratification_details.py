@@ -123,8 +123,10 @@ def get_rebound_data_all():
         pos = request.json.get("pos", "")
         sort = request.json.get("sort", "")
         
-        # If no tags are selected, return an empty response
-        if not selectedTags:
+        if (extra.get("IncludeAllCategories") and tab_index == 0) or selectedTags:
+            pass
+        else:
+            qty = []
             return jsonify({"maxPage": 0, "data": []}), 200
         
         # Generate SQL query to count the total number of records
