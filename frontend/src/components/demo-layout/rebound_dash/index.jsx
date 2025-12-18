@@ -303,10 +303,18 @@ const ReboundDash = () => {
     }
     const basePayload = navExtraFilters[navId] || {};
     const filterPayload = { ...basePayload };
-    const tagOverride = navTagFilters[navId];
+    let tagOverride = navTagFilters[navId];
     const isDenialsNav = navId === 'denials' || navId.startsWith('denials:');
-    if (isDenialsNav && aiModelFilters.length > 0) {
-      filterPayload.ExcludeAiModels = aiModelFilters;
+    if (!tagOverride && navId === 'denials') {
+      tagOverride = tags.filter(
+        (tag) => tag && tag !== 'Contractual Adj' && tag !== 'Patient Resp'
+      );
+    }
+    if (isDenialsNav) {
+      filterPayload.ExcludeAutomationZero = true;
+      if (aiModelFilters.length > 0) {
+        filterPayload.ExcludeAiModels = aiModelFilters;
+      }
     }
     dispatch(setExtraFilter(filterPayload));
     if (tagOverride) {
@@ -315,7 +323,7 @@ const ReboundDash = () => {
     }
     dispatch(setCurrentPage(1));
     dispatch(setTableLoading(true));
-  }, [aiModelFilters, dispatch, navExtraFilters, navTagFilters]);
+  }, [aiModelFilters, dispatch, navExtraFilters, navTagFilters, tags]);
 
   const aiFilterSignature = useMemo(() => JSON.stringify(aiModelFilters), [aiModelFilters]);
   const lastAiFilterSignatureRef = useRef(aiFilterSignature);
@@ -528,7 +536,7 @@ const ReboundDash = () => {
       dispatch(increaseLoading())
       axios.get(`${apiUrl}/get_all_tags`).then((res) => {
         dispatch(setTags(res.data));
-        dispatch(setSelectedTags(res.data.filter(row => row !== 'Contractual Adj' && row !== 'Patient Resp' && row !== '')));
+        dispatch(setSelectedTags(res.data.filter(row => row !== '')));
         dispatch(decreaseLoading())
         dispatch(setTagLoading(false));
       }).catch(err => {
@@ -615,7 +623,7 @@ const ReboundDash = () => {
     dispatch(setCurrentPage(1));
     dispatch(setKeyword(''));
     if (index == 0) {
-      dispatch(setSelectedTags(tags.filter(row => row !== 'Contractual Adj' && row !== 'Patient Resp' && row !== '')));
+      dispatch(setSelectedTags(tags.filter(row => row !== '')));
     } else if (index == 1) {
       dispatch(setSelectedTags(['Contractual Adj']))
     } else if (index == 2) {
