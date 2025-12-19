@@ -281,6 +281,7 @@ const ReboundDash = () => {
     'claim-status:pend-835': { Missing835: true },
   }), []);
   const navTagFilters = useMemo(() => ({
+    'claim-status:pend-835': ['Delinquent'],
     'denials:authorization': ['Authorization'],
     'denials:billing': ['Billing'],
     'denials:cob': ['Coordination of Benefits'],
@@ -305,16 +306,14 @@ const ReboundDash = () => {
     const filterPayload = { ...basePayload };
     let tagOverride = navTagFilters[navId];
     const isDenialsNav = navId === 'denials' || navId.startsWith('denials:');
+    const isAiLibrary = navId === 'ai-library';
     if (!tagOverride && navId === 'denials') {
       tagOverride = tags.filter(
         (tag) => tag && tag !== 'Contractual Adj' && tag !== 'Patient Resp'
       );
     }
-    if (isDenialsNav) {
-      filterPayload.ExcludeAutomationZero = true;
-      if (aiModelFilters.length > 0) {
-        filterPayload.ExcludeAiModels = aiModelFilters;
-      }
+    if (isAiLibrary && aiModelFilters.length > 0) {
+      filterPayload.ExcludeAiModels = aiModelFilters;
     }
     dispatch(setExtraFilter(filterPayload));
     if (tagOverride) {
@@ -324,6 +323,14 @@ const ReboundDash = () => {
     dispatch(setCurrentPage(1));
     dispatch(setTableLoading(true));
   }, [aiModelFilters, dispatch, navExtraFilters, navTagFilters, tags]);
+
+  // When tags finish loading, re-apply filters for denials views so data loads.
+  useEffect(() => {
+    if (!tags || tags.length === 0) return;
+    if (selectedNav === 'denials' || selectedNav.startsWith('denials:')) {
+      applyNavFilters(selectedNav);
+    }
+  }, [applyNavFilters, selectedNav, tags]);
 
   const aiFilterSignature = useMemo(() => JSON.stringify(aiModelFilters), [aiModelFilters]);
   const lastAiFilterSignatureRef = useRef(aiFilterSignature);
@@ -536,15 +543,16 @@ const ReboundDash = () => {
       dispatch(increaseLoading())
       axios.get(`${apiUrl}/get_all_tags`).then((res) => {
         const allTags = res.data;
-        const shouldIncludeAll = !rawToken && tabIndex === 0;
-        if (shouldIncludeAll) {
-          dispatch(setExtraFilter({ IncludeAllCategories: true }));
-        }
         dispatch(setTags(allTags));
-        dispatch(setSelectedTags(allTags));
-        if (shouldIncludeAll) {
+
+        if (!rawToken) {
+          dispatch(setSelectedTags([]));
+          dispatch(setExtraFilter({ IncludeAllCategories: true }));
           dispatch(setTableLoading(true));
+        } else {
+          dispatch(setSelectedTags(allTags));
         }
+
         dispatch(decreaseLoading())
         dispatch(setTagLoading(false));
       }).catch(err => {
@@ -631,7 +639,7 @@ const ReboundDash = () => {
     dispatch(setCurrentPage(1));
     dispatch(setKeyword(''));
     if (index == 0) {
-      dispatch(setSelectedTags(tags));
+      dispatch(setSelectedTags([]));
     } else if (index == 1) {
       dispatch(setSelectedTags(['Contractual Adj']))
     } else if (index == 2) {
@@ -683,6 +691,18 @@ const ReboundDash = () => {
   const handleNavSelection = (item) => {
     if (item.id !== 'ai-library') {
       setAiLibraryDrilldown(false);
+    }
+    if (item.id === 'home') {
+      if (location.pathname.includes('/denials') || location.pathname.includes('/management')) {
+        navigate(baseAppPath);
+      }
+      setSelectedNav('home');
+      dispatch(setTabIndex(0));
+      dispatch(setSelectedTags([]));
+      dispatch(setExtraFilter({ IncludeAllCategories: true }));
+      dispatch(setCurrentPage(1));
+      dispatch(setTableLoading(true));
+      return;
     }
     if (item.id === 'denials') {
       const denialsBase = `${baseAppPath}/denials`;
@@ -907,6 +927,37 @@ const ReboundDash = () => {
                   )}
                 </div>
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mt-4">
+              {[
+                { label: 'All', value: 0 },
+                { label: 'Contractual Adj', value: 1 },
+                { label: 'Patient Resp', value: 2 },
+                { label: 'Delinquent', value: 3 },
+                { label: 'Uncategorized', value: 4 },
+                { label: 'Automation', value: 5 },
+              ].map((tab) => {
+                const isActive = tabIndex === tab.value;
+                return (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    onClick={() => changeTab(tab.value)}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                      isActive
+                        ? isDark
+                          ? 'bg-white text-[#0B0E17]'
+                          : 'bg-slate-900 text-white'
+                        : isDark
+                          ? 'bg-[#0B0E17] border border-white/20 text-white/80 hover:bg-white/10'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
 
             <div className={`rounded-[48px] p-6 ${isDark ? 'bg-gradient-to-r from-[#4B9187] via-[#1D2540] to-[#6911AC80]' : 'bg-white'} shadow-[0_20px_60px_rgba(0,0,0,0.25)]`}>

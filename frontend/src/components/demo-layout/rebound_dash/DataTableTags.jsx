@@ -55,6 +55,7 @@ export default function DataTableTags(props) {
   };
 
   const applyFilter = () => {
+    const extraPayload = selectedTags.length === 0 ? { IncludeAllCategories: true } : {};
     // dispatch(increasePart1Loading())
     dispatch(setPart1Loading(true))
     dispatch(setPart2Loading(true))
@@ -67,7 +68,7 @@ export default function DataTableTags(props) {
     dispatch(setRemark(remark))
     dispatch(setProcedure(procedure))
     dispatch(setPOS(pos))
-    dispatch(setExtraFilter({}))
+    dispatch(setExtraFilter(extraPayload))
     console.log(endDate);
     setAnchorEl(null);
     axios.post(`${apiUrl}/data_all`, {
@@ -82,6 +83,7 @@ export default function DataTableTags(props) {
       remark: remark,
       procedure: procedure,
       pos: pos,
+      extra: extraPayload,
       sort: props.order
     }).then(res => {
       dispatch(setTableData(res.data.data));

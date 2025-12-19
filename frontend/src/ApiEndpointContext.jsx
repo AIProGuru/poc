@@ -12,6 +12,7 @@ import {
   setStatisticsLoading,
   setPayerLoading,
   setTabIndex,
+  setExtraFilter,
   increaseLoading,
   decreaseLoading,
 } from './redux/reducers/app.reducer';
@@ -57,7 +58,9 @@ export const ApiEndpointProvider = ({ children }) => {
     dispatch(increaseLoading())
     axios.get(`${apiUrl}/get_all_tags`).then((res) => {
       dispatch(setTags(res.data));
-      dispatch(setSelectedTags(res.data.filter(row => row !== 'Contractual Adj' && row !== 'Patient Resp' && row !== '')));
+      // Default to showing all categories on initial load.
+      dispatch(setSelectedTags([]));
+      dispatch(setExtraFilter({ IncludeAllCategories: true }));
       dispatch(decreaseLoading())
       dispatch(setTagLoading(false));
     }).catch(err => {

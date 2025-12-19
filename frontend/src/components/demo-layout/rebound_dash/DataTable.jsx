@@ -87,7 +87,8 @@ const DataTable = (props) => {
 
     if (apiUrl === '') return;
     if (!tableLoading) return;
-    if (selectedTags.length === 0) return;
+    const includeAllCategories = extra?.IncludeAllCategories;
+    if (!includeAllCategories && selectedTags.length === 0) return;
     axios.post(`${apiUrl}/data_all`, {
       currentPage: currentPage,
       perPage: pageSize,
