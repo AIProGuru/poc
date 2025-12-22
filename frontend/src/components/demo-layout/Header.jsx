@@ -69,24 +69,21 @@ const Header = () => {
     dispatch(setTheme(newTheme));
   };
 
+  const headerBg = isDarkMode ? "bg-[#07090F] text-white" : "bg-slate-50 text-black";
+
   return (
     <div
-      className={`flex mt-5 ml-0 sm:ml-0 justify-between w-full ${
-        theme === "dark" ? "bg-[#151619] text-white" : " bg-white text-black"
-      }`}
+      className={`flex my-5 ml-0 sm:ml-0 justify-between w-full ${headerBg}`}
     >
-      <div className="flex  flex-col">
+      <div className="flex flex-col">
         <div
-          className="flex sm:hidden pt-2 pb-9  cursor-pointer"
+          className="flex sm:hidden pt-2 pb-9 cursor-pointer"
           onClick={() => navigate("/")}
         >
-          {/* <img src="/aaftaab.svg" alt="Logo" /> */}
+          {/* mobile logo placeholder */}
         </div>
-        <div className="mt-3  text-2xl sm:text-2xl">{appTitle}</div>
       </div>
-      <div>
-        {/* {isDarkMode ? <h1>Dark Theme enabled</h1> : <h1>Light Theme enabled</h1>} */}
-      </div>
+      <div />
       <div className="items-center hidden sm:flex gap-4">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">

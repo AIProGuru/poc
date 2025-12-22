@@ -17,23 +17,24 @@ import DetailSection from "./DetailSection";
 import Recommendation from "./Recommendation";
 import { samplifyDouble, samplifyString, samplifyInteger, SERVER_URL } from "../../../utils/config";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
-import { useDispatch, useSelector } from "react-redux";
-import { setAppTitle } from "../../../redux/reducers/app.reducer";
+import { useSelector } from "react-redux";
 import { IconButton } from "@mui/material";
 import "./dashboard.css"
 
 
 const ReboundDetailView = () => {
   const apiUrl = useApiEndpoint();
-  const dispatch = useDispatch();
   const location = useLocation();
   const [showAppealModal, setShowAppealModal] = useState(false);
-  
+
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
   const theme = useSelector((state) => state.app.theme);
+  const appTitle = useSelector((state) => state.app.title);
+  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const username = useSelector((state) => state.auth.username);
   const [detailShowStatus, setDetailShowStatus] = useState(4);
+  const [routeTitle, setRouteTitle] = useState('');
   const [currentClaim, setCurrentClaim] = useState(null);
   const [appeal, setAppeal] = useState([])
   const [actionDate, setActionDate] = useState(null)
@@ -74,13 +75,12 @@ const ReboundDetailView = () => {
     Evidence2: "",
     Resubmittion: "",
   })
-  const [remit_collapse_state,SetRemit_state]=useState(true)
+  const [remit_collapse_state, SetRemit_state] = useState(true)
 
   let { token } = useParams()
   useEffect(() => {
     if (apiUrl === '') return;
     if (token) {
-      dispatch(setAppTitle("Triage/Action"))
       token = JSON.parse(atob(token))
       console.log(token)
       if (token.tabIndex) {
@@ -88,6 +88,9 @@ const ReboundDetailView = () => {
       }
       if (token.claimNo) {
         setClaimNo(token.claimNo);
+      }
+      if (token.appTitle) {
+        setRouteTitle(token.appTitle);
       }
     }
   }, [apiUrl, token])
@@ -139,8 +142,8 @@ const ReboundDetailView = () => {
     })
   }
 
-  
-  const [notes , setNotes] = useState('')
+
+  const [notes, setNotes] = useState('')
 
   const expandAll = () => {
     setStatus(false);
@@ -176,7 +179,7 @@ const ReboundDetailView = () => {
       toast.error('Error occurred while submitting.');
     });
   };
-  
+
 
   const makeWordBold = (text, word) => {
     // Create a regular expression to match the word, ignoring case
@@ -193,7 +196,7 @@ const ReboundDetailView = () => {
     const date = new Date(Date.parse(dateString));
     return date.toLocaleDateString();
   };
-  
+
   const TableWrapper = ({ children }) => (
     <div className="overflow-x-auto rounded-xl shadow-sm border border-gray-200">
       <div className="inline-block min-w-full align-middle">
@@ -202,25 +205,77 @@ const ReboundDetailView = () => {
     </div>
   );
 
+  const formatValue = (value, fallback = "N/A") => {
+    if (value === undefined || value === null) return fallback;
+    if (Array.isArray(value)) {
+      const joined = value
+        .filter((item) => item !== undefined && item !== null && `${item}`.trim() !== "")
+        .join(", ");
+      return joined || fallback;
+    }
+    if (typeof value === "string" && value.trim() === "") return fallback;
+    return value;
+  };
+
+  const formatDateValue = (value) => {
+    if (!value) return "N/A";
+    const parsed = new Date(Date.parse(value));
+    return Number.isNaN(parsed.getTime()) ? "N/A" : parsed.toLocaleDateString();
+  };
+
+  const formatCurrency = (value) => {
+    if (value === undefined || value === null || value === "") return "N/A";
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? "N/A" : `$${samplifyDouble(numericValue)}`;
+  };
+
+  const extractModifiers = (mod) => {
+    if (Array.isArray(mod)) return mod.filter((item) => item).slice(0, 3);
+    if (typeof mod === "string") return mod.split(",").map((item) => item.trim()).filter(Boolean).slice(0, 3);
+    if (mod && typeof mod === "object") {
+      return [mod.Mod1, mod.Mod2, mod.Mod3].filter((item) => item);
+    }
+    return [];
+  };
+
+  const SectionCard = ({ title, children, startCollapsed = true }) => {
+    const [collapsed, setCollapsed] = useState(startCollapsed);
+
+    return (
+      <div
+        className={`rounded-2xl border ${isDark ? 'border-[#1f2433] bg-gradient-to-b from-[#141824] to-[#0f121b] shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'border-gray-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]'}`}
+      >
+        <button
+          type="button"
+          className={`w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b ${isDark ? 'border-[#1f2433] hover:bg-[#151a24]' : 'border-gray-200 hover:bg-gray-50'} transition`}
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          <p className={`text-sm font-semibold text-left ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{title}</p>
+          <div className={`w-7 h-7 rounded-lg border flex items-center justify-center text-lg ${isDark ? 'border-[#2a3142] bg-[#0f131b] text-gray-300' : 'border-gray-200 bg-white text-gray-700'}`}>
+            {collapsed ? "+" : "-"}
+          </div>
+        </button>
+        {!collapsed && <div className="px-4 sm:px-6 py-4">{children}</div>}
+      </div>
+    );
+  };
+
+  const InfoGrid = ({ fields }) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {fields.map((field, index) => (
+        <div
+          key={`${field.label}-${index}`}
+          className={`rounded-xl p-4 flex flex-col gap-1 border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-white border-gray-200 shadow-[0_6px_20px_rgba(0,0,0,0.06)]'}`}
+        >
+          <p className={`text-xs uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{field.label}</p>
+          <p className={`text-sm font-medium break-words ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{field.value}</p>
+        </div>
+      ))}
+    </div>
+  );
+
   const onDetailShowStatusChange = (value) => {
     setDetailShowStatus(value);
-    switch (value) {
-      case 0:
-        dispatch(setAppTitle("Claim"));
-        break;
-      case 1:
-        dispatch(setAppTitle("Remit"));
-        break;
-      case 2:
-        dispatch(setAppTitle("Related Encounters"));
-        break;
-      case 3:
-        dispatch(setAppTitle("Documentation"));
-        break;
-      case 4:
-        dispatch(setAppTitle("Triage/Action"));
-        break;
-    }
   }
 
 
@@ -242,7 +297,6 @@ const ReboundDetailView = () => {
     if (claimNo === '') return;
     setCurrentClaim(null);
     setDetailShowStatus(4);
-    // dispatch(setAppTitle("Claim"))
     axios.get(`${apiUrl}/get_claim?id=${claimNo}&username=${username}`).then(res => {
       console.log("@@@@@@@@@@@@@@", res.data)
       setCurrentClaim(res.data);
@@ -260,7 +314,7 @@ const ReboundDetailView = () => {
 
   };
 
-  
+
 
   const handleCloseNotesHistoryModal = () => {
     setOpenNotesHistoryModal(false)
@@ -278,1211 +332,1141 @@ const ReboundDetailView = () => {
 
   return (
     <>
-      {currentClaim && <div className="flex flex-col gap-4">
+      {currentClaim && (
+        <div
+          className={`flex flex-col gap-4 p-4 rounded-2xl border m-4 ${
+            isDark
+              ? 'bg-[#10131b] border-[#26272C33] shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
+              : 'bg-white border-gray-200 shadow-[0_8px_18px_rgba(0,0,0,0.08)]'
+          }`}
+        >
 
-        <div>
-       <p className=" text-[32px] font-semibold">Claim ID: {currentClaim.Claim.Data.ClaimNo}</p>
+        {/* <div>
+          <p className=" text-[32px] font-semibold text-gray-100">Claim ID: {currentClaim.Claim.Data.ClaimNo}</p>
+        </div> */}
+
+        {/* <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 p-3 rounded-2xl border ${isDark ? 'bg-[#0b0f16] border-[#1f2433] shadow-[0_12px_30px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 shadow-[0_10px_28px_rgba(0,0,0,0.08)]'}`}>
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Service Date(s)</div>
+            <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+              {formatDateValue(currentClaim.Claim.Data.ServiceDate)}
+            </div>
+          </div>
+
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Charges</div>
+            <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.Amount)}</div>
+          </div>
+
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Allowed Amt</div>
+            <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+              {formatCurrency(
+                currentClaim.Remit.length === 0
+                  ? currentClaim.Claim.Data.Amount
+                  : currentClaim.Remit[0].ServiceLine.map((rr) => Number(rr.AllowedAmount)).reduce((partialSum, a) => partialSum + a, 0)
+              )}
+            </div>
+          </div>
+
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Paid Amt</div>
+            <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.PaidAmount)}</div>
+          </div>
+
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Patient Resp</div>
+            <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.PatientResp)}</div>
+          </div>
+
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Contractual Adj</div>
+            <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+              {formatCurrency(
+                currentClaim.Remit.length === 0
+                  ? 0
+                  : currentClaim.Remit[0].ServiceLine.map((rr) => Number(rr.ChargedAmount) - Number(rr.AllowedAmount)).reduce(
+                    (partialSum, a) => partialSum + a,
+                    0
+                  )
+              )}
+            </div>
+          </div>
+
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Denied Amt</div>
+            <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.DeniedAmount)}</div>
+          </div>
+        </div> */}
+        <div className={`flex flex-col gap-3 p-4 rounded-2xl border ${isDark ? 'bg-[#0f131b] border-[#1f2433] shadow-[0_12px_30px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)]'}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className={`text-[12px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              {routeTitle || appTitle || 'Payment Variance > Underpaid > Priority 01 > Claim (837)'}
+            </p>
+            {/* <button className={`flex items-center gap-2 px-3 py-2 text-[12px] font-semibold rounded-lg transition ${isDark ? 'text-gray-200 bg-[#1a1f2b] border border-[#2a3142] hover:border-[#3c4661]' : 'text-gray-700 bg-white border border-gray-200 hover:border-gray-300 shadow-sm'}`}>
+              Actions
+              <span className="text-gray-400 text-xs">▼</span>
+            </button> */}
+          </div>
+          <div
+            className={`flex items-center rounded-2xl border px-1 py-1 ${
+              isDark
+                ? 'bg-[#0f131b] border-[#1f2433] shadow-[0_12px_30px_rgba(0,0,0,0.35)]'
+                : 'bg-white border-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)]'
+            }`}
+          >
+            {[
+              { id: 4, label: "Triage/Action" },
+              { id: 0, label: "Claim (837)" },
+              { id: 1, label: "Payments 835" },
+              { id: 2, label: "Related Encounters" },
+            ].map((tab) => {
+              const active = detailShowStatus === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => onDetailShowStatusChange(tab.id)}
+                  className={`flex-1 text-center px-4 py-2 text-sm font-semibold rounded-xl transition ${
+                    active
+                      ? isDark
+                        ? 'bg-[#2a2f3d] text-white border border-[#3c4661]'
+                        : 'bg-slate-900 text-white border border-slate-800'
+                      : isDark
+                        ? 'text-gray-400 border border-transparent hover:border-[#2e364a] hover:bg-[#141824]'
+                        : 'text-gray-600 border border-transparent hover:bg-gray-100'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className={`flex sm:flex-row flex-col    rounded-xl p-2 gap-2 items-center font-inter w-full ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} `}>
-  {/* Service Date */}
-  <div className={` h-full w-full rounded-xl flex flex-row sm:items-start items-center sm:flex-col sm:justify-center justify-between p-3 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'} `}>
-    <div className="text-[12px] text-[#828385]">Service Date(s)</div>
-    <div className={`text-[16px] ${theme==='dark'?'text-gray-300':'text-[#151618]'}  mt-0 sm:mt-5`}>
-      {(() => {
-        const date = new Date(Date.parse(currentClaim.Claim.Data.ServiceDate));
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const year = date.getUTCFullYear();
-        return `${month}/${day}/${year}`;
-      })()}
-    </div>
-  </div>
-
-  {/* Charges */}
-  <div className={` h-full w-full rounded-xl flex flex-row sm:items-start items-center sm:flex-col sm:justify-center justify-between p-3 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'} `}>
-    <div className={`text-[12px] ${theme==='dark'?'text-gray-300':'text-[#828385]'} text-[#828385]`}>Charges</div>
-    <div className={`text-[16px] ${theme==='dark'?'text-gray-300':'text-[#151618]'}  mt-0 sm:mt-5`}>{`$${samplifyDouble(currentClaim.Claim.Data.Amount)}`}</div>
-  </div>
-
-  {/* Allowed Amount */}
-  <div className={` h-full w-full rounded-xl flex flex-row sm:items-start items-center sm:flex-col sm:justify-center justify-between p-3 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'} `}>
-    <div className={`text-[12px] ${theme==='dark'?'text-gray-300':'text-[#828385]'} text-[#828385]`}>Allowed Amt</div>
-    <div className={`text-[16px] ${theme==='dark'?'text-gray-300':'text-[#151618]'}  mt-0 sm:mt-5`}>
-      {`$${currentClaim.Remit.length === 0
-        ? currentClaim.Claim.Data.Amount
-        : currentClaim.Remit[0].ServiceLine
-            .map((rr) => Number(rr.AllowedAmount))
-            .reduce((partialSum, a) => partialSum + a, 0)}`}
-    </div>
-  </div>
-
-  {/* Paid Amount */}
-  <div className={` h-full w-full rounded-xl flex flex-row sm:items-start items-center sm:flex-col sm:justify-center justify-between p-3 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'} `}>
-    <div className={`text-[12px] ${theme==='dark'?'text-gray-300':'text-[#828385]'} text-[#828385]`}>Paid Amt</div>
-    <div className={`text-[16px] ${theme==='dark'?'text-gray-300':'text-[#151618]'}  mt-0 sm:mt-5`}>{`$${samplifyDouble(currentClaim.Claim.Data.PaidAmount)}`}</div>
-  </div>
-
-  {/* Patient Responsibility */}
-  <div className={` h-full w-full rounded-xl flex flex-row sm:items-start items-center sm:flex-col sm:justify-center justify-between p-3 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'} `}>
-    <div className={`text-[12px] ${theme==='dark'?'text-gray-300':'text-[#828385]'} text-[#828385]`}>Patient Resp</div>
-    <div className={`text-[16px] ${theme==='dark'?'text-gray-300':'text-[#151618]'}  mt-0 sm:mt-5`}>{`$${samplifyDouble(currentClaim.Claim.Data.PatientResp)}`}</div>
-  </div>
-
-  {/* Contractual Adjustment */}
-  <div className={` h-full w-full rounded-xl flex flex-row sm:items-start items-center sm:flex-col sm:justify-center justify-between p-3 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'} `}>
-    <div className={`text-[12px] ${theme==='dark'?'text-gray-300':'text-[#828385]'} text-[#828385]`}>Contractual Adj</div>
-    <div className={`text-[16px] ${theme==='dark'?'text-gray-300':'text-[#151618]'}  mt-0 sm:mt-5`}>
-      {`$${samplifyDouble(
-        currentClaim.Remit.length === 0
-          ? 0
-          : currentClaim.Remit[0].ServiceLine
-              .map((rr) => Number(rr.ChargedAmount) - Number(rr.AllowedAmount))
-              .reduce((partialSum, a) => partialSum + a, 0)
-      )}`}
-    </div>
-  </div>
-
-  {/* Denied Amount */}
-  <div className={` h-full w-full rounded-xl flex flex-row sm:items-start items-center sm:flex-col sm:justify-center justify-between p-2 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'} `}>
-    <div className={`text-[12px] ${theme==='dark'?'text-gray-300':'text-[#828385]'} text-[#828385]`}>Denied Amt</div>
-    <div className={`text-[16px] ${theme==='dark'?'text-gray-300':'text-[#151618]'}  mt-0 sm:mt-5`}>{`$${samplifyDouble(currentClaim.Claim.Data.DeniedAmount)}`}</div>
-  </div>
-</div>
-<div className="text-[12px] h-[90px] font-medium  text-center text-[#005DE2]  flex justify-between items-center overflow-x-auto overflow-y-auto whitespace-nowrap">
-  <ul className="flex flex-nowrap -mb-px">
-  <li className="me-2">
-      <a
-        href="#"
-        className={`inline-block mt-2 p-2 border-b-2 ${detailShowStatus === 4
-          ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
-          : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-          }`}
-        aria-current="page"
-        onClick={() => onDetailShowStatusChange(4)}
-      >
-        Triage/Action
-      </a>
-    </li>
-    <li className="me-2">
-      <a
-        href="#"
-        className={`inline-block p-2 mt-2 border-b-2 ${detailShowStatus === 0
-          ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
-          : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-          }`}
-        onClick={() => onDetailShowStatusChange(0)}
-      >
-        Claim
-      </a>
-    </li>
-    <li className="me-2">
-      <a
-        href="#"
-        className={`inline-block p-2 mt-2 border-b-2 ${detailShowStatus === 1
-          ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
-          : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-          }`}
-        aria-current="page"
-        onClick={() => onDetailShowStatusChange(1)}
-      >
-        Remit
-      </a>
-    </li>
-    <li className="me-2">
-      <a
-        href="#"
-        className={`inline-block p-2 mt-2 border-b-2 ${detailShowStatus === 2
-          ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
-          : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-          }`}
-        aria-current="page"
-        onClick={() => onDetailShowStatusChange(2)}
-      >
-        Related Encounters
-      </a>
-    </li>
-    {/* <li className="me-2">
-      <a
-        href="#"
-        className={`inline-block p-4 border-b-2 ${detailShowStatus === 3
-          ? "text-[#0D364D] border-b-2 border-[#0D364D] rounded-t-lg active"
-          : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
-          }`}
-        aria-current="page"
-        onClick={() => onDetailShowStatusChange(3)}
-      >
-        Documentation
-      </a>
-    </li> */}
-
-  </ul>
-  {/* <div className="flex gap-2">
-    <div className="select-none border border-[#F2F7FF] bg-[#F2F7FF] rounded-lg text-[#0D364D] text-[14px] font-semibold px-[16px] py-[10px] cursor-pointer" onClick={expandAll}>Expand All</div>
-    <div className="select-none border border-[#CACBCB] bg-white rounded-lg text-[#0D364D] text-[14px] font-semibold px-[16px] py-[10px] cursor-pointer" onClick={collapseAll}>Collapse All</div>
-  </div> */}
-</div>
-
-        
         {detailShowStatus == 0 && (
-  <div className="flex flex-col bg-[#EFF4FE] p-3 gap-3 rounded-xl">
-    {/* Visit Section */}
-    <DetailSection title={"Visit"} status={status} key={renderIndex} showArrow={true}>
-  <div className="overflow-hidden rounded-xl"> {/* Changed overflow-x-auto to overflow-hidden */}
-    <table className="min-w-full divide-y divide-gray-200">
-      <thead>
-        <tr className="bg-gray-50">
-          <th className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charges</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Auth Code</th>
-          <th className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Place of Service</th>
-        </tr>
-      </thead>
-          <tbody className="bg-white ">
-            <tr className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {new Date(currentClaim.Claim.Data.ServiceDate).toLocaleDateString()}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.Category}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${currentClaim.Claim.Data.Amount}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.PriorAuthorization ?currentClaim.Claim.Data.PriorAuthorization:"N/A"}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{samplifyString(currentClaim.Claim.Data.PlaceOfService)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </DetailSection>
+          <div
+            className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark
+                ? 'text-gray-100 bg-[#0b0f16] border-[#1f2433] shadow-[0_16px_40px_rgba(0,0,0,0.35)]'
+                : 'text-gray-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'
+              }`}
+          >
+            <SectionCard title="Claim Details">
+              <InfoGrid
+                fields={[
+                  { label: "Patient Name", value: formatValue(currentClaim?.Claim?.Data?.PatientName || currentClaim?.Claim?.Data?.Patient) },
+                  { label: "Patient DOB", value: formatDateValue(currentClaim?.Claim?.Data?.PatientDOB) },
+                  { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.Facility || currentClaim?.Claim?.Data?.BillProvName) },
+                  { label: "Payer", value: formatValue(currentClaim?.Claim?.Data?.PayerName) },
+                  { label: "Patient ID", value: formatValue(currentClaim?.Claim?.Data?.PatientID) },
+                  { label: "Service Type", value: formatValue(currentClaim?.Claim?.Data?.ServiceType) },
+                  { label: "Type of Bill", value: formatValue(currentClaim?.Claim?.Data?.TypeOfBill) },
+                  { label: "Place of Service", value: formatValue(currentClaim?.Claim?.Data?.PlaceOfService ? samplifyString(currentClaim.Claim.Data.PlaceOfService) : "") },
+                  { label: "Principle DX", value: formatValue((currentClaim?.Claim?.Diagnosis || [])[0]?.Code) },
+                  { label: "Prior Authorization", value: formatValue(currentClaim?.Claim?.Data?.PriorAuthorization) },
+                ]}
+              />
+            </SectionCard>
 
-    {/* Payer Section */}
-    <DetailSection title={"Payer"} status={status} key={renderIndex + 1} showArrow={true}>
-      <div className="overflow-x-auto rounded-xl">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Sequence</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PayerID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white ">
-            <tr className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.PayerName}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.PatientID}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {currentClaim.Claim.Data.PayerSeq === 'P' ? 'Primary' : (currentClaim.Claim.Data.PayerSeq === 'S' ? 'Secondary' : '')}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.PayerID}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.PayerAddress}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </DetailSection>
+            <SectionCard title="Patient/Subscriber">
+              <InfoGrid
+                fields={[
+                  { label: "Patient Name", value: formatValue(currentClaim?.Claim?.Data?.PatientName || currentClaim?.Claim?.Data?.Patient) },
+                  { label: "Patient DOB", value: formatDateValue(currentClaim?.Claim?.Data?.PatientDOB) },
+                  { label: "Address", value: formatValue(currentClaim?.Claim?.Data?.PatientAddress || currentClaim?.Claim?.Data?.Address) },
+                  { label: "Patient Control #", value: formatValue(currentClaim?.Claim?.Data?.PatientControl || currentClaim?.Claim?.Data?.ControlNumber) },
+                  { label: "Gender", value: formatValue(currentClaim?.Claim?.Data?.Gender) },
+                  { label: "Subscriber Name", value: formatValue(currentClaim?.Claim?.Data?.SubscriberName) },
+                  { label: "Subscriber Relationship", value: formatValue(currentClaim?.Claim?.Data?.SubscriberRelationship) },
+                  { label: "Subscriber ID", value: formatValue(currentClaim?.Claim?.Data?.SubscriberID || currentClaim?.Claim?.Data?.Subscriber) },
+                  { label: "Subscriber Sex", value: formatValue(currentClaim?.Claim?.Data?.SubscriberSex || currentClaim?.Claim?.Data?.Gender) },
+                ]}
+              />
+            </SectionCard>
 
-    {/* Provider Section */}
-    <DetailSection title={"Provider"} status={status} key={renderIndex + 2} showArrow={true}>
-      <div className="overflow-x-auto rounded-xl">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Billing Provider NPI</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fed Tax ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Billing Taxonomy</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white ">
-            <tr className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.ProvNPI}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.ProvTaxID}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.BillProvName}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.BIllProvAddress}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{samplifyString(currentClaim.Claim.Data.BillTaxonomy)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </DetailSection>
+            <SectionCard title="Payer">
+              <InfoGrid
+                fields={[
+                  { label: "Payer", value: formatValue(currentClaim?.Claim?.Data?.PayerName) },
+                  { label: "Payer ID", value: formatValue(currentClaim?.Claim?.Data?.PayerID) },
+                  { label: "Address", value: formatValue(currentClaim?.Claim?.Data?.PayerAddress) },
+                  {
+                    label: "Payer Sequence",
+                    value: formatValue(
+                      currentClaim?.Claim?.Data?.PayerSeq === "P"
+                        ? "Primary"
+                        : currentClaim?.Claim?.Data?.PayerSeq === "S"
+                          ? "Secondary"
+                          : currentClaim?.Claim?.Data?.PayerSeq
+                    ),
+                  },
+                  { label: "Policy #", value: formatValue(currentClaim?.Claim?.Data?.Policy || currentClaim?.Claim?.Data?.PolicyNo) },
+                  { label: "Subscriber Name", value: formatValue(currentClaim?.Claim?.Data?.SubscriberName) },
+                ]}
+              />
+            </SectionCard>
 
-    {/* Diagnosis Section */}
-    <DetailSection 
-      title={"Diagnosis"} 
-      subtitle={`(${currentClaim.Claim.Diagnosis.map(row => row.Code).join(", ")})`} 
-      styleName={"text-[#828385] text-[14px]"} 
-      status={status} 
-      key={renderIndex + 3} 
-      showArrow={true}
-    >
-      <div className="overflow-x-auto rounded-xl">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white ">
-            {currentClaim.Claim.Diagnosis.map((row, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.Code}</td>
-                <td className="px-6 py-4 text-sm text-gray-500">{row.Description}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </DetailSection>
+            <SectionCard title="Provider">
+              <InfoGrid
+                fields={[
+                  { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.Facility || currentClaim?.Claim?.Data?.BillProvName) },
+                  { label: "Facility Address", value: formatValue(currentClaim?.Claim?.Data?.BillProvAddress || currentClaim?.Claim?.Data?.BIllProvAddress) },
+                  { label: "Billing Provider NPI", value: formatValue(currentClaim?.Claim?.Data?.ProvNPI) },
+                  { label: "Receiving Provider Tax ID", value: formatValue(currentClaim?.Claim?.Data?.ProvTaxID) },
+                  { label: "Referring Provider", value: formatValue(currentClaim?.Claim?.Data?.ReferringProvider) },
+                  { label: "Referring Provider NPI", value: formatValue(currentClaim?.Claim?.Data?.ReferringProviderNPI) },
+                  { label: "Referring Provider Tax ID", value: formatValue(currentClaim?.Claim?.Data?.ReferringProviderTaxID) },
+                ]}
+              />
+            </SectionCard>
 
-    {/* Service Lines Section */}
-    <DetailSection 
-      title={"Service Lines"} 
-      subtitle={`${currentClaim.Claim.ServiceLine.length}`} 
-      styleName={"px-2 py-1 rounded-full bg-blue-50 text-blue-600 text-sm"} 
-      status={status} 
-      key={renderIndex + 4} 
-      showArrow={true}
-    >
-      <div className="overflow-x-auto rounded-xl">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              {["Line #", "CPT", "Modifier", "Description", "Service Date", "Charges", "Units", "Rendering Provider NPI", "Rendering Taxonomy"].map(header => (
-                <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{header}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white ">
-            {currentClaim.Claim.ServiceLine.map((row, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.Code}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.Modifier}</td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  <Description description={row.Description} width={80} />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(row.ServiceDate).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.Charges}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.Units}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{samplifyString(row.RendProvNPI)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{samplifyString(row.RendTaxonomy)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </DetailSection>
-  </div>
-)}
-
-
-
-
-{detailShowStatus == 1 && (
-  <div className="flex flex-col  p-4 gap-4 rounded-xl">
-    {currentClaim.Remit.length === 0 ? (
-      <div className="rounded-xl bg-white  text-center text-gray-500">
-        No data available
-      </div>
-    ) : (
-      currentClaim.Remit.map((row, index) => (
-       <>
-      <div className="flex flex-row gap-x-5">
-      <h1 className="font-bold">{(() => {
-  const date = new Date(Date.parse(row.CheckDate));
-  const options = { year: 'numeric', month: 'short', day: '2-digit' };
-  return date.toLocaleDateString('en-US', options);
-})()}</h1>
-                  <h1 className="text-blue-600 font-semibold cursor-pointer" onClick={
-                    () => {
-                      SetRemit_state(!remit_collapse_state)
-                    } 
-                  }>{!remit_collapse_state?'Hide':'Show'}</h1>
-      </div>
-    
-       <div className="flex flex-col bg-[#EFF4FE] rounded-xl gap-2 p-2">
-            {/* Check Information */}
-            <DetailSection title="Check Information" showArrow={true} isCollapse={remit_collapse_state}>
-              <TableWrapper>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+            <SectionCard title="Diagnosis">
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
                     <tr>
-                      <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Check Date
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Check #
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Check Amount
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Payer ID
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Payer Name
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Provider Name
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Provider Address
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        TaxID
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        NPI
-                      </th>
-                      <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        PLB Adjustment
-                      </th>
+                      <th className="px-4 py-3 text-left font-semibold">Diagnosis</th>
+                      <th className="px-4 py-3 text-left font-semibold">Description</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    <tr className="hover:bg-gray-50 transition-colors">
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                        {formatDate(row.CheckDate)}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.CheckNumber}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.CheckAmount}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.PayerID}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.PayerName}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.ProviderName}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.ProviderAddress}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">-</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.NPI}</td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">-</td>
-                    </tr>
+                  <tbody className={`divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
+                    {(currentClaim?.Claim?.Diagnosis || []).map((row, index) => (
+                      <tr key={`${row.Code || index}-${index}`} className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'}`}>
+                        <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(row.Code)}</td>
+                        <td className={`px-4 py-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{formatValue(row.Description)}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
-              </TableWrapper>
-            </DetailSection>
+              </div>
+            </SectionCard>
 
-            {/* Claim Information */}
-            <DetailSection title="Claim Information" showArrow={true} isCollapse={remit_collapse_state}>
-              <TableWrapper>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+            <SectionCard title="Service Lines">
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
                     <tr>
-                      <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Dates</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processing Status</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Frequency</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Claim #</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charges</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amt</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Resp</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductible</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Insurance</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Pay</th>
-                      <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Other Insurance</th>
+                      <th className="px-4 py-3 text-left font-semibold">Rev Code</th>
+                      <th className="px-4 py-3 text-left font-semibold">Proc Code</th>
+                      <th className="px-4 py-3 text-left font-semibold">Mod Cd 1</th>
+                      <th className="px-4 py-3 text-left font-semibold">Mod Cd 2</th>
+                      <th className="px-4 py-3 text-left font-semibold">Mod Cd 3</th>
+                      <th className="px-4 py-3 text-left font-semibold">Proc Description</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    <tr className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(row.ServiceDate)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.ProcessingStatus}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.Frequency || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.PayerClaimNumber}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.ClaimID}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.ChargeAmount)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.ServiceLine.map(rr => Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0))}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.ServiceLine.map(rr => Number(rr.ChargedAmount) - Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0))}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.PaidAmount)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.PatientResp)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
-                    </tr>
+                  <tbody className={`divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
+                    {(currentClaim?.Claim?.ServiceLine || []).map((row, index) => {
+                      const modifiers = extractModifiers(row.Modifier || row.Modifiers || row.ModifierCodes || row.Mods || row);
+                      return (
+                        <tr key={`${row.Code || index}-${index}`} className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'}`}>
+                          <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(row.RevCode)}</td>
+                          <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(row.Code)}</td>
+                          <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(modifiers[0])}</td>
+                          <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(modifiers[1])}</td>
+                          <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(modifiers[2])}</td>
+                          <td className={`px-4 py-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{formatValue(row.Description)}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
-              </TableWrapper>
-            </DetailSection>
-
-            {/* Service Line Detail */}
-            <DetailSection title="Service Line Detail" showArrow={true} isCollapse={remit_collapse_state}>
-              <TableWrapper>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Line #</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Procedure Code</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modifiers</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charge</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed Amt</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amt</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductible</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Insurance</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Pay</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group Code</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason Code</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason Description</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</th>
-                      <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-  {row.ServiceLine.map((rowr, index) => 
-    rowr.Codes.map((adjustment, ind) => (
-      <tr key={`${index}-${ind}`} className="hover:bg-gray-50 transition-all duration-200 ease-in-out">
-        {ind === 0 && (
-          <>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <span className="text-sm font-medium text-gray-900 bg-gray-100 px-2.5 py-1 rounded-full">
-                {index + 1}
-              </span>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <div className="text-sm text-gray-600 font-medium">
-                {formatDate(row.ServiceDate)}
               </div>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700">
-                {rowr.ProcedureCode}
-              </span>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <Description description={rowr.Description} width={80} />
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <div className="flex flex-wrap gap-1">
-                {rowr.Modifiers?.length > 0 ? 
-                  [
-                    rowr.Modifiers[0].ProcedureModifier1,
-                    rowr.Modifiers[0].ProcedureModifier2,
-                    rowr.Modifiers[0].ProcedureModifier3,
-                    rowr.Modifiers[0].ProcedureModifier4
-                  ].filter(Boolean).map((modifier, idx) => (
-                    <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
-                      {modifier}
-                    </span>
-                  )) : '-'}
-              </div>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <div className="text-sm font-medium text-gray-900">
-                {samplifyInteger(rowr.UnitsPaid)}
-              </div>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <div className="text-sm font-semibold text-green-600">
-                ${samplifyDouble(rowr.ChargedAmount)}
-              </div>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <div className="text-sm font-semibold text-blue-600">
-                ${samplifyDouble(rowr.AllowedAmount)}
-              </div>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <div className="text-sm font-semibold text-red-600">
-                ${samplifyDouble(rowr.ChargedAmount - rowr.AllowedAmount)}
-              </div>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <div className="text-sm text-gray-500">-</div>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <div className="text-sm text-gray-500">-</div>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <div className="text-sm text-gray-500">-</div>
-            </td>
-            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-              <div className="text-sm font-semibold text-emerald-600">
-                ${samplifyDouble(rowr.PaidAmount)}
-              </div>
-            </td>
-          </>
-        )}
-        <td className="px-6 py-4">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
-            {adjustment.AdjustmentGroup}
-          </span>
-        </td>
-        <td className="px-6 py-4">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-yellow-50 text-yellow-800">
-            {adjustment.AdjustmentReason}
-          </span>
-        </td>
-        <td className="px-6 py-4">
-          <Description description={adjustment.Description} width={80} />
-        </td>
-        {ind === 0 && (
-          <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-            <div className="flex flex-wrap gap-1">
-              {rowr.RemarkCodes ? 
-                rowr.RemarkCodes.split(',').map((r, idx) => (
-                  <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
-                    {r.split(':')[1]}
-                  </span>
-                )) : '-'}
-            </div>
-          </td>
-        )}
-        <td className="px-6 py-4">
-          <div className="text-sm font-semibold text-gray-900">
-            ${samplifyDouble(adjustment.AdjustmentAmount)}
+            </SectionCard>
           </div>
-        </td>
-      </tr>
-    ))
-  )}
-</tbody>
+        )}
+
+        {detailShowStatus == 1 && (
+          <div className="flex flex-col  p-4 gap-4 rounded-xl">
+            {currentClaim.Remit.length === 0 ? (
+              <div className="rounded-xl bg-white  text-center text-gray-500">
+                No data available
+              </div>
+            ) : (
+              currentClaim.Remit.map((row, index) => (
+                <React.Fragment key={`remit-${row.ClaimID || row.CheckNumber || row.CheckDate || index}-${index}`}>
+                  <div className="flex flex-row gap-x-5">
+                    <h1 className="font-bold">{(() => {
+                      const date = new Date(Date.parse(row.CheckDate));
+                      const options = { year: 'numeric', month: 'short', day: '2-digit' };
+                      return date.toLocaleDateString('en-US', options);
+                    })()}</h1>
+                    <h1 className="text-blue-600 font-semibold cursor-pointer" onClick={
+                      () => {
+                        SetRemit_state(!remit_collapse_state)
+                      }
+                    }>{!remit_collapse_state ? 'Hide' : 'Show'}</h1>
+                  </div>
+
+                  <div className="flex flex-col bg-[#EFF4FE] rounded-xl gap-2 p-2">
+                    {/* Check Information */}
+                    <DetailSection title="Check Information" showArrow={true} isCollapse={remit_collapse_state}>
+                      <TableWrapper>
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Check Date
+                              </th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Check #
+                              </th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Check Amount
+                              </th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Payer ID
+                              </th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Payer Name
+                              </th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Provider Name
+                              </th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Provider Address
+                              </th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                TaxID
+                              </th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                NPI
+                              </th>
+                              <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                PLB Adjustment
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            <tr className="hover:bg-gray-50 transition-colors">
+                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                                {formatDate(row.CheckDate)}
+                              </td>
+                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.CheckNumber}</td>
+                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.CheckAmount}</td>
+                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.PayerID}</td>
+                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.PayerName}</td>
+                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.ProviderName}</td>
+                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.ProviderAddress}</td>
+                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">-</td>
+                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.NPI}</td>
+                              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">-</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </TableWrapper>
+                    </DetailSection>
+
+                    {/* Claim Information */}
+                    <DetailSection title="Claim Information" showArrow={true} isCollapse={remit_collapse_state}>
+                      <TableWrapper>
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Dates</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processing Status</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Frequency</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Claim #</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charges</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amt</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Resp</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductible</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Insurance</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Pay</th>
+                              <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Other Insurance</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            <tr className="hover:bg-gray-50 transition-colors">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(row.ServiceDate)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.ProcessingStatus}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.Frequency || '-'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.PayerClaimNumber}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.ClaimID}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.ChargeAmount)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.ServiceLine.map(rr => Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0))}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.ServiceLine.map(rr => Number(rr.ChargedAmount) - Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0))}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.PaidAmount)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.PatientResp)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </TableWrapper>
+                    </DetailSection>
+
+                    {/* Service Line Detail */}
+                    <DetailSection title="Service Line Detail" showArrow={true} isCollapse={remit_collapse_state}>
+                      <TableWrapper>
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Line #</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Procedure Code</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modifiers</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charge</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed Amt</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amt</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductible</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Insurance</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Pay</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group Code</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason Code</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason Description</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</th>
+                              <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {row.ServiceLine.map((rowr, index) =>
+                              rowr.Codes.map((adjustment, ind) => (
+                                <tr key={`${index}-${ind}`} className="hover:bg-gray-50 transition-all duration-200 ease-in-out">
+                                  {ind === 0 && (
+                                    <>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <span className="text-sm font-medium text-gray-900 bg-gray-100 px-2.5 py-1 rounded-full">
+                                          {index + 1}
+                                        </span>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <div className="text-sm text-gray-600 font-medium">
+                                          {formatDate(row.ServiceDate)}
+                                        </div>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700">
+                                          {rowr.ProcedureCode}
+                                        </span>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <Description description={rowr.Description} width={80} />
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <div className="flex flex-wrap gap-1">
+                                          {rowr.Modifiers?.length > 0 ?
+                                            [
+                                              rowr.Modifiers[0].ProcedureModifier1,
+                                              rowr.Modifiers[0].ProcedureModifier2,
+                                              rowr.Modifiers[0].ProcedureModifier3,
+                                              rowr.Modifiers[0].ProcedureModifier4
+                                            ].filter(Boolean).map((modifier, idx) => (
+                                              <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
+                                                {modifier}
+                                              </span>
+                                            )) : '-'}
+                                        </div>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <div className="text-sm font-medium text-gray-900">
+                                          {samplifyInteger(rowr.UnitsPaid)}
+                                        </div>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <div className="text-sm font-semibold text-green-600">
+                                          ${samplifyDouble(rowr.ChargedAmount)}
+                                        </div>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <div className="text-sm font-semibold text-blue-600">
+                                          ${samplifyDouble(rowr.AllowedAmount)}
+                                        </div>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <div className="text-sm font-semibold text-red-600">
+                                          ${samplifyDouble(rowr.ChargedAmount - rowr.AllowedAmount)}
+                                        </div>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <div className="text-sm text-gray-500">-</div>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <div className="text-sm text-gray-500">-</div>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <div className="text-sm text-gray-500">-</div>
+                                      </td>
+                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                        <div className="text-sm font-semibold text-emerald-600">
+                                          ${samplifyDouble(rowr.PaidAmount)}
+                                        </div>
+                                      </td>
+                                    </>
+                                  )}
+                                  <td className="px-6 py-4">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                                      {adjustment.AdjustmentGroup}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-yellow-50 text-yellow-800">
+                                      {adjustment.AdjustmentReason}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <Description description={adjustment.Description} width={80} />
+                                  </td>
+                                  {ind === 0 && (
+                                    <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                      <div className="flex flex-wrap gap-1">
+                                        {rowr.RemarkCodes ?
+                                          rowr.RemarkCodes.split(',').map((r, idx) => (
+                                            <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                                              {r.split(':')[1]}
+                                            </span>
+                                          )) : '-'}
+                                      </div>
+                                    </td>
+                                  )}
+                                  <td className="px-6 py-4">
+                                    <div className="text-sm font-semibold text-gray-900">
+                                      ${samplifyDouble(adjustment.AdjustmentAmount)}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </TableWrapper>
+                    </DetailSection>
+
+
+                  </div>
+                </React.Fragment>)))}
+          </div>
+        )}
+
+        {detailShowStatus == 2 && (
+          <div className="flex flex-col bg-[#EFF4FE] p-2 gap-4 rounded-xl">
+            <DetailSection
+              title="Related Encounter"
+              status={status}
+              key={renderIndex + 9}
+              showArrow={true}
+              className="bg-white rounded-xl shadow-sm"
+            >
+              <TableWrapper>
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim No</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Date</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Type</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer ID</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Name</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Sequence</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Frequency</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient ID</th>
+                      <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentClaim.RelatedEncounters.map((row, index) => (
+                      <tr
+                        key={index}
+                        onClick={() => showDetail(row.ClaimNo)}
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      >
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{index + 1}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.ClaimNo}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(row.ServiceDate)}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(row.TransactionDate)}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString(row.TransactionType)}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString(row.PayerID)}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString(row.PayerName)}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                          {row.PayerSeq == 'P' ? 'Primary' : (row.PayerSeq == 'S' ? 'Secondary' : '-')}
+                        </td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.Frequency}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString("")}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString("")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
               </TableWrapper>
             </DetailSection>
+          </div>
+        )}
 
-            
-</div>
-</>      )))}
-      </div>
-      )}
-
-
-        
-
-{detailShowStatus == 2 && (
-  <div className="flex flex-col bg-[#EFF4FE] p-2 gap-4 rounded-xl">
-    <DetailSection 
-      title="Related Encounter" 
-      status={status} 
-      key={renderIndex + 9} 
-      showArrow={true}
-      className="bg-white rounded-xl shadow-sm"
-    >
-      <TableWrapper>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim No</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Date</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Type</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer ID</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Name</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Sequence</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Frequency</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient ID</th>
-              <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {currentClaim.RelatedEncounters.map((row, index) => (
-              <tr 
-                key={index}
-                onClick={() => showDetail(row.ClaimNo)} 
-                className="hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{index + 1}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.ClaimNo}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(row.ServiceDate)}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(row.TransactionDate)}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString(row.TransactionType)}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString(row.PayerID)}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString(row.PayerName)}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                  {row.PayerSeq == 'P' ? 'Primary' : (row.PayerSeq == 'S' ? 'Secondary' : '-')}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.Frequency}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString("")}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString("")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </TableWrapper>
-    </DetailSection>
-  </div>
-)}
-
-
-
-        
         {detailShowStatus == 4 && <>
 
           <div
-  className="flex my-10   sm:flex-row flex-col gap-4 justify-evenly"
-  >
-  {/* First Row */}
-  <div className="flex flex-col w-full sm:w-[49.5%]">
-  <h1 className="mb-5 font-semibold ">General Information</h1>
-<div
-    className={`sm:w-full w-full h-auto  rounded-xl p-2 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} `}
-    style={{ display: 'flex', flexDirection: 'column' }}
+            className="flex my-10   sm:flex-row flex-col gap-4 justify-evenly"
+          >
+            {/* First Row */}
+            <div className="flex flex-col w-full sm:w-[49.5%]">
+              <h1 className="mb-5 font-semibold ">General Information</h1>
+              <div
+                className={`sm:w-full w-full h-auto  rounded-xl p-2 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} `}
+                style={{ display: 'flex', flexDirection: 'column' }}
 
-  >   <div className='flex sm:flex-row flex-col w-full gap-x-2  justify-evenly'>
-  <div className={` p-6 flex flex-col w-full rounded-xl ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'}`}>
-    <div>
-      <h2 className="text-[14px] text-gray-400">Root Cause</h2>
-      <p className="text-[14px] mt-3">
-        {appeal[4]}
-      </p>
-    </div>
-  </div>
+              >   <div className='flex sm:flex-row flex-col w-full gap-x-2  justify-evenly'>
+                  <div className={` p-6 flex flex-col w-full rounded-xl ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Root Cause</h2>
+                      <div className="text-[14px] mt-3">
+                        {appeal[4]}
+                      </div>
+                    </div>
+                  </div>
 
-  <div className={` p-6 sm:mt-0 mt-2 flex flex-col w-full rounded-xl ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'}`}>
-    <div>
-      <h2 className="text-[14px] text-gray-400">Rationale</h2>
-      <p className="text-[14px] mt-3">
-        {appeal[2].split('\n').map((i, key) => <div key={key}>{i}</div>)}
-      </p>
-    </div>
-  </div>
- 
-</div>
+                  <div className={` p-6 sm:mt-0 mt-2 flex flex-col w-full rounded-xl ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Rationale</h2>
+                      <div className="text-[14px] mt-3">
+                        {appeal[2].split('\n').map((i, key) => <div key={`rationale-${key}`}>{i}</div>)}
+                      </div>
+                    </div>
+                  </div>
 
-<div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Evidence</h2>
-          <p className="text-[14px] mt-3">
-            {appeal.length == 0 ? "Loading..." : (<> {currentClaim.Claim.Data.PrimaryCode === '109' ? <> 
-              <div className="overflow-x-auto p-2 rounded-lg">
-  <Table aria-label="sticky table" stickyHeader size="small" className="min-w-full">
-    <TableHead>
-      <TableRow className="bg-gray-50">
-        <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-          Claim ID
-        </TableCell>
-        <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-          Service Date
-        </TableCell>
-        <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-          Primary Payer
-        </TableCell>
-        <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-          Secondary Payer
-        </TableCell>
-        <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-          Payment Status
-        </TableCell>
-      </TableRow>
-    </TableHead>
-    <TableBody>
-      {chunkArray(appeal[3].split(','), 5).map((chunk, rowIndex) => (
-        <tr 
-          key={rowIndex}
-          className={`
+                </div>
+
+                <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Evidence</h2>
+                      <div className="text-[14px] mt-3">
+                        {appeal.length == 0 ? "Loading..." : (<> {currentClaim.Claim.Data.PrimaryCode === '109' ? <>
+                          <div className="overflow-x-auto p-2 rounded-lg">
+                            <Table aria-label="sticky table" stickyHeader size="small" className="min-w-full">
+                              <TableHead>
+                                <TableRow className="bg-gray-50">
+                                  <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                    Claim ID
+                                  </TableCell>
+                                  <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                    Service Date
+                                  </TableCell>
+                                  <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                    Primary Payer
+                                  </TableCell>
+                                  <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                    Secondary Payer
+                                  </TableCell>
+                                  <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                    Payment Status
+                                  </TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {chunkArray(appeal[3].split(','), 5).map((chunk, rowIndex) => (
+                                  <tr
+                                    key={rowIndex}
+                                    className={`
             ${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
             hover:bg-gray-100 transition-colors
           `}
-        >
-          {chunk.map((data, index) => (
-            <td 
-              key={index} 
-              className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-b"
-            >
-              {data}
-            </td>
-          ))}
-        </tr>
-      ))}
-    </TableBody>
-  </Table>
-</div>
-            </> :<Recommendation data={appeal[3]} flag={currentClaim.Claim.Data.Automation} />} </>)}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Prediction Score</h2>
-          <p className="text-[14px] mt-3">98%</p>
-        </div>
-      </div>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Procedure Code</h2>
-          <p className="text-[14px] mt-3">
-            {currentClaim.Claim.ServiceLine.map((row, index) => row.Code).join(", ")}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Diagnosis Code</h2>
-          <p className="text-[14px] mt-3">
-            {currentClaim.Claim.Diagnosis.map((row, index) => row.Code).join(", ")}
-          </p>
-        </div>
-      </div>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Reason Code</h2>
-          <p className="text-[14px] mt-3">
-            {`${currentClaim.Claim.Data.PrimaryGroup} ${currentClaim.Claim.Data.PrimaryCode}`}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Payer ID</h2>
-          <p className="text-[14px] mt-3">
-            {currentClaim.Claim.Data.PayerID}
-          </p>
-        </div>
-      </div>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Claim State</h2>
-          <p className="text-[14px] mt-3">
-            {currentClaim.Claim.Data.Category == 'Contractual Adj' ? 'Non-Recoverable' : (
-              currentClaim.Claim.Data.Category == '' ? 'Delinquent' : (
-                currentClaim.Claim.Data.Category == 'Patient Resp' ? 'Patient Resp' : 'Recoverable'
-              )
-            )}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Category</h2>
-          <p className="text-[14px] mt-3">
-            {currentClaim.Claim.Data.Category}
-          </p>
-        </div>
-      </div>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Remark Code</h2>
-          <p className="text-[14px] mt-3">
-            {currentClaim.Claim.Data.Remark.join(", ")}
-          </p>
-        </div>
-      </div>
-    </div>
-
- 
-
-    
-
-
-
-<div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-<div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Action Date</h2>
-          <p className="text-[14px] mt-3">
-            {actionDate || (currentClaim.Action.length > 0 && currentClaim.Action[0].action_date)}
-          </p>
-        </div>
-      </div>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Charges</h2>
-          <p className="text-[14px] mt-3">
-          ${currentClaim.Claim.Data.Amount}
-          </p>
-        </div>
-      </div>
-    </div>
-
-
-    <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-<div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Original Allowed Amt</h2>
-          <p className="text-[14px] mt-3">
-          ${samplifyDouble(
-                    currentClaim.Action.length === 0
-                      ? currentClaim.Remit
-                        .flatMap((item) => item.ServiceLine.map((it) => Number(it.AllowedAmount)))
-                        .reduce((partialSum, a) => partialSum + a, 0)
-                      : currentClaim.Remit
-                        .filter((item) => Date.parse(item.CheckDate) < Date.parse(currentClaim.Action[0].action_date))
-                        .flatMap((item) => item.ServiceLine.map((it) => Number(it.AllowedAmount)))
-                        .reduce((partialSum, a) => partialSum + a, 0)
-                  )}
-          </p>
-        </div>
-      </div>
-      <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-        <div>
-          <h2 className="text-[14px] text-gray-400">Overturned Allowed Amt</h2>
-          <p className="text-[14px] mt-3">
-          ${samplifyDouble(
-                    currentClaim.Action.length === 0
-                      ? 0
-                      : currentClaim.Remit
-                        .filter((item) => Date.parse(item.CheckDate) >= Date.parse(currentClaim.Action[0].action_date))
-                        .flatMap((item) => item.ServiceLine.map((it) => Number(it.AllowedAmount)))
-                        .reduce((partialSum, a) => partialSum + a, 0)
-                  )}
-          </p>
-        </div>
-      </div>
-    </div>
-    
-  </div>
-</div>
-
-
-{/* row Two */}
- <div
- className="flex flex-col w-full sm:w-[49.5%]"
- >
-  <h1 className="mb-5 font-semibold   ">Action</h1>
- <div
-    className={`sm:w-full w-full  sm:max-h-[750px] md:max-h-[710px] h-auto rounded-xl p-2 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
-    style={{ display: 'flex', flexDirection: 'column' }}
-  >
-    <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6  w-full rounded-lg`}>
-      <h2 className="text-[14px] text-gray-400">Recommendation</h2>
-      <p className="text-[14px] mt-3">{appeal[5]}</p>
-      <div className="flex flex-row mt-3 justify-evenly gap-x-3"> 
-        <div className={`cursor-pointer flex gap-2 rounded-lg text-white w-full p-2 border-[1px] border-[#44BFAB] ${thumb == 1 ? 'bg-[#F5FCFB]' : 'bg-[#F5FCFB] '}`} onClick={() => setThumb(1)}>
-          <div className="flex flex-row w-full justify-center gap-x-2 items-center">
-            <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8.22998 18.3505L11.33 20.7505C11.73 21.1505 12.63 21.3505 13.23 21.3505H17.03C18.23 21.3505 19.53 20.4505 19.83 19.2505L22.23 11.9505C22.73 10.5505 21.83 9.35046 20.33 9.35046H16.33C15.73 9.35046 15.23 8.85046 15.33 8.15046L15.83 4.95046C16.03 4.05046 15.43 3.05046 14.53 2.75046C13.73 2.45046 12.73 2.85046 12.33 3.45046L8.22998 9.55046" stroke="#44BFAB" stroke-width="1.2" stroke-miterlimit="10"/>
-              <path d="M3.12988 18.3504V8.55039C3.12988 7.15039 3.72988 6.65039 5.12988 6.65039H6.12988C7.52988 6.65039 8.12988 7.15039 8.12988 8.55039V18.3504C8.12988 19.7504 7.52988 20.2504 6.12988 20.2504H5.12988C3.72988 20.2504 3.12988 19.7504 3.12988 18.3504Z" stroke="#44BFAB" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span className="text-[#44BFAB] text-[14px]">Yes</span>
-          </div>
-        </div>
-
-        <div className={`cursor-pointer flex gap-2 rounded-lg text-white w-full p-2 border-[1px] border-[#F12622] ${thumb == 1 ? 'bg-[#FEF4F4]' : 'bg-[#FEF4F4] '}`} onClick={() => setThumb(1)}>
-          <div className="flex flex-row w-full justify-center gap-x-2 items-center">
-            <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17.27 5.65039L14.17 3.25039C13.77 2.85039 12.87 2.65039 12.27 2.65039H8.46998C7.26998 2.65039 5.96998 3.55039 5.66998 4.75039L3.26998 12.0504C2.76998 13.4504 3.66998 14.6504 5.16998 14.6504H9.16998C9.76998 14.6504 10.27 15.1504 10.17 15.8504L9.66998 19.0504C9.46998 19.9504 10.07 20.9504 10.97 21.2504C11.77 21.5504 12.77 21.1504 13.17 20.5504L17.27 14.4504" stroke="#F12622" stroke-width="1.2" stroke-miterlimit="10"/>
-              <path d="M22.3699 5.65V15.45C22.3699 16.85 21.7699 17.35 20.3699 17.35H19.3699C17.9699 17.35 17.3699 16.85 17.3699 15.45V5.65C17.3699 4.25 17.9699 3.75 19.3699 3.75H20.3699C21.7699 3.75 22.3699 4.25 22.3699 5.65Z" stroke="#F12622" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span className="text-[#F12622] text-[14px]">No</span>
-          </div>
-        </div>
-      </div>
-      <div className="w-[70%] text-[12px] mt-2 text-gray-400">
-        <h1> Please let us know if this recommendation was useful in addressing the claim. </h1>
-      </div>
-    </div>
-
-    <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-      <h2 className="text-[14px] mb-2 text-gray-400">Add Action</h2>
-      <div className="relative mt-3">
-        <label 
-          htmlFor="action-dropdown" 
-          className={`${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  absolute -top-2.5 left-2  px-1 text-[12px] `}
-        >
-          Action
-        </label>
-        <select
-          id="action-dropdown"
-          className={`w-full p-3 border border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  `}
-          ref={claimStatus}
-          defaultValue={currentClaim.Action.length > 0 ? currentClaim.Action[0].claim_status : ''}
-        >
-          <option value={"none"} disabled selected hidden>
-            Select an action
-          </option>
-          <option value={"resubmit"}>Resubmitted to payer</option>
-          <option value={"appeal"}>Appealed to payer</option>
-          <option value={"contact"}>Contacted to patient</option>
-        </select>
-      </div>
-    </div>
-
-    <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-      <div className='flex justify-between items-center'>
-        <h2 className="text-[14px] mb-2 text-gray-400">Notes</h2>
-        <button className='text-[14px] text-blue-500' onClick={handleOpenNotesHistory}>View Notes</button>
-      </div>
-      <div className="relative mt-5">
-        <div className={`${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} absolute -top-2.5 left-2  px-1 text-[12px] text-gray-400`}>
-          Leave Note
-        </div>
-        <textarea
-          className={`w-full p-3 border ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-          rows="4"
-          placeholder="Enter your notes here..."
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        ></textarea>
-      </div>
-    </div>
-    <div className="flex px-1 py-3 mt-3">
-      <div className='flex flex-row justify-between items-center w-full'>
-        <button className='bg-[#202123] text-white text-[14px] px-4 py-3 rounded-lg'    onClick={() => setShowAppealModal(true)}>Generate Appeal Letter</button>
-        <button className='bg-[#005DE2] text-white text-[14px] px-4 py-3 rounded-lg'    onClick={onSubmitClaim}>Save Changes</button>
-      </div>
-    </div>
-  </div>
-
- 
-  <div className="comment flex flex-col w-full h-full gap-4  mt-8">
-          <div className="flex flex-row justify-items-start items-start gap-2">
-          <h1 className="font-bold ">
-            Your Comments
-          </h1>
-          <button className="text-blue-600"   onClick={() => {
-                  setComment(originalComment);
-                  setShowComment(!showComment);
-                }}>
-            {showComment ? "Hide" : "Show"}
-          </button>
-          </div>
-         
-          {showComment && (
-          <div className={`${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} rounded-xl p-2`}>
-  <div className={`flex flex-col w-full gap-4  p-6 rounded-xl shadow-sm ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} `}>
-       <h1 className="mb-4 text-gray-400">Comments</h1>
-    <div className="space-y-4">
-      {/* Additional Info */}
-      <div className="relative">
-        <label 
-          htmlFor="additional-info" 
-          className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  px-1 text-[12px] `}
-        >
-          Additional Info
-        </label>
-        <input 
-          id="additional-info"
-          type="text"
-          className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-          value={comment.Additional}
-          onChange={(e) => setComment({ ...comment, Additional: e.target.value })}
-        />
-      </div>
-
-      {/* CPT Code */}
-      <div className="relative">
-        <label 
-          htmlFor="cpt-code" 
-          className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  px-1 text-[12px] `}
-        >
-          CPT Code Mismatch
-        </label>
-        <input 
-          id="cpt-code"
-          type="text"
-          className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-          value={comment.CPT}
-          onChange={(e) => setComment({ ...comment, CPT: e.target.value })}
-        />
-      </div>
-
-      {/* Description */}
-      <div className="relative">
-        <label 
-          htmlFor="description" 
-          className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  px-1 text-[12px] `}
-        >
-          Description Mismatch
-        </label>
-        <input 
-          id="description"
-          type="text"
-          className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-          value={comment.Description}
-          onChange={(e) => setComment({ ...comment, Description: e.target.value })}
-        />
-      </div>
-
-      {/* Recommendation */}
-      <div className="relative">
-        <label 
-          htmlFor="recommendation" 
-          className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  px-1 text-[12px] `}
-        >
-          Corrected Recommendation
-        </label>
-        <select
-          id="recommendation"
-          className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-          value={comment.Recommendation}
-          onChange={(e) => setComment({ ...comment, Recommendation: e.target.value })}
-        >
-          <option value="" disabled selected hidden>Select option</option>
-          <option value="Appeal">Appeal</option>
-          <option value="Resubmit">Resubmit</option>
-          <option value="Write-off">Write-off</option>
-        </select>
-      </div>
-
-      {/* Root Cause */}
-      <div className="relative">
-        <label 
-          htmlFor="root-cause" 
-          className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  px-1 text-[12px] `}
-        >
-          Updated Root Cause
-        </label>
-        <input 
-          id="root-cause"
-          type="text"
-          className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-          value={comment.Root}
-          onChange={(e) => setComment({ ...comment, Root: e.target.value })}
-        />
-      </div>
-
-      {/* Steps */}
-      <div className="relative">
-        <label 
-          htmlFor="steps" 
-          className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  px-1 text-[12px] `}
-        >
-          Steps to Solve
-        </label>
-        <textarea 
-          id="steps"
-          className={`w-full min-h-[120px] p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono resize-y`}
-          placeholder="# Steps to resolve the issue
-1. First step
-2. Second step"
-          value={comment.Steps}
-          onChange={(e) => setComment({ ...comment, Steps: e.target.value })}
-        />
-      </div>
-
-      {/* Evidence 1 */}
-      <div className="relative">
-        <label 
-          htmlFor="evidence1" 
-          className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  px-1 text-[12px] `}
-        >
-          Evidence #1
-        </label>
-        <input 
-          id="evidence1"
-          type="text"
-          className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-          value={comment.Evidence1}
-          onChange={(e) => setComment({ ...comment, Evidence1: e.target.value })}
-        />
-      </div>
-
-      {/* Evidence 2 */}
-      <div className="relative">
-        <label 
-          htmlFor="evidence2" 
-          className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  px-1 text-[12px] `}
-        >
-          Evidence #2
-        </label>
-        <input 
-          id="evidence2"
-          type="text"
-          className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-          value={comment.Evidence2}
-          onChange={(e) => setComment({ ...comment, Evidence2: e.target.value })}
-        />
-      </div>
-    </div>
-
-  
-  </div>
-    {/* Action Buttons */}
-    <div className="flex justify-end mb-3 gap-3 mt-6">
-      <button
-        className="px-6 py-3 text-sm font-medium text-blue-600 bg-[#DCE8FC] rounded-lg  transition-colors duration-200"
-        onClick={() => {setShowComment(false)
-          scrollToTop()
-        }
-
-        }
-      >
-        Cancel
-      </button>
-      <button
-        className="px-6 py-3 text-sm font-medium text-white bg-[#005DE2] rounded-lg transition-colors duration-200"
-        onClick={() => {
-          setOriginalComment(comment);
-          updateComment();
-        }}
-      >
-        Save Changes
-      </button>
-    </div>
-          </div>
-)}
-
-  </div>
-
- </div>
-
-
-
-  
-</div>
-
-    <div className="flex w-full">
-  
-              <Modal
-                open={openNotesHistoryModal}
-                onClose={() => setOpenNotesHistoryModal(false)}
-                aria-labelledby="modal-modal-title"
-                aria-describedby="modal-modal-description"
-              >
-                <Box className="absolute bg-white border-none w-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-10 font-inter">
-                  <div className="flex flex-col gap-4">
-                    <table className="border-collapse border-gray-200">
-                      <thead>
-                        <tr className="bg-gray-100">
-                          <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">No</th>
-                          <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">ClaimNo</th>
-                          <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">Date</th>
-                          <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">Action</th>
-                          <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">Notes</th>
-                          <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">User</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {currentClaim.Action.map((note, index) => (
-                          <tr key={index} className="hover:bg-gray-100">
-                            <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">{index + 1}</td>
-                            <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">{note.ClaimNo}</td>
-                            <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">{note.action_date}</td>
-                            <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">
-                              {note.claim_status === 'resubmit' ? 'Resubmitted to Payer' :
-                                note.claim_status === 'appeal' ? 'Appealed to Payer' :
-                                  note.claim_status === 'contact' ? 'Contacted to Patient' : ''
-                              }
-                            </td>
-                            <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">
-                              <Description description={note.notes} width={80} />
-                            </td>
-                            <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">{note.user}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                                  >
+                                    {chunk.map((data, index) => (
+                                      <td
+                                        key={index}
+                                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-b"
+                                      >
+                                        {data}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </> : <Recommendation data={appeal[3]} flag={currentClaim.Claim.Data.Automation} />} </>)}
+                      </div>
+                    </div>
                   </div>
-                </Box>
-              </Modal>
+                </div>
+
+                <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Prediction Score</h2>
+                      <p className="text-[14px] mt-3">98%</p>
+                    </div>
+                  </div>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Procedure Code</h2>
+                      <p className="text-[14px] mt-3">
+                        {currentClaim.Claim.ServiceLine.map((row, index) => row.Code).join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Diagnosis Code</h2>
+                      <p className="text-[14px] mt-3">
+                        {currentClaim.Claim.Diagnosis.map((row, index) => row.Code).join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Reason Code</h2>
+                      <p className="text-[14px] mt-3">
+                        {`${currentClaim.Claim.Data.PrimaryGroup} ${currentClaim.Claim.Data.PrimaryCode}`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Payer ID</h2>
+                      <p className="text-[14px] mt-3">
+                        {currentClaim.Claim.Data.PayerID}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Claim State</h2>
+                      <p className="text-[14px] mt-3">
+                        {currentClaim.Claim.Data.Category == 'Contractual Adj' ? 'Non-Recoverable' : (
+                          currentClaim.Claim.Data.Category == '' ? 'Delinquent' : (
+                            currentClaim.Claim.Data.Category == 'Patient Resp' ? 'Patient Resp' : 'Recoverable'
+                          )
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Category</h2>
+                      <p className="text-[14px] mt-3">
+                        {currentClaim.Claim.Data.Category}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Remark Code</h2>
+                      <p className="text-[14px] mt-3">
+                        {currentClaim.Claim.Data.Remark.join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+
+
+
+
+
+
+                <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Action Date</h2>
+                      <p className="text-[14px] mt-3">
+                        {actionDate || (currentClaim.Action.length > 0 && currentClaim.Action[0].action_date)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Charges</h2>
+                      <p className="text-[14px] mt-3">
+                        ${currentClaim.Claim.Data.Amount}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+
+                <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Original Allowed Amt</h2>
+                      <p className="text-[14px] mt-3">
+                        ${samplifyDouble(
+                          currentClaim.Action.length === 0
+                            ? currentClaim.Remit
+                              .flatMap((item) => item.ServiceLine.map((it) => Number(it.AllowedAmount)))
+                              .reduce((partialSum, a) => partialSum + a, 0)
+                            : currentClaim.Remit
+                              .filter((item) => Date.parse(item.CheckDate) < Date.parse(currentClaim.Action[0].action_date))
+                              .flatMap((item) => item.ServiceLine.map((it) => Number(it.AllowedAmount)))
+                              .reduce((partialSum, a) => partialSum + a, 0)
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div>
+                      <h2 className="text-[14px] text-gray-400">Overturned Allowed Amt</h2>
+                      <p className="text-[14px] mt-3">
+                        ${samplifyDouble(
+                          currentClaim.Action.length === 0
+                            ? 0
+                            : currentClaim.Remit
+                              .filter((item) => Date.parse(item.CheckDate) >= Date.parse(currentClaim.Action[0].action_date))
+                              .flatMap((item) => item.ServiceLine.map((it) => Number(it.AllowedAmount)))
+                              .reduce((partialSum, a) => partialSum + a, 0)
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
             </div>
 
-            {/* Delete from below */}
+
+            {/* row Two */}
+            <div
+              className="flex flex-col w-full sm:w-[49.5%]"
+            >
+              <h1 className="mb-5 font-semibold   ">Action</h1>
+              <div
+                className={`sm:w-full w-full  sm:max-h-[750px] md:max-h-[710px] h-auto rounded-xl p-2 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
+                style={{ display: 'flex', flexDirection: 'column' }}
+              >
+                <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6  w-full rounded-lg`}>
+                  <h2 className="text-[14px] text-gray-400">Recommendation</h2>
+                  <p className="text-[14px] mt-3">{appeal[5]}</p>
+                  <div className="flex flex-row mt-3 justify-evenly gap-x-3">
+                    <div className={`cursor-pointer flex gap-2 rounded-lg text-white w-full p-2 border-[1px] border-[#44BFAB] ${thumb == 1 ? 'bg-[#F5FCFB]' : 'bg-[#F5FCFB] '}`} onClick={() => setThumb(1)}>
+                      <div className="flex flex-row w-full justify-center gap-x-2 items-center">
+                        <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M8.22998 18.3505L11.33 20.7505C11.73 21.1505 12.63 21.3505 13.23 21.3505H17.03C18.23 21.3505 19.53 20.4505 19.83 19.2505L22.23 11.9505C22.73 10.5505 21.83 9.35046 20.33 9.35046H16.33C15.73 9.35046 15.23 8.85046 15.33 8.15046L15.83 4.95046C16.03 4.05046 15.43 3.05046 14.53 2.75046C13.73 2.45046 12.73 2.85046 12.33 3.45046L8.22998 9.55046" stroke="#44BFAB" strokeWidth="1.2" strokeMiterlimit="10" />
+                          <path d="M3.12988 18.3504V8.55039C3.12988 7.15039 3.72988 6.65039 5.12988 6.65039H6.12988C7.52988 6.65039 8.12988 7.15039 8.12988 8.55039V18.3504C8.12988 19.7504 7.52988 20.2504 6.12988 20.2504H5.12988C3.72988 20.2504 3.12988 19.7504 3.12988 18.3504Z" stroke="#44BFAB" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span className="text-[#44BFAB] text-[14px]">Yes</span>
+                      </div>
+                    </div>
+
+                    <div className={`cursor-pointer flex gap-2 rounded-lg text-white w-full p-2 border-[1px] border-[#F12622] ${thumb == 1 ? 'bg-[#FEF4F4]' : 'bg-[#FEF4F4] '}`} onClick={() => setThumb(1)}>
+                      <div className="flex flex-row w-full justify-center gap-x-2 items-center">
+                        <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M17.27 5.65039L14.17 3.25039C13.77 2.85039 12.87 2.65039 12.27 2.65039H8.46998C7.26998 2.65039 5.96998 3.55039 5.66998 4.75039L3.26998 12.0504C2.76998 13.4504 3.66998 14.6504 5.16998 14.6504H9.16998C9.76998 14.6504 10.27 15.1504 10.17 15.8504L9.66998 19.0504C9.46998 19.9504 10.07 20.9504 10.97 21.2504C11.77 21.5504 12.77 21.1504 13.17 20.5504L17.27 14.4504" stroke="#F12622" strokeWidth="1.2" strokeMiterlimit="10" />
+                          <path d="M22.3699 5.65V15.45C22.3699 16.85 21.7699 17.35 20.3699 17.35H19.3699C17.9699 17.35 17.3699 16.85 17.3699 15.45V5.65C17.3699 4.25 17.9699 3.75 19.3699 3.75H20.3699C21.7699 3.75 22.3699 4.25 22.3699 5.65Z" stroke="#F12622" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span className="text-[#F12622] text-[14px]">No</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="w-[70%] text-[12px] mt-2 text-gray-400">
+                    <h1> Please let us know if this recommendation was useful in addressing the claim. </h1>
+                  </div>
+                </div>
+
+                <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                  <h2 className="text-[14px] mb-2 text-gray-400">Add Action</h2>
+                  <div className="relative mt-3">
+                    <label
+                      htmlFor="action-dropdown"
+                      className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  absolute -top-2.5 left-2  px-1 text-[12px] `}
+                    >
+                      Action
+                    </label>
+                    <select
+                      id="action-dropdown"
+                      className={`w-full p-3 border border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  `}
+                      ref={claimStatus}
+                      defaultValue={currentClaim.Action.length > 0 ? currentClaim.Action[0].claim_status : ''}
+                    >
+                      <option value={"none"} disabled hidden>Select an action</option>
+                      <option value={"resubmit"}>Resubmitted to payer</option>
+                      <option value={"appeal"}>Appealed to payer</option>
+                      <option value={"contact"}>Contacted to patient</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                  <div className='flex justify-between items-center'>
+                    <h2 className="text-[14px] mb-2 text-gray-400">Notes</h2>
+                    <button className='text-[14px] text-blue-500' onClick={handleOpenNotesHistory}>View Notes</button>
+                  </div>
+                  <div className="relative mt-5">
+                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} absolute -top-2.5 left-2  px-1 text-[12px] text-gray-400`}>
+                      Leave Note
+                    </div>
+                    <textarea
+                      className={`w-full p-3 border ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                      rows="4"
+                      placeholder="Enter your notes here..."
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                    ></textarea>
+                  </div>
+                </div>
+                <div className="flex px-1 py-3 mt-3">
+                  <div className='flex flex-row justify-between items-center w-full'>
+                    <button className='bg-[#202123] text-white text-[14px] px-4 py-3 rounded-lg' onClick={() => setShowAppealModal(true)}>Generate Appeal Letter</button>
+                    <button className='bg-[#005DE2] text-white text-[14px] px-4 py-3 rounded-lg' onClick={onSubmitClaim}>Save Changes</button>
+                  </div>
+                </div>
+              </div>
+
+
+              <div className="comment flex flex-col w-full h-full gap-4  mt-8">
+                <div className="flex flex-row justify-items-start items-start gap-2">
+                  <h1 className="font-bold ">
+                    Your Comments
+                  </h1>
+                  <button className="text-blue-600" onClick={() => {
+                    setComment(originalComment);
+                    setShowComment(!showComment);
+                  }}>
+                    {showComment ? "Hide" : "Show"}
+                  </button>
+                </div>
+
+                {showComment && (
+                  <div className={`${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} rounded-xl p-2`}>
+                    <div className={`flex flex-col w-full gap-4  p-6 rounded-xl shadow-sm ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} `}>
+                      <h1 className="mb-4 text-gray-400">Comments</h1>
+                      <div className="space-y-4">
+                        {/* Additional Info */}
+                        <div className="relative">
+                          <label
+                            htmlFor="additional-info"
+                            className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                          >
+                            Additional Info
+                          </label>
+                          <input
+                            id="additional-info"
+                            type="text"
+                            className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            value={comment.Additional}
+                            onChange={(e) => setComment({ ...comment, Additional: e.target.value })}
+                          />
+                        </div>
+
+                        {/* CPT Code */}
+                        <div className="relative">
+                          <label
+                            htmlFor="cpt-code"
+                            className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                          >
+                            CPT Code Mismatch
+                          </label>
+                          <input
+                            id="cpt-code"
+                            type="text"
+                            className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            value={comment.CPT}
+                            onChange={(e) => setComment({ ...comment, CPT: e.target.value })}
+                          />
+                        </div>
+
+                        {/* Description */}
+                        <div className="relative">
+                          <label
+                            htmlFor="description"
+                            className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                          >
+                            Description Mismatch
+                          </label>
+                          <input
+                            id="description"
+                            type="text"
+                            className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            value={comment.Description}
+                            onChange={(e) => setComment({ ...comment, Description: e.target.value })}
+                          />
+                        </div>
+
+                        {/* Recommendation */}
+                        <div className="relative">
+                          <label
+                            htmlFor="recommendation"
+                            className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                          >
+                            Corrected Recommendation
+                          </label>
+                          <select
+                            id="recommendation"
+                            className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            value={comment.Recommendation}
+                            onChange={(e) => setComment({ ...comment, Recommendation: e.target.value })}
+                          >
+                            <option value="" disabled hidden>Select option</option>
+                            <option value="Appeal">Appeal</option>
+                            <option value="Resubmit">Resubmit</option>
+                            <option value="Write-off">Write-off</option>
+                          </select>
+                        </div>
+
+                        {/* Root Cause */}
+                        <div className="relative">
+                          <label
+                            htmlFor="root-cause"
+                            className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                          >
+                            Updated Root Cause
+                          </label>
+                          <input
+                            id="root-cause"
+                            type="text"
+                            className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            value={comment.Root}
+                            onChange={(e) => setComment({ ...comment, Root: e.target.value })}
+                          />
+                        </div>
+
+                        {/* Steps */}
+                        <div className="relative">
+                          <label
+                            htmlFor="steps"
+                            className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                          >
+                            Steps to Solve
+                          </label>
+                          <textarea
+                            id="steps"
+                            className={`w-full min-h-[120px] p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono resize-y`}
+                            placeholder="# Steps to resolve the issue
+1. First step
+2. Second step"
+                            value={comment.Steps}
+                            onChange={(e) => setComment({ ...comment, Steps: e.target.value })}
+                          />
+                        </div>
+
+                        {/* Evidence 1 */}
+                        <div className="relative">
+                          <label
+                            htmlFor="evidence1"
+                            className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                          >
+                            Evidence #1
+                          </label>
+                          <input
+                            id="evidence1"
+                            type="text"
+                            className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            value={comment.Evidence1}
+                            onChange={(e) => setComment({ ...comment, Evidence1: e.target.value })}
+                          />
+                        </div>
+
+                        {/* Evidence 2 */}
+                        <div className="relative">
+                          <label
+                            htmlFor="evidence2"
+                            className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                          >
+                            Evidence #2
+                          </label>
+                          <input
+                            id="evidence2"
+                            type="text"
+                            className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                            value={comment.Evidence2}
+                            onChange={(e) => setComment({ ...comment, Evidence2: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+
+                    </div>
+                    {/* Action Buttons */}
+                    <div className="flex justify-end mb-3 gap-3 mt-6">
+                      <button
+                        className="px-6 py-3 text-sm font-medium text-blue-600 bg-[#DCE8FC] rounded-lg  transition-colors duration-200"
+                        onClick={() => {
+                          setShowComment(false)
+                          scrollToTop()
+                        }
+
+                        }
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="px-6 py-3 text-sm font-medium text-white bg-[#005DE2] rounded-lg transition-colors duration-200"
+                        onClick={() => {
+                          setOriginalComment(comment);
+                          updateComment();
+                        }}
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+
+            </div>
 
 
 
-{/* <div className="rounded-lg flex flex-col">
+
+          </div>
+
+          <div className="flex w-full">
+
+            <Modal
+              open={openNotesHistoryModal}
+              onClose={() => setOpenNotesHistoryModal(false)}
+              aria-labelledby="modal-modal-title"
+              aria-describedby="modal-modal-description"
+            >
+              <Box className="absolute bg-white border-none w-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-10 font-inter">
+                <div className="flex flex-col gap-4">
+                  <table className="border-collapse border-gray-200">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">No</th>
+                        <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">ClaimNo</th>
+                        <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">Date</th>
+                        <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">Action</th>
+                        <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">Notes</th>
+                        <th className="border border-gray-200 px-4 py-2 text-left text-gray-500 font-semibold">User</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentClaim.Action.map((note, index) => (
+                        <tr key={index} className="hover:bg-gray-100">
+                          <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">{index + 1}</td>
+                          <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">{note.ClaimNo}</td>
+                          <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">{note.action_date}</td>
+                          <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">
+                            {note.claim_status === 'resubmit' ? 'Resubmitted to Payer' :
+                              note.claim_status === 'appeal' ? 'Appealed to Payer' :
+                                note.claim_status === 'contact' ? 'Contacted to Patient' : ''
+                            }
+                          </td>
+                          <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">
+                            <Description description={note.notes} width={80} />
+                          </td>
+                          <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">{note.user}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Box>
+            </Modal>
+          </div>
+
+          {/* Delete from below */}
+
+
+
+          {/* <div className="rounded-lg flex flex-col">
             <div className="flex w-full">
               <div className="flex w-1/2">
                 <div className="w-1/4 bg-[#E4F1FF] rounded-tl-lg py-[15px] pl-[12px] border-[#C6DCFC] border-r-[1px] border-b-[1px] border-t-[#CACBCB] border-t-[1px] border-l-[#CACBCB] border-l-[1px]  font-inter font-medium text-[16px]">Prediction Score</div>
@@ -1570,13 +1554,13 @@ const ReboundDetailView = () => {
               <div className="w-[87.5%] py-[16px] pl-[12px] border-[#CACBCB] border-r-[1px] border-b-[1px] bg-white font-inter font-medium text-[14px] flex gap-4 items-center"
               >{appeal.length == 0 ? "Loading..." : <div dangerouslySetInnerHTML={{ __html: makeWordBold(appeal[5], "resubmit") }}></div>}
                 <div className={`cursor-pointer flex gap-2 rounded-lg text-white p-2 ${thumb == 1 ? 'bg-[#3b6b2f]' : 'bg-[#8aad95]'}`} onClick={() => setThumb(1)}>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" class="size-6">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282m0 0h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904m10.598-9.75H14.25M5.904 18.5c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 0 1-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h1.053c.472 0 .745.556.5.96a8.958 8.958 0 0 0-1.302 4.665c0 1.194.232 2.333.654 3.375Z" />
                   </svg>
                   <span>{currentClaim.up + (thumb > 0 ? 1 : 0)}</span>
                 </div>
                 <div className={`cursor-pointer flex gap-2 rounded-lg text-white p-2 ${thumb == -1 ? 'bg-[#ef2f2f]' : 'bg-[#ef8484]'}`} onClick={() => setThumb(-1)}>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" class="size-6">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7.498 15.25H4.372c-1.026 0-1.945-.694-2.054-1.715a12.137 12.137 0 0 1-.068-1.285c0-2.848.992-5.464 2.649-7.521C5.287 4.247 5.886 4 6.504 4h4.016a4.5 4.5 0 0 1 1.423.23l3.114 1.04a4.5 4.5 0 0 0 1.423.23h1.294M7.498 15.25c.618 0 .991.724.725 1.282A7.471 7.471 0 0 0 7.5 19.75 2.25 2.25 0 0 0 9.75 22a.75.75 0 0 0 .75-.75v-.633c0-.573.11-1.14.322-1.672.304-.76.93-1.33 1.653-1.715a9.04 9.04 0 0 0 2.86-2.4c.498-.634 1.226-1.08 2.032-1.08h.384m-10.253 1.5H9.7m8.075-9.75c.01.05.027.1.05.148.593 1.2.925 2.55.925 3.977 0 1.487-.36 2.89-.999 4.125m.023-8.25c-.076-.365.183-.75.575-.75h.908c.889 0 1.713.518 1.972 1.368.339 1.11.521 2.287.521 3.507 0 1.553-.295 3.036-.831 4.398-.306.774-1.086 1.227-1.918 1.227h-1.053c-.472 0-.745-.556-.5-.96a8.95 8.95 0 0 0 .303-.54" />
                   </svg>
                   <span>{currentClaim.down + (thumb < 0 ? 1 : 0)}</span>
@@ -1654,10 +1638,10 @@ const ReboundDetailView = () => {
                 onClick={onSubmitClaim}>Save</div>
             </div>
           </div> */}
-      
-       
         </>}
-      </div >}
+
+        </div>
+      )}
       <Modal
         open={showAppealModal}
         onClose={() => setShowAppealModal(false)}
@@ -1675,7 +1659,9 @@ const ReboundDetailView = () => {
             </div>
             }
             {!generatingAppeal && <div className='text-[14px] font-semibold text-[#072F40]'>
-              {appealLetter.split('\n').map((row, index) => <p>{row}</p>)}
+              {appealLetter.split('\n').map((row, index) => (
+                <p key={`appeal-line-${index}`}>{row}</p>
+              ))}
             </div>}
             <hr />
             <div className='flex gap-4 justify-end pt-3'>

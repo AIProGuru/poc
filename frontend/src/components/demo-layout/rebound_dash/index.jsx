@@ -55,6 +55,7 @@ const ReboundDash = () => {
   const theme = useSelector((state) => state.app.theme);
   const appType = useSelector((state) => state.app.type);
   const role = useSelector((state) => state.auth.role);
+  const appTitle = useSelector((state) => state.app.title);
   const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/pilotcustomer' : '/demo';
   const isDenialsRoute = location.pathname.includes('/denials');
   const isUserManagementView = selectedNav === 'user-management';
@@ -485,9 +486,10 @@ const ReboundDash = () => {
     if (apiUrl === '') return;
 
     if (rawToken) {
-      let tokenObj;
+      let tokenObj = null;
       try {
-        tokenObj = JSON.parse(atob(rawToken));
+        const decoded = atob(rawToken);
+        tokenObj = JSON.parse(decoded);
       } catch (err) {
         console.error('Invalid token payload', err);
         tokenObj = null;
@@ -746,93 +748,6 @@ const ReboundDash = () => {
 
   return (
     <div className={`min-h-screen flex ${isDark ? 'bg-[#07090F] text-white' : 'bg-slate-50 text-slate-900'}`}>
-      <aside className={`hidden md:flex flex-col w-72 border-r px-2 py-6 ${isDark ? 'bg-[#0B0E17] border-[#1F2231] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
-        <div className="flex items-center justify-center gap-3 mt-6 mb-10">
-          <img
-            src="/helio-logo.svg"
-            alt="Helio RCM logo"
-            className="h-16 w-auto"
-            loading="lazy"
-          />
-        </div>
-        <nav className="flex-1 space-y-1">
-          {navItems.map((item) => {
-            const hasChildren = Array.isArray(item.children) && item.children.length > 0;
-            const childActive = hasChildren && selectedNav.startsWith(`${item.id}:`);
-            const isActive = selectedNav === item.id || childActive;
-            const isExpanded = expandedNav.has(item.id);
-            const navStateClass = isActive
-              ? (isDark ? 'bg-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'bg-slate-900 text-white shadow-lg')
-              : (isDark ? 'text-[#8A8FB1] hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100');
-            const iconWrapperClass = isActive
-              ? (isDark ? 'border-white/20 bg-white/10' : 'border-slate-700 bg-slate-800')
-              : (isDark ? 'border-white/5 bg-white/5' : 'border-slate-200 bg-white');
-            const badgeClass = isActive
-              ? (isDark ? 'bg-white/20 text-white' : 'bg-white text-slate-900')
-              : (isDark ? 'bg-[#1F2231] text-[#B3B8D6]' : 'bg-slate-200 text-slate-700');
-            return (
-              <div key={item.id}>
-                <div className={`w-full flex items-center rounded-2xl px-2 py-2 transition-colors ${navStateClass}`}>
-                  <button
-                    type="button"
-                    className="flex-1 flex items-center justify-between gap-2 text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                    onClick={() => handleNavSelection(item)}
-                  >
-                    <span className="flex items-center gap-3 min-w-0">
-                      <span className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${iconWrapperClass}`}>
-                        {renderNavIcon(item.icon, isActive)}
-                      </span>
-                      <span className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
-                    </span>
-                    {item.badge && (
-                      <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </button>
-                  {hasChildren && (
-                    <button
-                      type="button"
-                      className={`p-1 rounded-full ml-2 ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
-                      onClick={() => toggleExpand(item.id)}
-                    >
-                      <svg
-                        className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        viewBox="0 0 20 20"
-                        fill="none"
-                      >
-                        <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-                {hasChildren && isExpanded && (
-                  <div className="ml-14 mt-1 mb-2 space-y-1">
-                    {item.children.map((child) => {
-                      const childActive = selectedNav === child.id;
-                      return (
-                        <button
-                          type="button"
-                          key={child.id}
-                          className={`w-full text-left text-xs font-medium px-3 py-2 rounded-xl transition-colors ${
-                            childActive
-                              ? (isDark ? 'bg-white/10 text-white' : 'bg-slate-900 text-white')
-                              : (isDark ? 'text-[#8A8FB1] hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100')
-                          }`}
-                          onClick={() => handleChildSelection(item.id, child)}
-                        >
-                          {child.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-      </aside>
-
       <div className="flex-1 flex flex-col gap-8 px-6 md:px-10 py-10 min-w-0 overflow-hidden">
         {isUserManagementView ? (
           <div className={`rounded-[40px] border ${isDark ? 'bg-[#070B18] border-[#161B2D] text-white' : 'bg-white border-slate-200 text-slate-900'} shadow-[0_35px_80px_rgba(3,7,18,0.35)]`}>
@@ -856,78 +771,7 @@ const ReboundDash = () => {
           </div>
         ) : (
           <>
-            <div className="flex flex-wrap items-center justify-end gap-4">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7B80A1]">
-                    <svg width="18" height="18" fill="none" viewBox="0 0 20 20">
-                      <path d="M9 15C12.3137 15 15 12.3137 15 9C15 5.68629 12.3137 3 9 3C5.68629 3 3 5.68629 3 9C3 12.3137 5.68629 15 9 15Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M15.5 15.5L18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    defaultValue={keyword}
-                    ref={inputKeywordRef}
-                    onKeyDown={(e) => e.key === 'Enter' && filterByKeyword()}
-                    className={`h-12 w-64 rounded-full border pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#6C63FF] ${
-                      isDark
-                        ? 'bg-[#11131B] border-[#1F2231] text-white placeholder:text-[#7B80A1]'
-                        : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'
-                    }`}
-                  />
-                </div>
-                <div className="relative">
-                  <button
-                    type="button"
-                    className={`flex items-center gap-3 rounded-full px-2 py-1 border ${isDark ? 'border-white/10 bg-[#11131B]' : 'border-slate-200 bg-white'}`}
-                    onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  >
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#FFD3A5] to-[#FD6585] text-[#1A1D2B] font-semibold flex items-center justify-center">
-                      {profileInitials}
-                    </div>
-                    <svg className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-180' : ''} ${isDark ? 'text-white' : 'text-slate-600'}`} viewBox="0 0 20 20" fill="none">
-                      <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                  {showProfileMenu && (
-                    <div className={`absolute right-0 mt-3 w-56 rounded-2xl border shadow-2xl ${isDark ? 'bg-[#0F1119] border-[#1F2231] text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
-                      <button
-                        type="button"
-                        className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}
-                        onClick={() => {
-                          dispatch(setTheme(isDark ? 'light' : 'dark'));
-                          setShowProfileMenu(false);
-                        }}
-                      >
-                        Switch to {isDark ? 'Light' : 'Dark'} Mode
-                      </button>
-                      <button
-                        type="button"
-                        className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}
-                        onClick={() => {
-                          navigate('/account-settings');
-                          setShowProfileMenu(false);
-                        }}
-                      >
-                        View Profile
-                      </button>
-                      <button
-                        type="button"
-                        className={`w-full text-left px-4 py-3 text-sm ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}
-                        onClick={() => {
-                          logout();
-                          setShowProfileMenu(false);
-                        }}
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+
 
             <div className="flex flex-wrap gap-2 mt-4">
               {[
@@ -975,6 +819,9 @@ const ReboundDash = () => {
             </div>
 
             <div className="flex flex-col min-w-0">
+              <div className="mb-4 text-sm font-semibold text-gray-400">
+                {appTitle || 'Home'}
+              </div>
               {showAiModels ? <ArIntel onModelSelect={() => setAiLibraryDrilldown(true)} /> : <DataTable />}
             </div>
           </>

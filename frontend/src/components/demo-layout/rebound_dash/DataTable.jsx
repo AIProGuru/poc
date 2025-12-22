@@ -49,6 +49,7 @@ const DataTable = (props) => {
   const procedure = useSelector((state) => state.app.procedure)
   const pos = useSelector((state) => state.app.pos)
   const extra = useSelector((state) => state.app.extraFilter);
+  const appTitle = useSelector((state) => state.app.title);
   const [order, _setOrder] = useState("ClaimNo");
   const theme = useSelector((state) => state.app.theme);
   const isDarkMode = theme === 'dark';
@@ -67,9 +68,9 @@ const DataTable = (props) => {
   };
 
   const showDetail = (claimNo) => {
-    dispatch(setAppTitle("Triage/Action"))
     const token = {
-      claimNo
+      claimNo,
+      appTitle,
     }
     console.log(location.pathname)
     navigate(`${type === 0 ? '/rebound' : '/pilotcustomer'}/detail/${btoa(JSON.stringify(token))}`);
