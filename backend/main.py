@@ -75,6 +75,7 @@ from api.platform.launchpad.recovery import (
     pilotcustomer_api_recovery,
 )
 from api.platform.rcmgpt.generate_appeal import rebound_api_generate_appeal, medevolve_api_generate_appeal
+from api.platform.clients import clients_api
 
 from api.platform.demo.demo import demo_api
 
@@ -169,6 +170,7 @@ def create_app():
     app.register_blueprint(pilotcustomer_api_recovery)
     app.register_blueprint(rebound_api_generate_appeal)
     app.register_blueprint(medevolve_api_generate_appeal)
+    app.register_blueprint(clients_api)
 
 
 

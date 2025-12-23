@@ -4,11 +4,13 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 import { Pie, Bar } from 'react-chartjs-2';
 import './ClientManagement.css';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore/lite';
+import axios from 'axios';
+import { collection } from 'firebase/firestore/lite';
 import { db } from '../FirebaseConfig';
 import {  addDoc, serverTimestamp } from 'firebase/firestore/lite';
 // First import the necessary Firestore functions at the top of your file
 import {  doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore/lite';
+import { useApiEndpoint } from '../ApiEndpointContext';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -17,6 +19,7 @@ ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tool
 
 const ClientManagement = () => {
   const navigate = useNavigate();
+  const apiUrl = useApiEndpoint();
 
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -184,23 +187,15 @@ const handleNewClientSubmit = async (e) => {
 
   const fetch_clients = async () => {
     try {
+      if (!apiUrl) return;
       setLoading(true);
-      const clientsCollection = collection(db, 'clients');
-      const clientsSnapshot = await getDocs(clientsCollection);
-      const clientsList = clientsSnapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data() 
-      }));
-      
-      setClients(clientsList);
-      setLoading(false);
-      
-      console.log('Clients fetched successfully:', clientsList);
+      const res = await axios.get(`${apiUrl}/clients`, { withCredentials: true });
+      setClients(res.data || []);
+      console.log('Clients fetched successfully:', res.data);
     } catch (error) {
       console.error('Error fetching clients:', error);
+    } finally {
       setLoading(false);
-      // If you have toast notifications
-      // toast.error('Failed to load client data. Please try again.');
     }
   };
 
