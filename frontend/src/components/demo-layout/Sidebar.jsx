@@ -19,6 +19,21 @@ const Sidebar = () => {
   const theme = useSelector((state) => state.app.theme);
   const tags = useSelector((state) => state.tags.allTags);
   const models = useSelector((state) => state.app.models) || [];
+  const placeholderNavs = [
+    "dashboard",
+    "support",
+    "settings",
+    "claim-edits",
+    "claim-edits:ch-rejection",
+    "claim-edits:payer-rejection",
+    "payment-variance",
+    "payment-variance:payer-overpaid",
+    "payment-variance:payer-underpaid",
+    "payment-posting",
+    "payment-posting:payment",
+    "payment-posting:writeoff",
+    "payment-posting:refund",
+  ];
 
   const [selectedNav, setSelectedNav] = useState("home");
   const [expandedNav, setExpandedNav] = useState(() => new Set());
@@ -142,6 +157,8 @@ const Sidebar = () => {
       "denials:other": ["Other Non-Specific"],
       "denials:provider": ["Provider"],
       "denials:timely-filing": ["Timely Filing"],
+      "patient-responsibility": ["Patient Resp"],
+      "patient-responsibility:bal-due": ["Patient Resp"],
       "payment-posting:contractual-adj": ["Contractual Adj"],
     }),
     []
@@ -349,6 +366,12 @@ const Sidebar = () => {
 
   const applyFilters = useCallback(
     (navId, fallbackTab) => {
+      if (placeholderNavs.includes(navId)) {
+        dispatch(setSelectedTags([]));
+        dispatch(setExtraFilter({}));
+        dispatch(setTableLoading(false));
+        return;
+      }
       let extra = navExtraFilters[navId] || navExtraFilters[fallbackTab] || {};
       let tagOverride = navTagFilters[navId];
 
@@ -361,6 +384,10 @@ const Sidebar = () => {
 
       if (tagOverride && tagOverride.length > 0) {
         dispatch(setSelectedTags(tagOverride));
+        dispatch(setTabIndex(6));
+      } else if (navId === "ai-library") {
+        // Keep denial categories visible when browsing AI Library
+        dispatch(setSelectedTags(tags));
         dispatch(setTabIndex(6));
       } else if (navId === "denials") {
         const defaultTags = tags.filter(
@@ -380,6 +407,18 @@ const Sidebar = () => {
 
   const handleClick = (item) => {
     dispatch(setAppTitle(item.title));
+    const hasChildren = Array.isArray(item.children) && item.children.length > 0;
+    if (hasChildren) {
+      setExpandedNav((prev) => {
+        const next = new Set(prev);
+        if (next.has(item.id) && selectedNav === item.id) {
+          next.delete(item.id);
+        } else {
+          next.add(item.id);
+        }
+        return next;
+      });
+    }
     setSelectedNav(item.id);
     if (item.id === "home") {
       dispatch(setTabIndex(0));
@@ -423,7 +462,7 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`hidden md:flex flex-col w-72 border-r px-3 py-6 ${
+      className={`hidden md:flex flex-col w-72 h-full border-r px-3 py-6 ${
         isDark
           ? "bg-[#0B0E17] border-[#1F2231] text-white"
           : "bg-white border-slate-200 text-slate-900"
@@ -494,7 +533,11 @@ const Sidebar = () => {
                   <button
                     type="button"
                     className={`p-1 rounded-full ml-2 ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
-                    onClick={() => toggleExpand(item.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleExpand(item.id);
+                    }}
                   >
                     <svg
                       className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
@@ -531,7 +574,7 @@ const Sidebar = () => {
           );
         })}
       </nav>
-      <div className="mt-6 flex items-center justify-between px-3">
+      {/* <div className="mt-6 flex items-center justify-between px-3">
         <span className="text-sm font-semibold">Theme</span>
         <label className="relative inline-flex items-center cursor-pointer">
           <input
@@ -542,7 +585,7 @@ const Sidebar = () => {
           />
           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
         </label>
-      </div>
+      </div> */}
     </aside>
   );
 };

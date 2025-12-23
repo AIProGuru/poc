@@ -33,7 +33,7 @@ const ReboundDetailView = () => {
   const isDark = theme === 'dark';
   const navigate = useNavigate();
   const username = useSelector((state) => state.auth.username);
-  const [detailShowStatus, setDetailShowStatus] = useState(4);
+  const [detailShowStatus, setDetailShowStatus] = useState(0);
   const [routeTitle, setRouteTitle] = useState('');
   const [currentClaim, setCurrentClaim] = useState(null);
   const [appeal, setAppeal] = useState([])
@@ -198,7 +198,7 @@ const ReboundDetailView = () => {
   };
 
   const TableWrapper = ({ children }) => (
-    <div className="overflow-x-auto rounded-xl shadow-sm border border-gray-200">
+    <div className={`overflow-x-auto rounded-xl shadow-sm border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-white border-gray-200'}`}>
       <div className="inline-block min-w-full align-middle">
         {children}
       </div>
@@ -296,7 +296,7 @@ const ReboundDetailView = () => {
     if (apiUrl === '') return;
     if (claimNo === '') return;
     setCurrentClaim(null);
-    setDetailShowStatus(4);
+    setDetailShowStatus(0);
     axios.get(`${apiUrl}/get_claim?id=${claimNo}&username=${username}`).then(res => {
       console.log("@@@@@@@@@@@@@@", res.data)
       setCurrentClaim(res.data);
@@ -335,8 +335,8 @@ const ReboundDetailView = () => {
       {currentClaim && (
         <div
           className={`flex flex-col gap-4 p-4 rounded-2xl border m-4 ${isDark
-              ? 'bg-[#10131b] border-[#26272C33] shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
-              : 'bg-white border-gray-200 shadow-[0_8px_18px_rgba(0,0,0,0.08)]'
+            ? 'bg-[#10131b] border-[#26272C33] shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
+            : 'bg-white border-gray-200 shadow-[0_8px_18px_rgba(0,0,0,0.08)]'
             }`}
         >
 
@@ -410,15 +410,15 @@ const ReboundDetailView = () => {
 
             <div
               className={`flex items-center rounded-2xl border px-1 py-1 ${isDark
-                  ? 'bg-[#0f131b] border-[#1f2433] shadow-[0_12px_30px_rgba(0,0,0,0.35)]'
-                  : 'bg-white border-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)]'
+                ? 'bg-[#0f131b] border-[#1f2433] shadow-[0_12px_30px_rgba(0,0,0,0.35)]'
+                : 'bg-white border-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)]'
                 }`}
             >
               {[
-                { id: 4, label: "Overview" },
+                // { id: 4, label: "Overview" },
                 { id: 0, label: "Claim (837)" },
-                { id: 1, label: "Payments 835" },
-                { id: 2, label: "Actions" },
+                { id: 1, label: "Payments (835)" },
+                { id: 2, label: "Related Encounters" },
               ].map((tab) => {
                 const active = detailShowStatus === tab.id;
                 return (
@@ -426,12 +426,12 @@ const ReboundDetailView = () => {
                     key={tab.id}
                     onClick={() => onDetailShowStatusChange(tab.id)}
                     className={`flex-1 text-center px-4 py-2 text-sm font-semibold rounded-xl transition ${active
-                        ? isDark
-                          ? 'bg-[#2a2f3d] text-white border border-[#3c4661]'
-                          : 'bg-slate-900 text-white border border-slate-800'
-                        : isDark
-                          ? 'text-gray-400 border border-transparent hover:border-[#2e364a] hover:bg-[#141824]'
-                          : 'text-gray-600 border border-transparent hover:bg-gray-100'
+                      ? isDark
+                        ? 'bg-[#2a2f3d] text-white border border-[#3c4661]'
+                        : 'bg-slate-900 text-white border border-slate-800'
+                      : isDark
+                        ? 'text-gray-400 border border-transparent hover:border-[#2e364a] hover:bg-[#141824]'
+                        : 'text-gray-600 border border-transparent hover:bg-gray-100'
                       }`}
                   >
                     {tab.label}
@@ -573,328 +573,342 @@ const ReboundDetailView = () => {
           )}
 
           {detailShowStatus == 1 && (
-            <div className="flex flex-col  p-4 gap-4 rounded-xl">
+            <div className={`flex flex-col p-4 gap-4 rounded-2xl border ${isDark ? 'bg-[#0f131b] border-[#1f2433] text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
               {currentClaim.Remit.length === 0 ? (
-                <div className="rounded-xl bg-white  text-center text-gray-500">
+                <div className={`rounded-xl text-center ${isDark ? 'bg-[#121722] text-gray-400 border border-[#1f2433]' : 'bg-white text-gray-500 border-gray-200'}`}>
                   No data available
                 </div>
               ) : (
-                currentClaim.Remit.map((row, index) => (
-                  <React.Fragment key={`remit-${row.ClaimID || row.CheckNumber || row.CheckDate || index}-${index}`}>
-                    <div className="flex flex-row gap-x-5">
-                      <h1 className="font-bold">{(() => {
-                        const date = new Date(Date.parse(row.CheckDate));
-                        const options = { year: 'numeric', month: 'short', day: '2-digit' };
-                        return date.toLocaleDateString('en-US', options);
-                      })()}</h1>
-                      <h1 className="text-blue-600 font-semibold cursor-pointer" onClick={
-                        () => {
-                          SetRemit_state(!remit_collapse_state)
-                        }
-                      }>{!remit_collapse_state ? 'Hide' : 'Show'}</h1>
-                    </div>
+                currentClaim.Remit.map((row, index) => {
+                  const date = new Date(Date.parse(row.CheckDate));
+                  const options = { year: 'numeric', month: 'short', day: '2-digit' };
+                  const dateLabel = date.toLocaleDateString('en-US', options);
 
-                    <div className="flex flex-col bg-[#EFF4FE] rounded-xl gap-2 p-2">
-                      {/* Check Information */}
-                      <DetailSection title="Check Information" showArrow={true} isCollapse={remit_collapse_state}>
-                        <TableWrapper>
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Check Date
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Check #
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Check Amount
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Payer ID
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Payer Name
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Provider Name
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Provider Address
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  TaxID
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  NPI
-                                </th>
-                                <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  PLB Adjustment
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              <tr className="hover:bg-gray-50 transition-colors">
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                                  {formatDate(row.CheckDate)}
-                                </td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.CheckNumber}</td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.CheckAmount}</td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.PayerID}</td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.PayerName}</td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.ProviderName}</td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.ProviderAddress}</td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">-</td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.NPI}</td>
-                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">-</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </TableWrapper>
-                      </DetailSection>
+                  return (
+                    <div key={`remit-${row.ClaimID || row.CheckNumber || row.CheckDate || index}-${index}`} className="flex flex-col gap-3">
+                      <button
+                        type="button"
+                        onClick={() => SetRemit_state(!remit_collapse_state)}
+                        className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition w-full ${
+                          isDark
+                            ? 'bg-[#141824] border-[#1f2433] hover:border-[#3c4661] hover:bg-[#181d29]'
+                            : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className={`text-lg font-bold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{dateLabel}</span>
+                        <span className={`flex items-center gap-2 text-sm font-semibold ${isDark ? 'text-blue-200' : 'text-blue-600'}`}>
+                          {!remit_collapse_state ? 'Hide' : 'Show'}
+                          <span
+                            className={`inline-block transform transition-transform ${
+                              remit_collapse_state ? 'rotate-180' : 'rotate-0'
+                            } ${isDark ? 'text-gray-300' : 'text-gray-500'}`}
+                          >
+                            ▼
+                          </span>
+                        </span>
+                      </button>
 
-                      {/* Claim Information */}
-                      <DetailSection title="Claim Information" showArrow={true} isCollapse={remit_collapse_state}>
-                        <TableWrapper>
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Dates</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processing Status</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Frequency</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Claim #</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charges</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amt</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Resp</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductible</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Insurance</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Pay</th>
-                                <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Other Insurance</th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              <tr className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(row.ServiceDate)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.ProcessingStatus}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{currentClaim.Claim.Data.Frequency || '-'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.PayerClaimNumber}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.ClaimID}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.ChargeAmount)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.ServiceLine.map(rr => Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0))}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.ServiceLine.map(rr => Number(rr.ChargedAmount) - Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0))}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.PaidAmount)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${samplifyDouble(row.PatientResp)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </TableWrapper>
-                      </DetailSection>
-
-                      {/* Service Line Detail */}
-                      <DetailSection title="Service Line Detail" showArrow={true} isCollapse={remit_collapse_state}>
-                        <TableWrapper>
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Line #</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Procedure Code</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modifiers</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charge</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed Amt</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amt</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductible</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Insurance</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Pay</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group Code</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason Code</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason Description</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</th>
-                                <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              {row.ServiceLine.map((rowr, index) =>
-                                rowr.Codes.map((adjustment, ind) => (
-                                  <tr key={`${index}-${ind}`} className="hover:bg-gray-50 transition-all duration-200 ease-in-out">
-                                    {ind === 0 && (
-                                      <>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <span className="text-sm font-medium text-gray-900 bg-gray-100 px-2.5 py-1 rounded-full">
-                                            {index + 1}
-                                          </span>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <div className="text-sm text-gray-600 font-medium">
-                                            {formatDate(row.ServiceDate)}
-                                          </div>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700">
-                                            {rowr.ProcedureCode}
-                                          </span>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <Description description={rowr.Description} width={80} />
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <div className="flex flex-wrap gap-1">
-                                            {rowr.Modifiers?.length > 0 ?
-                                              [
-                                                rowr.Modifiers[0].ProcedureModifier1,
-                                                rowr.Modifiers[0].ProcedureModifier2,
-                                                rowr.Modifiers[0].ProcedureModifier3,
-                                                rowr.Modifiers[0].ProcedureModifier4
-                                              ].filter(Boolean).map((modifier, idx) => (
-                                                <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
-                                                  {modifier}
-                                                </span>
-                                              )) : '-'}
-                                          </div>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <div className="text-sm font-medium text-gray-900">
-                                            {samplifyInteger(rowr.UnitsPaid)}
-                                          </div>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <div className="text-sm font-semibold text-green-600">
-                                            ${samplifyDouble(rowr.ChargedAmount)}
-                                          </div>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <div className="text-sm font-semibold text-blue-600">
-                                            ${samplifyDouble(rowr.AllowedAmount)}
-                                          </div>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <div className="text-sm font-semibold text-red-600">
-                                            ${samplifyDouble(rowr.ChargedAmount - rowr.AllowedAmount)}
-                                          </div>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <div className="text-sm text-gray-500">-</div>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <div className="text-sm text-gray-500">-</div>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <div className="text-sm text-gray-500">-</div>
-                                        </td>
-                                        <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                          <div className="text-sm font-semibold text-emerald-600">
-                                            ${samplifyDouble(rowr.PaidAmount)}
-                                          </div>
-                                        </td>
-                                      </>
-                                    )}
-                                    <td className="px-6 py-4">
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
-                                        {adjustment.AdjustmentGroup}
-                                      </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-yellow-50 text-yellow-800">
-                                        {adjustment.AdjustmentReason}
-                                      </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                      <Description description={adjustment.Description} width={80} />
-                                    </td>
-                                    {ind === 0 && (
-                                      <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                        <div className="flex flex-wrap gap-1">
-                                          {rowr.RemarkCodes ?
-                                            rowr.RemarkCodes.split(',').map((r, idx) => (
-                                              <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
-                                                {r.split(':')[1]}
-                                              </span>
-                                            )) : '-'}
-                                        </div>
-                                      </td>
-                                    )}
-                                    <td className="px-6 py-4">
-                                      <div className="text-sm font-semibold text-gray-900">
-                                        ${samplifyDouble(adjustment.AdjustmentAmount)}
-                                      </div>
-                                    </td>
+                      {!remit_collapse_state && (
+                        <div className="flex flex-col gap-3">
+                          <SectionCard title="Check Information">
+                            <TableWrapper>
+                              <table className={`min-w-full divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
+                                <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
+                                  <tr>
+                                    <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Check Date
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Check #
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Check Amount
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Payer ID
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Payer Name
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Provider Name
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Provider Address
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      TaxID
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      NPI
+                                    </th>
+                                    <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      PLB Adjustment
+                                    </th>
                                   </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
-                        </TableWrapper>
-                      </DetailSection>
+                                </thead>
+                                <tbody className={`${isDark ? 'bg-[#121722] divide-[#1f2433]' : 'bg-white divide-gray-200'}`}>
+                                  <tr className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'} transition-colors`}>
+                                    <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                      {formatDate(row.CheckDate)}
+                                    </td>
+                                    <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.CheckNumber}</td>
+                                    <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.CheckAmount}</td>
+                                    <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.PayerID}</td>
+                                    <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.PayerName}</td>
+                                    <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.ProviderName}</td>
+                                    <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.ProviderAddress}</td>
+                                    <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>-</td>
+                                    <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.NPI}</td>
+                                    <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>-</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </TableWrapper>
+                          </SectionCard>
 
+                          <SectionCard title="Claim Information">
+                            <TableWrapper>
+                              <table className={`min-w-full divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
+                                <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
+                                  <tr>
+                                    <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Dates</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processing Status</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Frequency</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Claim #</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charges</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amt</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Resp</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductible</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Insurance</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Pay</th>
+                                    <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Other Insurance</th>
+                                  </tr>
+                                </thead>
+                                <tbody className={`${isDark ? 'bg-[#121722] divide-[#1f2433]' : 'bg-white divide-gray-200'}`}>
+                                  <tr className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'} transition-colors`}>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatDate(row.ServiceDate)}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.ProcessingStatus}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{currentClaim.Claim.Data.Frequency || '-'}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.PayerClaimNumber}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.ClaimID}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>${samplifyDouble(row.ChargeAmount)}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>${samplifyDouble(row.ServiceLine.map(rr => Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0))}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>${samplifyDouble(row.ServiceLine.map(rr => Number(rr.ChargedAmount) - Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0))}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>${samplifyDouble(row.PaidAmount)}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>${samplifyDouble(row.PatientResp)}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </TableWrapper>
+                          </SectionCard>
 
+                          <SectionCard title="Service Line Detail">
+                            <TableWrapper>
+                              <table className={`min-w-full divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
+                                <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
+                                  <tr>
+                                    <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Line #</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Procedure Code</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modifiers</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charge</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed Amt</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amt</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductible</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Insurance</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Pay</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group Code</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason Code</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason Description</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</th>
+                                    <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                  </tr>
+                                </thead>
+                                <tbody className={`${isDark ? 'bg-[#121722] divide-[#1f2433] text-gray-100' : 'bg-white divide-gray-200 text-gray-900'}`}>
+                                  {row.ServiceLine.map((rowr, index) =>
+                                    rowr.Codes.map((adjustment, ind) => (
+                                      <tr key={`${index}-${ind}`} className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'} transition-all duration-200 ease-in-out`}>
+                                        {ind === 0 && (
+                                          <>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <span className={`text-sm font-medium ${isDark ? 'text-gray-100 bg-[#1f2635]' : 'text-gray-900 bg-gray-100'} px-2.5 py-1 rounded-full`}>
+                                                {index + 1}
+                                              </span>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                                {formatDate(row.ServiceDate)}
+                                              </div>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <span className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${isDark ? 'bg-[#1f2635] text-white' : 'bg-blue-50 text-blue-700'}`}>
+                                                {rowr.ProcedureCode}
+                                              </span>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <Description description={rowr.Description} width={80} />
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <div className="flex flex-wrap gap-1">
+                                                {rowr.Modifiers?.length > 0 ?
+                                                  [
+                                                    rowr.Modifiers[0].ProcedureModifier1,
+                                                    rowr.Modifiers[0].ProcedureModifier2,
+                                                    rowr.Modifiers[0].ProcedureModifier3,
+                                                    rowr.Modifiers[0].ProcedureModifier4
+                                                  ].filter(Boolean).map((modifier, idx) => (
+                                                    <span key={idx} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isDark ? 'bg-[#1f2635] text-purple-100' : 'bg-purple-50 text-purple-700'}`}>
+                                                      {modifier}
+                                                    </span>
+                                                  )) : '-'}
+                                              </div>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                                {samplifyInteger(rowr.UnitsPaid)}
+                                              </div>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <div className={`text-sm font-semibold ${isDark ? 'text-emerald-300' : 'text-green-600'}`}>
+                                                ${samplifyDouble(rowr.ChargedAmount)}
+                                              </div>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <div className={`text-sm font-semibold ${isDark ? 'text-blue-300' : 'text-blue-600'}`}>
+                                                ${samplifyDouble(rowr.AllowedAmount)}
+                                              </div>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <div className={`text-sm font-semibold ${isDark ? 'text-red-300' : 'text-red-600'}`}>
+                                                ${samplifyDouble(rowr.ChargedAmount - rowr.AllowedAmount)}
+                                              </div>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</div>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</div>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</div>
+                                            </td>
+                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                              <div className={`text-sm font-semibold ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`}>
+                                                ${samplifyDouble(rowr.PaidAmount)}
+                                              </div>
+                                            </td>
+                                          </>
+                                        )}
+                                        <td className="px-6 py-4">
+                                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${isDark ? 'bg-[#1f2635] text-white' : 'bg-gray-100 text-gray-800'}`}>
+                                            {adjustment.AdjustmentGroup}
+                                          </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${isDark ? 'bg-[#3b3525] text-amber-200' : 'bg-yellow-50 text-yellow-800'}`}>
+                                            {adjustment.AdjustmentReason}
+                                          </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                          <Description description={adjustment.Description} width={80} />
+                                        </td>
+                                        {ind === 0 && (
+                                          <td rowSpan={rowr.Codes.length} className="px-6 py-4">
+                                            <div className="flex flex-wrap gap-1">
+                                              {rowr.RemarkCodes ?
+                                                rowr.RemarkCodes.split(',').map((r, idx) => (
+                                                  <span key={idx} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isDark ? 'bg-[#1f2635] text-indigo-200' : 'bg-indigo-50 text-indigo-700'}`}>
+                                                    {r.split(':')[1]}
+                                                  </span>
+                                                )) : '-'}
+                                            </div>
+                                          </td>
+                                        )}
+                                        <td className="px-6 py-4">
+                                          <div className={`text-sm font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                            ${samplifyDouble(adjustment.AdjustmentAmount)}
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))
+                                  )}
+                                </tbody>
+                              </table>
+                            </TableWrapper>
+                          </SectionCard>
+                        </div>
+                      )}
                     </div>
-                  </React.Fragment>)))}
+                  );
+                })
+              )}
             </div>
           )}
-
           {detailShowStatus == 2 && (
-            <div className="flex flex-col bg-[#EFF4FE] p-2 gap-4 rounded-xl">
-              <DetailSection
-                title="Related Encounter"
-                status={status}
-                key={renderIndex + 9}
-                showArrow={true}
-                className="bg-white rounded-xl shadow-sm"
-              >
-                <TableWrapper>
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim No</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Date</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Type</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer ID</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Name</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Sequence</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Frequency</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient ID</th>
-                        <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+
+            <DetailSection
+              title="Related Encounter"
+              status={status}
+              key={renderIndex + 9}
+              showArrow={true}
+              className=""
+              isDark={isDark}
+            >
+              <TableWrapper>
+                <table className={`min-w-full divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
+                  <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
+                    <tr>
+                      <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim No</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Date</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Type</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer ID</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Name</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Sequence</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Frequency</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient ID</th>
+                      <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`${isDark ? 'bg-[#121722] divide-[#1f2433] text-gray-100' : 'bg-white divide-gray-200 text-gray-900'}`}>
+                    {currentClaim.RelatedEncounters.map((row, index) => (
+                      <tr
+                        key={index}
+                        onClick={() => showDetail(row.ClaimNo)}
+                        className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'} transition-colors cursor-pointer`}
+                      >
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{index + 1}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.ClaimNo}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatDate(row.ServiceDate)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatDate(row.TransactionDate)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString(row.TransactionType)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString(row.PayerID)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString(row.PayerName)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
+                          {row.PayerSeq == 'P' ? 'Primary' : (row.PayerSeq == 'S' ? 'Secondary' : '-')}
+                        </td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.Frequency}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString("")}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString("")}</td>
                       </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {currentClaim.RelatedEncounters.map((row, index) => (
-                        <tr
-                          key={index}
-                          onClick={() => showDetail(row.ClaimNo)}
-                          className="hover:bg-gray-50 transition-colors cursor-pointer"
-                        >
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{index + 1}</td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.ClaimNo}</td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(row.ServiceDate)}</td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDate(row.TransactionDate)}</td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString(row.TransactionType)}</td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString(row.PayerID)}</td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString(row.PayerName)}</td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                            {row.PayerSeq == 'P' ? 'Primary' : (row.PayerSeq == 'S' ? 'Secondary' : '-')}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{row.Frequency}</td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString("")}</td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{samplifyString("")}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </TableWrapper>
-              </DetailSection>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </TableWrapper>
+            </DetailSection>
+
           )}
 
           {detailShowStatus == 4 && <>
@@ -1678,3 +1692,4 @@ const ReboundDetailView = () => {
 };
 
 export default ReboundDetailView;
+

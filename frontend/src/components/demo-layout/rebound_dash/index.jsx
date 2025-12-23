@@ -59,7 +59,26 @@ const ReboundDash = () => {
   const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/pilotcustomer' : '/demo';
   const isDenialsRoute = location.pathname.includes('/denials');
   const isUserManagementView = selectedNav === 'user-management';
-  const showAiModels = !isUserManagementView && selectedNav === 'ai-library' && !rawToken;
+  // Show AI models only when the app title indicates AI Library/Automation (set by Sidebar or ArIntel),
+  // and not when drilled into claim results.
+  const isAiTitle = appTitle === 'AI Library' || appTitle === 'AI Automation';
+  const showAiModels = !isUserManagementView && isAiTitle && !aiLibraryDrilldown;
+  const placeholderNavs = [
+    'settings',
+    'support',
+    'dashboard',
+    'claim-edits',
+    'claim-edits:ch-rejection',
+    'claim-edits:payer-rejection',
+    'payment-variance',
+    'payment-variance:payer-overpaid',
+    'payment-variance:payer-underpaid',
+    'payment-posting',
+    'payment-posting:payment',
+    'payment-posting:writeoff',
+    'payment-posting:refund',
+  ];
+  const showPlaceholder = placeholderNavs.includes(selectedNav);
   const count = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   let tabIndex = useSelector((state) => state.app.tabIndex);
@@ -296,11 +315,22 @@ const ReboundDash = () => {
     'denials:other': ['Other Non-Specific'],
     'denials:provider': ['Provider'],
     'denials:timely-filing': ['Timely Filing'],
+    'patient-responsibility': ['Patient Resp'],
+    'patient-responsibility:bal-due': ['Patient Resp'],
     'payment-posting:contractual-adj': ['Contractual Adj'],
   }), []);
 
   const applyNavFilters = useCallback((navId) => {
     if (!navId || navId === 'user-management') {
+      return;
+    }
+    // Placeholder sections should not trigger data loading; show static content instead.
+    if (placeholderNavs.includes(navId)) {
+      dispatch(setSelectedTags([]));
+      dispatch(setExtraFilter({}));
+      dispatch(setTableLoading(false));
+      dispatch(setPart1Loading(false));
+      dispatch(setPart2Loading(false));
       return;
     }
     const basePayload = navExtraFilters[navId] || {};
@@ -313,8 +343,13 @@ const ReboundDash = () => {
         (tag) => tag && tag !== 'Contractual Adj' && tag !== 'Patient Resp'
       );
     }
-    if (isAiLibrary && aiModelFilters.length > 0) {
-      filterPayload.ExcludeAiModels = aiModelFilters;
+    if (isAiLibrary) {
+      if (aiModelFilters.length > 0) {
+        filterPayload.ExcludeAiModels = aiModelFilters;
+      }
+      // For AI Library we still want to expose Denial categories so users can drill back into them.
+      dispatch(setSelectedTags(tags));
+      dispatch(setTabIndex(6));
     }
     dispatch(setExtraFilter(filterPayload));
     if (tagOverride) {
@@ -324,6 +359,16 @@ const ReboundDash = () => {
     dispatch(setCurrentPage(1));
     dispatch(setTableLoading(true));
   }, [aiModelFilters, dispatch, navExtraFilters, navTagFilters, tags]);
+
+  // If navigation happens via the shared Sidebar (sets title to "AI Library"),
+  // keep this view in sync so the AI models grid renders instead of the claims table.
+  useEffect(() => {
+    if ((appTitle === 'AI Library' || appTitle === 'AI Automation') && selectedNav !== 'ai-library') {
+      setSelectedNav('ai-library');
+      setAiLibraryDrilldown(false);
+      applyNavFilters('ai-library');
+    }
+  }, [appTitle, selectedNav, applyNavFilters]);
 
   // When tags finish loading, re-apply filters for denials views so data loads.
   useEffect(() => {
@@ -694,6 +739,15 @@ const ReboundDash = () => {
     if (item.id !== 'ai-library') {
       setAiLibraryDrilldown(false);
     }
+    if (placeholderNavs.includes(item.id)) {
+      setSelectedNav(item.id);
+      dispatch(setSelectedTags([]));
+      dispatch(setExtraFilter({}));
+      dispatch(setTableLoading(false));
+      dispatch(setPart1Loading(false));
+      dispatch(setPart2Loading(false));
+      return;
+    }
     if (item.id === 'home') {
       if (location.pathname.includes('/denials') || location.pathname.includes('/management')) {
         navigate(baseAppPath);
@@ -773,7 +827,7 @@ const ReboundDash = () => {
           <>
 
 
-            <div className="flex flex-wrap gap-2 mt-4">
+            {/* <div className="flex flex-wrap gap-2 mt-4">
               {[
                 { label: 'All', value: 0 },
                 { label: 'Contractual Adj', value: 1 },
@@ -802,9 +856,9 @@ const ReboundDash = () => {
                   </button>
                 );
               })}
-            </div>
+            </div> */}
 
-            <div className={`rounded-[48px] p-6 ${isDark ? 'bg-gradient-to-r from-[#4B9187] via-[#1D2540] to-[#6911AC80]' : 'bg-white'} shadow-[0_20px_60px_rgba(0,0,0,0.25)]`}>
+            {/* <div className={`rounded-[48px] p-6 ${isDark ? 'bg-gradient-to-r from-[#4B9187] via-[#1D2540] to-[#6911AC80]' : 'bg-white'} shadow-[0_20px_60px_rgba(0,0,0,0.25)]`}>
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
                 {insightCards.map((card) => (
                   <div
@@ -816,13 +870,25 @@ const ReboundDash = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             <div className="flex flex-col min-w-0">
               <div className="mb-4 text-sm font-semibold text-gray-400">
                 {appTitle || 'Home'}
               </div>
-              {showAiModels ? <ArIntel onModelSelect={() => setAiLibraryDrilldown(true)} /> : <DataTable />}
+              {showAiModels ? (
+                <ArIntel onModelSelect={() => setAiLibraryDrilldown(true)} />
+              ) : showPlaceholder ? (
+                <div
+                  className={`rounded-2xl border px-6 py-10 text-center text-lg font-semibold ${
+                    isDark ? 'bg-[#0f131b] border-[#1f2433] text-gray-200' : 'bg-white border-gray-200 text-gray-700'
+                  }`}
+                >
+                  Coming soon
+                </div>
+              ) : (
+                <DataTable />
+              )}
             </div>
           </>
         )}
