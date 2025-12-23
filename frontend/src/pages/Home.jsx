@@ -10,11 +10,12 @@ const Home = () => {
           <div className="flex justify-between items-center py-4">
             {/* Logo */}
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-pink-400 rounded-full flex items-center justify-center mr-3">
-                <div className="w-6 h-6 bg-white rounded-full opacity-80"></div>
-              </div>
-              <span className="text-2xl font-bold text-teal-600">HELIO</span>
-              <span className="text-sm text-gray-500 ml-1">RCM</span>
+              <img
+                src="/helio-logo.svg"
+                alt="HELIO RCM"
+                className="h-12 w-auto"
+                loading="lazy"
+              />
             </div>
 
             {/* Navigation */}
