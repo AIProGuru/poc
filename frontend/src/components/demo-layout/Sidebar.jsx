@@ -17,6 +17,7 @@ const Sidebar = () => {
   const location = useLocation();
   const type = useSelector((state) => state.app.type);
   const theme = useSelector((state) => state.app.theme);
+  const counts = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   const models = useSelector((state) => state.app.models) || [];
   const placeholderNavs = [
@@ -41,6 +42,12 @@ const Sidebar = () => {
   const basePath =
     type === 0 ? "/rebound" : type === 1 ? "/pilotcustomer" : "/demo";
   const isDark = theme === "dark";
+
+  const denialsCount = useMemo(() => {
+    const value = counts?.[0]?.count;
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : 0;
+  }, [counts]);
 
   const navItems = useMemo(() => {
     const aiBadge = models.reduce(
@@ -74,7 +81,7 @@ const Sidebar = () => {
         id: "denials",
         title: "Denials",
         icon: "shield-x",
-        badge: null,
+        badge: denialsCount || null,
         children: [
           { id: "denials:authorization", title: "Authorization" },
           { id: "denials:billing", title: "Billing" },
@@ -131,7 +138,7 @@ const Sidebar = () => {
       { id: "support", title: "Support", icon: "lifebuoy", badge: null },
       { id: "settings", title: "Settings", icon: "cog", badge: null },
     ];
-  }, [models]);
+  }, [denialsCount, models]);
 
   const navExtraFilters = useMemo(
     () => ({
