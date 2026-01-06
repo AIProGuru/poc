@@ -8,6 +8,7 @@ import {
   setExtraFilter,
   setCurrentPage,
   setTableLoading,
+  setTableData,
 } from "../../redux/reducers/app.reducer";
 import { setSelectedTags } from "../../redux/reducers/tag.reducer";
 
@@ -45,6 +46,11 @@ const Sidebar = () => {
 
   const denialsCount = useMemo(() => {
     const value = counts?.[0]?.count;
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : 0;
+  }, [counts]);
+  const patientResponsibilityCount = useMemo(() => {
+    const value = counts?.[2]?.count;
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : 0;
   }, [counts]);
@@ -102,7 +108,7 @@ const Sidebar = () => {
         id: "patient-responsibility",
         title: "Patient Responsibility",
         icon: "user",
-        badge: 23,
+        badge: patientResponsibilityCount,
         tab: 2,
         children: [{ id: "patient-responsibility:bal-due", title: "Bal Due from PT" }],
       },
@@ -138,7 +144,7 @@ const Sidebar = () => {
       { id: "support", title: "Support", icon: "lifebuoy", badge: null },
       { id: "settings", title: "Settings", icon: "cog", badge: null },
     ];
-  }, [denialsCount, models]);
+  }, [denialsCount, models, patientResponsibilityCount]);
 
   const navExtraFilters = useMemo(
     () => ({
@@ -376,6 +382,7 @@ const Sidebar = () => {
       if (placeholderNavs.includes(navId)) {
         dispatch(setSelectedTags([]));
         dispatch(setExtraFilter({}));
+        dispatch(setTableData([]));
         dispatch(setTableLoading(false));
         return;
       }

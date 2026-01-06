@@ -146,6 +146,7 @@ const ReboundDash = () => {
     if (!Array.isArray(count) || !count[idx]) return 0;
     return count[idx][key] ?? 0;
   };
+  const patientResponsibilityCount = getMetricValue(2, 'count');
 
   const insightCards = [
     { id: 'count', label: 'Count', value: getMetricValue(0, 'count'), format: 'number', gradient: 'from-[#1CB5E0] to-[#46E5B9]' },
@@ -260,7 +261,7 @@ const ReboundDash = () => {
     {
       id: 'patient-responsibility',
       label: 'Patient Responsibility',
-      badge: 23,
+      badge: patientResponsibilityCount,
       icon: 'user',
       tab: 2,
       children: [
@@ -296,7 +297,7 @@ const ReboundDash = () => {
     ...(role === 'admin'
       ? [{ id: 'user-management', label: 'User Management', badge: null, icon: 'users' }]
       : []),
-  ], [denialCount, role]);
+  ], [denialCount, patientResponsibilityCount, role]);
   const navExtraFilters = useMemo(() => ({
     'claim-status:pend-835': { Missing835: true },
   }), []);
@@ -328,6 +329,7 @@ const ReboundDash = () => {
     if (placeholderNavs.includes(navId)) {
       dispatch(setSelectedTags([]));
       dispatch(setExtraFilter({}));
+      dispatch(setTableData([]));
       dispatch(setTableLoading(false));
       dispatch(setPart1Loading(false));
       dispatch(setPart2Loading(false));
@@ -692,7 +694,7 @@ const ReboundDash = () => {
     } else if (index == 2) {
       dispatch(setSelectedTags(['Patient Resp']))
     } else if (index == 3) {
-      dispatch(setSelectedTags(['Missing']))
+      dispatch(setSelectedTags(['Delinquent']))
     } else if (index == 4) {
       dispatch(setSelectedTags([]))
     } else if (index == 5) {
@@ -743,6 +745,7 @@ const ReboundDash = () => {
       setSelectedNav(item.id);
       dispatch(setSelectedTags([]));
       dispatch(setExtraFilter({}));
+      dispatch(setTableData([]));
       dispatch(setTableLoading(false));
       dispatch(setPart1Loading(false));
       dispatch(setPart2Loading(false));

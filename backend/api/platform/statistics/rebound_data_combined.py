@@ -62,7 +62,7 @@ def newGenerateSQL(
     if tags == "":
         if flag == True:
             query += f"""
-                CUSTOM_ALL.Category IS NULL
+                (CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = '')
             """
         else:
             query += f"""
@@ -71,7 +71,7 @@ def newGenerateSQL(
     else:
         if flag == True:
             query += f"""
-                (CUSTOM_ALL.Category IS NULL OR CUSTOM_ALL.Category IN ({tags}))
+                (CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = '' OR CUSTOM_ALL.Category IN ({tags}))
             """
         else:
             query += f"""

@@ -59,8 +59,9 @@ def get_tags():
         # Process results
         categories = []
         for row in rows:
-            if row["Category"] is not None:
-                categories.append(row["Category"])
+            category_value = (row["Category"] or "").strip()
+            if category_value:
+                categories.append(category_value)
             else:
                 categories.append(os.getenv('DELIQUENT', 'Delinquent'))
         

@@ -76,17 +76,17 @@ def get_counts():
         query = """
             SELECT
                 COUNT(CASE WHEN (Category != 'Contractual Adj' AND Category != 'Patient Resp' 
-                    AND Category IS NOT NULL AND Automation = 0) THEN 1 ELSE NULL END) cnt1,
+                    AND Category IS NOT NULL AND TRIM(Category) != '' AND Automation = 0) THEN 1 ELSE NULL END) cnt1,
                 COUNT(CASE WHEN Category = 'Contractual Adj' AND Automation = 0 THEN 1 ELSE NULL END) cnt2,
                 COUNT(CASE WHEN Category = 'Patient Resp' AND Automation = 0 THEN 1 ELSE NULL END) cnt3,
-                COUNT(CASE WHEN Category IS NULL AND Automation = 0 THEN 1 ELSE NULL END) cnt4,
+                COUNT(CASE WHEN (Category IS NULL OR TRIM(Category) = '') AND Automation = 0 THEN 1 ELSE NULL END) cnt4,
                 COUNT(CASE WHEN Automation != 0 THEN 1 ELSE NULL END) cnt6,
                 COUNT(1) cnt7,
                 SUM(CASE WHEN (Category != 'Contractual Adj' AND Category != 'Patient Resp' 
-                    AND Category IS NOT NULL) THEN Amount ELSE 0 END) amount1,
+                    AND Category IS NOT NULL AND TRIM(Category) != '') THEN Amount ELSE 0 END) amount1,
                 SUM(CASE WHEN Category = 'Contractual Adj' THEN Amount ELSE 0 END) amount2,
                 SUM(CASE WHEN Category = 'Patient Resp' THEN Amount ELSE 0 END) amount3,
-                SUM(CASE WHEN Category IS NULL THEN Amount ELSE 0 END) amount4
+                SUM(CASE WHEN (Category IS NULL OR TRIM(Category) = '') THEN Amount ELSE 0 END) amount4
             FROM CUSTOM_ALL;
         """
         

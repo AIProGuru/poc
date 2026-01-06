@@ -52,6 +52,7 @@ def get_statistics():
                 COUNT(ID) AS value 
             FROM CUSTOM_ALL 
             WHERE Category IS NOT NULL 
+                AND TRIM(Category) != ''
                 AND Category != 'Patient Resp' 
                 AND Category != 'Contractual Adj' 
             GROUP BY Category
