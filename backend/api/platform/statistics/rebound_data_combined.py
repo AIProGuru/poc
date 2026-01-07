@@ -46,10 +46,9 @@ def newGenerateSQL(
         elif tab_index == 6 or tab_index == 5:
             filteredTags.append(item)
     for tag in filteredTags:
-        if tag != os.getenv('DELIQUENT'):
-            tags += f"'{tag}',"
-        else:
+        if tag == os.getenv('DELIQUENT'):
             flag = True
+        tags += f"'{tag}',"
     tags = tags[: len(tags) - 1]
     group = ""
     if code != "":

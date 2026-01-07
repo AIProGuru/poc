@@ -51,8 +51,7 @@ def generate_sql(
         for tag in filteredTags:
             if tag == os.getenv('DELIQUENT'):
                 flag = True
-            else:
-                tags += f"'{tag}',"
+            tags += f"'{tag}',"
         if tags.endswith(","):
             tags = tags[: len(tags) - 1]
     group = ""
