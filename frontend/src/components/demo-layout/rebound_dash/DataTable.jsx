@@ -478,11 +478,20 @@ const DataTable = (props) => {
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
                     {`$${samplifyDouble(row.AllowedAmt)}`}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
-                    <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`}>{row.Category}</span>
+                <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                    {(() => {
+                      const category = (row.Category || '').trim() || 'DELINQUENT';
+                      return <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`}>{category}</span>;
+                    })()}
                   </TableCell>
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
-                    {row.PrimaryCode !== '' && <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`}>{`${row.PrimaryGroup} ${row.PrimaryCode}`}</span>}
+                    {(() => {
+                      const group = ((row.PrimaryGroup ?? '') || '').trim();
+                      const code = ((row.PrimaryCode ?? '') || '').trim();
+                      const denialCode = [group, code].filter(Boolean).join(' ');
+                      if (!denialCode) return null;
+                      return <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`}>{denialCode}</span>;
+                    })()}
                   </TableCell>
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
                     {row.Remark.split('*').length > 0 && <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`}>{samplifyString(row.Remark.split('*')[0])}</span>}

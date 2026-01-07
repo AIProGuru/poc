@@ -75,7 +75,8 @@ const ReboundDetailView = () => {
     Evidence2: "",
     Resubmittion: "",
   })
-  const [remit_collapse_state, SetRemit_state] = useState(true)
+  // Track expanded 835s per index so multiple remits don't toggle together.
+  const [remitExpandSet, setRemitExpandSet] = useState(() => new Set());
 
   let { token } = useParams()
   useEffect(() => {
@@ -583,12 +584,23 @@ const ReboundDetailView = () => {
                   const date = new Date(Date.parse(row.CheckDate));
                   const options = { year: 'numeric', month: 'short', day: '2-digit' };
                   const dateLabel = date.toLocaleDateString('en-US', options);
+                  const isExpanded = remitExpandSet.has(index);
 
                   return (
                     <div key={`remit-${row.ClaimID || row.CheckNumber || row.CheckDate || index}-${index}`} className="flex flex-col gap-3">
                       <button
                         type="button"
-                        onClick={() => SetRemit_state(!remit_collapse_state)}
+                        onClick={() => {
+                          setRemitExpandSet((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(index)) {
+                              next.delete(index);
+                            } else {
+                              next.add(index);
+                            }
+                            return next;
+                          });
+                        }}
                         className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition w-full ${
                           isDark
                             ? 'bg-[#141824] border-[#1f2433] hover:border-[#3c4661] hover:bg-[#181d29]'
@@ -597,10 +609,10 @@ const ReboundDetailView = () => {
                       >
                         <span className={`text-lg font-bold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{dateLabel}</span>
                         <span className={`flex items-center gap-2 text-sm font-semibold ${isDark ? 'text-blue-200' : 'text-blue-600'}`}>
-                          {!remit_collapse_state ? 'Hide' : 'Show'}
+                          {isExpanded ? 'Hide' : 'Show'}
                           <span
                             className={`inline-block transform transition-transform ${
-                              remit_collapse_state ? 'rotate-180' : 'rotate-0'
+                              isExpanded ? 'rotate-0' : 'rotate-180'
                             } ${isDark ? 'text-gray-300' : 'text-gray-500'}`}
                           >
                             ▼
@@ -608,7 +620,7 @@ const ReboundDetailView = () => {
                         </span>
                       </button>
 
-                      {!remit_collapse_state && (
+                      {isExpanded && (
                         <div className="flex flex-col gap-3">
                           <SectionCard title="Check Information">
                             <TableWrapper>

@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple
 import time
 import logging
 from datetime import date
+import os
 from db import get_connection, close_connection
 from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL
 
@@ -151,12 +152,16 @@ def get_rebound_data_all():
         print("aaaaaaaaaaaaaaaaaaaaaaa", count_sql)
         print("bbbbbbbbbbbbbbbbbbbbbbb", result['cnt'])
         # Generate SQL query to fetch the data with pagination
+        delinquent_label = os.getenv('DELIQUENT', 'Delinquent').replace("'", "''")
         data_sql = f"""select
             CUSTOM_ALL.ClaimNo, CUSTOM_ALL.ProvTaxID, CUSTOM_ALL.ProvNPI,
             CUSTOM_ALL.PayerName, CUSTOM_ALL.PayerID, CUSTOM_ALL.PayerSeq, CUSTOM_ALL.LoadDate,
             CUSTOM_ALL.ServiceDate, CUSTOM_ALL.PlaceOfService, CUSTOM_ALL.Amount,
-            CUSTOM_ALL.AllowedAmt, CUSTOM_ALL.Category, CUSTOM_ALL.PrimaryGroup,
-            CUSTOM_ALL.PrimaryCode, CUSTOM_ALL.PrimaryDX, CUSTOM_ALL.PrimaryProcedure, CUSTOM_ALL.Remark, CUSTOM_ALL.ActionDate, CUSTOM_ALL.ActionTaken
+            CUSTOM_ALL.AllowedAmt,
+            COALESCE(NULLIF(TRIM(CUSTOM_ALL.Category), ''), '{delinquent_label}') AS Category,
+            COALESCE(CUSTOM_ALL.PrimaryGroup, '') AS PrimaryGroup,
+            COALESCE(CUSTOM_ALL.PrimaryCode, '') AS PrimaryCode,
+            CUSTOM_ALL.PrimaryDX, CUSTOM_ALL.PrimaryProcedure, CUSTOM_ALL.Remark, CUSTOM_ALL.ActionDate, CUSTOM_ALL.ActionTaken
             {newGenerateSQL(
                 tab_index,
                 keyword,

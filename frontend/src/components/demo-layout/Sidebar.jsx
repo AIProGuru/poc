@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
+import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -11,6 +12,7 @@ import {
   setTableData,
 } from "../../redux/reducers/app.reducer";
 import { setSelectedTags } from "../../redux/reducers/tag.reducer";
+import { useApiEndpoint } from "../../ApiEndpointContext";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
@@ -21,7 +23,11 @@ const Sidebar = () => {
   const counts = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   const models = useSelector((state) => state.app.models) || [];
+  const apiUrl = useApiEndpoint();
+  const [navBadges, setNavBadges] = useState({});
   const placeholderNavs = [
+    "claim-status",
+    "claim-status:pend-277",
     "dashboard",
     "support",
     "settings",
@@ -67,20 +73,20 @@ const Sidebar = () => {
         id: "claim-edits",
         title: "Claim Edits",
         icon: "clipboard",
-        badge: 45,
+        badge: 0,
         children: [
-          { id: "claim-edits:ch-rejection", title: "CH Rejection" },
-          { id: "claim-edits:payer-rejection", title: "Payer Rejection" },
+          { id: "claim-edits:ch-rejection", title: "CH Rejection", badge: 0 },
+          { id: "claim-edits:payer-rejection", title: "Payer Rejection", badge: 0 },
         ],
       },
       {
         id: "claim-status",
         title: "Claim Status",
         icon: "list",
-        badge: 96,
+        badge: 0,
         children: [
-          { id: "claim-status:pend-277", title: "Pend 277" },
-          { id: "claim-status:pend-835", title: "Pend 835" },
+          { id: "claim-status:pend-277", title: "Pend 277", badge: 0 },
+          { id: "claim-status:pend-835", title: "Pend 835", badge: 0 },
         ],
       },
       {
@@ -89,19 +95,19 @@ const Sidebar = () => {
         icon: "shield-x",
         badge: denialsCount || null,
         children: [
-          { id: "denials:authorization", title: "Authorization" },
-          { id: "denials:billing", title: "Billing" },
-          { id: "denials:cob", title: "Coordination of Benefits" },
-          { id: "denials:documentation", title: "Documentation" },
-          { id: "denials:duplicate", title: "Duplicate" },
-          { id: "denials:eligibility", title: "Eligibility" },
-          { id: "denials:loc", title: "Level of Care" },
-          { id: "denials:medical-coding", title: "Medical Coding" },
-          { id: "denials:medical-necessity", title: "Medical Necessity" },
-          { id: "denials:non-covered", title: "Non-Covered" },
-          { id: "denials:other", title: "Other Non-Specific" },
-          { id: "denials:provider", title: "Provider" },
-          { id: "denials:timely-filing", title: "Timely Filing" },
+          { id: "denials:authorization", title: "Authorization", badge: 0 },
+          { id: "denials:billing", title: "Billing", badge: 0 },
+          { id: "denials:cob", title: "Coordination of Benefits", badge: 0 },
+          { id: "denials:documentation", title: "Documentation", badge: 0 },
+          { id: "denials:duplicate", title: "Duplicate", badge: 0 },
+          { id: "denials:eligibility", title: "Eligibility", badge: 0 },
+          { id: "denials:loc", title: "Level of Care", badge: 0 },
+          { id: "denials:medical-coding", title: "Medical Coding", badge: 0 },
+          { id: "denials:medical-necessity", title: "Medical Necessity", badge: 0 },
+          { id: "denials:non-covered", title: "Non-Covered", badge: 0 },
+          { id: "denials:other", title: "Other Non-Specific", badge: 0 },
+          { id: "denials:provider", title: "Provider", badge: 0 },
+          { id: "denials:timely-filing", title: "Timely Filing", badge: 0 },
         ],
       },
       {
@@ -110,29 +116,29 @@ const Sidebar = () => {
         icon: "user",
         badge: patientResponsibilityCount,
         tab: 2,
-        children: [{ id: "patient-responsibility:bal-due", title: "Bal Due from PT" }],
+        children: [{ id: "patient-responsibility:bal-due", title: "Bal Due from PT", badge: 0 }],
       },
       {
         id: "payment-variance",
         title: "Payment Variance",
         icon: "chart",
-        badge: 67,
+        badge: 0,
         tab: 4,
         children: [
-          { id: "payment-variance:payer-overpaid", title: "Payer Overpaid" },
-          { id: "payment-variance:payer-underpaid", title: "Payer Underpaid" },
+          { id: "payment-variance:payer-overpaid", title: "Payer Overpaid", badge: 0 },
+          { id: "payment-variance:payer-underpaid", title: "Payer Underpaid", badge: 0 },
         ],
       },
       {
         id: "payment-posting",
         title: "Payment Posting",
         icon: "card",
-        badge: 36,
+        badge: 0,
         children: [
-          { id: "payment-posting:contractual-adj", title: "Contractual Adj" },
-          { id: "payment-posting:payment", title: "Payment" },
-          { id: "payment-posting:writeoff", title: "Write-off" },
-          { id: "payment-posting:refund", title: "Refund" },
+          { id: "payment-posting:contractual-adj", title: "Contractual Adj", badge: 0 },
+          { id: "payment-posting:payment", title: "Payment", badge: 0 },
+          { id: "payment-posting:writeoff", title: "Write-off", badge: 0 },
+          { id: "payment-posting:refund", title: "Refund", badge: 0 },
         ],
       },
       {
@@ -419,6 +425,65 @@ const Sidebar = () => {
     [dispatch, navExtraFilters, navTagFilters, tags]
   );
 
+  useEffect(() => {
+    if (!apiUrl || !tags || tags.length === 0) return;
+    const tabOverrideMap = {
+      "patient-responsibility": 2,
+      "patient-responsibility:bal-due": 2,
+      "payment-posting:contractual-adj": 1,
+    };
+    const requests = [];
+    const addRequest = (navId, parentTab) => {
+      const tagOverride = navTagFilters[navId];
+      if (!tagOverride || tagOverride.length === 0) return;
+      const tabIndex =
+        tabOverrideMap[navId] ??
+        (typeof parentTab === "number" ? parentTab : 6);
+      const extra = navExtraFilters[navId] || {};
+      requests.push(
+        axios
+          .post(`${apiUrl}/part1_all`, {
+            tabIndex,
+            keyword: "",
+            selectedTags: tagOverride,
+            startDate: null,
+            endDate: null,
+            code: "",
+            remark: "",
+            procedure: "",
+            pos: "",
+            extra,
+          })
+          .then((res) => ({
+            navId,
+            count: res.data?.Count ?? res.data?.count ?? 0,
+          }))
+          .catch(() => null)
+      );
+    };
+
+    navItems.forEach((item) => {
+      const parentTab = item.tab;
+      if (navTagFilters[item.id]) {
+        addRequest(item.id, parentTab);
+      }
+      if (Array.isArray(item.children)) {
+        item.children.forEach((child) => addRequest(child.id, parentTab));
+      }
+    });
+
+    if (requests.length === 0) return;
+    Promise.all(requests).then((results) => {
+      const next = {};
+      results
+        .filter(Boolean)
+        .forEach(({ navId, count }) => {
+          next[navId] = Number(count) || 0;
+        });
+      setNavBadges(next);
+    });
+  }, [apiUrl, tags, navItems, navExtraFilters, navTagFilters]);
+
   const handleClick = (item) => {
     dispatch(setAppTitle(item.title));
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
@@ -531,11 +596,14 @@ const Sidebar = () => {
                     >
                       {renderIcon(item.icon, isActive)}
                     </span>
-                    <span className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                    <span
+                      className="text-sm font-medium truncate max-w-[100px]"
+                      title={item.title}
+                    >
                       {item.title}
                     </span>
                   </span>
-                  {item.badge && (
+                  {item.badge !== null && item.badge !== undefined && (
                     <span
                       className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}
                     >
@@ -567,18 +635,31 @@ const Sidebar = () => {
                 <div className="ml-14 mt-1 mb-2 space-y-1">
                   {item.children.map((child) => {
                     const childIsActive = activeId === child.id;
+                    const childBadge =
+                      navBadges[child.id] ??
+                      child.badge ??
+                      (navBadges[item.id] ?? 0);
                     return (
                       <button
                         type="button"
                         key={child.id}
-                        className={`w-full text-left text-xs font-medium px-3 py-2 rounded-xl transition-colors ${
+                        className={`w-full flex items-center justify-between text-left text-xs font-medium px-3 py-2 rounded-xl transition-colors ${
                           childIsActive
                             ? (isDark ? 'bg-white/10 text-white' : 'bg-slate-900 text-white')
                             : (isDark ? 'text-[#8A8FB1] hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100')
                         }`}
                         onClick={() => handleChildClick(item, child)}
                       >
-                        {child.title}
+                        <span className="truncate" title={child.title}>{child.title}</span>
+                        <span
+                          className={`ml-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                            childIsActive
+                              ? (isDark ? 'bg-white/20 text-white' : 'bg-white text-slate-900')
+                              : (isDark ? 'bg-[#1F2231] text-[#B3B8D6]' : 'bg-slate-200 text-slate-700')
+                          }`}
+                        >
+                          {childBadge}
+                        </span>
                       </button>
                     );
                   })}

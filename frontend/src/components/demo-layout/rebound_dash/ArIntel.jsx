@@ -12,8 +12,7 @@ const ArIntel = ({ onModelSelect }) => {
   const models = useSelector((state) => state.app.models);
   const theme = useSelector((state) => state.app.theme);
   const tags = useSelector((state) => state.tags.allTags);
-
-  console.log('apiUrl', apiUrl)
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     if (!apiUrl) return;
@@ -58,41 +57,51 @@ const ArIntel = ({ onModelSelect }) => {
   };
 
   return (
-    <div className="flex mt-[-20px] flex-col">
-      <div className={`mt-2 max-h-[calc(100vh-240px)] overflow-y-auto pr-3 rounded-3xl border ${theme === 'dark' ? 'bg-white/5 border-white/10 backdrop-blur-xl' : 'bg-gradient-to-b from-white to-slate-50 border-slate-200 shadow-lg'}`}>
-        <div className={`flex items-center justify-between px-5 py-4 border-b ${theme === 'dark' ? 'border-white/10 text-white' : 'border-slate-200 text-slate-700'}`}>
+    <div className="flex flex-col gap-4">
+      <div className={`rounded-[32px] border ${isDark ? 'bg-[#0B0E17] border-[#1F2231] text-white' : 'bg-white border-slate-200 text-slate-900'} shadow-[0_20px_60px_rgba(0,0,0,0.15)]`}>
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
           <div>
-            <p className="text-xs uppercase tracking-[0.45em] text-[#3881E3]">AI Models</p>
-            <h2 className="text-lg font-semibold mt-1">Denial Automation Catalog</h2>
+            <p className="text-[11px] uppercase tracking-[0.25em] text-[#8A8FB1]">AI Models</p>
+            <h2 className="text-xl font-semibold mt-1 leading-tight">Denial Automation Catalog</h2>
+            <p className={`text-xs mt-1 ${isDark ? 'text-white/60' : 'text-slate-500'}`}>
+              Browse automation recipes aligned to your denial categories.
+            </p>
           </div>
-          <div className="text-sm">
+          <div className={`text-sm font-semibold ${isDark ? 'text-white/80' : 'text-slate-600'}`}>
             {models.length} models
           </div>
         </div>
-        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {models.length === 0 && (
+            <div className={`col-span-full rounded-2xl border text-sm text-center py-6 ${isDark ? 'border-white/10 bg-white/5 text-white/70' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+              No AI models available.
+            </div>
+          )}
           {models.map((row) => (
-            <div
+            <button
+              type="button"
               key={row.id}
               title={buildTooltip(row)}
               onClick={() => handleModelClick(row)}
-              className={`flex items-center justify-between rounded-2xl border px-4 py-3 transition hover:-translate-y-0.5 hover:shadow-lg cursor-pointer ${theme === 'dark' ? 'border-white/10 bg-white/5 text-white' : 'border-slate-200 bg-white text-slate-900'}`}
+              className={`group flex items-center justify-between rounded-2xl border px-5 py-4 transition cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#005DE2] ${isDark ? 'border-white/10 bg-white/5 text-white hover:bg-white/10' : 'border-slate-200 bg-white text-slate-900 hover:shadow-lg hover:-translate-y-0.5'}`}
             >
               <div className="min-w-0 pr-3">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-[#3881E3]">{row.Category || 'Model'}</p>
-                <h3 className="text-sm font-semibold truncate" title={row.Title}>{row.Title}</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-300 truncate">
-                  {row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleDateString() : 'No timestamp'}
-                </p>
+                <p className="text-[11px] uppercase tracking-[0.25em] text-[#8A8FB1]">{row.Category || 'Model'}</p>
+                <h3 className="text-sm font-semibold truncate leading-snug text-[#8A8FB1]" title={row.Title}>{row.Title}</h3>
+                {/* <p className={`text-xs truncate mt-1 ${isDark ? 'text-white/60' : 'text-slate-500'}`}>
+                  {row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleDateString() : 'Last updated: N/A'}
+                </p> */}
               </div>
-              <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${theme === 'dark' ? 'border-white/15 bg-white/5 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+              <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${isDark ? 'border-white/15 bg-white/5 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
                 {row.Count ?? 0} claims
               </span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default ArIntel;

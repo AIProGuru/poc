@@ -64,6 +64,8 @@ const ReboundDash = () => {
   const isAiTitle = appTitle === 'AI Library' || appTitle === 'AI Automation';
   const showAiModels = !isUserManagementView && isAiTitle && !aiLibraryDrilldown;
   const placeholderNavs = [
+    'claim-status',
+    'claim-status:pend-277',
     'settings',
     'support',
     'dashboard',
