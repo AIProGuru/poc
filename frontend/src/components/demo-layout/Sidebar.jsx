@@ -561,6 +561,16 @@ const Sidebar = () => {
           const childActive = hasChildren && activeId.startsWith(`${item.id}:`);
           const isActive = activeId === item.id || childActive;
           const isExpanded = expandedNav.has(item.id) || childActive;
+          const childSum = hasChildren
+            ? item.children.reduce((sum, child) => sum + (navBadges[child.id] ?? 0), 0)
+            : 0;
+          const parentBadge = navBadges[item.id];
+          const computedBadge =
+            typeof parentBadge === "number" && parentBadge > 0
+              ? parentBadge
+              : childSum > 0
+                ? childSum
+                : item.badge;
           const navStateClass = isActive
             ? isDark
               ? "bg-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
@@ -603,11 +613,11 @@ const Sidebar = () => {
                       {item.title}
                     </span>
                   </span>
-                  {item.badge !== null && item.badge !== undefined && (
+                  {computedBadge !== null && computedBadge !== undefined && (
                     <span
                       className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}
                     >
-                      {item.badge}
+                      {computedBadge}
                     </span>
                   )}
                 </button>
