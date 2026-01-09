@@ -556,13 +556,17 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`hidden md:flex flex-col w-72 h-full border-r px-3 py-6 ${
+      className={`hidden md:flex flex-col w-[308px] h-screen border-r px-3 py-6 sticky top-0 ${
         isDark
           ? "bg-[#0B0E17] border-[#1F2231] text-white"
           : "bg-white border-slate-200 text-slate-900"
       }`}
     >
-      <div className="flex items-center justify-center gap-3 mt-4 mb-10">
+      <div
+        className={`flex items-center justify-center gap-3 pb-6 ${
+          isDark ? "bg-[#0B0E17]" : "bg-white"
+        } sticky top-0 z-10`}
+      >
         <img
           src="/helio-logo.svg"
           alt="Helio RCM logo"
@@ -570,7 +574,7 @@ const Sidebar = () => {
           loading="lazy"
         />
       </div>
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-1 overflow-y-auto sidebar-scrollbar pr-1">
         {navItems.map((item) => {
           const hasChildren = Array.isArray(item.children) && item.children.length > 0;
           const childActive = hasChildren && activeId.startsWith(`${item.id}:`);

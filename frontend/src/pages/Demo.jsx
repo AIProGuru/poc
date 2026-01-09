@@ -12,17 +12,17 @@ const Demo = () => {
   const theme = useSelector((state) => state.app.theme);
   console.log(theme)
   return (
-    <div className="w-full h-full min-h-screen flex relative">
-      <div className="shrink-0 hidden md:block">
+    <div className="w-full h-screen flex overflow-hidden relative">
+      <div className="shrink-0 hidden md:block h-screen overflow-hidden">
         <MySidebar />
       </div>
       <div
         className={`${
           theme === "dark" ? "bg-[#07090F] text-white" : "bg-slate-50 text-slate-900"
-        } overflow-x-auto grow flex flex-col`}
+        } overflow-x-hidden grow flex flex-col`}
       >
         <Header />
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto hide-scrollbar">
           <Outlet />
         </div>
       </div>
