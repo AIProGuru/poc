@@ -32,6 +32,10 @@ import { setCategoryLabel, setCategoryValue } from '../../../redux/reducers/stat
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import ArIntel from "./ArIntel";
 import UserManagement from "./UserManagement";
+import HomeScreen from "./HomeScreen";
+import DashboardScreen from "./DashboardScreen";
+import SupportScreen from "./SupportScreen";
+import SettingsScreen from "./SettingsScreen";
 import { AccountContext } from "../../../utils/Account";
 
 const ReboundDash = () => {
@@ -81,6 +85,10 @@ const ReboundDash = () => {
     'payment-posting:refund',
   ];
   const showPlaceholder = placeholderNavs.includes(selectedNav);
+  const showHomeView = appTitle === 'Home';
+  const showDashboardView = appTitle === 'Dashboard';
+  const showSupportView = appTitle === 'Support';
+  const showSettingsView = appTitle === 'Settings';
   const count = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   let tabIndex = useSelector((state) => state.app.tabIndex);
@@ -881,7 +889,15 @@ const ReboundDash = () => {
               <div className="mb-4 text-sm font-semibold text-gray-400">
                 {appTitle || 'Home'}
               </div>
-              {showAiModels ? (
+              {showHomeView ? (
+                <HomeScreen isDark={isDark} />
+              ) : showDashboardView ? (
+                <DashboardScreen isDark={isDark} />
+              ) : showSupportView ? (
+                <SupportScreen isDark={isDark} />
+              ) : showSettingsView ? (
+                <SettingsScreen isDark={isDark} />
+              ) : showAiModels ? (
                 <ArIntel onModelSelect={() => setAiLibraryDrilldown(true)} />
               ) : showPlaceholder ? (
                 <div
