@@ -621,7 +621,7 @@ const Sidebar = () => {
                 >
                   <span className="flex items-center gap-3 min-w-0">
                     <span
-                      className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${iconWrapperClass}`}
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center border ${iconWrapperClass}`}
                     >
                       {renderIcon(item.icon, isActive)}
                     </span>
