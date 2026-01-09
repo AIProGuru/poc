@@ -68,8 +68,6 @@ const ReboundDash = () => {
   const isAiTitle = appTitle === 'AI Library' || appTitle === 'AI Automation';
   const showAiModels = !isUserManagementView && isAiTitle && !aiLibraryDrilldown;
   const placeholderNavs = [
-    'claim-status',
-    'claim-status:pend-277',
     'settings',
     'support',
     'dashboard',
@@ -79,10 +77,6 @@ const ReboundDash = () => {
     'payment-variance',
     'payment-variance:payer-overpaid',
     'payment-variance:payer-underpaid',
-    'payment-posting',
-    'payment-posting:payment',
-    'payment-posting:writeoff',
-    'payment-posting:refund',
   ];
   const showPlaceholder = placeholderNavs.includes(selectedNav);
   const showHomeView = appTitle === 'Home';
@@ -312,7 +306,24 @@ const ReboundDash = () => {
     'claim-status:pend-835': { Missing835: true },
   }), []);
   const navTagFilters = useMemo(() => ({
+    'claim-status': ['Pend 277', 'Delinquent'],
+    'claim-status:pend-277': ['Pend 277'],
     'claim-status:pend-835': ['Delinquent'],
+    'denials': [
+      'Authorization',
+      'Billing',
+      'Coordination of Benefits',
+      'Documentation',
+      'Duplicate',
+      'Eligibility',
+      'Level of Care',
+      'Medical Coding',
+      'Medical Necessity',
+      'Non-Covered',
+      'Other Non-Specific',
+      'Provider',
+      'Timely Filing',
+    ],
     'denials:authorization': ['Authorization'],
     'denials:billing': ['Billing'],
     'denials:cob': ['Coordination of Benefits'],
@@ -329,6 +340,10 @@ const ReboundDash = () => {
     'patient-responsibility': ['Patient Resp'],
     'patient-responsibility:bal-due': ['Patient Resp'],
     'payment-posting:contractual-adj': ['Contractual Adj'],
+    'payment-posting:payment': ['Payment'],
+    'payment-posting:writeoff': ['Write-off'],
+    'payment-posting:refund': ['Refund'],
+    'payment-posting': ['Contractual Adj', 'Payment', 'Write-off', 'Refund'],
   }), []);
 
   const applyNavFilters = useCallback((navId) => {
