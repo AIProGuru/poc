@@ -44,6 +44,14 @@ const ReboundDetailView = () => {
   const [renderIndex, setRenderIndex] = useState(0)
   const [claimNo, setClaimNo] = useState('')
   const [thumb, setThumb] = useState(0);
+  const [triageActions, setTriageActions] = useState([
+    { label: "Action", checked: false },
+    { label: "Action", checked: false },
+    { label: "Action", checked: false },
+    { label: "Action", checked: false },
+    { label: "Action", checked: false },
+  ]);
+  const [triageNotes, setTriageNotes] = useState("");
   const [generatingAppeal, setGeneratingAppeal] = useState(false);
   const type = useSelector((state) => state.app.type)
   const claimStatus = useRef(null);
@@ -438,6 +446,7 @@ const ReboundDetailView = () => {
                 { id: 1, label: "Claim (837)" },
                 { id: 2, label: "Payments (835)" },
                 { id: 3, label: "Related Encounters" },
+                { id: 4, label: "Triage" },
               ].map((tab) => {
                 const active = detailShowStatus === tab.id;
                 return (
@@ -1011,7 +1020,52 @@ const ReboundDetailView = () => {
 
           )}
 
-          {detailShowStatus == 4 && <>
+          {detailShowStatus == 4 && (
+            <div
+              className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark
+                ? 'text-gray-100 bg-[#0b0f16] border-[#1f2433] shadow-[0_16px_40px_rgba(0,0,0,0.35)]'
+                : 'text-gray-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'
+                }`}
+            >
+              <div className="flex flex-col gap-3">
+                <p className="text-lg font-semibold">Triage</p>
+                <div className={`rounded-xl p-4 border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className="flex flex-col gap-3">
+                    {triageActions.map((action, idx) => (
+                      <label key={`triage-${idx}`} className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-400"
+                          checked={action.checked}
+                          onChange={() =>
+                            setTriageActions((prev) =>
+                              prev.map((item, i) =>
+                                i === idx ? { ...item, checked: !item.checked } : item
+                              )
+                            )
+                          }
+                        />
+                        <span className={isDark ? 'text-gray-200' : 'text-gray-700'}>{action.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <p className="text-lg font-semibold">Notes</p>
+                <textarea
+                  rows={5}
+                  className={`w-full rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDark ? 'bg-[#0f131b] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                  value={triageNotes}
+                  onChange={(e) => setTriageNotes(e.target.value)}
+                  placeholder="Add notes for this claim..."
+                />
+              </div>
+            </div>
+          )}
+
+          {detailShowStatus == 999 && <>
 
             <div
               className="flex my-10   sm:flex-row flex-col gap-4 justify-evenly"
