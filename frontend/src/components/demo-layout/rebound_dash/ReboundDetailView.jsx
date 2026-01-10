@@ -84,8 +84,13 @@ const ReboundDetailView = () => {
     if (token) {
       token = JSON.parse(atob(token))
       console.log(token)
-      if (token.tabIndex) {
-        setDetailShowStatus(token.tabIndex);
+      if (token.tabIndex !== undefined && token.tabIndex !== null) {
+        const legacyMapped =
+          token.tabIndex === 0 ? 1 :
+          token.tabIndex === 1 ? 2 :
+          token.tabIndex === 2 ? 3 :
+          token.tabIndex;
+        setDetailShowStatus(legacyMapped);
       }
       if (token.claimNo) {
         setClaimNo(token.claimNo);
@@ -239,19 +244,32 @@ const ReboundDetailView = () => {
     return [];
   };
 
-  const SectionCard = ({ title, children, startCollapsed = true }) => {
+  const SectionCard = ({ title, children, startCollapsed = true, collapsible = true }) => {
     const [collapsed, setCollapsed] = useState(startCollapsed);
 
+    const containerClass = `rounded-2xl border ${isDark ? 'border-[#1f2433] bg-gradient-to-b from-[#141824] to-[#0f121b] shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'border-gray-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]'}`;
+    const headerClasses = `w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b ${isDark ? 'border-[#1f2433] hover:bg-[#151a24]' : 'border-gray-200 hover:bg-gray-50'} transition`;
+    const titleClasses = `text-sm font-semibold text-left ${isDark ? 'text-gray-200' : 'text-gray-800'}`;
+
+    if (!collapsible) {
+      return (
+        <div className={containerClass}>
+          <div className={headerClasses}>
+            <p className={titleClasses}>{title}</p>
+          </div>
+          <div className="px-4 sm:px-6 py-4">{children}</div>
+        </div>
+      );
+    }
+
     return (
-      <div
-        className={`rounded-2xl border ${isDark ? 'border-[#1f2433] bg-gradient-to-b from-[#141824] to-[#0f121b] shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'border-gray-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]'}`}
-      >
+      <div className={containerClass}>
         <button
           type="button"
-          className={`w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b ${isDark ? 'border-[#1f2433] hover:bg-[#151a24]' : 'border-gray-200 hover:bg-gray-50'} transition`}
+          className={headerClasses}
           onClick={() => setCollapsed(!collapsed)}
         >
-          <p className={`text-sm font-semibold text-left ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{title}</p>
+          <p className={titleClasses}>{title}</p>
           <div className={`w-7 h-7 rounded-lg border flex items-center justify-center text-lg ${isDark ? 'border-[#2a3142] bg-[#0f131b] text-gray-300' : 'border-gray-200 bg-white text-gray-700'}`}>
             {collapsed ? "+" : "-"}
           </div>
@@ -416,10 +434,10 @@ const ReboundDetailView = () => {
                 }`}
             >
               {[
-                // { id: 4, label: "Overview" },
-                { id: 0, label: "Claim (837)" },
-                { id: 1, label: "Payments (835)" },
-                { id: 2, label: "Related Encounters" },
+                { id: 0, label: "Insights" },
+                { id: 1, label: "Claim (837)" },
+                { id: 2, label: "Payments (835)" },
+                { id: 3, label: "Related Encounters" },
               ].map((tab) => {
                 const active = detailShowStatus === tab.id;
                 return (
@@ -443,6 +461,76 @@ const ReboundDetailView = () => {
           </div>
 
           {detailShowStatus == 0 && (
+            <div
+              className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark
+                ? 'text-gray-100 bg-[#0b0f16] border-[#1f2433] shadow-[0_16px_40px_rgba(0,0,0,0.35)]'
+                : 'text-gray-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'
+                }`}
+            >
+              <SectionCard title="" startCollapsed={false} collapsible={false}>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className={`rounded-xl p-4 border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-white border-gray-200 shadow-[0_10px_24px_rgba(0,0,0,0.06)]'}`}>
+                    <p className={`text-xs uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Claim Overview</p>
+                    <p className={`mt-2 text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {formatValue(currentClaim?.Claim?.Data?.ClaimNo)}
+                    </p>
+                    <p className={`text-sm mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {formatValue(currentClaim?.Claim?.Data?.Category || currentClaim?.Claim?.Data?.CategoryName || currentClaim?.Claim?.Data?.ClaimCategory || 'Category not specified')}
+                    </p>
+                    <p className={`text-xs mt-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Status: {formatValue(currentClaim?.Claim?.Data?.Status || currentClaim?.Claim?.Data?.ClaimStatus || 'Unknown')}
+                    </p>
+                  </div>
+
+                  <div className={`rounded-xl p-4 border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-white border-gray-200 shadow-[0_10px_24px_rgba(0,0,0,0.06)]'}`}>
+                    <p className={`text-xs uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Financials</p>
+                    <div className="mt-3 space-y-2 text-sm">
+                      <div className="flex justify-between"><span className="text-gray-500">Billed</span><span className="font-semibold">{formatCurrency(currentClaim?.Claim?.Data?.Amount)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Paid</span><span className="font-semibold">{formatCurrency(currentClaim?.Claim?.Data?.PaidAmount)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Patient Resp</span><span className="font-semibold">{formatCurrency(currentClaim?.Claim?.Data?.PatientResp)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Denied</span><span className="font-semibold text-red-400">{formatCurrency(currentClaim?.Claim?.Data?.DeniedAmount)}</span></div>
+                    </div>
+                  </div>
+
+                  <div className={`rounded-xl p-4 border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-white border-gray-200 shadow-[0_10px_24px_rgba(0,0,0,0.06)]'}`}>
+                    <p className={`text-xs uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Key Parties</p>
+                    <div className="mt-3 space-y-2 text-sm">
+                      <div><span className="text-gray-500">Patient</span><div className="font-semibold">{formatValue(currentClaim?.Claim?.Data?.PatientName || currentClaim?.Claim?.Data?.Patient)}</div></div>
+                      <div><span className="text-gray-500">Facility</span><div className="font-semibold">{formatValue(currentClaim?.Claim?.Data?.Facility || currentClaim?.Claim?.Data?.BillProvName)}</div></div>
+                      <div><span className="text-gray-500">Payer</span><div className="font-semibold">{formatValue(currentClaim?.Claim?.Data?.PayerName)}</div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`mt-6 rounded-xl p-4 border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-white border-gray-200 shadow-[0_10px_24px_rgba(0,0,0,0.06)]'}`}>
+                  <p className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Top reasons / adjustments</p>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    {((currentClaim?.Remit?.[0]?.ServiceLine || [])
+                      .flatMap((line) => (line.Codes || []).map((code) => `${code.AdjustmentGroup || '—'} ${code.AdjustmentReason || ''}`.trim()))
+                      .filter(Boolean)
+                      .slice(0, 5)).map((reason, idx) => (
+                        <li key={`reason-${idx}`} className={isDark ? 'text-gray-200' : 'text-gray-700'}>
+                          {reason}
+                        </li>
+                      ))}
+                    {((currentClaim?.Remit?.[0]?.ServiceLine || [])
+                      .flatMap((line) => (line.Codes || []).map((code) => `${code.AdjustmentGroup || '—'} ${code.AdjustmentReason || ''}`.trim()))
+                      .filter(Boolean)
+                      .length === 0) && (
+                        <li className={isDark ? 'text-gray-400' : 'text-gray-500'}>No adjustment details available.</li>
+                      )}
+                  </ul>
+                  {currentClaim?.Claim?.Data?.Remark && (
+                    <p className={`mt-3 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      Remark: {currentClaim.Claim.Data.Remark}
+                    </p>
+                  )}
+                </div>
+              </SectionCard>
+            </div>
+          )}
+
+          {detailShowStatus == 1 && (
             <div
               className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark
                 ? 'text-gray-100 bg-[#0b0f16] border-[#1f2433] shadow-[0_16px_40px_rgba(0,0,0,0.35)]'
@@ -573,7 +661,7 @@ const ReboundDetailView = () => {
             </div>
           )}
 
-          {detailShowStatus == 1 && (
+          {detailShowStatus == 2 && (
             <div className={`flex flex-col p-4 gap-4 rounded-2xl border ${isDark ? 'bg-[#0f131b] border-[#1f2433] text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
               {currentClaim.Remit.length === 0 ? (
                 <div className={`rounded-xl text-center ${isDark ? 'bg-[#121722] text-gray-400 border border-[#1f2433]' : 'bg-white text-gray-500 border-gray-200'}`}>
@@ -867,7 +955,7 @@ const ReboundDetailView = () => {
               )}
             </div>
           )}
-          {detailShowStatus == 2 && (
+          {detailShowStatus == 3 && (
 
             <DetailSection
               title="Related Encounter"
