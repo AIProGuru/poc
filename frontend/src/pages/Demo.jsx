@@ -22,7 +22,7 @@ const Demo = () => {
         } overflow-x-hidden grow flex flex-col`}
       >
         <Header />
-        <div className="flex-1 overflow-y-auto hide-scrollbar">
+        <div className="flex-1 overflow-y-auto content-scrollbar">
           <Outlet />
         </div>
       </div>
