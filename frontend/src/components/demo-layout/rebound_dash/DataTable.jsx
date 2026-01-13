@@ -91,6 +91,8 @@ const DataTable = (props) => {
     if (!tableLoading) return;
     const includeAllCategories = extra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) return;
+    if (requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
     const requestId = ++requestRef.current;
     axios.post(`${apiUrl}/data_all`, {
       currentPage: currentPage,
@@ -108,11 +110,13 @@ const DataTable = (props) => {
       sort: order
     }).then(res => {
       if (requestRef.current !== requestId) return;
+      requestInFlightRef.current = false;
       dispatch(setTableData(res.data.data));
       dispatch(setTotalPage(res.data.maxPage));
       dispatch(setTableLoading(false))
     }).catch(() => {
       if (requestRef.current !== requestId) return;
+      requestInFlightRef.current = false;
       dispatch(setTableLoading(false));
     });
   }, [tableLoading, selectedTags, order, extra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate])
@@ -248,6 +252,7 @@ const DataTable = (props) => {
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+  const requestInFlightRef = useRef(false);
 
   const scrollTable = (direction) => {
     if (tableScrollRef.current) {
