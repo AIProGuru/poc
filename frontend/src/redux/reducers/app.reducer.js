@@ -134,6 +134,22 @@ const appReducer = createSlice({
     },
     setTheme: (state, action) => {
       state.theme = action.payload;
+    },
+    setTabDefaults: (state, action) => {
+      const { tabIndex, extraFilter, selectedTags } = action.payload || {};
+      state.tabIndex = tabIndex ?? state.tabIndex;
+      state.currentPage = 1;
+      state.keyword = '';
+      state.startDate = null;
+      state.endDate = null;
+      state.code = '';
+      state.remark = '';
+      state.pos = '';
+      state.procedure = '';
+      state.extraFilter = extraFilter || {};
+      state.tableLoading = true;
+      state.part1Loading = true;
+      state.part2Loading = true;
     }
   },
 });
@@ -171,7 +187,8 @@ export const {
   setRemark,
   setProcedure,
   setPOS,
-  setTheme
+  setTheme,
+  setTabDefaults
 } = appReducer.actions;
 
 export default appReducer.reducer;

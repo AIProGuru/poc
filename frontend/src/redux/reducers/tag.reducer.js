@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { setTabDefaults } from "./app.reducer";
 
 const initialState = {
   allTags: [],
@@ -20,6 +21,12 @@ const tagsReducer = createSlice({
       state.allPayers = [...action.payload]
     }
   },
+  extraReducers: (builder) => {
+    builder.addCase(setTabDefaults, (state, action) => {
+      const nextTags = action.payload?.selectedTags ?? [];
+      state.selectedTags = [...nextTags];
+    });
+  }
 });
 
 export const { setTags, setSelectedTags, setAllPayers } = tagsReducer.actions;

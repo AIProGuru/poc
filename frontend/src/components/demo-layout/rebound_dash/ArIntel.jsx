@@ -1,8 +1,23 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setAppTitle } from '../../../redux/reducers/app.reducer';
+import {
+  setAppTitle,
+  setTabIndex,
+  setKeyword,
+  setCode,
+  setRemark,
+  setProcedure,
+  setPOS,
+  setExtraFilter,
+  setTableLoading,
+  setPart1Loading,
+  setPart2Loading,
+  setCurrentPage,
+  setTableData,
+} from '../../../redux/reducers/app.reducer';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApiEndpoint } from '../../../ApiEndpointContext';
+import { setSelectedTags } from '../../../redux/reducers/tag.reducer';
 
 const ArIntel = ({ onModelSelect }) => {
   const apiUrl = useApiEndpoint();
@@ -37,23 +52,42 @@ const ArIntel = ({ onModelSelect }) => {
   ].join('\n');
 
   const handleModelClick = (row) => {
+    const nonce = Date.now();
     const payload = {
       code: `${row.GroupCode || ''}${row.Code || ''}`,
       remark: row.Remark || '',
       procedure: '',
       keyword: '',
       pos: '',
+      // Use the automation tab to align with model counts.
       tabIndex: 5,
-      extra: row.extra,
+      extra: row.extra || {},
       selectedTags: tags,
       source: 'ai-library',
+      nonce,
     };
+    // Pre-apply filters locally so clicking the same model twice still triggers correct data load.
+    dispatch(setKeyword(''));
+    dispatch(setCode(payload.code));
+    dispatch(setRemark(payload.remark));
+    dispatch(setProcedure(''));
+    dispatch(setPOS(''));
+    dispatch(setExtraFilter(payload.extra));
+    dispatch(setSelectedTags(tags));
+    // Ensure any in-flight AI Library requests are cleared so the drilldown triggers a single load.
+    dispatch(setTableLoading(false));
+    dispatch(setPart1Loading(false));
+    dispatch(setPart2Loading(false));
+    dispatch(setTabIndex(5));
+    dispatch(setCurrentPage(1));
+    dispatch(setTableData([]));
+    dispatch(setTableLoading(true));
     dispatch(setAppTitle(row.Title));
     if (typeof onModelSelect === 'function') {
       onModelSelect(row);
     }
     const tenantBase = location.pathname.split('/')[1] || 'rebound';
-    navigate(`/${tenantBase}/denials/${btoa(JSON.stringify(payload))}`);
+    navigate(`/${tenantBase}/denials/${btoa(JSON.stringify(payload))}`, { replace: true });
   };
 
   return (

@@ -10,6 +10,13 @@ import {
   setCurrentPage,
   setTableLoading,
   setTableData,
+  setKeyword,
+  setCode,
+  setRemark,
+  setProcedure,
+  setPOS,
+  setStartDate,
+  setEndDate,
 } from "../../redux/reducers/app.reducer";
 import { setSelectedTags } from "../../redux/reducers/tag.reducer";
 import { useApiEndpoint } from "../../ApiEndpointContext";
@@ -148,7 +155,6 @@ const Sidebar = () => {
 
   const navExtraFilters = useMemo(
     () => ({
-      "claim-status:pend-835": { Missing835: true },
       "payment-variance": { IncludeAllCategories: true },
     }),
     []
@@ -400,6 +406,15 @@ const Sidebar = () => {
 
   const applyFilters = useCallback(
     (navId, fallbackTab) => {
+      // Always clear ad-hoc filters when switching nav so AI drill-down payloads don't leak.
+      dispatch(setKeyword(""));
+      dispatch(setCode(""));
+      dispatch(setRemark(""));
+      dispatch(setProcedure(""));
+      dispatch(setPOS(""));
+      dispatch(setStartDate(null));
+      dispatch(setEndDate(null));
+
       if (placeholderNavs.includes(navId)) {
         dispatch(setSelectedTags([]));
         dispatch(setExtraFilter({}));
@@ -407,6 +422,7 @@ const Sidebar = () => {
         dispatch(setTableLoading(false));
         return;
       }
+      const isAiLibrary = navId === "ai-library";
       let extra = navExtraFilters[navId] || navExtraFilters[fallbackTab] || {};
       let tagOverride = navTagFilters[navId];
 
@@ -435,7 +451,11 @@ const Sidebar = () => {
       }
 
       dispatch(setCurrentPage(1));
-      dispatch(setTableLoading(true));
+      if (!isAiLibrary) {
+        dispatch(setTableLoading(true));
+      } else {
+        dispatch(setTableLoading(false));
+      }
     },
     [dispatch, navExtraFilters, navTagFilters, tags]
   );

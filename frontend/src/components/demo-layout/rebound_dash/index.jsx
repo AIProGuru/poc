@@ -25,6 +25,7 @@ import {
   setProcedure,
   setExtraFilter,
   setRecoveryLoading,
+  setTabDefaults,
 } from "../../../redux/reducers/app.reducer";
 import { setSelectedTags, setTags, setAllPayers } from "../../../redux/reducers/tag.reducer";
 import { setTableData, setTheme, setModels } from '../../../redux/reducers/app.reducer';
@@ -95,7 +96,7 @@ const ReboundDash = () => {
   const lastname = useSelector((state) => state.auth.lastname);
   const keyword = useSelector((state) => state.app.keyword);
 
-  console.log('apiUrl', apiUrl);
+  // console.log('apiUrl', apiUrl);
 
   const filterByKeyword = () => {
     dispatch(setExtraFilter({}));
@@ -302,9 +303,7 @@ const ReboundDash = () => {
       ? [{ id: 'user-management', label: 'User Management', badge: null, icon: 'users' }]
       : []),
   ], [denialCount, patientResponsibilityCount, role]);
-  const navExtraFilters = useMemo(() => ({
-    'claim-status:pend-835': { Missing835: true },
-  }), []);
+  const navExtraFilters = useMemo(() => ({}), []);
   const navTagFilters = useMemo(() => ({
     'claim-status': ['Pend 277', 'Delinquent'],
     'claim-status:pend-277': ['Pend 277'],
@@ -377,6 +376,10 @@ const ReboundDash = () => {
       // For AI Library we still want to expose Denial categories so users can drill back into them.
       dispatch(setSelectedTags(tags));
       dispatch(setTabIndex(6));
+      dispatch(setExtraFilter(filterPayload));
+      dispatch(setCurrentPage(1));
+      // Avoid kicking off table loads while in the AI Library grid (no DataTable rendered).
+      return;
     }
     dispatch(setExtraFilter(filterPayload));
     if (tagOverride) {
@@ -386,6 +389,21 @@ const ReboundDash = () => {
     dispatch(setCurrentPage(1));
     dispatch(setTableLoading(true));
   }, [aiModelFilters, dispatch, navExtraFilters, navTagFilters, tags]);
+
+  const resetFilters = useCallback(() => {
+    // Clear drill-down filters (e.g., from AI Library payload) before applying new nav defaults.
+    dispatch(setKeyword(''));
+    dispatch(setCode(''));
+    dispatch(setRemark(''));
+    dispatch(setProcedure(''));
+    dispatch(setPOS(''));
+    dispatch(setStartDate(null));
+    dispatch(setEndDate(null));
+    dispatch(setSelectedTags([]));
+    dispatch(setExtraFilter({ IncludeAllCategories: true }));
+    dispatch(setTabIndex(0));
+    dispatch(setCurrentPage(1));
+  }, [dispatch]);
 
   // If navigation happens via the shared Sidebar (sets title to "AI Library"),
   // keep this view in sync so the AI models grid renders instead of the claims table.
@@ -407,6 +425,7 @@ const ReboundDash = () => {
 
   const aiFilterSignature = useMemo(() => JSON.stringify(aiModelFilters), [aiModelFilters]);
   const lastAiFilterSignatureRef = useRef(aiFilterSignature);
+  const wasAiDrilldownRef = useRef(aiLibraryDrilldown);
 
   useEffect(() => {
     const isDenialsNav = selectedNav === 'denials' || selectedNav.startsWith('denials:');
@@ -419,6 +438,16 @@ const ReboundDash = () => {
       applyNavFilters(selectedNav);
     }
   }, [aiFilterSignature, applyNavFilters, selectedNav]);
+
+  useEffect(() => {
+    const leftAiDrilldown = wasAiDrilldownRef.current && !aiLibraryDrilldown;
+    wasAiDrilldownRef.current = aiLibraryDrilldown;
+    if (leftAiDrilldown && selectedNav !== 'ai-library') {
+      // Ensure any AI drill-down filters are cleared once the user navigates away.
+      resetFilters();
+      applyNavFilters(selectedNav);
+    }
+  }, [aiLibraryDrilldown, applyNavFilters, resetFilters, selectedNav]);
 
   const isDark = theme === 'dark';
 
@@ -709,36 +738,19 @@ const ReboundDash = () => {
   }, [apiUrl, rawToken])
 
   const changeTab = (index) => {
-    dispatch(setTabIndex(index));
-    dispatch(setCurrentPage(1));
-    dispatch(setKeyword(''));
-    if (index == 0) {
-      dispatch(setSelectedTags([]));
-    } else if (index == 1) {
-      dispatch(setSelectedTags(['Contractual Adj']))
-    } else if (index == 2) {
-      dispatch(setSelectedTags(['Patient Resp']))
-    } else if (index == 3) {
-      dispatch(setSelectedTags(['Delinquent']))
-    } else if (index == 4) {
-      dispatch(setSelectedTags([]))
-    } else if (index == 5) {
-      dispatch(setSelectedTags(tags))
-    } else if (index == 6) {
-      dispatch(setSelectedTags(tags))
+    let tagsToApply = [];
+    if (index === 1) {
+      tagsToApply = ['Contractual Adj'];
+    } else if (index === 2) {
+      tagsToApply = ['Patient Resp'];
+    } else if (index === 3) {
+      tagsToApply = ['Delinquent'];
+    } else if (index === 5 || index === 6) {
+      tagsToApply = tags;
     }
-    dispatch(setStartDate(null));
-    dispatch(setEndDate(null));
-    dispatch(setCode(''));
-    dispatch(setRemark(''));
-    dispatch(setPOS(''));
-    dispatch(setProcedure(''));
-    dispatch(setKeyword(''));
     const extraPayload = index === 0 ? { IncludeAllCategories: true } : {};
-    dispatch(setExtraFilter(extraPayload));
-    dispatch(setTableLoading(true));
-    dispatch(setPart1Loading(true));
-    dispatch(setPart2Loading(true));
+    dispatch(setTabDefaults({ tabIndex: index, extraFilter: extraPayload }));
+    dispatch(setSelectedTags(tagsToApply));
   }
 
   const toggleExpand = (id) => {
@@ -765,6 +777,9 @@ const ReboundDash = () => {
   const handleNavSelection = (item) => {
     if (item.id !== 'ai-library') {
       setAiLibraryDrilldown(false);
+    }
+    if (item.id !== 'ai-library') {
+      resetFilters();
     }
     if (placeholderNavs.includes(item.id)) {
       setSelectedNav(item.id);
@@ -814,6 +829,7 @@ const ReboundDash = () => {
 
   const handleChildSelection = (parentId, child) => {
     setAiLibraryDrilldown(false);
+    resetFilters();
     setSelectedNav(child.id);
     ensureExpanded(parentId);
     const parentItem = navItems.find((nav) => nav.id === parentId);

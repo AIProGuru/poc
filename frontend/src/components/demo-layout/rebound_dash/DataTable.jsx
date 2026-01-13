@@ -24,6 +24,7 @@ import DataTableTags from "./DataTableTags";
 
 const DataTable = (props) => {
   const apiUrl = useApiEndpoint();
+  const requestRef = useRef(0);
   const location = useLocation();
   const navigate = useNavigate();
   const pageSizes = [50, 100, 250, 500, 5000];
@@ -90,6 +91,7 @@ const DataTable = (props) => {
     if (!tableLoading) return;
     const includeAllCategories = extra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) return;
+    const requestId = ++requestRef.current;
     axios.post(`${apiUrl}/data_all`, {
       currentPage: currentPage,
       perPage: pageSize,
@@ -105,11 +107,15 @@ const DataTable = (props) => {
       extra: extra,
       sort: order
     }).then(res => {
+      if (requestRef.current !== requestId) return;
       dispatch(setTableData(res.data.data));
       dispatch(setTotalPage(res.data.maxPage));
       dispatch(setTableLoading(false))
-    })
-  }, [tableLoading, selectedTags, order, extra])
+    }).catch(() => {
+      if (requestRef.current !== requestId) return;
+      dispatch(setTableLoading(false));
+    });
+  }, [tableLoading, selectedTags, order, extra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate])
 
   const setOrder = (ord) => {
     const ordName = order[order.length - 1] === '-' ? order.substring(0, order.length - 1) : order;
