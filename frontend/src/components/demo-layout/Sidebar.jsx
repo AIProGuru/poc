@@ -680,8 +680,13 @@ const Sidebar = () => {
                   </button>
                 )}
               </div>
-              {hasChildren && isExpanded && (
-                <div className="ml-14 mt-1 mb-2 space-y-1">
+              {hasChildren && (
+                <div
+                  className={`ml-14 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'mt-1 mb-2 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'}`}
+                  style={{
+                    maxHeight: isExpanded ? `${(item.children?.length || 1) * 44}px` : 0,
+                  }}
+                >
                   {item.children.map((child) => {
                     const childIsActive = activeId === child.id;
                     const childBadge =
