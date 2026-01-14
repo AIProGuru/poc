@@ -306,7 +306,9 @@ const DataTable = (props) => {
               backgroundColor: tableBackground,
               color: theme === 'dark' ? 'white' : 'black',
               borderRadius: '24px',
-              overflowX: 'auto',
+              overflowX: 'scroll',
+              overflowY: 'auto',
+              scrollbarGutter: 'stable',
               scrollbarWidth: 'thin',
               scrollbarColor: theme === 'dark' ? '#2E323D transparent' : '#c8d3e6 transparent',
               '&::-webkit-scrollbar': {
