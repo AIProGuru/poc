@@ -327,6 +327,9 @@ const DataTable = (props) => {
           stickyHeader
           size="small"
           sx={{
+            '& .MuiTableCell-root': {
+              padding: '10px 12px'
+            },
             '& .MuiTableCell-head': {
               textTransform: 'uppercase',
               letterSpacing: '.08em',
@@ -344,13 +347,13 @@ const DataTable = (props) => {
         >
             <TableHead>
               <TableRow>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("ClaimNo")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("ClaimNo")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Claim ID
                     {renderSortIcon('ClaimNo')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("ProvTaxID")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "160px" }} onClick={() => setOrder("ProvTaxID")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Provider Tax ID
                     {renderSortIcon('ProvTaxID')}
@@ -362,73 +365,73 @@ const DataTable = (props) => {
                     {renderSortIcon('ProvNPI')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("PayerName")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("PayerName")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Payer Name
                     {renderSortIcon('PayerName')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PayerID")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "130px" }} onClick={() => setOrder("PayerID")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Payer ID
                     {renderSortIcon('PayerID')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }}>
+                <TableCell style={{ ...headerCellStyle, minWidth: "120px" }}>
                   PayerSeq
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "250px" }}>
+                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }}>
                   Patient Name
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("LoadDate")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("LoadDate")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Load Date
                     {renderSortIcon('LoadDate')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("ServiceDate")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("ServiceDate")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Service Date
                     {renderSortIcon('ServiceDate')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }}>
+                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }}>
                   Place of Service
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("Amount")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("Amount")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Charges
                     {renderSortIcon('Amount')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("AllowedAmt")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("AllowedAmt")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Allowed Amt
                     {renderSortIcon('AllowedAmt')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "250px" }} onClick={() => setOrder("Category")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("Category")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Category
                     {renderSortIcon('Category')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("PrimaryCode")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PrimaryCode")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Denial Code
                     {renderSortIcon('PrimaryCode')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }}>
+                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }}>
                   Remark Code
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("PrimaryDX")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "160px" }} onClick={() => setOrder("PrimaryDX")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Primary Diagnosis
                     {renderSortIcon('PrimaryDX')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "200px" }} onClick={() => setOrder("PrimaryProcedure")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PrimaryProcedure")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Primary Service
                     {renderSortIcon('PrimaryProcedure')}
@@ -450,68 +453,73 @@ const DataTable = (props) => {
                     }
                   }}
                 >
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "170px" }}>
                     {row.ClaimNo}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
                     {row.ProvTaxID}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                     {row.ProvNPI}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
                     {row.PayerName}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "130px" }}>
                     {row.PayerID}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "120px" }}>
                     {row.PayerSeq === 'P' ? "Primary" : (row.PayerSeq === 'S' ? 'Secondary' : '')}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
                     {"-"}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                     {new Date(row.LoadDate).toISOString().substring(0, 10)}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                     {new Date(row.ServiceDate).toISOString().substring(0, 10)}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                     {row.PlaceOfService}
                   </TableCell>
                   <TableCell
                     className="text-wrap"
                     onClick={() => showDetail(row.ClaimNo)}
-                    style={{ ...bodyCellStyle, minWidth: "200px" }}  >
+                    style={{ ...bodyCellStyle, minWidth: "140px" }}  >
                     {`$${samplifyDouble(row.Amount)}`}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                     {`$${samplifyDouble(row.AllowedAmt)}`}
                   </TableCell>
-                <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                     {(() => {
                       const category = (row.Category || '').trim() || 'DELINQUENT';
-                      return <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`}>{category}</span>;
+                      return category;
                     })()}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                     {(() => {
                       const group = ((row.PrimaryGroup ?? '') || '').trim();
                       const code = ((row.PrimaryCode ?? '') || '').trim();
                       const denialCode = [group, code].filter(Boolean).join(' ');
-                      if (!denialCode) return null;
-                      return <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`}>{denialCode}</span>;
+                      return denialCode || '';
                     })()}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
-                    {row.Remark.split('*').length > 0 && <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`}>{samplifyString(row.Remark.split('*')[0])}</span>}
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                    {(() => {
+                      const remarkText = (row.Remark || '').split('*')[0] || '';
+                      return remarkText ? samplifyString(remarkText) : '';
+                    })()}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
-                    <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`} key={index}>{row.PrimaryDX.split("::")[0]}</span>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
+                    {(() => {
+                      const primaryDx = (row.PrimaryDX || '').split("::")[0];
+                      return primaryDx;
+                    })()}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "200px" }}>
-                    <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`} key={index}>{row.PrimaryProcedure}</span>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                    {row.PrimaryProcedure || ''}
                   </TableCell>
                 </TableRow>)
               }

@@ -497,7 +497,7 @@ const ReboundDetailView = () => {
                       <div className="flex justify-between"><span className="text-gray-500">Billed</span><span className="font-semibold">{formatCurrency(currentClaim?.Claim?.Data?.Amount)}</span></div>
                       <div className="flex justify-between"><span className="text-gray-500">Paid</span><span className="font-semibold">{formatCurrency(currentClaim?.Claim?.Data?.PaidAmount)}</span></div>
                       <div className="flex justify-between"><span className="text-gray-500">Patient Resp</span><span className="font-semibold">{formatCurrency(currentClaim?.Claim?.Data?.PatientResp)}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">Denied</span><span className="font-semibold text-red-400">{formatCurrency(currentClaim?.Claim?.Data?.DeniedAmount)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Denied</span><span className="font-semibold">{formatCurrency(currentClaim?.Claim?.Data?.DeniedAmount)}</span></div>
                     </div>
                   </div>
 
@@ -851,36 +851,33 @@ const ReboundDetailView = () => {
                                         {ind === 0 && (
                                           <>
                                             <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <span className={`text-sm font-medium ${isDark ? 'text-gray-100 bg-[#1f2635]' : 'text-gray-900 bg-gray-100'} px-2.5 py-1 rounded-full`}>
+                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                 {index + 1}
-                                              </span>
+                                              </div>
                                             </td>
                                             <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                 {formatDate(row.ServiceDate)}
                                               </div>
                                             </td>
                                             <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <span className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${isDark ? 'bg-[#1f2635] text-white' : 'bg-blue-50 text-blue-700'}`}>
+                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                 {rowr.ProcedureCode}
-                                              </span>
+                                              </div>
                                             </td>
                                             <td rowSpan={rowr.Codes.length} className="px-6 py-4">
                                               <Description description={rowr.Description} width={80} />
                                             </td>
                                             <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className="flex flex-wrap gap-1">
-                                                {rowr.Modifiers?.length > 0 ?
-                                                  [
+                                              <div className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                                {rowr.Modifiers?.length > 0
+                                                  ? [
                                                     rowr.Modifiers[0].ProcedureModifier1,
                                                     rowr.Modifiers[0].ProcedureModifier2,
                                                     rowr.Modifiers[0].ProcedureModifier3,
                                                     rowr.Modifiers[0].ProcedureModifier4
-                                                  ].filter(Boolean).map((modifier, idx) => (
-                                                    <span key={idx} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isDark ? 'bg-[#1f2635] text-purple-100' : 'bg-purple-50 text-purple-700'}`}>
-                                                      {modifier}
-                                                    </span>
-                                                  )) : '-'}
+                                                  ].filter(Boolean).join(', ') || '-'
+                                                  : '-'}
                                               </div>
                                             </td>
                                             <td rowSpan={rowr.Codes.length} className="px-6 py-4">
@@ -889,17 +886,17 @@ const ReboundDetailView = () => {
                                               </div>
                                             </td>
                                             <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-semibold ${isDark ? 'text-emerald-300' : 'text-green-600'}`}>
+                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                 ${samplifyDouble(rowr.ChargedAmount)}
                                               </div>
                                             </td>
                                             <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-semibold ${isDark ? 'text-blue-300' : 'text-blue-600'}`}>
+                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                 ${samplifyDouble(rowr.AllowedAmount)}
                                               </div>
                                             </td>
                                             <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-semibold ${isDark ? 'text-red-300' : 'text-red-600'}`}>
+                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                 ${samplifyDouble(rowr.ChargedAmount - rowr.AllowedAmount)}
                                               </div>
                                             </td>
@@ -913,39 +910,39 @@ const ReboundDetailView = () => {
                                               <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</div>
                                             </td>
                                             <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-semibold ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`}>
+                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                 ${samplifyDouble(rowr.PaidAmount)}
                                               </div>
                                             </td>
                                           </>
                                         )}
                                         <td className="px-6 py-4">
-                                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${isDark ? 'bg-[#1f2635] text-white' : 'bg-gray-100 text-gray-800'}`}>
+                                          <div className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                             {adjustment.AdjustmentGroup}
-                                          </span>
+                                          </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${isDark ? 'bg-[#3b3525] text-amber-200' : 'bg-yellow-50 text-yellow-800'}`}>
+                                          <div className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                             {adjustment.AdjustmentReason}
-                                          </span>
+                                          </div>
                                         </td>
                                         <td className="px-6 py-4">
                                           <Description description={adjustment.Description} width={80} />
                                         </td>
                                         {ind === 0 && (
                                           <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                            <div className="flex flex-wrap gap-1">
-                                              {rowr.RemarkCodes ?
-                                                rowr.RemarkCodes.split(',').map((r, idx) => (
-                                                  <span key={idx} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isDark ? 'bg-[#1f2635] text-indigo-200' : 'bg-indigo-50 text-indigo-700'}`}>
-                                                    {r.split(':')[1]}
-                                                  </span>
-                                                )) : '-'}
+                                            <div className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                              {rowr.RemarkCodes
+                                                ? rowr.RemarkCodes.split(',')
+                                                  .map((r) => r.split(':')[1])
+                                                  .filter(Boolean)
+                                                  .join(', ') || '-'
+                                                : '-'}
                                             </div>
                                           </td>
                                         )}
                                         <td className="px-6 py-4">
-                                          <div className={`text-sm font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                          <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                             ${samplifyDouble(adjustment.AdjustmentAmount)}
                                           </div>
                                         </td>
