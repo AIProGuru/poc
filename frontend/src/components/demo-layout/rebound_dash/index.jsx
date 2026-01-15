@@ -103,7 +103,7 @@ const ReboundDash = () => {
     dispatch(setPart1Loading(true));
     dispatch(setPart2Loading(true));
     dispatch(setTableLoading(true));
-    dispatch(setKeyword(inputKeywordRef.current.value));
+    dispatch(setKeyword(inputKeywordRef.current?.value || ''));
     dispatch(setCurrentPage(1));
   };
 

@@ -48,6 +48,12 @@ const Header = () => {
     setMenuShow(true);
   };
 
+  const handleKeywordKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      filterByKeyword();
+    }
+  };
+
   const handleClose = () => {
     setAnchorEl(null);
     setMenuShow(false);
@@ -95,6 +101,9 @@ const Header = () => {
           <input
             placeholder="Search"
             className={`text-sm rounded-lg py-2.5 px-10 pl-10 w-64 ${theme === 'dark' ? "bg-[#151619] text-white border border-gray-600" : "text-black bg-white border border-gray-300"}`}
+            ref={inputKeywordRef}
+            defaultValue={keyword}
+            onKeyDown={handleKeywordKeyDown}
           />
         </div>
         {/* {theme === "dark" ? (
