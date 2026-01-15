@@ -118,7 +118,6 @@ const DataTable = (props) => {
     if (!tableLoading) return;
     const includeAllCategories = extra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) return;
-    if (requestInFlightRef.current) return;
     requestInFlightRef.current = true;
     const requestId = ++requestRef.current;
     axios.post(`${apiUrl}/data_all`, {
