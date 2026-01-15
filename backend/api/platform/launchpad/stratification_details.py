@@ -25,6 +25,17 @@ pilotcustomer_api_stratification.api_name = 'pilotcustomer_api_stratification'
 @rebound_api_stratification.route("/data_all", methods=["POST"])
 @medevolve_api_stratification.route("/data_all", methods=["POST"])
 @pilotcustomer_api_stratification.route("/data_all", methods=["POST"])
+def map_sort_field(sort: str) -> str:
+    """Map UI sort keys to database columns."""
+    if not sort:
+        return sort
+    target = sort[:-1] if sort.endswith("-") else sort
+    suffix = "-" if sort.endswith("-") else ""
+    if target.lower() == "facility":
+        return f"BillProvName{suffix}"
+    return sort
+
+
 def get_rebound_data_all():
     """
     This endpoint fetches platform data with pagination and filtering options.
@@ -123,7 +134,7 @@ def get_rebound_data_all():
         remark = request.json.get("remark", "")
         procedure = request.json.get("procedure", "")
         pos = request.json.get("pos", "")
-        sort = request.json.get("sort", "")
+        sort = map_sort_field(request.json.get("sort", ""))
         
         include_all_categories = extra.get("IncludeAllCategories") and tab_index == 0
         if not include_all_categories and not selectedTags:

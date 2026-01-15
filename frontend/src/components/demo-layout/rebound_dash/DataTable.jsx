@@ -386,10 +386,10 @@ const DataTable = (props) => {
                     {renderSortIcon('Priority')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("Facility")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("BillProvName")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Facility Name
-                    {renderSortIcon('Facility')}
+                    {renderSortIcon('BillProvName')}
                   </div>
                 </TableCell>
                 <TableCell style={{ ...headerCellStyle, minWidth: "160px" }} onClick={() => setOrder("ProvTaxID")} className="cursor-pointer">
