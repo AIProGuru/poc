@@ -55,6 +55,33 @@ const DataTable = (props) => {
   const theme = useSelector((state) => state.app.theme);
   const isDarkMode = theme === 'dark';
   const tableBackground = isDarkMode ? '#0B0F19' : '#ffffff';
+  const formatDateSafe = (value) => {
+    if (!value) return '';
+    const dateObj = new Date(value);
+    return Number.isNaN(dateObj.getTime()) ? '' : dateObj.toISOString().substring(0, 10);
+  };
+  const formatCurrency = (value) => `$${samplifyDouble(Number(value) || 0)}`;
+  // Mirror the facility value used in the Claim (837) detail view.
+  const getFacility = (row) => {
+    const claimData =
+      (row.Claim && row.Claim.Data) ||
+      row.ClaimData ||
+      row.claimData ||
+      (row.claim && row.claim.Data) ||
+      {};
+    return (
+      row.Facility ||
+      row.FacilityName ||
+      claimData.Facility ||
+      claimData.FacilityName ||
+      claimData.BillProvName ||
+      row.BillProvName ||
+      row.ProviderName ||
+      claimData.BillProv ||
+      row.BillProv ||
+      ''
+    );
+  };
   const headerCellStyle = {
     background: tableBackground,
     color: isDarkMode ? '#A5AACB' : '#1A1D2B',
@@ -198,31 +225,35 @@ const DataTable = (props) => {
 
     // Define the CSV headers based on the table headers
     const tableHeaders = [
-      'Claim ID', 'Provider Tax ID', 'Provider NPI', 'Payer Name', 'Payer ID', 'PayerSeq', 'Patient Name', 'Load Date', 'Service Date', 'Place Of Service', 'Charges', 'Allowed Amt', 'Category', 'Denial Code', 'Primary Diagnosis', 'Primary Service', 'Remark Code'
+      'Priority', 'Facility Name', 'Provider Tax ID', 'Claim ID', 'Payer ID', 'Payer Name', 'Payer Seq', 'Patient Name', 'Service Date', 'Place of Service', 'Charges', 'Allowed Amt', 'Balance', 'Category', 'CARC', 'RARC', 'Primary Dx', 'Primary Service'
     ];
     let csv_data = [tableHeaders.join(',')];
 
     // Process each row of data
     tableData.forEach((row, index) => {
-      let remark = row.Remark ? [...new Set(row.Remark.split('*'))].join('*') : '';
+      const remark = row.Remark ? [...new Set(row.Remark.split('*'))].join('*') : '';
+      const charges = Number(row.Amount) || 0;
+      const allowed = Number(row.AllowedAmt) || 0;
+      const balance = charges - allowed;
       let value = [
-        row.ClaimNo || '',
-        row.ProvTaxID || '',
-        row.ProvNPI || '',
-        row.PayerName || '',
+        row.Priority || '',
+        getFacility(row),
+        row.ProvTaxID || row.ProviderTaxID || '',
+        row.ClaimNo || row.ClaimID || '',
         row.PayerID || '',
-        row.PayerSeq === 'P' ? "Primary" : (row.PayerSeq === 'S' ? 'Secondary' : ''),
-        row.PayerName || '-', // Assuming Patient Name is the same as Payer Name
-        row.LoadDate ? new Date(row.LoadDate).toLocaleDateString('en-US') : '',
-        row.ServiceDate ? new Date(row.ServiceDate).toLocaleDateString('en-US') : '',
+        row.PayerName || '',
+        row.PayerSeq === 'P' ? "Primary" : (row.PayerSeq === 'S' ? 'Secondary' : (row.PayerSeq || '')),
+        row.PatientName || row.Patient || '',
+        formatDateSafe(row.ServiceDate),
         row.PlaceOfService || '',
-        row.Amount ? `$${row.Amount}` : '',
-        row.AllowedAmt !== null ? `$${row.Amount}` : '$0',
+        charges ? `$${charges}` : '$0',
+        `$${allowed}`,
+        `$${balance}`,
         row.Category || '',
-        `${row.PrimaryGroup || ''} ${row.PrimaryCode || ''}`,
+        `${row.PrimaryGroup || ''} ${row.PrimaryCode || ''}`.trim(),
+        remark,
         row.PrimaryDX ? row.PrimaryDX.split("::")[0] : '',
-        row.PrimaryProcedure || '',
-        remark
+        row.PrimaryProcedure || ''
       ];
 
       csv_data.push(value.join(','));
@@ -346,13 +377,19 @@ const DataTable = (props) => {
               color: isDarkMode ? '#F4F6FF' : '#0F172A'
             }
           }}
-        >
+                >
             <TableHead>
               <TableRow>
-                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("ClaimNo")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "120px" }} onClick={() => setOrder("Priority")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
-                    Claim ID
-                    {renderSortIcon('ClaimNo')}
+                    Priority
+                    {renderSortIcon('Priority')}
+                  </div>
+                </TableCell>
+                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("Facility")} className="cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    Facility Name
+                    {renderSortIcon('Facility')}
                   </div>
                 </TableCell>
                 <TableCell style={{ ...headerCellStyle, minWidth: "160px" }} onClick={() => setOrder("ProvTaxID")} className="cursor-pointer">
@@ -361,16 +398,10 @@ const DataTable = (props) => {
                     {renderSortIcon('ProvTaxID')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("ProvNPI")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("ClaimNo")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
-                    Provider NPI
-                    {renderSortIcon('ProvNPI')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("PayerName")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Payer Name
-                    {renderSortIcon('PayerName')}
+                    Claim ID
+                    {renderSortIcon('ClaimNo')}
                   </div>
                 </TableCell>
                 <TableCell style={{ ...headerCellStyle, minWidth: "130px" }} onClick={() => setOrder("PayerID")} className="cursor-pointer">
@@ -379,16 +410,19 @@ const DataTable = (props) => {
                     {renderSortIcon('PayerID')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "120px" }}>
-                  PayerSeq
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }}>
-                  Patient Name
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("LoadDate")} className="cursor-pointer">
+                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("PayerName")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
-                    Load Date
-                    {renderSortIcon('LoadDate')}
+                    Payer Name
+                    {renderSortIcon('PayerName')}
+                  </div>
+                </TableCell>
+                <TableCell style={{ ...headerCellStyle, minWidth: "120px" }}>
+                  Payer Seq
+                </TableCell>
+                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("PatientName")} className="cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    Patient Name
+                    {renderSortIcon('PatientName')}
                   </div>
                 </TableCell>
                 <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("ServiceDate")} className="cursor-pointer">
@@ -397,8 +431,11 @@ const DataTable = (props) => {
                     {renderSortIcon('ServiceDate')}
                   </div>
                 </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }}>
-                  Place of Service
+                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PlaceOfService")} className="cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    Place of Service
+                    {renderSortIcon('PlaceOfService')}
+                  </div>
                 </TableCell>
                 <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("Amount")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
@@ -412,6 +449,9 @@ const DataTable = (props) => {
                     {renderSortIcon('AllowedAmt')}
                   </div>
                 </TableCell>
+                <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
+                  Balance
+                </TableCell>
                 <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("Category")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
                     Category
@@ -420,16 +460,16 @@ const DataTable = (props) => {
                 </TableCell>
                 <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PrimaryCode")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
-                    Denial Code
+                    CARC
                     {renderSortIcon('PrimaryCode')}
                   </div>
                 </TableCell>
                 <TableCell style={{ ...headerCellStyle, minWidth: "150px" }}>
-                  Remark Code
+                  RARC
                 </TableCell>
                 <TableCell style={{ ...headerCellStyle, minWidth: "160px" }} onClick={() => setOrder("PrimaryDX")} className="cursor-pointer">
                   <div className="flex items-center gap-2">
-                    Primary Diagnosis
+                    Primary Dx
                     {renderSortIcon('PrimaryDX')}
                   </div>
                 </TableCell>
@@ -455,32 +495,32 @@ const DataTable = (props) => {
                     }
                   }}
                 >
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                    {row.ClaimNo}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
-                    {row.ProvTaxID}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
-                    {row.ProvNPI}
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "120px" }}>
+                    {row.Priority || ''}
                   </TableCell>
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                    {row.PayerName}
+                    {getFacility(row)}
+                  </TableCell>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
+                    {row.ProvTaxID || row.ProviderTaxID || ''}
+                  </TableCell>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                    {row.ClaimNo}
                   </TableCell>
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "130px" }}>
                     {row.PayerID}
                   </TableCell>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                    {row.PayerName}
+                  </TableCell>
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "120px" }}>
-                    {row.PayerSeq === 'P' ? "Primary" : (row.PayerSeq === 'S' ? 'Secondary' : '')}
+                    {row.PayerSeq === 'P' ? "Primary" : (row.PayerSeq === 'S' ? 'Secondary' : (row.PayerSeq || ''))}
                   </TableCell>
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                    {"-"}
+                    {row.PatientName || row.Patient || ''}
                   </TableCell>
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                    {new Date(row.LoadDate).toISOString().substring(0, 10)}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                    {new Date(row.ServiceDate).toISOString().substring(0, 10)}
+                    {formatDateSafe(row.ServiceDate)}
                   </TableCell>
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                     {row.PlaceOfService}
@@ -489,12 +529,15 @@ const DataTable = (props) => {
                     className="text-wrap"
                     onClick={() => showDetail(row.ClaimNo)}
                     style={{ ...bodyCellStyle, minWidth: "140px" }}  >
-                    {`$${samplifyDouble(row.Amount)}`}
+                    {formatCurrency(row.Amount)}
                   </TableCell>
                   <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                    {`$${samplifyDouble(row.AllowedAmt)}`}
+                    {formatCurrency(row.AllowedAmt)}
                   </TableCell>
-                <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
+                    {formatCurrency((Number(row.Amount) || 0) - (Number(row.AllowedAmt) || 0))}
+                  </TableCell>
+                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                     {(() => {
                       const category = (row.Category || '').trim() || 'DELINQUENT';
                       return category;

@@ -125,6 +125,7 @@ def get_rebound_claim():
                 CUSTOM_ALL.PayerAddress,
                 CUSTOM_ALL.ProvNPI,
                 CUSTOM_ALL.ProvTaxID,
+                CUSTOM_ALL.Facility,
                 CUSTOM_ALL.BillProvName,
                 CUSTOM_ALL.BIllProvAddress,
                 CUSTOM_ALL.BillTaxonomy,

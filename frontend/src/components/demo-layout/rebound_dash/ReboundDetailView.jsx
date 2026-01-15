@@ -211,13 +211,17 @@ const ReboundDetailView = () => {
     return date.toLocaleDateString();
   };
 
-  const TableWrapper = ({ children }) => (
-    <div className={`overflow-x-auto rounded-xl shadow-sm border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-white border-gray-200'}`}>
-      <div className="inline-block min-w-full align-middle">
-        {children}
+  const TableWrapper = ({ children, borderless = false }) => {
+    const bgClass = isDark ? 'bg-[#0f131b]' : 'bg-white';
+    const borderClass = borderless ? '' : `border ${isDark ? 'border-[#1f2433]' : 'border-gray-200'}`;
+    return (
+      <div className={`overflow-x-auto rounded-xl shadow-sm ${bgClass} ${borderClass}`}>
+        <div className="inline-block min-w-full align-middle">
+          {children}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const formatValue = (value, fallback = "N/A") => {
     if (value === undefined || value === null) return fallback;
@@ -243,6 +247,19 @@ const ReboundDetailView = () => {
     return Number.isNaN(numericValue) ? "N/A" : `$${samplifyDouble(numericValue)}`;
   };
 
+  const renderTruncated = (value, maxWidth = '180px') => {
+    const display = value === undefined || value === null ? 'N/A' : `${value}`;
+    return (
+      <span
+        title={display}
+        className="block whitespace-nowrap overflow-hidden text-ellipsis"
+        style={{ maxWidth }}
+      >
+        {display}
+      </span>
+    );
+  };
+
   const extractModifiers = (mod) => {
     if (Array.isArray(mod)) return mod.filter((item) => item).slice(0, 3);
     if (typeof mod === "string") return mod.split(",").map((item) => item.trim()).filter(Boolean).slice(0, 3);
@@ -252,12 +269,20 @@ const ReboundDetailView = () => {
     return [];
   };
 
-  const SectionCard = ({ title, children, startCollapsed = true, collapsible = true }) => {
+  const SectionCard = ({ title, children, startCollapsed = true, collapsible = true, showBorder = true }) => {
     const [collapsed, setCollapsed] = useState(startCollapsed);
 
-    const containerClass = `rounded-2xl border ${isDark ? 'border-[#1f2433] bg-gradient-to-b from-[#141824] to-[#0f121b] shadow-[0_10px_30px_rgba(0,0,0,0.35)]' : 'border-gray-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]'}`;
-    const headerClasses = `w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b ${isDark ? 'border-[#1f2433] hover:bg-[#151a24]' : 'border-gray-200 hover:bg-gray-50'} transition`;
+    const containerClass = `rounded-2xl overflow-hidden ${
+      isDark
+        ? `${showBorder ? 'border border-[#1f2433]' : 'border-0'} bg-gradient-to-b from-[#141824] to-[#0f121b] shadow-[0_10px_30px_rgba(0,0,0,0.35)]`
+        : `${showBorder ? 'border border-gray-200' : 'border-0'} bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]`
+    }`;
+    const borderStyle = showBorder ? (isDark ? 'border-[#1f2433]' : 'border-gray-200') : 'border-transparent';
+    const headerClasses = `w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b-0 ${borderStyle} ${isDark ? 'hover:bg-[#151a24]' : 'hover:bg-gray-50'} transition`;
+    const dividerClass = isDark ? 'bg-[#303544]' : 'bg-gray-200';
     const titleClasses = `text-sm font-semibold text-left ${isDark ? 'text-gray-200' : 'text-gray-800'}`;
+
+    const toggleCollapsed = () => setCollapsed((prev) => !prev);
 
     if (!collapsible) {
       return (
@@ -272,30 +297,56 @@ const ReboundDetailView = () => {
 
     return (
       <div className={containerClass}>
-        <button
-          type="button"
+        <div
           className={headerClasses}
-          onClick={() => setCollapsed(!collapsed)}
+          role="button"
+          tabIndex={0}
+          onClick={toggleCollapsed}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggleCollapsed();
+            }
+          }}
         >
           <p className={titleClasses}>{title}</p>
-          <div className={`w-7 h-7 rounded-lg border flex items-center justify-center text-lg ${isDark ? 'border-[#2a3142] bg-[#0f131b] text-gray-300' : 'border-gray-200 bg-white text-gray-700'}`}>
-            {collapsed ? "+" : "-"}
-          </div>
-        </button>
-        {!collapsed && <div className="px-4 sm:px-6 py-4">{children}</div>}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleCollapsed();
+            }}
+            className={`w-7 h-7 rounded-lg border flex items-center justify-center text-lg ${isDark ? 'border-[#2a3142] bg-[#0f131b] text-gray-300' : 'border-gray-200 bg-white text-gray-700'}`}
+            aria-label={collapsed ? 'Expand section' : 'Collapse section'}
+          >
+            {collapsed ? "-" : "+"}
+          </button>
+        </div>
+        {!collapsed && (
+          <>
+            <div className="px-4 sm:px-6">
+              <div className={`h-px w-full ${dividerClass}`} />
+            </div>
+            <div className="px-4 sm:px-6 py-4">{children}</div>
+          </>
+        )}
       </div>
     );
   };
 
   const InfoGrid = ({ fields }) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-y-6 gap-x-16">
       {fields.map((field, index) => (
         <div
           key={`${field.label}-${index}`}
-          className={`rounded-xl p-4 flex flex-col gap-1 border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-white border-gray-200 shadow-[0_6px_20px_rgba(0,0,0,0.06)]'}`}
+          className="flex items-start gap-2 text-sm leading-6 min-w-[260px]"
         >
-          <p className={`text-xs uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{field.label}</p>
-          <p className={`text-sm font-medium break-words ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{field.value}</p>
+          <span className={`font-semibold whitespace-nowrap ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
+            {field.label}:
+          </span>
+          <span className={`break-words ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+            {field.value}
+          </span>
         </div>
       ))}
     </div>
@@ -433,7 +484,7 @@ const ReboundDetailView = () => {
               <span className="text-gray-400 text-xs">▼</span>
             </button> */}
           </div>
-          <div className={`flex flex-col gap-3 p-4 rounded-2xl border ${isDark ? 'bg-[#0f131b] border-[#1f2433] shadow-[0_12px_30px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)]'}`}>
+          <div className={`flex flex-col gap-3 rounded-2xl ${isDark ? 'bg-[#0f131b] shadow-[0_12px_30px_rgba(0,0,0,0.35)]' : 'bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)]'}`}>
 
             <div
               className={`flex items-center rounded-2xl border px-1 py-1 ${isDark
@@ -546,7 +597,7 @@ const ReboundDetailView = () => {
                 : 'text-gray-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'
                 }`}
             >
-              <SectionCard title="Claim Details">
+              <SectionCard title="Claim Details" showBorder={false}>
                 <InfoGrid
                   fields={[
                     { label: "Patient Name", value: formatValue(currentClaim?.Claim?.Data?.PatientName || currentClaim?.Claim?.Data?.Patient) },
@@ -563,7 +614,7 @@ const ReboundDetailView = () => {
                 />
               </SectionCard>
 
-              <SectionCard title="Patient/Subscriber">
+              <SectionCard title="Patient/Subscriber" showBorder={false}>
                 <InfoGrid
                   fields={[
                     { label: "Patient Name", value: formatValue(currentClaim?.Claim?.Data?.PatientName || currentClaim?.Claim?.Data?.Patient) },
@@ -579,7 +630,7 @@ const ReboundDetailView = () => {
                 />
               </SectionCard>
 
-              <SectionCard title="Payer">
+              <SectionCard title="Payer" showBorder={false}>
                 <InfoGrid
                   fields={[
                     { label: "Payer", value: formatValue(currentClaim?.Claim?.Data?.PayerName) },
@@ -588,20 +639,21 @@ const ReboundDetailView = () => {
                     {
                       label: "Payer Sequence",
                       value: formatValue(
-                        currentClaim?.Claim?.Data?.PayerSeq === "P"
-                          ? "Primary"
-                          : currentClaim?.Claim?.Data?.PayerSeq === "S"
-                            ? "Secondary"
-                            : currentClaim?.Claim?.Data?.PayerSeq
-                      ),
-                    },
-                    { label: "Policy #", value: formatValue(currentClaim?.Claim?.Data?.Policy || currentClaim?.Claim?.Data?.PolicyNo) },
-                    { label: "Subscriber Name", value: formatValue(currentClaim?.Claim?.Data?.SubscriberName) },
-                  ]}
-                />
-              </SectionCard>
+                    currentClaim?.Claim?.Data?.PayerSeq === "P"
+                      ? "Primary"
+                      : currentClaim?.Claim?.Data?.PayerSeq === "S"
+                        ? "Secondary"
+                        : currentClaim?.Claim?.Data?.PayerSeq
+                    ),
+                  },
+                  { label: "Policy #", value: formatValue(currentClaim?.Claim?.Data?.Policy || currentClaim?.Claim?.Data?.PolicyNo) },
+                  { label: "Subscriber Name", value: formatValue(currentClaim?.Claim?.Data?.SubscriberName) },
+                  { label: "Subscriber Relationship", value: formatValue(currentClaim?.Claim?.Data?.SubscriberRelationship) },
+                ]}
+              />
+            </SectionCard>
 
-              <SectionCard title="Provider">
+              <SectionCard title="Provider" showBorder={false}>
                 <InfoGrid
                   fields={[
                     { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.Facility || currentClaim?.Claim?.Data?.BillProvName) },
@@ -615,54 +667,97 @@ const ReboundDetailView = () => {
                 />
               </SectionCard>
 
-              <SectionCard title="Diagnosis">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
-                      <tr>
-                        <th className="px-4 py-3 text-left font-semibold">Diagnosis</th>
-                        <th className="px-4 py-3 text-left font-semibold">Description</th>
+              <SectionCard title="Diagnosis" showBorder={false}>
+                <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
+                  <table className="w-full text-sm border-separate border-spacing-0">
+                    <thead>
+                      <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
+                        {['Diagnosis', 'Description'].map((col, idx, arr) => (
+                          <th
+                            key={col}
+                            className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
+                          >
+                            {col}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
-                    <tbody className={`divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
-                      {(currentClaim?.Claim?.Diagnosis || []).map((row, index) => (
-                        <tr key={`${row.Code || index}-${index}`} className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'}`}>
-                          <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(row.Code)}</td>
-                          <td className={`px-4 py-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{formatValue(row.Description)}</td>
+                    <tbody>
+                      {(currentClaim?.Claim?.Diagnosis || []).map((row, index, arr) => (
+                        <tr key={`${row.Code || index}-${index}`} className={isDark ? (index % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                          {[formatValue(row.Code), formatValue(row.Description)].map((val, idx) => (
+                            <td
+                              key={`${index}-${idx}`}
+                              className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== 1 ? 'border-r' : ''} ${index === arr.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === 1 ? 'rounded-br-2xl' : '') : ''}`}
+                            >
+                              {renderTruncated(val, idx === 0 ? '140px' : '320px')}
+                            </td>
+                          ))}
                         </tr>
                       ))}
+                      {(currentClaim?.Claim?.Diagnosis || []).length === 0 && (
+                        <tr>
+                          <td colSpan={2} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No diagnosis data.</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
               </SectionCard>
 
-              <SectionCard title="Service Lines">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
-                      <tr>
-                        <th className="px-4 py-3 text-left font-semibold">Rev Code</th>
-                        <th className="px-4 py-3 text-left font-semibold">Proc Code</th>
-                        <th className="px-4 py-3 text-left font-semibold">Mod Cd 1</th>
-                        <th className="px-4 py-3 text-left font-semibold">Mod Cd 2</th>
-                        <th className="px-4 py-3 text-left font-semibold">Mod Cd 3</th>
-                        <th className="px-4 py-3 text-left font-semibold">Proc Description</th>
+              <SectionCard title="Service Lines" showBorder={false}>
+                <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
+                  <table className="w-full text-sm border-separate border-spacing-0">
+                    <thead>
+                      <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
+                        {[
+                          'Service Line #',
+                          'Service Date',
+                          'Proc Code - Units',
+                          'Charge $',
+                          'Allowed $',
+                          'Contractual $',
+                          'Deductible $',
+                        ].map((col, idx, arr) => (
+                          <th
+                            key={col}
+                            className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
+                          >
+                            {col}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
-                    <tbody className={`divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
-                      {(currentClaim?.Claim?.ServiceLine || []).map((row, index) => {
-                        const modifiers = extractModifiers(row.Modifier || row.Modifiers || row.ModifierCodes || row.Mods || row);
+                    <tbody>
+                      {(currentClaim?.Claim?.ServiceLine || []).map((line, lineIndex, arr) => {
+                        const modifiers = extractModifiers(line.Modifier || line.Modifiers || line.ModifierCodes || line.Mods || line);
+                        const cells = [
+                          lineIndex + 1,
+                          formatDateValue(line.ServiceDate || line.ServiceDateFrom || line.ServiceDateTo),
+                          [formatValue(line.ProcedureCode || line.Code), formatValue(line.UnitsPaid || line.Units || line.Quantity), modifiers.filter(Boolean).join(', ')].filter((v) => v && v !== 'N/A').join(' '),
+                          formatCurrency(line.ChargedAmount || line.ChargeAmount || line.Amount),
+                          formatCurrency(line.AllowedAmount),
+                          formatCurrency((line.ChargedAmount || 0) - (line.AllowedAmount || 0)),
+                          formatCurrency(line.Deductible),
+                        ];
                         return (
-                          <tr key={`${row.Code || index}-${index}`} className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'}`}>
-                            <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(row.RevCode)}</td>
-                            <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(row.Code)}</td>
-                            <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(modifiers[0])}</td>
-                            <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(modifiers[1])}</td>
-                            <td className={`px-4 py-3 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{formatValue(modifiers[2])}</td>
-                            <td className={`px-4 py-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{formatValue(row.Description)}</td>
+                          <tr key={`${line.Code || lineIndex}-${lineIndex}`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                            {cells.map((val, idx) => (
+                              <td
+                                key={`${lineIndex}-${idx}`}
+                                className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== cells.length - 1 ? 'border-r' : ''} ${lineIndex === arr.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === cells.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                              >
+                                {renderTruncated(val, ['72px', '120px', '220px', '120px', '120px', '120px', '120px'][idx] || '180px')}
+                              </td>
+                            ))}
                           </tr>
                         );
                       })}
+                      {(currentClaim?.Claim?.ServiceLine || []).length === 0 && (
+                        <tr>
+                          <td colSpan={7} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No service line detail.</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -698,13 +793,13 @@ const ReboundDetailView = () => {
                             return next;
                           });
                         }}
-                        className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition w-full ${
+                        className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-6 text-left transition w-full ${
                           isDark
-                            ? 'bg-[#141824] border-[#1f2433] hover:border-[#3c4661] hover:bg-[#181d29]'
-                            : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            ? 'bg-[#141824] hover:bg-[#181d29]'
+                            : 'bg-white hover:bg-gray-50'
                         }`}
                       >
-                        <span className={`text-lg font-bold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{dateLabel}</span>
+                        <span className={`text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{dateLabel}</span>
                         <span className={`flex items-center gap-2 text-sm font-semibold ${isDark ? 'text-blue-200' : 'text-blue-600'}`}>
                           {isExpanded ? 'Hide' : 'Show'}
                           <span
@@ -718,9 +813,9 @@ const ReboundDetailView = () => {
                       </button>
 
                       {isExpanded && (
-                        <div className="flex flex-col gap-3">
-                          <SectionCard title="Check Information">
-                            <TableWrapper>
+                        <div className="flex flex-col gap-3 pl-4 sm:pl-6">
+                          <SectionCard title="Check Information" showBorder={false}>
+                            <TableWrapper borderless>
                               <table className={`min-w-full divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
                                 <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
                                   <tr>
@@ -776,8 +871,8 @@ const ReboundDetailView = () => {
                             </TableWrapper>
                           </SectionCard>
 
-                          <SectionCard title="Claim Information">
-                            <TableWrapper>
+                          <SectionCard title="Claim Information" showBorder={false}>
+                            <TableWrapper borderless>
                               <table className={`min-w-full divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
                                 <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
                                   <tr>
@@ -819,139 +914,129 @@ const ReboundDetailView = () => {
                             </TableWrapper>
                           </SectionCard>
 
-                          <SectionCard title="Service Line Detail">
-                            <TableWrapper>
-                              <table className={`min-w-full divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
-                                <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
-                                  <tr>
-                                    <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Line #</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Procedure Code</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modifiers</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charge</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed Amt</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amt</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductible</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Insurance</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Co-Pay</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group Code</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason Code</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason Description</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</th>
-                                    <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                          <SectionCard title="Patient/Subscriber" showBorder={false}>
+                            <div className="px-1 pb-1">
+                              <InfoGrid
+                                fields={[
+                                  { label: "Patient Name", value: formatValue(currentClaim?.Claim?.Data?.PatientName || currentClaim?.Claim?.Data?.Patient) },
+                                  { label: "Patient DOB", value: formatDateValue(currentClaim?.Claim?.Data?.PatientDOB) },
+                                  { label: "Address", value: formatValue(currentClaim?.Claim?.Data?.PatientAddress || currentClaim?.Claim?.Data?.Address) },
+                                  { label: "Patient Control #", value: formatValue(currentClaim?.Claim?.Data?.PatientControl || currentClaim?.Claim?.Data?.ControlNumber) },
+                                  { label: "Gender", value: formatValue(currentClaim?.Claim?.Data?.Gender) },
+                                  { label: "Subscriber Name", value: formatValue(currentClaim?.Claim?.Data?.SubscriberName) },
+                                  { label: "Subscriber Relationship", value: formatValue(currentClaim?.Claim?.Data?.SubscriberRelationship) },
+                                  { label: "Subscriber ID", value: formatValue(currentClaim?.Claim?.Data?.SubscriberID || currentClaim?.Claim?.Data?.Subscriber) },
+                                ]}
+                              />
+                            </div>
+                          </SectionCard>
+
+                          <SectionCard title="Service Line Detail" showBorder={false}>
+                            <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
+                              <table className="w-full text-sm border-separate border-spacing-0">
+                                <thead>
+                                  <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
+                                    {[
+                                      'Service Line #',
+                                      'Service Date',
+                                      'Proc Code - Units',
+                                      'Charge $',
+                                      'Allowed $',
+                                      'Contractual $',
+                                      'Deductible $',
+                                    ].map((col, idx, arr) => (
+                                      <th
+                                        key={col}
+                                        className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
+                                      >
+                                        {col}
+                                      </th>
+                                    ))}
                                   </tr>
                                 </thead>
-                                <tbody className={`${isDark ? 'bg-[#121722] divide-[#1f2433] text-gray-100' : 'bg-white divide-gray-200 text-gray-900'}`}>
-                                  {row.ServiceLine.map((rowr, index) =>
-                                    rowr.Codes.map((adjustment, ind) => (
-                                      <tr key={`${index}-${ind}`} className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'} transition-all duration-200 ease-in-out`}>
-                                        {ind === 0 && (
-                                          <>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                {index + 1}
-                                              </div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                {formatDate(row.ServiceDate)}
-                                              </div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                {rowr.ProcedureCode}
-                                              </div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <Description description={rowr.Description} width={80} />
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                {rowr.Modifiers?.length > 0
-                                                  ? [
-                                                    rowr.Modifiers[0].ProcedureModifier1,
-                                                    rowr.Modifiers[0].ProcedureModifier2,
-                                                    rowr.Modifiers[0].ProcedureModifier3,
-                                                    rowr.Modifiers[0].ProcedureModifier4
-                                                  ].filter(Boolean).join(', ') || '-'
-                                                  : '-'}
-                                              </div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                {samplifyInteger(rowr.UnitsPaid)}
-                                              </div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                ${samplifyDouble(rowr.ChargedAmount)}
-                                              </div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                ${samplifyDouble(rowr.AllowedAmount)}
-                                              </div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                ${samplifyDouble(rowr.ChargedAmount - rowr.AllowedAmount)}
-                                              </div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>-</div>
-                                            </td>
-                                            <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                              <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                ${samplifyDouble(rowr.PaidAmount)}
-                                              </div>
-                                            </td>
-                                          </>
-                                        )}
-                                        <td className="px-6 py-4">
-                                          <div className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                            {adjustment.AdjustmentGroup}
-                                          </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                          <div className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                            {adjustment.AdjustmentReason}
-                                          </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                          <Description description={adjustment.Description} width={80} />
-                                        </td>
-                                        {ind === 0 && (
-                                          <td rowSpan={rowr.Codes.length} className="px-6 py-4">
-                                            <div className={`text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                              {rowr.RemarkCodes
-                                                ? rowr.RemarkCodes.split(',')
-                                                  .map((r) => r.split(':')[1])
-                                                  .filter(Boolean)
-                                                  .join(', ') || '-'
-                                                : '-'}
-                                            </div>
+                                <tbody>
+                                  {(row.ServiceLine || []).map((line, lineIndex) => {
+                                    const modifiers = extractModifiers(line.Modifier || line.Modifiers || line.ModifierCodes || line.Mods || line);
+                                    return (
+                                      <tr key={`${line.Code || lineIndex}-${lineIndex}`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                                        {[
+                                          lineIndex + 1,
+                                          formatDateValue(line.ServiceDate),
+                                          [formatValue(line.ProcedureCode || line.Code), formatValue(line.UnitsPaid || line.Units || line.Quantity), modifiers.filter(Boolean).join(', ')].filter((v) => v && v !== 'N/A').join(' '),
+                                          formatCurrency(line.ChargedAmount || line.ChargeAmount || line.Amount),
+                                          formatCurrency(line.AllowedAmount),
+                                          formatCurrency((line.ChargedAmount || 0) - (line.AllowedAmount || 0)),
+                                          formatCurrency(line.Deductible),
+                                        ].map((val, idx, arr) => (
+                                          <td
+                                            key={`${lineIndex}-${idx}`}
+                                            className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${lineIndex === (row.ServiceLine || []).length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                                          >
+                                            {renderTruncated(val, ['72px', '120px', '220px', '120px', '120px', '120px', '120px'][idx] || '180px')}
                                           </td>
-                                        )}
-                                        <td className="px-6 py-4">
-                                          <div className={`text-sm font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                            ${samplifyDouble(adjustment.AdjustmentAmount)}
-                                          </div>
-                                        </td>
+                                        ))}
                                       </tr>
-                                    ))
+                                    );
+                                  })}
+                                  {(row.ServiceLine || []).length === 0 && (
+                                    <tr>
+                                      <td colSpan={7} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No service line detail.</td>
+                                    </tr>
                                   )}
                                 </tbody>
                               </table>
-                            </TableWrapper>
+                            </div>
+                          </SectionCard>
+
+                          <SectionCard title="Supplement/Adjustment Information" showBorder={false}>
+                            <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
+                              <table className="w-full text-sm border-separate border-spacing-0">
+                                <thead>
+                                  <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
+                                    {[
+                                      'Service Line #',
+                                      'Core Business Scenario',
+                                      'Supp/Adj Group Code',
+                                      'Description',
+                                    ].map((col, idx, arr) => (
+                                      <th
+                                        key={col}
+                                        className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
+                                      >
+                                        {col}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {(row.ServiceLine || []).map((line, lineIndex) => {
+                                    const firstCode = (line.Codes || [])[0] || {};
+                                    return (
+                                      <tr key={`supp-${lineIndex}`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                                        {[
+                                          lineIndex + 1,
+                                          formatValue(line.CoreBusinessScenario || line.BusinessScenario || 'N/A'),
+                                          formatValue(firstCode.AdjustmentGroup || firstCode.GroupCode || 'N/A'),
+                                          formatValue(firstCode.Description || firstCode.AdjustmentReason || 'N/A'),
+                                        ].map((val, idx, arr) => (
+                                          <td
+                                            key={`${lineIndex}-${idx}`}
+                                            className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${lineIndex === (row.ServiceLine || []).length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                                          >
+                                            {renderTruncated(val, ['72px', '220px', '160px', '260px'][idx] || '180px')}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    );
+                                  })}
+                                  {(row.ServiceLine || []).length === 0 && (
+                                    <tr>
+                                      <td colSpan={4} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No supplemental data.</td>
+                                    </tr>
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
                           </SectionCard>
                         </div>
                       )}
@@ -975,17 +1060,24 @@ const ReboundDetailView = () => {
                 <table className={`min-w-full divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
                   <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
                     <tr>
-                      <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim No</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Date</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Type</th>
+                      <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facility Name</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provider Tax ID</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer ID</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Name</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Sequence</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Frequency</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient ID</th>
-                      <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Seq</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Place of Service</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charges</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed Amt</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CARC</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RARC</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Primary Dx</th>
+                      <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Primary Service</th>
                     </tr>
                   </thead>
                   <tbody className={`${isDark ? 'bg-[#121722] divide-[#1f2433] text-gray-100' : 'bg-white divide-gray-200 text-gray-900'}`}>
@@ -995,19 +1087,32 @@ const ReboundDetailView = () => {
                         onClick={() => showDetail(row.ClaimNo)}
                         className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'} transition-colors cursor-pointer`}
                       >
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{index + 1}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.ClaimNo}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatDate(row.ServiceDate)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatDate(row.TransactionDate)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString(row.TransactionType)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString(row.PayerID)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString(row.PayerName)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.Priority)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.FacilityName || row?.Facility)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.ProviderTaxID || row?.ProvTaxID || row?.TaxID)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.ClaimNo || row?.ClaimID || row?.ClaimId)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PayerID)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PayerName)}</td>
                         <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {row.PayerSeq == 'P' ? 'Primary' : (row.PayerSeq == 'S' ? 'Secondary' : '-')}
+                          {row?.PayerSeq === 'P' ? 'Primary' : row?.PayerSeq === 'S' ? 'Secondary' : formatValue(row?.PayerSeq)}
                         </td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.Frequency}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString("")}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString("")}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PatientName || row?.Patient)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatDateValue(row?.ServiceDate)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PlaceOfService || row?.POS)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatCurrency(row?.Charges || row?.Amount || row?.BilledAmount || row?.TotalCharges)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatCurrency(row?.AllowedAmount || row?.AllowedAmt || row?.Allowed)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
+                          {formatCurrency(
+                            row?.Balance !== undefined && row?.Balance !== null
+                              ? row.Balance
+                              : (Number(row?.Charges || row?.Amount || 0) || 0) - (Number(row?.AllowedAmount || row?.AllowedAmt || 0) || 0)
+                          )}
+                        </td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.Category || row?.CategoryName || row?.ClaimCategory)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.CARC || row?.PrimaryGroup)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(Array.isArray(row?.RARC) ? row.RARC.join(', ') : (row?.RARC || row?.Remark))}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PrimaryDx || row?.PrimaryDiagnosis || row?.DiagnosisCode)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PrimaryService || row?.ProcedureCode || row?.Service)}</td>
                       </tr>
                     ))}
                   </tbody>

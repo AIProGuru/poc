@@ -154,10 +154,19 @@ def get_rebound_data_all():
         # Generate SQL query to fetch the data with pagination
         delinquent_label = os.getenv('DELIQUENT', 'Delinquent').replace("'", "''")
         data_sql = f"""select
-            CUSTOM_ALL.ClaimNo, CUSTOM_ALL.ProvTaxID, CUSTOM_ALL.ProvNPI,
-            CUSTOM_ALL.PayerName, CUSTOM_ALL.PayerID, CUSTOM_ALL.PayerSeq, CUSTOM_ALL.LoadDate,
-            CUSTOM_ALL.ServiceDate, CUSTOM_ALL.PlaceOfService, CUSTOM_ALL.Amount,
+            CUSTOM_ALL.ClaimNo,
+            CUSTOM_ALL.ProvTaxID,
+            CUSTOM_ALL.ProvNPI,
+            CUSTOM_ALL.PayerName,
+            CUSTOM_ALL.PayerID,
+            CUSTOM_ALL.PayerSeq,
+            CUSTOM_ALL.LoadDate,
+            CUSTOM_ALL.ServiceDate,
+            CUSTOM_ALL.PlaceOfService,
+            CUSTOM_ALL.Amount,
             CUSTOM_ALL.AllowedAmt,
+            CUSTOM_ALL.Facility,
+            CUSTOM_ALL.BillProvName,
             COALESCE(NULLIF(TRIM(CUSTOM_ALL.Category), ''), '{delinquent_label}') AS Category,
             COALESCE(CUSTOM_ALL.PrimaryGroup, '') AS PrimaryGroup,
             COALESCE(CUSTOM_ALL.PrimaryCode, '') AS PrimaryCode,
