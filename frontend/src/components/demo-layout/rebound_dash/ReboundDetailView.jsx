@@ -1060,24 +1060,17 @@ const ReboundDetailView = () => {
                 <table className={`min-w-full divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
                   <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
                     <tr>
-                      <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facility Name</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provider Tax ID</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
+                      <th scope="col" className="first:rounded-tl-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim No</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Date</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Type</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer ID</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Name</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Seq</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Date</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Place of Service</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Charges</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowed Amt</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CARC</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RARC</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Primary Dx</th>
-                      <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Primary Service</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payer Sequence</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Claim Frequency</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient ID</th>
+                      <th scope="col" className="last:rounded-tr-xl px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
                     </tr>
                   </thead>
                   <tbody className={`${isDark ? 'bg-[#121722] divide-[#1f2433] text-gray-100' : 'bg-white divide-gray-200 text-gray-900'}`}>
@@ -1087,32 +1080,19 @@ const ReboundDetailView = () => {
                         onClick={() => showDetail(row.ClaimNo)}
                         className={`${isDark ? 'hover:bg-[#151a26]' : 'hover:bg-gray-50'} transition-colors cursor-pointer`}
                       >
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.Priority)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.FacilityName || row?.Facility)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.ProviderTaxID || row?.ProvTaxID || row?.TaxID)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.ClaimNo || row?.ClaimID || row?.ClaimId)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PayerID)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PayerName)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{index + 1}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.ClaimNo}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatDate(row.ServiceDate)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatDate(row.TransactionDate)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString(row.TransactionType)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString(row.PayerID)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString(row.PayerName)}</td>
                         <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {row?.PayerSeq === 'P' ? 'Primary' : row?.PayerSeq === 'S' ? 'Secondary' : formatValue(row?.PayerSeq)}
+                          {row.PayerSeq == 'P' ? 'Primary' : (row.PayerSeq == 'S' ? 'Secondary' : '-')}
                         </td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PatientName || row?.Patient)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatDateValue(row?.ServiceDate)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PlaceOfService || row?.POS)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatCurrency(row?.Charges || row?.Amount || row?.BilledAmount || row?.TotalCharges)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatCurrency(row?.AllowedAmount || row?.AllowedAmt || row?.Allowed)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {formatCurrency(
-                            row?.Balance !== undefined && row?.Balance !== null
-                              ? row.Balance
-                              : (Number(row?.Charges || row?.Amount || 0) || 0) - (Number(row?.AllowedAmount || row?.AllowedAmt || 0) || 0)
-                          )}
-                        </td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.Category || row?.CategoryName || row?.ClaimCategory)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.CARC || row?.PrimaryGroup)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(Array.isArray(row?.RARC) ? row.RARC.join(', ') : (row?.RARC || row?.Remark))}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PrimaryDx || row?.PrimaryDiagnosis || row?.DiagnosisCode)}</td>
-                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{formatValue(row?.PrimaryService || row?.ProcedureCode || row?.Service)}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{row.Frequency}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString("")}</td>
+                        <td className={`whitespace-nowrap px-6 py-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{samplifyString("")}</td>
                       </tr>
                     ))}
                   </tbody>
