@@ -329,31 +329,16 @@ const DataTable = (props) => {
           </svg>
         </button>
         <div className="pl-9 pr-5">
-          <TableContainer
-            ref={tableScrollRef}
-            sx={{
-              maxHeight: tableMaxHeight,
-              backgroundColor: tableBackground,
-              color: theme === 'dark' ? 'white' : 'black',
-              borderRadius: '24px',
-              overflowX: 'scroll',
-              overflowY: 'auto',
-              scrollbarGutter: 'stable',
-              scrollbarWidth: 'thin',
-              scrollbarColor: theme === 'dark' ? '#2E323D transparent' : '#c8d3e6 transparent',
-              '&::-webkit-scrollbar': {
-                height: '6px',
-                width: '6px'
-              },
-              '&::-webkit-scrollbar-track': {
-                backgroundColor: 'transparent'
-              },
-              '&::-webkit-scrollbar-thumb': {
-                borderRadius: '999px',
-                backgroundColor: theme === 'dark' ? '#2E323D' : '#c8d3e6'
-              }
-            }}
-          >
+          <div className={`overflow-x-auto rounded-2xl ${isDarkMode ? 'bg-[#0B0F19]' : 'bg-white'}`}>
+            <TableContainer
+              ref={tableScrollRef}
+              sx={{
+                maxHeight: tableMaxHeight,
+                backgroundColor: tableBackground,
+                color: theme === 'dark' ? 'white' : 'black',
+                borderRadius: '24px',
+              }}
+            >
         <Table
           aria-label="sticky table"
           stickyHeader
@@ -569,7 +554,8 @@ const DataTable = (props) => {
               }
             </TableBody>
         </Table>
-          </TableContainer>
+            </TableContainer>
+          </div>
         </div>
       </div>
         <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
