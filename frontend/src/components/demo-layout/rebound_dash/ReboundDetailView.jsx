@@ -521,12 +521,7 @@ const ReboundDetailView = () => {
           </div>
 
           {detailShowStatus == 0 && (
-            <div
-              className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark
-                ? 'text-gray-100 bg-[#0b0f16] border-[#1f2433] shadow-[0_16px_40px_rgba(0,0,0,0.35)]'
-                : 'text-gray-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'
-                }`}
-            >
+            <div>
               <SectionCard title="" startCollapsed={false} collapsible={false}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className={`rounded-xl p-4 border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-white border-gray-200 shadow-[0_10px_24px_rgba(0,0,0,0.06)]'}`}>
@@ -800,7 +795,7 @@ const ReboundDetailView = () => {
                         }`}
                       >
                         <span className={`text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{dateLabel}</span>
-                        <span className={`flex items-center gap-2 text-sm font-semibold ${isDark ? 'text-blue-200' : 'text-blue-600'}`}>
+                        <span className={`flex items-center gap-2 text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-600'}`}>
                           {isExpanded ? 'Hide' : 'Show'}
                           <span
                             className={`inline-block transform transition-transform ${

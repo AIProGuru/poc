@@ -331,12 +331,29 @@ const DataTable = (props) => {
         <div className="pl-9 pr-5">
           <div className={`overflow-x-auto rounded-2xl ${isDarkMode ? 'bg-[#0B0F19]' : 'bg-white'}`}>
             <TableContainer
+              className="datatable-scroll"
               ref={tableScrollRef}
               sx={{
                 maxHeight: tableMaxHeight,
                 backgroundColor: tableBackground,
                 color: theme === 'dark' ? 'white' : 'black',
                 borderRadius: '24px',
+                overflowX: 'auto',
+                overflowY: 'auto',
+                scrollbarGutter: 'stable both-edges',
+                scrollbarWidth: 'thin',
+                scrollbarColor: isDarkMode ? '#2E323D transparent' : '#c8d3e6 transparent',
+                '&::-webkit-scrollbar': {
+                  height: '10px',
+                  width: '10px'
+                },
+                '&::-webkit-scrollbar-track': {
+                  backgroundColor: 'transparent'
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  borderRadius: '999px',
+                  backgroundColor: isDarkMode ? '#2E323D' : '#c8d3e6'
+                }
               }}
             >
         <Table
