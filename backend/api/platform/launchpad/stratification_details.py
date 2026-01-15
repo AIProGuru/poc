@@ -25,15 +25,42 @@ pilotcustomer_api_stratification.api_name = 'pilotcustomer_api_stratification'
 @rebound_api_stratification.route("/data_all", methods=["POST"])
 @medevolve_api_stratification.route("/data_all", methods=["POST"])
 @pilotcustomer_api_stratification.route("/data_all", methods=["POST"])
+ALLOWED_SORT_COLUMNS = {
+    "ClaimNo",
+    "ProvTaxID",
+    "ProvNPI",
+    "PayerName",
+    "PayerID",
+    "PayerSeq",
+    "LoadDate",
+    "ServiceDate",
+    "PlaceOfService",
+    "Amount",
+    "AllowedAmt",
+    "Category",
+    "PrimaryGroup",
+    "PrimaryCode",
+    "PrimaryDX",
+    "PrimaryProcedure",
+    "Remark",
+    "ActionDate",
+    "ActionTaken",
+    # facility mapping
+    "BillProvName",
+}
+
+
 def map_sort_field(sort: str) -> str:
-    """Map UI sort keys to database columns."""
+    """Map UI sort keys to database columns and guard against invalid fields."""
     if not sort:
         return sort
     target = sort[:-1] if sort.endswith("-") else sort
     suffix = "-" if sort.endswith("-") else ""
     if target.lower() == "facility":
-        return f"BillProvName{suffix}"
-    return sort
+        target = "BillProvName"
+    if target not in ALLOWED_SORT_COLUMNS:
+        return "ClaimNo"
+    return f"{target}{suffix}"
 
 
 def get_rebound_data_all():
