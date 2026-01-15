@@ -1048,14 +1048,8 @@ const ReboundDetailView = () => {
           )}
           {detailShowStatus == 3 && (
 
-            <DetailSection
-              title="Related Encounter"
-              status={status}
-              key={renderIndex + 9}
-              showArrow={true}
-              className=""
-              isDark={isDark}
-            >
+            <div className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark ? 'text-gray-100 bg-[#0b0f16] border-[#1f2433] shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'text-gray-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
+              
               <TableWrapper>
                 <table className={`min-w-full divide-y ${isDark ? 'divide-[#1f2433]' : 'divide-gray-200'}`}>
                   <thead className={`${isDark ? 'bg-[#1a1f2b] text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
@@ -1098,7 +1092,7 @@ const ReboundDetailView = () => {
                   </tbody>
                 </table>
               </TableWrapper>
-            </DetailSection>
+            </div>
 
           )}
 
