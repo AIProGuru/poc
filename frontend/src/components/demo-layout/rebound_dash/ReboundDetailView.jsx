@@ -44,13 +44,8 @@ const ReboundDetailView = () => {
   const [renderIndex, setRenderIndex] = useState(0)
   const [claimNo, setClaimNo] = useState('')
   const [thumb, setThumb] = useState(0);
-  const [triageActions, setTriageActions] = useState([
-    { label: "Action", checked: false },
-    { label: "Action", checked: false },
-    { label: "Action", checked: false },
-    { label: "Action", checked: false },
-    { label: "Action", checked: false },
-  ]);
+  const [triageActions, setTriageActions] = useState([]);
+  const [triageOtherText, setTriageOtherText] = useState("");
   const [triageNotes, setTriageNotes] = useState("");
   const [generatingAppeal, setGeneratingAppeal] = useState(false);
   const type = useSelector((state) => state.app.type)
@@ -85,6 +80,11 @@ const ReboundDetailView = () => {
   })
   // Track expanded 835s per index so multiple remits don't toggle together.
   const [remitExpandSet, setRemitExpandSet] = useState(() => new Set());
+  const defaultTriageActions = Array.from({ length: 5 }, () => ({
+    label: "Action",
+    checked: false,
+    allowFreeText: false,
+  }));
 
   let { token } = useParams()
   useEffect(() => {
@@ -140,6 +140,43 @@ const ReboundDetailView = () => {
     })
   }, [showAppealModal])
 
+  useEffect(() => {
+    if (!apiUrl || !currentClaim) return;
+    const denialCategory =
+      currentClaim?.Claim?.Data?.Category ||
+      currentClaim?.Claim?.Data?.CategoryName ||
+      currentClaim?.Claim?.Data?.ClaimCategory ||
+      "";
+
+    if (!denialCategory) {
+      setTriageActions(defaultTriageActions);
+      setTriageOtherText("");
+      return;
+    }
+
+    axios
+      .get(`${apiUrl}/triage_actions`, {
+        params: { denial_category: denialCategory },
+      })
+      .then((res) => {
+        const items = Array.isArray(res.data) ? res.data : [];
+        if (items.length === 0) {
+          setTriageActions(defaultTriageActions);
+          return;
+        }
+        setTriageActions(
+          items.map((item) => ({
+            label: item.label || item.action || "Action",
+            checked: false,
+            allowFreeText: Boolean(item.allowFreeText || item.allow_free_text),
+          }))
+        );
+      })
+      .catch(() => {
+        setTriageActions(defaultTriageActions);
+      });
+    setTriageOtherText("");
+  }, [apiUrl, currentClaim])
 
   const showDetail = (claimNo) => {
     const token = {
@@ -1102,23 +1139,40 @@ const ReboundDetailView = () => {
                 <p className="text-lg font-semibold">Triage</p>
                 <div className={`rounded-xl p-4 border ${isDark ? 'bg-[#0f131b] border-[#1f2433]' : 'bg-gray-50 border-gray-200'}`}>
                   <div className="flex flex-col gap-3">
-                    {triageActions.map((action, idx) => (
-                      <label key={`triage-${idx}`} className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-gray-400"
-                          checked={action.checked}
-                          onChange={() =>
-                            setTriageActions((prev) =>
-                              prev.map((item, i) =>
-                                i === idx ? { ...item, checked: !item.checked } : item
-                              )
-                            )
-                          }
-                        />
-                        <span className={isDark ? 'text-gray-200' : 'text-gray-700'}>{action.label}</span>
-                      </label>
-                    ))}
+                    {triageActions.map((action, idx) => {
+                      const isOther =
+                        action.allowFreeText ||
+                        `${action.label || ""}`.trim().toLowerCase() === "other";
+                      return (
+                        <div key={`triage-${idx}`} className="flex flex-col gap-2">
+                          <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-gray-400"
+                              checked={action.checked}
+                              onChange={() =>
+                                setTriageActions((prev) =>
+                                  prev.map((item, i) =>
+                                    i === idx ? { ...item, checked: !item.checked } : item
+                                  )
+                                )
+                              }
+                            />
+                            <span className={isDark ? 'text-gray-200' : 'text-gray-700'}>{action.label}</span>
+                          </label>
+                          {isOther && (
+                            <input
+                              type="text"
+                              value={triageOtherText}
+                              onChange={(e) => setTriageOtherText(e.target.value)}
+                              disabled={!action.checked}
+                              placeholder="Enter other action..."
+                              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${isDark ? 'bg-[#0f131b] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

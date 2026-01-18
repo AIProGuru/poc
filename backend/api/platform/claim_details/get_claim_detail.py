@@ -444,3 +444,68 @@ def get_rebound_claim():
         close_connection(cursor, conn)
         _end = time.time()
         print("/get_rebound_claim", _end - _start)
+
+
+@rebound_api_get_claim.route("/triage_actions", methods=["GET"])
+@medevolve_api_get_claim.route("/triage_actions", methods=["GET"])
+@pilotcustomer_api_get_claim.route("/triage_actions", methods=["GET"])
+def get_triage_actions():
+    """
+    This endpoint fetches triage action items for a denial category.
+    ---
+    tags:
+      - Claim Details
+    parameters:
+      - in: query
+        name: denial_category
+        type: string
+        required: true
+        description: Denial category name
+    responses:
+      200:
+        description: Successful response
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              allowFreeText:
+                type: boolean
+    """
+    conn = None
+    cursor = None
+    try:
+        conn, cursor, db_name = get_connection(request.base_url)
+        denial_category = (request.args.get("denial_category") or "").strip()
+        if denial_category == "":
+            return jsonify([]), 200
+
+        q = f"""
+            SELECT action_label, allow_free_text, sort_order
+            FROM denial_action_items
+            WHERE category='{denial_category}' AND is_active=1
+            ORDER BY sort_order, action_label
+        """
+        try:
+            cursor.execute(q)
+            rows = cursor.fetchall()
+        except Exception as query_error:
+            logger.error(f"[QUERY ERROR]: {query_error} - Query: {q}")
+            return jsonify([]), 200
+
+        ret = []
+        for row in rows or []:
+            ret.append(
+                {
+                    "label": row["action_label"],
+                    "allowFreeText": bool(row.get("allow_free_text", 0)),
+                }
+            )
+        return jsonify(ret), 200
+    except Exception as e:
+        logger.error(f"[ERROR]: {e}")
+        return jsonify({"error": "Internal server Error"}), 500
+    finally:
+        close_connection(cursor, conn)
