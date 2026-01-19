@@ -71,15 +71,16 @@ def save_action():
         notes = request.json.get("notes")
         username = request.json.get("username")
 
-        q = f"select * from rate where username='{username}' and claimno='{claimno}' limit 1"
-        cursor.execute(q)
-        result = cursor.fetchone()
-        if result is not None:
-            q = f"update rate set action={thumb} where username='{username}' and claimno='{claimno}'"
-        else:
-            q = f"insert into rate(username, claimno, action) values('{username}', '{claimno}', {thumb})"
-        cursor.execute(q)
-        conn.commit()
+        if thumb is not None and str(thumb) != "":
+            q = f"select * from rate where username='{username}' and claimno='{claimno}' limit 1"
+            cursor.execute(q)
+            result = cursor.fetchone()
+            if result is not None:
+                q = f"update rate set action={thumb} where username='{username}' and claimno='{claimno}'"
+            else:
+                q = f"insert into rate(username, claimno, action) values('{username}', '{claimno}', {thumb})"
+            cursor.execute(q)
+            conn.commit()
 
         q = f"""
             insert into actions(ClaimNo, action_date, action, claim_status, notes, user) 

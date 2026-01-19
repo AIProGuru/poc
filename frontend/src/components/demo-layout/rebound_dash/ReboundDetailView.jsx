@@ -148,9 +148,13 @@ const ReboundDetailView = () => {
       currentClaim?.Claim?.Data?.ClaimCategory ||
       "";
 
+    const savedTriage = getSavedTriageEntry(currentClaim);
+    const savedTriageValue = parseTriageActionValue(savedTriage?.action);
+    setTriageNotes(savedTriage?.notes || "");
+    setTriageOtherText(savedTriageValue.otherText || "");
+
     if (!denialCategory) {
-      setTriageActions(defaultTriageActions);
-      setTriageOtherText("");
+      setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
       return;
     }
 
@@ -161,21 +165,20 @@ const ReboundDetailView = () => {
       .then((res) => {
         const items = Array.isArray(res.data) ? res.data : [];
         if (items.length === 0) {
-          setTriageActions(defaultTriageActions);
+          setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
           return;
         }
         setTriageActions(
-          items.map((item) => ({
+          applySavedTriageSelection(items.map((item) => ({
             label: item.label || item.action || "Action",
             checked: false,
             allowFreeText: Boolean(item.allowFreeText || item.allow_free_text),
-          }))
+          })), savedTriageValue)
         );
       })
       .catch(() => {
-        setTriageActions(defaultTriageActions);
+        setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
       });
-    setTriageOtherText("");
   }, [apiUrl, currentClaim])
 
   const showDetail = (claimNo) => {
@@ -195,6 +198,47 @@ const ReboundDetailView = () => {
 
 
   const [notes, setNotes] = useState('')
+
+  const getSavedTriageEntry = (claim) => {
+    const actions = claim?.Action || [];
+    return actions.find((item) => `${item.claim_status || ""}`.toLowerCase() === "triage") || null;
+  };
+
+  const parseTriageActionValue = (value) => {
+    if (!value) return { selected: [], otherText: "" };
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return { selected: parsed.filter(Boolean), otherText: "" };
+      }
+      if (parsed && typeof parsed === "object") {
+        return {
+          selected: Array.isArray(parsed.selected) ? parsed.selected.filter(Boolean) : [],
+          otherText: parsed.otherText ? `${parsed.otherText}` : "",
+        };
+      }
+    } catch (err) {
+      // Fall back to comma-delimited list.
+    }
+    return {
+      selected: `${value}`
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      otherText: "",
+    };
+  };
+
+  const applySavedTriageSelection = (items, saved) => {
+    const savedSet = new Set(saved.selected.map((item) => `${item}`.toLowerCase()));
+    const savedOther = saved.otherText ? saved.otherText.trim() : "";
+    return items.map((item) => {
+      const label = `${item.label || ""}`.trim();
+      const isOther = item.allowFreeText || label.toLowerCase() === "other";
+      const checked = savedSet.has(label.toLowerCase()) || (isOther && savedOther);
+      return { ...item, checked };
+    });
+  };
 
   const expandAll = () => {
     setStatus(false);
@@ -229,6 +273,41 @@ const ReboundDetailView = () => {
     }).catch(err => {
       toast.error('Error occurred while submitting.');
     });
+  };
+
+  const onSubmitTriage = () => {
+    if (!currentClaim) return;
+    const selected = triageActions.filter((item) => item.checked).map((item) => item.label);
+    const otherText = triageOtherText.trim();
+    if (otherText && !selected.some((label) => `${label}`.toLowerCase() === "other")) {
+      selected.push("Other");
+    }
+    if (selected.length === 0 && triageNotes.trim() === "" && otherText === "") {
+      toast.info("Please select an action or add notes before saving.");
+      return;
+    }
+    toast.info("Saving triage actions...");
+    const actionPayload = JSON.stringify({ selected, otherText });
+    axios
+      .post(`${apiUrl}/save_action`, {
+        claimno: currentClaim.Claim.Data.ClaimNo,
+        action_date: new Date(Date.now()).toLocaleDateString('en-US', {
+          month: 'numeric',
+          day: 'numeric',
+          year: 'numeric'
+        }),
+        action: actionPayload,
+        claim_status: "triage",
+        thumb: null,
+        notes: triageNotes,
+        username: username
+      })
+      .then(() => {
+        toast.success("Triage actions saved.");
+      })
+      .catch(() => {
+        toast.error("Error occurred while saving triage actions.");
+      });
   };
 
 
@@ -1186,6 +1265,15 @@ const ReboundDetailView = () => {
                   onChange={(e) => setTriageNotes(e.target.value)}
                   placeholder="Add notes for this claim..."
                 />
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={onSubmitTriage}
+                    className="px-6 py-3 text-sm font-medium text-white bg-[#005DE2] rounded-lg transition-colors duration-200"
+                  >
+                    Save Actions
+                  </button>
+                </div>
               </div>
             </div>
           )}
