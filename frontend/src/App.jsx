@@ -166,18 +166,15 @@ function App() {
       )}
       {(MAINTAINING === 'false' || MAINTAINING === undefined) && isLoading === 0 && (
         <div className="flex flex-col h-full">
-          <div className="block md:hidden">
+          {/* <div className="block md:hidden">
             {location.pathname.startsWith('/rcmgpt') === false && <ChatBotButton />}
           </div>
           {showChatBot && <div
             className="fixed md:left-[300px] md:bottom-4 z-[55] w-[100vw] md:w-[600px] flex flex-col drop-shadow-md bg-white md:bg-[#EFF4FE] rounded-none md:rounded-2xl md:mb-2 h-[100vh] md:h-auto"
-          // ref={chatbot}
           >
             <ChatBot />
-          </div>}
-          {/* {showlist.indexOf(location.pathname) !== -1 && <Header />} */}
+          </div>} */}
           <div className="flex-1">{routes}</div>
-          {/* <Footer /> */}
         </div>
       )}
     </div>

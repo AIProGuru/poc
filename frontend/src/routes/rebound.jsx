@@ -41,10 +41,6 @@ const reboundRoutes = [
     path: "artificial-intelligence/:token",
     element: <PrivateRoute role={AUTH_ROLES} element={AIDetail} />,
   },
-  {
-    path: 'rcmgpt',
-    element: <PrivateRoute role={AUTH_ROLES} element={RCMGPT} />,
-  }
 ];
 
 export default reboundRoutes;
