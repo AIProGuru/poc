@@ -616,7 +616,9 @@ const Sidebar = () => {
       <aside
         className={`flex flex-col h-screen border-r px-2 md:px-3 py-6 top-0 left-0 ${
           mobileExpanded ? "w-[308px]" : "w-[72px]"
-        } md:w-[308px] ${isMobileView ? "fixed z-50" : "sticky"} ${
+        } md:w-[308px] ${
+          isMobileView ? (mobileExpanded ? "fixed z-50" : "sticky") : "sticky"
+        } ${
           isDark
             ? "bg-[#1F2024] border-r-[#3f4045] text-white"
             : "bg-white border-slate-200 text-slate-900"

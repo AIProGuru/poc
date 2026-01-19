@@ -13,7 +13,7 @@ const Demo = () => {
   console.log(theme)
   return (
     <div className="w-full h-screen flex overflow-hidden relative">
-      <div className="shrink-0 h-screen overflow-hidden w-0 md:w-auto">
+      <div className="shrink-0 h-screen overflow-hidden w-[72px] md:w-auto">
         <MySidebar />
       </div>
       <div
