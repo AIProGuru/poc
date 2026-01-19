@@ -484,7 +484,7 @@ def get_triage_actions():
 
         q = f"""
             SELECT action_label, allow_free_text, sort_order
-            FROM denial_action_items
+            FROM claim_action_items
             WHERE category='{denial_category}' AND is_active=1
             ORDER BY sort_order, action_label
         """
