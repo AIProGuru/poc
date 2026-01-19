@@ -616,9 +616,8 @@ const Header = () => {
         {/* <img src="/rebound-logo.svg" width={128} className='w-[90px] sm:w-[128px]' /> */}
         <div className="font-inter hidden sm:flex text-[28px] font-semibold relative cursor-pointer select-none">
           <div
-            className={`flex  w-full h-[48px] font-semibold text-[16px] font-inter justify-between pr-2 items-center gap-2 pl-2 ${
-              menuShow ? "rounded-t-lg" : "rounded-lg"
-            } ${theme === "dark" ? "bg-[#151619]" : "bg-white"}`}
+            className={`flex  w-full h-[48px] font-semibold text-[16px] font-inter justify-between pr-2 items-center gap-2 pl-2 ${menuShow ? "rounded-t-lg" : "rounded-lg"
+              }`}
             onClick={handleMenuClick}
           >
             <img src="/man.svg" width={32} height={32} />
@@ -656,32 +655,28 @@ const Header = () => {
             }}
           >
             <div
-              className={`flex  flex-col ${
-                theme === "dark"
+              className={`flex  flex-col ${theme === "dark"
                   ? "bg-[#151619] text-white"
                   : "bg-white text-black"
-              } w-[220px] gap-y-4`}
+                } w-[220px] gap-y-4`}
             >
               <div className="flex flex-col items-start gap-1">
                 <Typography variant="h6">{`${firstname} ${lastname}`}</Typography>
                 <Typography
                   variant="body2"
-                  color={`${
-                    theme === "dark"
+                  color={`${theme === "dark"
                       ? "bg-[#151619] text-white"
                       : "bg-white text-black"
-                  }`}
+                    }`}
                 >{`${useremail}`}</Typography>
               </div>
               <div
-                className={`flex items-center  rounded-lg p-1 w-full ${
-                  theme === "dark" ? "bg-[#191A1D]" : "bg-[#eef4ff]"
-                } `}
+                className={`flex items-center  rounded-lg p-1 w-full ${theme === "dark" ? "bg-[#191A1D]" : "bg-[#eef4ff]"
+                  } `}
               >
                 <button
-                  className={`flex items-center justify-center flex-1 h-10 rounded-lg text-sm font-semibold transition-colors ${
-                    !isDarkMode ? "bg-white text-blue-600" : " text-blue-600"
-                  }`}
+                  className={`flex items-center justify-center flex-1 h-10 rounded-lg text-sm font-semibold transition-colors ${!isDarkMode ? "bg-white text-blue-600" : " text-blue-600"
+                    }`}
                   onClick={() => dispatch(setTheme("light"))}
                 >
                   <svg
@@ -701,9 +696,8 @@ const Header = () => {
                   <span className="pl-2">Light</span>
                 </button>
                 <button
-                  className={`flex items-center justify-center flex-1 h-10 rounded-lg text-sm font-semibold transition-colors ${
-                    isDarkMode ? " text-white bg-[#151619]" : " text-gray-400"
-                  }`}
+                  className={`flex items-center justify-center flex-1 h-10 rounded-lg text-sm font-semibold transition-colors ${isDarkMode ? " text-white bg-[#151619]" : " text-gray-400"
+                    }`}
                   onClick={toggleDarkMode}
                 >
                   {theme === "dark" ? (
@@ -742,16 +736,15 @@ const Header = () => {
               </div>
               {role === "admin" && (
                 <div
-                  className={`flex items-center gap-2 h-[48px] cursor-pointer ${
-                    theme === "dark"
+                  className={`flex items-center gap-2 h-[48px] cursor-pointer ${theme === "dark"
                       ? "bg-[#151619] text-white"
                       : "bg-white text-black"
-                  } pl-2`}
-                  // onClick={() => {
-                  //   setMenuShow(false);
-                  //   dispatch(setAppTitle("User Management"));
-                  //   navigate("/management");
-                  // }}
+                    } pl-2`}
+                // onClick={() => {
+                //   setMenuShow(false);
+                //   dispatch(setAppTitle("User Management"));
+                //   navigate("/management");
+                // }}
                 >
                   <svg
                     width="18"
@@ -791,11 +784,10 @@ const Header = () => {
                   </svg>
 
                   <span
-                    className={`text-[14px] ${
-                      theme === "dark"
+                    className={`text-[14px] ${theme === "dark"
                         ? "bg-[#151619] text-white"
                         : "bg-white text-black"
-                    } font-regular font-inter`}
+                      } font-regular font-inter`}
                   >
                     User Management
                   </span>
@@ -804,16 +796,15 @@ const Header = () => {
 
               {role === "admin" && (
                 <div
-                  className={`flex items-center gap-2 h-[48px] cursor-pointer ${
-                    theme === "dark"
+                  className={`flex items-center gap-2 h-[48px] cursor-pointer ${theme === "dark"
                       ? "bg-[#151619] text-white"
                       : "bg-white text-black"
-                  } pl-2`}
-                  // onClick={() => {
-                  //   setMenuShow(false);
-                  //   dispatch(setAppTitle("Client Management"));
-                  //   navigate("/clientmanagement");
-                  // }}
+                    } pl-2`}
+                // onClick={() => {
+                //   setMenuShow(false);
+                //   dispatch(setAppTitle("Client Management"));
+                //   navigate("/clientmanagement");
+                // }}
                 >
                   <svg
                     width="20"
@@ -874,11 +865,10 @@ const Header = () => {
                   </svg>
 
                   <span
-                    className={`text-[14px] ${
-                      theme === "dark"
+                    className={`text-[14px] ${theme === "dark"
                         ? "bg-[#151619] text-white"
                         : "bg-white text-black"
-                    } font-regular font-inter`}
+                      } font-regular font-inter`}
                   >
                     Client Management
                   </span>
@@ -886,11 +876,10 @@ const Header = () => {
               )}
 
               <div
-                className={`flex items-center gap-2 h-[48px] cursor-pointer ${
-                  theme === "dark"
+                className={`flex items-center gap-2 h-[48px] cursor-pointer ${theme === "dark"
                     ? "bg-[#151619] text-white"
                     : "bg-white text-black"
-                } pl-2`}
+                  } pl-2`}
                 onClick={() => {
                   setMenuShow(false);
                   dispatch(setAppTitle("Account Settings"));
@@ -923,21 +912,19 @@ const Header = () => {
                 </svg>
 
                 <span
-                  className={`text-[14px] ${
-                    theme === "dark"
+                  className={`text-[14px] ${theme === "dark"
                       ? "bg-[#151619] text-white"
                       : "bg-white text-black"
-                  } font-regular font-inter`}
+                    } font-regular font-inter`}
                 >
                   Account Settings
                 </span>
               </div>
               <div
-                className={`flex items-center gap-2 h-[48px] cursor-pointer ${
-                  theme === "dark"
+                className={`flex items-center gap-2 h-[48px] cursor-pointer ${theme === "dark"
                     ? "bg-[#151619] text-white"
                     : "bg-white text-black"
-                } pl-2`}
+                  } pl-2`}
                 onClick={logout}
               >
                 <svg
@@ -973,11 +960,10 @@ const Header = () => {
                   />
                 </svg>
                 <span
-                  className={`text-[14px] ${
-                    theme === "dark"
+                  className={`text-[14px] ${theme === "dark"
                       ? "bg-[#151619] text-white"
                       : "bg-white text-black"
-                  } font-regular font-inter`}
+                    } font-regular font-inter`}
                 >
                   Logout
                 </span>
