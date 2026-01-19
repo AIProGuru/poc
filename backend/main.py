@@ -31,7 +31,7 @@ from api.platform.claim_details.get_claim_detail import (
     pilotcustomer_api_get_claim,
 )
 from api.platform.claim_details.add_appeal import rebound_api_appeal, medevolve_api_appeal
-from api.platform.claim_details.save_action import rebound_api_action, medevolve_api_action
+from api.platform.claim_details.save_action import rebound_api_action, medevolve_api_action, pilotcustomer_api_action
 from api.platform.claim_details.save_comment import rebound_api_comment, medevolve_api_comment
 from api.platform.claim_details.add_document import rebound_api_add_doc, medevolve_api_add_doc
 from api.platform.ai_automation.get_artificial_intelligence import (
@@ -147,8 +147,9 @@ def create_app():
     app.register_blueprint(pilotcustomer_api_status)
     app.register_blueprint(rebound_api_appeal)
     app.register_blueprint(medevolve_api_appeal)
-    app.register_blueprint(rebound_api_action)
-    app.register_blueprint(medevolve_api_action)
+app.register_blueprint(rebound_api_action)
+app.register_blueprint(medevolve_api_action)
+app.register_blueprint(pilotcustomer_api_action)
     app.register_blueprint(rebound_api_comment)
     app.register_blueprint(medevolve_api_comment)
     app.register_blueprint(rebound_api_add_doc)
