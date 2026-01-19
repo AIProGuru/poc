@@ -46,6 +46,8 @@ const Sidebar = () => {
 
   const [selectedNav, setSelectedNav] = useState("home");
   const [expandedNav, setExpandedNav] = useState(() => new Set());
+  const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
 
   const basePath =
     type === 0 ? "/rebound" : type === 1 ? "/pilotcustomer" : "/demo";
@@ -519,7 +521,24 @@ const Sidebar = () => {
     });
   }, [apiUrl, tags, navItems, navExtraFilters, navTagFilters]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      const nextIsMobile = window.innerWidth < 768;
+      setIsMobileView(nextIsMobile);
+      if (!nextIsMobile) {
+        setMobileExpanded(false);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const handleClick = (item) => {
+    if (isMobileView && !mobileExpanded) {
+      setMobileExpanded(true);
+      return;
+    }
     dispatch(setAppTitle(item.title));
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
     if (hasChildren) {
@@ -541,9 +560,16 @@ const Sidebar = () => {
     }
     applyFilters(item.id, item.id);
     navigate(basePath);
+    if (isMobileView) {
+      setMobileExpanded(false);
+    }
   };
 
   const handleChildClick = (parent, child) => {
+    if (isMobileView && !mobileExpanded) {
+      setMobileExpanded(true);
+      return;
+    }
     dispatch(setAppTitle(`${parent.title} > ${child.title}`));
     setSelectedNav(child.id);
     if (typeof parent.tab === "number") {
@@ -552,6 +578,9 @@ const Sidebar = () => {
     applyFilters(child.id, parent.id);
     setExpandedNav((prev) => new Set(prev).add(parent.id));
     navigate(basePath);
+    if (isMobileView) {
+      setMobileExpanded(false);
+    }
   };
 
   const toggleExpand = (id) => {
@@ -575,22 +604,39 @@ const Sidebar = () => {
   const activeId = selectedNav;
 
   return (
-    <aside
-      className={`hidden md:flex flex-col w-[308px] h-screen border-r px-3 py-6 sticky top-0 ${
-        isDark
-          ? "bg-[#0B0E17] border-[#1F2231] text-white"
-          : "bg-white border-slate-200 text-slate-900"
-      }`}
-    >
+    <>
+      {isMobileView && mobileExpanded && (
+        <button
+          type="button"
+          aria-label="Collapse sidebar"
+          onClick={() => setMobileExpanded(false)}
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+        />
+      )}
+      <aside
+        className={`flex flex-col h-screen border-r px-2 md:px-3 py-6 top-0 left-0 ${
+          mobileExpanded ? "w-[308px]" : "w-[72px]"
+        } md:w-[308px] ${isMobileView ? "fixed z-50" : "sticky"} ${
+          isDark
+            ? "bg-[#0B0E17] border-[#1F2231] text-white"
+            : "bg-white border-slate-200 text-slate-900"
+        }`}
+      >
       <div
         className={`flex items-center justify-center gap-3 pb-6 ${
           isDark ? "bg-[#0B0E17]" : "bg-white"
         } sticky top-0 z-10`}
       >
         <img
+          src="/logo_sm.svg"
+          alt="Helio RCM logo"
+          className={`h-12 w-12 ${mobileExpanded ? "hidden md:hidden" : "md:hidden"}`}
+          loading="lazy"
+        />
+        <img
           src="/helio-logo.svg"
           alt="Helio RCM logo"
-          className="h-16 w-auto"
+          className={`${mobileExpanded ? "block" : "hidden"} h-16 w-auto md:block`}
           loading="lazy"
         />
       </div>
@@ -636,7 +682,10 @@ const Sidebar = () => {
               <div className={`w-full flex items-center rounded-2xl px-2 py-2 transition-colors ${navStateClass}`}>
                 <button
                   type="button"
-                  className="flex-1 flex items-center justify-between gap-2 text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                  aria-label={item.title}
+                  className={`flex-1 flex items-center justify-center gap-2 text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
+                    mobileExpanded ? "justify-between" : "md:justify-between"
+                  }`}
                   onClick={() => handleClick(item)}
                 >
                   <span className="flex items-center gap-3 min-w-0">
@@ -646,7 +695,7 @@ const Sidebar = () => {
                       {renderIcon(item.icon, isActive)}
                     </span>
                     <span
-                      className="text-sm font-medium truncate max-w-[100px]"
+                      className={`${mobileExpanded ? "inline" : "hidden"} md:inline text-sm font-medium truncate max-w-[100px]`}
                       title={item.title}
                     >
                       {item.title}
@@ -654,7 +703,7 @@ const Sidebar = () => {
                   </span>
                   {computedBadge !== null && computedBadge !== undefined && (
                     <span
-                      className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}
+                      className={`${mobileExpanded ? "inline-flex" : "hidden"} md:inline-flex text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}
                     >
                       {computedBadge}
                     </span>
@@ -663,7 +712,7 @@ const Sidebar = () => {
                 {hasChildren && (
                   <button
                     type="button"
-                    className={`p-1 rounded-full ml-2 ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+                    className={`${mobileExpanded ? "flex" : "hidden"} md:flex p-1 rounded-full ml-2 ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -682,7 +731,7 @@ const Sidebar = () => {
               </div>
               {hasChildren && (
                 <div
-                  className={`ml-14 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'mt-1 mb-2 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'}`}
+                  className={`${mobileExpanded ? "block" : "hidden"} md:block ml-14 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'mt-1 mb-2 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'}`}
                   style={{
                     maxHeight: isExpanded ? `${(item.children?.length || 1) * 44}px` : 0,
                   }}
@@ -736,6 +785,7 @@ const Sidebar = () => {
         </label>
       </div> */}
     </aside>
+    </>
   );
 };
 
