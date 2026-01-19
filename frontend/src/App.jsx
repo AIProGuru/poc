@@ -21,6 +21,8 @@ import { AccountContext } from "./utils/Account";
 import { increaseLoading, decreaseLoading, setTagLoading } from "./redux/reducers/app.reducer";
 import ChatBot from "./components/demo-layout/rebound_dash/ChatBot";
 import ChatBotButton from "./components/demo-layout/rebound_dash/ChatBotButton";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const showlist = [
   '/',
@@ -120,6 +122,7 @@ function App() {
 
   return (
     <div className="w-full h-screen">
+      <ToastContainer position="top-right" autoClose={3000} />
       {MAINTAINING === 'true' && <div className="flex bg-indigo-400 w-full h-full">
         <div
           role="status"

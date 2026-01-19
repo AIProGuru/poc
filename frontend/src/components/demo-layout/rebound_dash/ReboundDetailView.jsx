@@ -47,6 +47,7 @@ const ReboundDetailView = () => {
   const [triageActions, setTriageActions] = useState([]);
   const [triageOtherText, setTriageOtherText] = useState("");
   const [triageNotes, setTriageNotes] = useState("");
+  const [triageSaving, setTriageSaving] = useState(false);
   const [generatingAppeal, setGeneratingAppeal] = useState(false);
   const type = useSelector((state) => state.app.type)
   const claimStatus = useRef(null);
@@ -287,6 +288,7 @@ const ReboundDetailView = () => {
       return;
     }
     toast.info("Saving triage actions...");
+    setTriageSaving(true);
     const actionPayload = JSON.stringify({ selected, otherText });
     axios
       .post(`${apiUrl}/save_action`, {
@@ -307,6 +309,9 @@ const ReboundDetailView = () => {
       })
       .catch(() => {
         toast.error("Error occurred while saving triage actions.");
+      })
+      .finally(() => {
+        setTriageSaving(false);
       });
   };
 
@@ -1269,9 +1274,10 @@ const ReboundDetailView = () => {
                   <button
                     type="button"
                     onClick={onSubmitTriage}
-                    className="px-6 py-3 text-sm font-medium text-white bg-[#005DE2] rounded-lg transition-colors duration-200"
+                    disabled={triageSaving}
+                    className="px-6 py-3 text-sm font-medium text-white bg-[#005DE2] rounded-lg transition-all duration-200 hover:bg-[#0A56C5] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Save Actions
+                    {triageSaving ? "Saving..." : "Save Actions"}
                   </button>
                 </div>
               </div>
