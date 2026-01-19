@@ -18,7 +18,7 @@ const Demo = () => {
       </div>
       <div
         className={`${
-          theme === "dark" ? "bg-[#07090F] text-white" : "bg-slate-50 text-slate-900"
+          theme === "dark" ? "bg-[#1e1f24] text-white" : "bg-slate-50 text-slate-900"
         } overflow-x-hidden grow flex flex-col`}
       >
         <Header />

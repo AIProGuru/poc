@@ -75,7 +75,7 @@ const Header = () => {
     dispatch(setTheme(newTheme));
   };
 
-  const headerBg = isDarkMode ? "bg-[#07090F] text-white" : "bg-slate-50 text-black";
+  const headerBg = isDarkMode ? "text-white" : "text-black";
 
   return (
     <div
@@ -92,15 +92,15 @@ const Header = () => {
       <div />
       <div className="items-center hidden sm:flex gap-4">
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <svg width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+            <svg className="block w-[18px] h-[18px]" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M7.98913 15.2496C11.6327 15.2496 14.5864 12.2959 14.5864 8.6524C14.5864 5.00885 11.6327 2.05518 7.98913 2.05518C4.34558 2.05518 1.39191 5.00885 1.39191 8.6524C1.39191 12.2959 4.34558 15.2496 7.98913 15.2496Z" stroke="#9598B0" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M15.2808 15.9441L13.8919 14.5552" stroke="#9598B0" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
           <input
             placeholder="Search"
-            className={`text-sm rounded-lg py-2.5 px-10 pl-10 w-64 ${theme === 'dark' ? "bg-[#151619] text-white border border-gray-600" : "text-black bg-white border border-gray-300"}`}
+            className={`text-sm rounded-lg py-2.5 px-10 pl-10 w-64 ${theme === 'dark' ? "bg-[#27282D] text-white border border-gray-600" : "text-black bg-white border border-gray-300"}`}
             ref={inputKeywordRef}
             defaultValue={keyword}
             onKeyDown={handleKeywordKeyDown}

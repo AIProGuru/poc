@@ -845,8 +845,8 @@ const ReboundDash = () => {
   };
 
   return (
-    <div className={`min-h-screen flex ${isDark ? 'bg-[#07090F] text-white' : 'bg-slate-50 text-slate-900'}`}>
-      <div className="flex-1 flex flex-col gap-8 px-6 md:px-10 py-10 min-w-0 overflow-hidden">
+    <div className={`flex ${isDark ? 'text-white' : 'bg-slate-50 text-slate-900'}`}>
+      <div className="flex-1 flex flex-col gap-8 px-6 md:px-10 py-4 min-w-0 overflow-hidden">
         {isUserManagementView ? (
           <div className={`rounded-[40px] border ${isDark ? 'bg-[#070B18] border-[#161B2D] text-white' : 'bg-white border-slate-200 text-slate-900'} shadow-[0_35px_80px_rgba(3,7,18,0.35)]`}>
             <div className={`flex flex-wrap items-center justify-between gap-4 px-6 py-5 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
@@ -933,7 +933,7 @@ const ReboundDash = () => {
               ) : showPlaceholder ? (
                 <div
                   className={`rounded-2xl border px-6 py-10 text-center text-lg font-semibold ${
-                    isDark ? 'bg-[#0f131b] border-[#1f2433] text-gray-200' : 'bg-white border-gray-200 text-gray-700'
+                    isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-200' : 'bg-white border-gray-200 text-gray-700'
                   }`}
                 >
                   Coming soon

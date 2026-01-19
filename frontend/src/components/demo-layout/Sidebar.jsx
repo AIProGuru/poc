@@ -618,13 +618,13 @@ const Sidebar = () => {
           mobileExpanded ? "w-[308px]" : "w-[72px]"
         } md:w-[308px] ${isMobileView ? "fixed z-50" : "sticky"} ${
           isDark
-            ? "bg-[#0B0E17] border-[#1F2231] text-white"
+            ? "bg-[#1F2024] border-r-[#3f4045] text-white"
             : "bg-white border-slate-200 text-slate-900"
         }`}
       >
       <div
         className={`flex items-center justify-center gap-3 pb-6 ${
-          isDark ? "bg-[#0B0E17]" : "bg-white"
+          isDark ? "bg-[#1F2024]" : "bg-white"
         } sticky top-0 z-10`}
       >
         <img
@@ -661,7 +661,7 @@ const Sidebar = () => {
               ? "bg-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
               : "bg-slate-900 text-white shadow-lg"
             : isDark
-            ? "text-[#8A8FB1] hover:bg-white/5"
+            ? "text-[#F4F4F4]/50 hover:bg-white/5"
             : "text-slate-500 hover:bg-slate-100";
           const iconWrapperClass = isActive
             ? isDark
@@ -675,7 +675,7 @@ const Sidebar = () => {
               ? "bg-white/20 text-white"
               : "bg-white text-slate-900"
             : isDark
-            ? "bg-[#1F2231] text-[#B3B8D6]"
+            ? "bg-[#1F2231] text-[#F4F4F4]/50"
             : "bg-slate-200 text-slate-700";
           return (
             <div key={item.id}>
@@ -749,7 +749,7 @@ const Sidebar = () => {
                         className={`w-full flex items-center justify-between text-left text-xs font-medium px-3 py-2 rounded-xl transition-colors ${
                           childIsActive
                             ? (isDark ? 'bg-white/10 text-white' : 'bg-slate-900 text-white')
-                            : (isDark ? 'text-[#8A8FB1] hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100')
+                            : (isDark ? 'text-[#F4F4F4]/50 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100')
                         }`}
                         onClick={() => handleChildClick(item, child)}
                       >
@@ -758,7 +758,7 @@ const Sidebar = () => {
                           className={`ml-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
                             childIsActive
                               ? (isDark ? 'bg-white/20 text-white' : 'bg-white text-slate-900')
-                              : (isDark ? 'bg-[#1F2231] text-[#B3B8D6]' : 'bg-slate-200 text-slate-700')
+                              : (isDark ? 'bg-[#1F2231] text-[#F4F4F4]/50' : 'bg-slate-200 text-slate-700')
                           }`}
                         >
                           {childBadge}

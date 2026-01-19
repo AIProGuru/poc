@@ -54,7 +54,7 @@ const DataTable = (props) => {
   const [order, _setOrder] = useState("ClaimNo");
   const theme = useSelector((state) => state.app.theme);
   const isDarkMode = theme === 'dark';
-  const tableBackground = isDarkMode ? '#0B0F19' : '#ffffff';
+  const tableBackground = isDarkMode ? '#27282D' : '#ffffff';
   const formatDateSafe = (value) => {
     if (!value) return '';
     const dateObj = new Date(value);
@@ -84,7 +84,7 @@ const DataTable = (props) => {
   };
   const headerCellStyle = {
     background: tableBackground,
-    color: isDarkMode ? '#A5AACB' : '#1A1D2B',
+    color: isDarkMode ? '#F4F4F4' : '#1A1D2B',
     borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : '#E4E7EF'}`,
     fontWeight: 600,
     fontSize: '0.82rem',
@@ -308,7 +308,7 @@ const DataTable = (props) => {
   const tableMaxHeight = Math.max(320, viewportHeight - (isMobile ? 240 : 360));
 
   return (
-    <div className={`rounded-[32px] border ${isDarkMode ? 'bg-[#0B0F19] border-[#1F2231] text-white' : 'bg-white border-[#E4E7EF] text-[#0f172a]'} shadow-[0_25px_60px_rgba(0,0,0,0.35)] p-6 flex flex-col h-full`}>
+    <div className={`rounded-[32px] border ${isDarkMode ? 'bg-[#27282D] border-[#1F2231] text-white' : 'bg-white border-[#E4E7EF] text-[#0f172a]'} p-6 flex flex-col h-full`}>
       <div className="relative pb-4 pt-2">
         <button
           className={`p-1 absolute left-0 top-6 -translate-x-1/2 z-10 ${isDarkMode ? 'text-white/70 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
@@ -329,7 +329,7 @@ const DataTable = (props) => {
           </svg>
         </button>
         <div className="pl-9 pr-5">
-          <div className={`overflow-x-auto rounded-2xl ${isDarkMode ? 'bg-[#0B0F19]' : 'bg-white'}`}>
+          <div className={`overflow-x-auto rounded-2xl ${isDarkMode ? 'bg-[#27282D]' : 'bg-white'}`}>
             <TableContainer
               className="datatable-scroll"
               ref={tableScrollRef}
@@ -342,7 +342,7 @@ const DataTable = (props) => {
                 overflowY: 'auto',
                 scrollbarGutter: 'stable both-edges',
                 scrollbarWidth: 'thin',
-                scrollbarColor: isDarkMode ? '#2E323D transparent' : '#c8d3e6 transparent',
+                scrollbarColor: isDarkMode ? '#5A6072 transparent' : '#8FA2C8 transparent',
                 '&::-webkit-scrollbar': {
                   height: '10px',
                   width: '10px'
@@ -352,426 +352,426 @@ const DataTable = (props) => {
                 },
                 '&::-webkit-scrollbar-thumb': {
                   borderRadius: '999px',
-                  backgroundColor: isDarkMode ? '#2E323D' : '#c8d3e6'
+                  backgroundColor: isDarkMode ? '#5A6072' : '#8FA2C8'
                 }
               }}
             >
-        <Table
-          aria-label="sticky table"
-          stickyHeader
-          size="small"
-          sx={{
-            '& .MuiTableCell-root': {
-              padding: '10px 12px'
-            },
-            '& .MuiTableCell-head': {
-              textTransform: 'uppercase',
-              letterSpacing: '.08em',
-              fontSize: '0.75rem',
-              backgroundColor: tableBackground,
-              color: isDarkMode ? '#A5AACB' : '#4B5563',
-              position: 'sticky',
-              top: 0,
-              zIndex: 2
-            },
-            '& .MuiTableCell-body': {
-              color: isDarkMode ? '#F4F6FF' : '#0F172A'
-            }
-          }}
-                >
-            <TableHead>
-              <TableRow>
-                <TableCell style={{ ...headerCellStyle, minWidth: "120px" }} onClick={() => setOrder("Priority")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Priority
-                    {renderSortIcon('Priority')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("BillProvName")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Facility Name
-                    {renderSortIcon('BillProvName')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "160px" }} onClick={() => setOrder("ProvTaxID")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Provider Tax ID
-                    {renderSortIcon('ProvTaxID')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("ClaimNo")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Claim ID
-                    {renderSortIcon('ClaimNo')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "130px" }} onClick={() => setOrder("PayerID")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Payer ID
-                    {renderSortIcon('PayerID')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("PayerName")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Payer Name
-                    {renderSortIcon('PayerName')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "120px" }}>
-                  Payer Seq
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("PatientName")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Patient Name
-                    {renderSortIcon('PatientName')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("ServiceDate")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Service Date
-                    {renderSortIcon('ServiceDate')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PlaceOfService")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Place of Service
-                    {renderSortIcon('PlaceOfService')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("Amount")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Charges
-                    {renderSortIcon('Amount')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("AllowedAmt")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Allowed Amt
-                    {renderSortIcon('AllowedAmt')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
-                  Balance
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("Category")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Category
-                    {renderSortIcon('Category')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PrimaryCode")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    CARC
-                    {renderSortIcon('PrimaryCode')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }}>
-                  RARC
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "160px" }} onClick={() => setOrder("PrimaryDX")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Primary Dx
-                    {renderSortIcon('PrimaryDX')}
-                  </div>
-                </TableCell>
-                <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PrimaryProcedure")} className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    Primary Service
-                    {renderSortIcon('PrimaryProcedure')}
-                  </div>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody className="relative">
-              {tableLoading && <TableRow className="flex justify-center items-center h-[100px]"><TableCell colSpan={12}><div className="flex justify-center items-center">Loading data...</div></TableCell></TableRow>}
-              {!tableLoading && tableData.length === 0 && <TableRow className="flex justify-center items-center h-[100px]"><TableCell colSpan={12}><div className="flex justify-center items-center">No record</div></TableCell></TableRow>}
-              {
-                !tableLoading && tableData.length !== 0 && tableData.map((row, index) => <TableRow
-                  key={index}
-                  className="transition-colors"
-                  sx={{
-                    maxHeight: "100px",
-                    '&:hover': {
-                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : '#F3F4FF'
-                    }
-                  }}
-                >
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "120px" }}>
-                    {row.Priority || ''}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                    {getFacility(row)}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
-                    {row.ProvTaxID || row.ProviderTaxID || ''}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                    {row.ClaimNo}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "130px" }}>
-                    {row.PayerID}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                    {row.PayerName}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "120px" }}>
-                    {row.PayerSeq === 'P' ? "Primary" : (row.PayerSeq === 'S' ? 'Secondary' : (row.PayerSeq || ''))}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                    {row.PatientName || row.Patient || ''}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                    {formatDateSafe(row.ServiceDate)}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
-                    {row.PlaceOfService}
-                  </TableCell>
-                  <TableCell
-                    className="text-wrap"
-                    onClick={() => showDetail(row.ClaimNo)}
-                    style={{ ...bodyCellStyle, minWidth: "140px" }}  >
-                    {formatCurrency(row.Amount)}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                    {formatCurrency(row.AllowedAmt)}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                    {formatCurrency((Number(row.Amount) || 0) - (Number(row.AllowedAmt) || 0))}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
-                    {(() => {
-                      const category = (row.Category || '').trim() || 'DELINQUENT';
-                      return category;
-                    })()}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
-                    {(() => {
-                      const group = ((row.PrimaryGroup ?? '') || '').trim();
-                      const code = ((row.PrimaryCode ?? '') || '').trim();
-                      const denialCode = [group, code].filter(Boolean).join(' ');
-                      return denialCode || '';
-                    })()}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
-                    {(() => {
-                      const remarkText = (row.Remark || '').split('*')[0] || '';
-                      return remarkText ? samplifyString(remarkText) : '';
-                    })()}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
-                    {(() => {
-                      const primaryDx = (row.PrimaryDX || '').split("::")[0];
-                      return primaryDx;
-                    })()}
-                  </TableCell>
-                  <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
-                    {row.PrimaryProcedure || ''}
-                  </TableCell>
-                </TableRow>)
-              }
-            </TableBody>
-        </Table>
+              <Table
+                aria-label="sticky table"
+                stickyHeader
+                size="small"
+                sx={{
+                  '& .MuiTableCell-root': {
+                    padding: '10px 12px'
+                  },
+                  '& .MuiTableCell-head': {
+                    textTransform: 'uppercase',
+                    letterSpacing: '.08em',
+                    fontSize: '0.75rem',
+                    backgroundColor: tableBackground,
+                    color: isDarkMode ? '#A5AACB' : '#4B5563',
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 2
+                  },
+                  '& .MuiTableCell-body': {
+                    color: isDarkMode ? '#F4F6FF' : '#0F172A'
+                  }
+                }}
+              >
+                <TableHead>
+                  <TableRow>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "120px" }} onClick={() => setOrder("Priority")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Priority
+                        {renderSortIcon('Priority')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("BillProvName")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Facility Name
+                        {renderSortIcon('BillProvName')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "160px" }} onClick={() => setOrder("ProvTaxID")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Provider Tax ID
+                        {renderSortIcon('ProvTaxID')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("ClaimNo")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Claim ID
+                        {renderSortIcon('ClaimNo')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "130px" }} onClick={() => setOrder("PayerID")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Payer ID
+                        {renderSortIcon('PayerID')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("PayerName")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Payer Name
+                        {renderSortIcon('PayerName')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "120px" }}>
+                      Payer Seq
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("PatientName")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Patient Name
+                        {renderSortIcon('PatientName')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("ServiceDate")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Service Date
+                        {renderSortIcon('ServiceDate')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PlaceOfService")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Place of Service
+                        {renderSortIcon('PlaceOfService')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("Amount")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Charges
+                        {renderSortIcon('Amount')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("AllowedAmt")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Allowed Amt
+                        {renderSortIcon('AllowedAmt')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
+                      Balance
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("Category")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Category
+                        {renderSortIcon('Category')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PrimaryCode")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        CARC
+                        {renderSortIcon('PrimaryCode')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "150px" }}>
+                      RARC
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "160px" }} onClick={() => setOrder("PrimaryDX")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Primary Dx
+                        {renderSortIcon('PrimaryDX')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PrimaryProcedure")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Primary Service
+                        {renderSortIcon('PrimaryProcedure')}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody className="relative">
+                  {tableLoading && <TableRow className="flex justify-center items-center h-[100px]"><TableCell colSpan={12}><div className="flex justify-center items-center">Loading data...</div></TableCell></TableRow>}
+                  {!tableLoading && tableData.length === 0 && <TableRow className="flex justify-center items-center h-[100px]"><TableCell className="w-full" colSpan={12}><div className="flex justify-center items-center">No record</div></TableCell></TableRow>}
+                  {
+                    !tableLoading && tableData.length !== 0 && tableData.map((row, index) => <TableRow
+                      key={index}
+                      className="transition-colors"
+                      sx={{
+                        maxHeight: "100px",
+                        '&:hover': {
+                          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : '#F3F4FF'
+                        }
+                      }}
+                    >
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "120px" }}>
+                        {row.Priority || ''}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                        {getFacility(row)}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
+                        {row.ProvTaxID || row.ProviderTaxID || ''}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                        {row.ClaimNo}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "130px" }}>
+                        {row.PayerID}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                        {row.PayerName}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "120px" }}>
+                        {row.PayerSeq === 'P' ? "Primary" : (row.PayerSeq === 'S' ? 'Secondary' : (row.PayerSeq || ''))}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                        {row.PatientName || row.Patient || ''}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
+                        {formatDateSafe(row.ServiceDate)}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                        {row.PlaceOfService}
+                      </TableCell>
+                      <TableCell
+                        className="text-wrap"
+                        onClick={() => showDetail(row.ClaimNo)}
+                        style={{ ...bodyCellStyle, minWidth: "140px" }}  >
+                        {formatCurrency(row.Amount)}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
+                        {formatCurrency(row.AllowedAmt)}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
+                        {formatCurrency((Number(row.Amount) || 0) - (Number(row.AllowedAmt) || 0))}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                        {(() => {
+                          const category = (row.Category || '').trim() || 'DELINQUENT';
+                          return category;
+                        })()}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                        {(() => {
+                          const group = ((row.PrimaryGroup ?? '') || '').trim();
+                          const code = ((row.PrimaryCode ?? '') || '').trim();
+                          const denialCode = [group, code].filter(Boolean).join(' ');
+                          return denialCode || '';
+                        })()}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                        {(() => {
+                          const remarkText = (row.Remark || '').split('*')[0] || '';
+                          return remarkText ? samplifyString(remarkText) : '';
+                        })()}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
+                        {(() => {
+                          const primaryDx = (row.PrimaryDX || '').split("::")[0];
+                          return primaryDx;
+                        })()}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                        {row.PrimaryProcedure || ''}
+                      </TableCell>
+                    </TableRow>)
+                  }
+                </TableBody>
+              </Table>
             </TableContainer>
           </div>
         </div>
       </div>
-        <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className=" hidden sm:block items-center gap-2 justify-start  pl-3">
-            <label
-              htmlFor="pageSize"
-              className={`text-nowrap text-sm font-medium text-gray-900 dark:text-white ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
-            >
-              Rows per page:
-            </label>
-            <select
-              id="pageSize"
-              className={` border-none text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-3  ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-gray-50 text-black'}`}
-              value={pageSize}
-              onChange={(e) => {
-                dispatch(setPageSize(parseInt(e.target.value)))
-                dispatch(setCurrentPage(1))
-                dispatch(setTableLoading(true));
-              }}
-            >
-              {pageSizes.map((row, index) => (
-                <option key={index} value={row}>
-                  {row}
-                </option>
-              ))}
-            </select>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className=" hidden sm:block items-center gap-2 justify-start  pl-3">
+          <label
+            htmlFor="pageSize"
+            className={`text-nowrap text-sm font-medium text-gray-900 dark:text-white ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+          >
+            Rows per page:
+          </label>
+          <select
+            id="pageSize"
+            className={` border-none text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-3  ${theme === 'dark' ? 'bg-[#27282D] text-white' : 'bg-gray-50 text-black'}`}
+            value={pageSize}
+            onChange={(e) => {
+              dispatch(setPageSize(parseInt(e.target.value)))
+              dispatch(setCurrentPage(1))
+              dispatch(setTableLoading(true));
+            }}
+          >
+            {pageSizes.map((row, index) => (
+              <option key={index} value={row}>
+                {row}
+              </option>
+            ))}
+          </select>
 
-          </div>
+        </div>
 
 
-          <div className="flex items-center gap-4 mt-3 md:mt-0">
-            <nav aria-label="Page navigation example" className="flex">
-              <ul className="inline-flex -space-x-px text-sm">
-                {/* Double Left (<<) - First Page */}
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center px-2 h-8 leading-tight text-gray-500 rounded-s-lg  hover:text-gray-700 "
-                    onClick={() => {
-                      dispatch(setCurrentPage(1));
+        <div className="flex items-center gap-4 mt-3 md:mt-0">
+          <nav aria-label="Page navigation example" className="flex">
+            <ul className="inline-flex -space-x-px text-sm">
+              {/* Double Left (<<) - First Page */}
+              <li>
+                <a
+                  href="#"
+                  className="flex items-center justify-center px-2 h-8 leading-tight text-gray-500 rounded-s-lg  hover:text-gray-700 "
+                  onClick={() => {
+                    dispatch(setCurrentPage(1));
+                    dispatch(setTableLoading(true));
+                  }}
+                >
+                  {/* Double Left SVG Icon */}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3.22385 7.99988L7.36193 12.1379L8.30473 11.1951L5.10947 7.99988L8.30473 4.80462L7.36193 3.86182L3.22385 7.99988ZM6.99046 7.99988L11.1285 12.1379L12.0713 11.1951L8.87606 7.99988L12.0713 4.80462L11.1285 3.86182L6.99046 7.99988Z" fill="#9598B0" />
+                  </svg>
+                </a>
+              </li>
+
+              {/* Single Left (<) - Previous Page */}
+              <li>
+                <a
+                  href="#"
+                  className="flex items-center justify-center px-2 h-8 leading-tight text-gray-500  hover:text-gray-700 "
+                  onClick={() => {
+                    if (currentPage > 1) {
+                      dispatch(setCurrentPage(currentPage - 1));
                       dispatch(setTableLoading(true));
-                    }}
-                  >
-                    {/* Double Left SVG Icon */}
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3.22385 7.99988L7.36193 12.1379L8.30473 11.1951L5.10947 7.99988L8.30473 4.80462L7.36193 3.86182L3.22385 7.99988ZM6.99046 7.99988L11.1285 12.1379L12.0713 11.1951L8.87606 7.99988L12.0713 4.80462L11.1285 3.86182L6.99046 7.99988Z" fill="#9598B0" />
-                    </svg>
-                  </a>
-                </li>
-
-                {/* Single Left (<) - Previous Page */}
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center px-2 h-8 leading-tight text-gray-500  hover:text-gray-700 "
-                    onClick={() => {
-                      if (currentPage > 1) {
-                        dispatch(setCurrentPage(currentPage - 1));
-                        dispatch(setTableLoading(true));
-                      }
-                    }}
-                  >
-                    {/* Single Left SVG Icon */}
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7.21908 7.99953L10.5189 11.2994L9.57608 12.2422L5.33341 7.99953L9.57608 3.75694L10.5189 4.69973L7.21908 7.99953Z" fill="#9598B0" />
-                    </svg>
-                  </a>
-                </li>
-
-                {/* Display page numbers with ellipsis */}
-                {(() => {
-                  const pages = [];
-                  const maxButtons = 5;
-                  if (!totalPage || totalPage <= maxButtons) {
-                    for (let pageNum = 1; pageNum <= (totalPage || 1); pageNum += 1) {
-                      pages.push(pageNum);
                     }
-                  } else {
-                    if (currentPage <= 3) {
-                      pages.push(1, 2, 3, 4, 5);
-                    } else if (currentPage >= totalPage - 2) {
-                      pages.push(totalPage - 4, totalPage - 3, totalPage - 2, totalPage - 1, totalPage);
-                    } else {
-                      pages.push(currentPage - 2, currentPage - 1, currentPage, currentPage + 1, currentPage + 2);
-                    }
+                  }}
+                >
+                  {/* Single Left SVG Icon */}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.21908 7.99953L10.5189 11.2994L9.57608 12.2422L5.33341 7.99953L9.57608 3.75694L10.5189 4.69973L7.21908 7.99953Z" fill="#9598B0" />
+                  </svg>
+                </a>
+              </li>
+
+              {/* Display page numbers with ellipsis */}
+              {(() => {
+                const pages = [];
+                const maxButtons = 5;
+                if (!totalPage || totalPage <= maxButtons) {
+                  for (let pageNum = 1; pageNum <= (totalPage || 1); pageNum += 1) {
+                    pages.push(pageNum);
                   }
-                  return (
-                    <>
-                      {pages[0] > 1 && (
-                        <>
-                          <li>
-                            <a
-                              href="#"
-                              className={`flex items-center justify-center px-3 h-8 leading-tight ${currentPage === 1
-                                  ? ` font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} `
-                                  : "text-gray-500 hover:text-gray-700"
-                                } `}
-                              onClick={() => {
-                                dispatch(setCurrentPage(1));
-                                dispatch(setTableLoading(true));
-                              }}
-                            >
-                              1
-                            </a>
-                          </li>
-                          {pages[0] > 2 && (
-                            <li>
-                              <span className="px-3 h-8 leading-tight text-gray-500">...</span>
-                            </li>
-                          )}
-                        </>
-                      )}
-                      {pages.map((pageNum) => (
-                        <li key={pageNum}>
+                } else {
+                  if (currentPage <= 3) {
+                    pages.push(1, 2, 3, 4, 5);
+                  } else if (currentPage >= totalPage - 2) {
+                    pages.push(totalPage - 4, totalPage - 3, totalPage - 2, totalPage - 1, totalPage);
+                  } else {
+                    pages.push(currentPage - 2, currentPage - 1, currentPage, currentPage + 1, currentPage + 2);
+                  }
+                }
+                return (
+                  <>
+                    {pages[0] > 1 && (
+                      <>
+                        <li>
                           <a
                             href="#"
-                            className={`flex items-center justify-center px-3 h-8 leading-tight ${currentPage === pageNum
-                                ? ` font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} `
-                                : "text-gray-500 hover:text-gray-700"
+                            className={`flex items-center justify-center px-3 h-8 leading-tight ${currentPage === 1
+                              ? ` font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} `
+                              : "text-gray-500 hover:text-gray-700"
                               } `}
                             onClick={() => {
-                              dispatch(setCurrentPage(pageNum));
+                              dispatch(setCurrentPage(1));
                               dispatch(setTableLoading(true));
                             }}
                           >
-                            {pageNum}
+                            1
                           </a>
                         </li>
-                      ))}
-                      {pages[pages.length - 1] < totalPage && (
-                        <>
-                          {pages[pages.length - 1] < totalPage - 1 && (
-                            <li>
-                              <span className="px-3 h-8 leading-tight text-gray-500">...</span>
-                            </li>
-                          )}
+                        {pages[0] > 2 && (
                           <li>
-                            <a
-                              href="#"
-                              className={`flex items-center justify-center px-3 h-8 leading-tight ${currentPage === totalPage
-                                  ? ` font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} `
-                                  : "text-gray-500 hover:text-gray-700"
-                                } `}
-                              onClick={() => {
-                                dispatch(setCurrentPage(totalPage));
-                                dispatch(setTableLoading(true));
-                              }}
-                            >
-                              {totalPage}
-                            </a>
+                            <span className="px-3 h-8 leading-tight text-gray-500">...</span>
                           </li>
-                        </>
-                      )}
-                    </>
-                  );
-                })()}
+                        )}
+                      </>
+                    )}
+                    {pages.map((pageNum) => (
+                      <li key={pageNum}>
+                        <a
+                          href="#"
+                          className={`flex items-center justify-center px-3 h-8 leading-tight ${currentPage === pageNum
+                            ? ` font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} `
+                            : "text-gray-500 hover:text-gray-700"
+                            } `}
+                          onClick={() => {
+                            dispatch(setCurrentPage(pageNum));
+                            dispatch(setTableLoading(true));
+                          }}
+                        >
+                          {pageNum}
+                        </a>
+                      </li>
+                    ))}
+                    {pages[pages.length - 1] < totalPage && (
+                      <>
+                        {pages[pages.length - 1] < totalPage - 1 && (
+                          <li>
+                            <span className="px-3 h-8 leading-tight text-gray-500">...</span>
+                          </li>
+                        )}
+                        <li>
+                          <a
+                            href="#"
+                            className={`flex items-center justify-center px-3 h-8 leading-tight ${currentPage === totalPage
+                              ? ` font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} `
+                              : "text-gray-500 hover:text-gray-700"
+                              } `}
+                            onClick={() => {
+                              dispatch(setCurrentPage(totalPage));
+                              dispatch(setTableLoading(true));
+                            }}
+                          >
+                            {totalPage}
+                          </a>
+                        </li>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
 
-                {/* Single Right (>) - Next Page */}
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500  hover:text-gray-700 "
-                    onClick={() => {
-                      if (currentPage + 1 <= totalPage) {
-                        dispatch(setCurrentPage(currentPage + 1));
-                        dispatch(setTableLoading(true));
-                      }
-                    }}
-                  >
-                    {/* Single Right SVG Icon */}
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M8.78093 8.00047L5.48112 4.70062L6.42392 3.75781L10.6666 8.00047L6.42392 12.2431L5.48112 11.3003L8.78093 8.00047Z" fill="#9598B0" />
-                    </svg>
-                  </a>
-                </li>
-
-                {/* Double Right (>>) - Last Page */}
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 rounded-e-lg  hover:text-gray-700 "
-                    onClick={() => {
-                      dispatch(setCurrentPage(totalPage));
+              {/* Single Right (>) - Next Page */}
+              <li>
+                <a
+                  href="#"
+                  className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500  hover:text-gray-700 "
+                  onClick={() => {
+                    if (currentPage + 1 <= totalPage) {
+                      dispatch(setCurrentPage(currentPage + 1));
                       dispatch(setTableLoading(true));
-                    }}
-                  >
-                    {/* Double Right SVG Icon */}
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12.7761 7.99988L8.63807 3.86182L7.69527 4.80462L10.8905 7.99988L7.69527 11.1951L8.63807 12.1379L12.7761 7.99988ZM9.00953 7.99988L4.87148 3.86182L3.92867 4.80462L7.12393 7.99988L3.92867 11.1951L4.87148 12.1379L9.00953 7.99988Z" fill="#9598B0" />
-                    </svg>
-                  </a>
-                </li>
-              </ul>
-            </nav>
-          </div>
+                    }
+                  }}
+                >
+                  {/* Single Right SVG Icon */}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.78093 8.00047L5.48112 4.70062L6.42392 3.75781L10.6666 8.00047L6.42392 12.2431L5.48112 11.3003L8.78093 8.00047Z" fill="#9598B0" />
+                  </svg>
+                </a>
+              </li>
 
-
-
+              {/* Double Right (>>) - Last Page */}
+              <li>
+                <a
+                  href="#"
+                  className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 rounded-e-lg  hover:text-gray-700 "
+                  onClick={() => {
+                    dispatch(setCurrentPage(totalPage));
+                    dispatch(setTableLoading(true));
+                  }}
+                >
+                  {/* Double Right SVG Icon */}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.7761 7.99988L8.63807 3.86182L7.69527 4.80462L10.8905 7.99988L7.69527 11.1951L8.63807 12.1379L12.7761 7.99988ZM9.00953 7.99988L4.87148 3.86182L3.92867 4.80462L7.12393 7.99988L3.92867 11.1951L4.87148 12.1379L9.00953 7.99988Z" fill="#9598B0" />
+                  </svg>
+                </a>
+              </li>
+            </ul>
+          </nav>
         </div>
+
+
+
+      </div>
     </div>
   );
 };

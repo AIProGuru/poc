@@ -10,7 +10,7 @@ const DetailSection = ({ title, children, subtitle, styleName, className, status
   return (
     <>
       {collapse && (
-        <div className={`rounded-lg select-none flex justify-between items-center py-[8px] pl-[12px] ${isDark ? 'bg-[#0f131b] text-gray-200' : 'bg-white text-[#072F40]'}`}>
+        <div className={`rounded-lg select-none flex justify-between items-center py-[8px] pl-[12px] ${isDark ? 'bg-[#27282D] text-gray-200' : 'bg-white text-[#072F40]'}`}>
           <div className='text-[14px] font-inter font-semibold flex gap-4 items-center'>
             <div>{title}</div>
             {subtitle && <div className={`${styleName} min-w-6 text-center`}>{subtitle}</div>}
@@ -26,7 +26,7 @@ const DetailSection = ({ title, children, subtitle, styleName, className, status
       )}
       {!collapse && (
         <div className='rounded-lg'>
-          <div className={`flex justify-between items-center select-none py-[8px] pl-[12px] ${isDark ? 'bg-[#0f131b] text-gray-200' : 'bg-white text-[#072F40]'}`}>
+          <div className={`flex justify-between items-center select-none py-[8px] pl-[12px] ${isDark ? 'bg-[#27282D] text-gray-200' : 'bg-white text-[#072F40]'}`}>
             <div className='text-[14px] font-inter font-semibold flex gap-4 items-center'>
               <div>{title}</div>
               {subtitle && <div className={`${styleName} min-w-6 text-center align-middle`}>{subtitle}</div>}
