@@ -91,7 +91,7 @@ def generate_sql(
         if len(remark_codes) == 1:
             remark_filter = f"CUSTOM_PAID_SERVICE_REMARK.RemarkCode='{remark_codes[0]}'"
         else:
-            safe_codes = [f"'{code.replace(\"'\", \"''\")}'" for code in remark_codes]
+            safe_codes = ["'%s'" % code.replace("'", "''") for code in remark_codes]
             remark_filter = f"CUSTOM_PAID_SERVICE_REMARK.RemarkCode IN ({','.join(safe_codes)})"
         query += f"""
             AND EXISTS (
