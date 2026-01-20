@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 import json
+import re
 from db import get_connection, close_connection
 import logging
 
@@ -82,6 +83,12 @@ def get_artificial_intelligence():
                         extra_data = json.loads(item["extra"])
                     except json.JSONDecodeError:
                         extra_data = {}
+                    query_text = item.get("query") or ""
+                    remark_codes = re.findall(r"RemarkCode='([^']+)'", query_text)
+                    if remark_codes and "remarkCodes" not in extra_data:
+                        extra_data["remarkCodes"] = remark_codes
+                    if "denial_actions" in query_text and "Only" not in extra_data:
+                        extra_data["Only"] = True
 
                     ret.append(
                         {

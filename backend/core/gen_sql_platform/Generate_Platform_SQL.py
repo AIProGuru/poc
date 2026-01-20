@@ -2,6 +2,7 @@ from enum import IntEnum
 from typing import Dict, List, Optional
 from datetime import date
 import os
+import re
 
 class TabIndex(IntEnum):
     MAIN = 0
@@ -86,11 +87,17 @@ def generate_sql(
     if pos != "":
         query += f"and CUSTOM_ALL.PlaceOfService='{pos}' "
     if remark != "":
+        remark_codes = [code.strip() for code in re.split(r"[,*]", remark) if code.strip()]
+        if len(remark_codes) == 1:
+            remark_filter = f"CUSTOM_PAID_SERVICE_REMARK.RemarkCode='{remark_codes[0]}'"
+        else:
+            safe_codes = [f"'{code.replace(\"'\", \"''\")}'" for code in remark_codes]
+            remark_filter = f"CUSTOM_PAID_SERVICE_REMARK.RemarkCode IN ({','.join(safe_codes)})"
         query += f"""
             AND EXISTS (
                 SELECT 1
                 FROM CUSTOM_PAID_SERVICE_REMARK
-                WHERE CUSTOM_PAID_SERVICE_REMARK.RemarkCode='{remark}'
+                WHERE {remark_filter}
                     AND CUSTOM_ALL.id_835=CUSTOM_PAID_SERVICE_REMARK.id_835
                     AND CUSTOM_ALL.ID=CUSTOM_PAID_SERVICE_REMARK.id_837
             )

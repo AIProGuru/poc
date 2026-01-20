@@ -53,14 +53,24 @@ const ArIntel = ({ onModelSelect }) => {
 
   const handleModelClick = (row) => {
     const nonce = Date.now();
+    const groupCode = `${row.GroupCode || ''}`.trim();
+    const reasonCode = `${row.Code || ''}`.trim();
+    const isCarc = groupCode.length === 2 && reasonCode !== '';
+    const adjustmentCode = isCarc ? `${groupCode}${reasonCode}` : '';
+    const remarkCode = isCarc
+      ? (row.Remark || '')
+      : (row.Remark || `${groupCode}${reasonCode}` || '');
+    const remarkCodes = Array.isArray(row?.extra?.remarkCodes)
+      ? row.extra.remarkCodes.filter(Boolean).join('*')
+      : remarkCode;
     const payload = {
-      code: `${row.GroupCode || ''}${row.Code || ''}`,
-      remark: row.Remark || '',
+      code: adjustmentCode,
+      remark: remarkCodes,
       procedure: '',
       keyword: '',
       pos: '',
-      // Use the automation tab to align with model counts.
-      tabIndex: 5,
+      // Use the custom tab to avoid automation-only filtering.
+      tabIndex: 6,
       extra: row.extra || {},
       selectedTags: tags,
       source: 'ai-library',
