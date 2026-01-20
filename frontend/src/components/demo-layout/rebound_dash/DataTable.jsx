@@ -61,6 +61,19 @@ const DataTable = (props) => {
     return Number.isNaN(dateObj.getTime()) ? '' : dateObj.toISOString().substring(0, 10);
   };
   const formatCurrency = (value) => `$${samplifyDouble(Number(value) || 0)}`;
+  const [summaryTotals, setSummaryTotals] = useState(null);
+  const summaryRequestRef = useRef(0);
+  const summary = React.useMemo(() => {
+    const count = tableData.length;
+    const charges = tableData.reduce((sum, row) => sum + (Number(row.Amount) || 0), 0);
+    const allowed = tableData.reduce((sum, row) => sum + (Number(row.AllowedAmt) || 0), 0);
+    const paid = tableData.reduce((sum, row) => sum + (Number(row.PaidAmount || row.PaidAmt || row.Paid) || 0), 0);
+    const variance = tableData.reduce(
+      (sum, row) => sum + ((Number(row.Amount) || 0) - (Number(row.AllowedAmt) || 0)),
+      0
+    );
+    return { count, charges, allowed, paid, variance };
+  }, [tableData]);
   // Mirror the facility value used in the Claim (837) detail view.
   const getFacility = (row) => {
     const claimData =
@@ -146,6 +159,34 @@ const DataTable = (props) => {
       dispatch(setTableLoading(false));
     });
   }, [tableLoading, selectedTags, order, extra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate])
+
+  useEffect(() => {
+    if (apiUrl === '') return;
+    const includeAllCategories = extra?.IncludeAllCategories;
+    if (!includeAllCategories && selectedTags.length === 0) {
+      setSummaryTotals(null);
+      return;
+    }
+    const requestId = ++summaryRequestRef.current;
+    axios.post(`${apiUrl}/data_summary`, {
+      selectedTags,
+      keyword,
+      tabIndex,
+      startDate: startDate ? startDate.toISOString().substr(0, 10) : null,
+      endDate: endDate ? endDate.toISOString().substr(0, 10) : null,
+      code,
+      remark,
+      procedure,
+      pos,
+      extra,
+    }).then((res) => {
+      if (summaryRequestRef.current !== requestId) return;
+      setSummaryTotals(res.data);
+    }).catch(() => {
+      if (summaryRequestRef.current !== requestId) return;
+      setSummaryTotals(null);
+    });
+  }, [apiUrl, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, extra])
 
   const setOrder = (ord) => {
     const ordName = order[order.length - 1] === '-' ? order.substring(0, order.length - 1) : order;
@@ -308,8 +349,31 @@ const DataTable = (props) => {
   const tableMaxHeight = Math.max(320, viewportHeight - (isMobile ? 240 : 360));
 
   return (
-    <div className={`rounded-[32px] border ${isDarkMode ? 'bg-[#27282D] border-[#1F2231] text-white' : 'bg-white border-[#E4E7EF] text-[#0f172a]'} p-6 flex flex-col h-full`}>
-      <div className="relative pb-4 pt-2">
+    <>
+      <div className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? 'bg-[#2f3036] border-[#3b3c43] text-white' : 'bg-white border-gray-200 text-[#0f172a]'}`}>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {[
+            { label: 'Count', value: summaryTotals?.count ?? summary.count },
+            { label: 'Charges', value: formatCurrency(summaryTotals?.charges ?? summary.charges) },
+            { label: 'Exp Reimbursement', value: formatCurrency(summaryTotals?.paid ?? summary.paid) },
+            { label: 'Allowed', value: formatCurrency(summaryTotals?.allowed ?? summary.allowed) },
+            { label: 'Payment Variance', value: formatCurrency(summaryTotals?.variance ?? summary.variance) },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className={`rounded-xl px-4 py-3 text-sm ${isDarkMode ? 'bg-[#3a3b42] text-white shadow-[0_4px_10px_rgba(0,0,0,0.35)]' : 'bg-slate-50 text-slate-900 border border-gray-200'}`}
+            >
+              <p className={`text-xs uppercase tracking-wide ${isDarkMode ? 'text-white/70' : 'text-slate-500'}`}>{item.label}</p>
+              <p className="mt-1 text-lg font-semibold">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={`rounded-[32px] border ${isDarkMode ? 'bg-[#27282D] border-[#1F2231] text-white' : 'bg-white border-[#E4E7EF] text-[#0f172a]'} p-6 flex flex-col h-full`}>
+        <div className={`mb-3 text-sm font-semibold ${isDarkMode ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
+          {appTitle || 'Home'}
+        </div>
+        <div className="relative pb-4 pt-2">
         <button
           className={`p-1 absolute left-0 top-6 -translate-x-1/2 z-10 ${isDarkMode ? 'text-white/70 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
           onClick={() => scrollTable('left')}
@@ -772,7 +836,8 @@ const DataTable = (props) => {
 
 
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

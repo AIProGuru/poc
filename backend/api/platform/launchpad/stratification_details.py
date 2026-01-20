@@ -240,3 +240,75 @@ def get_rebound_data_all():
         close_connection(cursor, conn)
         _end = time.time()
         logger.info(f"/rebound_data_all took {_end - _start:.2f} seconds")
+
+
+@rebound_api_stratification.route("/data_summary", methods=["POST"])
+@medevolve_api_stratification.route("/data_summary", methods=["POST"])
+@pilotcustomer_api_stratification.route("/data_summary", methods=["POST"])
+def get_rebound_data_summary():
+    """
+    This endpoint returns aggregate totals for the current filter set.
+    ---
+    tags:
+      - Platform Data
+    """
+    _start = time.time()
+    conn = None
+    cursor = None
+    try:
+        conn, cursor, db_name = get_connection(request.base_url)
+        tab_index = request.json.get("tabIndex")
+        keyword = request.json.get("keyword")
+        selectedTags = request.json.get("selectedTags") or []
+        startDate = request.json.get("startDate")
+        endDate = request.json.get("endDate")
+        extra = request.json.get("extra", {})
+        code = request.json.get("code", "")
+        remark = request.json.get("remark", "")
+        procedure = request.json.get("procedure", "")
+        pos = request.json.get("pos", "")
+
+        include_all_categories = extra.get("IncludeAllCategories") and tab_index == 0
+        if not include_all_categories and not selectedTags:
+            return jsonify({"count": 0, "charges": 0, "allowed": 0, "paid": 0, "variance": 0}), 200
+
+        summary_sql = f"""select
+            count(ID) AS cnt,
+            COALESCE(sum(CUSTOM_ALL.Amount), 0) AS total_amount,
+            COALESCE(sum(CUSTOM_ALL.AllowedAmt), 0) AS total_allowed,
+            COALESCE(sum(CUSTOM_ALL.PaidAmt), 0) AS total_paid
+            {newGenerateSQL(
+                tab_index,
+                keyword,
+                selectedTags,
+                startDate,
+                endDate,
+                code,
+                remark,
+                procedure,
+                pos,
+                extra,
+                ""
+            )}"""
+        cursor.execute(summary_sql)
+        result = cursor.fetchone() or {}
+        charges = result.get("total_amount") or 0
+        allowed = result.get("total_allowed") or 0
+        paid = result.get("total_paid") or 0
+        variance = charges - allowed
+        return jsonify(
+            {
+                "count": result.get("cnt") or 0,
+                "charges": charges,
+                "allowed": allowed,
+                "paid": paid,
+                "variance": variance,
+            }
+        ), 200
+    except Exception as e:
+        logger.error(f"[ERROR]: {e}")
+        return jsonify({"error": "Internal server Error"}), 500
+    finally:
+        close_connection(cursor, conn)
+        _end = time.time()
+        logger.info(f"/rebound_data_summary took {_end - _start:.2f} seconds")

@@ -917,9 +917,6 @@ const ReboundDash = () => {
             </div> */}
 
             <div className="flex flex-col min-w-0">
-              <div className="mb-4 text-sm font-semibold text-gray-400">
-                {appTitle || 'Home'}
-              </div>
               {showHomeView ? (
                 <HomeScreen isDark={isDark} />
               ) : showDashboardView ? (
