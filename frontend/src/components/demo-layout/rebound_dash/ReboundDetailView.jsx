@@ -356,6 +356,17 @@ const ReboundDetailView = () => {
     return Number.isNaN(numericValue) ? "N/A" : `$${samplifyDouble(numericValue)}`;
   };
 
+  const getClaimSummary = () => {
+    if (!currentClaim?.Claim?.Data) return null;
+    const charges = Number(currentClaim.Claim.Data.Amount) || 0;
+    const allowed = (currentClaim.Remit?.[0]?.ServiceLine || [])
+      .map((rr) => Number(rr.AllowedAmount) || 0)
+      .reduce((sum, val) => sum + val, 0);
+    const paid = Number(currentClaim.Claim.Data.PaidAmount) || 0;
+    const variance = charges - allowed;
+    return { count: 1, charges, allowed, paid, variance };
+  };
+
   const renderTruncated = (value, maxWidth = '180px') => {
     const display = value === undefined || value === null ? 'N/A' : `${value}`;
     return (
@@ -447,7 +458,9 @@ const ReboundDetailView = () => {
       {fields.map((field, index) => (
         <div
           key={`${field.label}-${index}`}
-          className="flex items-start gap-2 text-sm leading-6 min-w-[260px]"
+          className={`flex items-start gap-2 text-sm leading-6 min-w-[260px] ${
+            field.colSpan === 2 ? 'md:col-span-2 xl:col-span-2' : ''
+          }`}
         >
           <span className={`font-semibold whitespace-nowrap ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
             {field.label}:
@@ -518,6 +531,31 @@ const ReboundDetailView = () => {
 
   return (
     <>
+      {(() => {
+        const summary = getClaimSummary();
+        if (!summary) return null;
+        return (
+          <div className={`rounded-2xl border m-4 p-4 ${isDark ? 'bg-[#2f3036] border-[#3b3c43] text-white' : 'bg-white border-gray-200 text-[#0f172a]'}`}>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {[
+                { label: 'Count', value: summary.count },
+                { label: 'Charges', value: formatCurrency(summary.charges) },
+                { label: 'Exp Reimbursement', value: formatCurrency(summary.paid) },
+                { label: 'Allowed', value: formatCurrency(summary.allowed) },
+                { label: 'Payment Variance', value: formatCurrency(summary.variance) },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className={`rounded-xl px-4 py-3 text-sm ${isDark ? 'bg-[#3a3b42] text-white shadow-[0_4px_10px_rgba(0,0,0,0.35)]' : 'bg-slate-50 text-slate-900 border border-gray-200'}`}
+                >
+                  <p className={`text-xs uppercase tracking-wide ${isDark ? 'text-white/70' : 'text-slate-500'}`}>{item.label}</p>
+                  <p className="mt-1 text-lg font-semibold">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
       {currentClaim && (
         <div
           className={`flex flex-col gap-4 p-4 rounded-lg border m-4 ${isDark
@@ -672,6 +710,7 @@ const ReboundDetailView = () => {
                     { label: "Patient Name", value: formatValue(currentClaim?.Claim?.Data?.PatientName || currentClaim?.Claim?.Data?.Patient) },
                     { label: "Patient DOB", value: formatDateValue(currentClaim?.Claim?.Data?.PatientDOB) },
                     { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.Facility || currentClaim?.Claim?.Data?.BillProvName) },
+                    { label: "Facility Taxonomy", value: formatValue(currentClaim?.Claim?.Data?.BillTaxonomy || currentClaim?.Claim?.Data?.FacilityTaxonomy || currentClaim?.Claim?.Data?.RendTaxonomy) },
                     { label: "Payer", value: formatValue(currentClaim?.Claim?.Data?.PayerName) },
                     { label: "Patient ID", value: formatValue(currentClaim?.Claim?.Data?.PatientID) },
                     { label: "Service Type", value: formatValue(currentClaim?.Claim?.Data?.ServiceType) },
@@ -726,10 +765,11 @@ const ReboundDetailView = () => {
                 <InfoGrid
                   fields={[
                     { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.Facility || currentClaim?.Claim?.Data?.BillProvName) },
-                    { label: "Facility Address", value: formatValue(currentClaim?.Claim?.Data?.BillProvAddress || currentClaim?.Claim?.Data?.BIllProvAddress) },
+                    { label: "Facility Address", value: formatValue(currentClaim?.Claim?.Data?.BillProvAddress || currentClaim?.Claim?.Data?.BIllProvAddress), colSpan: 2 },
                     { label: "Billing Provider NPI", value: formatValue(currentClaim?.Claim?.Data?.ProvNPI) },
                     { label: "Receiving Provider Tax ID", value: formatValue(currentClaim?.Claim?.Data?.ProvTaxID) },
                     { label: "Referring Provider", value: formatValue(currentClaim?.Claim?.Data?.ReferringProvider) },
+                    { label: "Taxonomy Code", value: formatValue(currentClaim?.Claim?.Data?.ReferringProviderTaxonomy || currentClaim?.Claim?.Data?.RendTaxonomy || currentClaim?.Claim?.Data?.BillTaxonomy) },
                     { label: "Referring Provider NPI", value: formatValue(currentClaim?.Claim?.Data?.ReferringProviderNPI) },
                     { label: "Referring Provider Tax ID", value: formatValue(currentClaim?.Claim?.Data?.ReferringProviderTaxID) },
                   ]}
