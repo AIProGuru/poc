@@ -676,10 +676,12 @@ const ReboundDetailView = () => {
               <ul className="mt-3 space-y-2 text-sm">
                 {((currentClaim?.Remit?.[0]?.ServiceLine || [])
                   .flatMap((line) => (line.Codes || []).map((code) => {
+                    const groupCode = `${code.AdjustmentGroup || ''}`.trim();
                     const reasonCode = `${code.AdjustmentReason || ''}`.trim();
                     const description = `${code.Description || ''}`.trim();
-                    if (!reasonCode && !description) return '';
-                    return description ? `${reasonCode} - ${description}`.trim() : reasonCode;
+                    if (!groupCode && !reasonCode && !description) return '';
+                    const prefix = groupCode ? `${groupCode} ${reasonCode}`.trim() : reasonCode;
+                    return description ? `${prefix} - ${description}`.trim() : prefix;
                   }))
                   .filter(Boolean)
                   .slice(0, 6)).map((reason, idx) => (
@@ -689,10 +691,12 @@ const ReboundDetailView = () => {
                   ))}
                 {((currentClaim?.Remit?.[0]?.ServiceLine || [])
                   .flatMap((line) => (line.Codes || []).map((code) => {
+                    const groupCode = `${code.AdjustmentGroup || ''}`.trim();
                     const reasonCode = `${code.AdjustmentReason || ''}`.trim();
                     const description = `${code.Description || ''}`.trim();
-                    if (!reasonCode && !description) return '';
-                    return description ? `${reasonCode} - ${description}`.trim() : reasonCode;
+                    if (!groupCode && !reasonCode && !description) return '';
+                    const prefix = groupCode ? `${groupCode} ${reasonCode}`.trim() : reasonCode;
+                    return description ? `${prefix} - ${description}`.trim() : prefix;
                   }))
                   .filter(Boolean)
                   .length === 0) && (
