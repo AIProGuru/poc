@@ -680,6 +680,7 @@ const ReboundDetailView = () => {
                     const reasonCode = `${code.AdjustmentReason || ''}`.trim();
                     const description = `${code.Description || ''}`.trim();
                     if (!groupCode && !reasonCode && !description) return '';
+                    if (groupCode === 'CO' && reasonCode === '45') return '';
                     const prefix = groupCode ? `${groupCode} ${reasonCode}`.trim() : reasonCode;
                     return description ? `${prefix} - ${description}`.trim() : prefix;
                   }))
@@ -695,6 +696,7 @@ const ReboundDetailView = () => {
                     const reasonCode = `${code.AdjustmentReason || ''}`.trim();
                     const description = `${code.Description || ''}`.trim();
                     if (!groupCode && !reasonCode && !description) return '';
+                    if (groupCode === 'CO' && reasonCode === '45') return '';
                     const prefix = groupCode ? `${groupCode} ${reasonCode}`.trim() : reasonCode;
                     return description ? `${prefix} - ${description}`.trim() : prefix;
                   }))
@@ -711,6 +713,7 @@ const ReboundDetailView = () => {
               <SectionCard title="Claim Details" showBorder={false}>
                 <InfoGrid
                   fields={[
+                    { label: "Claim No", value: formatValue(currentClaim?.Claim?.Data?.ClaimNo) },
                     { label: "Patient Name", value: formatValue(currentClaim?.Claim?.Data?.PatientName || currentClaim?.Claim?.Data?.Patient) },
                     { label: "Patient DOB", value: formatDateValue(currentClaim?.Claim?.Data?.PatientDOB) },
                     { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.Facility || currentClaim?.Claim?.Data?.BillProvName) },
@@ -961,10 +964,11 @@ const ReboundDetailView = () => {
                           </SectionCard>
 
                           <SectionCard title="Claim Information" showBorder={false}>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-6 text-sm">
-                              {[
-                                { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.BillProvName || currentClaim?.Claim?.Data?.ProviderName) },
-                                { label: "Tax ID", value: formatValue(currentClaim?.Claim?.Data?.ProvTaxID) },
+                              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-6 text-sm">
+                                {[
+                                  { label: "Claim No", value: formatValue(row.ClaimID || row.PayerClaimNumber || currentClaim?.Claim?.Data?.ClaimNo) },
+                                  { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.BillProvName || currentClaim?.Claim?.Data?.ProviderName) },
+                                  { label: "Tax ID", value: formatValue(currentClaim?.Claim?.Data?.ProvTaxID) },
                                 { label: "NPI", value: formatValue(currentClaim?.Claim?.Data?.ProvNPI || row.NPI) },
                                 { label: "Date of Service", value: formatDateValue(currentClaim?.Claim?.Data?.ServiceDate) },
                                 { label: "Patient Control #", value: formatValue(currentClaim?.Claim?.Data?.PatientControl || currentClaim?.Claim?.Data?.ControlNumber) },
