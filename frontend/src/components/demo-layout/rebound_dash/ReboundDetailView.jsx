@@ -362,9 +362,9 @@ const ReboundDetailView = () => {
     const allowed = (currentClaim.Remit?.[0]?.ServiceLine || [])
       .map((rr) => Number(rr.AllowedAmount) || 0)
       .reduce((sum, val) => sum + val, 0);
-    const paid = Number(currentClaim.Claim.Data.PaidAmount) || 0;
-    const variance = charges - allowed;
-    return { count: 1, charges, allowed, paid, variance };
+    const payerPayments = Number(currentClaim.Claim.Data.PaidAmount) || 0;
+    const patientResp = Number(currentClaim.Claim.Data.PatientResp) || 0;
+    return { count: 1, charges, allowed, payerPayments, patientResp, balance: 0 };
   };
 
   const renderTruncated = (value, maxWidth = '180px') => {
@@ -535,18 +535,23 @@ const ReboundDetailView = () => {
         const summary = getClaimSummary();
         if (!summary) return null;
         return (
-          <div className={`rounded-2xl border m-4 p-4 ${isDark ? 'bg-[#2f3036] border-[#3b3c43] text-white' : 'bg-white border-gray-200 text-[#0f172a]'}`}>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div
+            className={`rounded-2xl border m-4 p-4 ${isDark ? 'border-transparent text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]' : 'bg-white border-gray-200 text-[#0f172a]'}`}
+            style={isDark ? { background: 'linear-gradient(90deg, #4B9187 0%, #6911AC 100%)' } : undefined}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
               {[
                 { label: 'Count', value: summary.count },
                 { label: 'Charges', value: formatCurrency(summary.charges) },
-                { label: 'Exp Reimbursement', value: formatCurrency(summary.paid) },
-                { label: 'Allowed', value: formatCurrency(summary.allowed) },
-                { label: 'Payment Variance', value: formatCurrency(summary.variance) },
+                { label: 'Exp Reimbursement', value: formatCurrency(0) },
+                { label: 'Allowed Amt', value: formatCurrency(summary.allowed) },
+                { label: 'Payer Payments', value: formatCurrency(summary.payerPayments) },
+                { label: 'Patient Resp', value: formatCurrency(summary.patientResp) },
+                { label: 'Balance', value: formatCurrency(0) },
               ].map((item) => (
                 <div
                   key={item.label}
-                  className={`rounded-xl px-4 py-3 text-sm ${isDark ? 'bg-[#3a3b42] text-white shadow-[0_4px_10px_rgba(0,0,0,0.35)]' : 'bg-slate-50 text-slate-900 border border-gray-200'}`}
+                  className={`rounded-xl px-4 py-3 text-sm ${isDark ? 'bg-black/15 text-white border border-white/20 shadow-[0_4px_4px_rgba(0,0,0,0.25)]' : 'bg-slate-50 text-slate-900 border border-gray-200'}`}
                 >
                   <p className={`text-xs uppercase tracking-wide ${isDark ? 'text-white/70' : 'text-slate-500'}`}>{item.label}</p>
                   <p className="mt-1 text-lg font-semibold">{item.value}</p>
