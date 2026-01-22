@@ -355,6 +355,7 @@ const ReboundDetailView = () => {
     const numericValue = Number(value);
     return Number.isNaN(numericValue) ? "N/A" : `$${samplifyDouble(numericValue)}`;
   };
+  const formatSummaryCurrency = (value) => `$${samplifyInteger(Number(value) || 0)}`;
 
   const getClaimSummary = () => {
     if (!currentClaim?.Claim?.Data) return null;
@@ -542,12 +543,12 @@ const ReboundDetailView = () => {
             <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
               {[
                 { label: 'Count', value: summary.count },
-                { label: 'Charges', value: formatCurrency(summary.charges) },
-                { label: 'Exp Reimbursement', value: formatCurrency(0) },
-                { label: 'Allowed Amt', value: formatCurrency(summary.allowed) },
-                { label: 'Payer Payments', value: formatCurrency(summary.payerPayments) },
-                { label: 'Patient Resp', value: formatCurrency(summary.patientResp) },
-                { label: 'Balance', value: formatCurrency(0) },
+                { label: 'Charges', value: formatSummaryCurrency(summary.charges) },
+                { label: 'Exp Reimbursement', value: formatSummaryCurrency(0) },
+                { label: 'Allowed Amt', value: formatSummaryCurrency(summary.allowed) },
+                { label: 'Payer Payments', value: formatSummaryCurrency(summary.payerPayments) },
+                { label: 'Patient Resp', value: formatSummaryCurrency(summary.patientResp) },
+                { label: 'Balance', value: formatSummaryCurrency(0) },
               ].map((item) => (
                 <div
                   key={item.label}
