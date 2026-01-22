@@ -14,7 +14,7 @@ import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
-import { samplifyDouble, samplifyString } from "../../../utils/config";
+import { samplifyDouble, samplifyInteger, samplifyString } from "../../../utils/config";
 
 import DataTableFilter from "./DataTableFilter";
 import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, setPart1Loading, setPart2Loading, setTableLoading, setExtraFilter } from "../../../redux/reducers/app.reducer";
@@ -60,19 +60,16 @@ const DataTable = (props) => {
     const dateObj = new Date(value);
     return Number.isNaN(dateObj.getTime()) ? '' : dateObj.toISOString().substring(0, 10);
   };
-  const formatCurrency = (value) => `$${samplifyDouble(Number(value) || 0)}`;
+  const formatCurrency = (value) => `$${samplifyInteger(Number(value) || 0)}`;
   const [summaryTotals, setSummaryTotals] = useState(null);
   const summaryRequestRef = useRef(0);
   const summary = React.useMemo(() => {
     const count = tableData.length;
     const charges = tableData.reduce((sum, row) => sum + (Number(row.Amount) || 0), 0);
     const allowed = tableData.reduce((sum, row) => sum + (Number(row.AllowedAmt) || 0), 0);
-    const paid = tableData.reduce((sum, row) => sum + (Number(row.PaidAmount || row.PaidAmt || row.Paid) || 0), 0);
-    const variance = tableData.reduce(
-      (sum, row) => sum + ((Number(row.Amount) || 0) - (Number(row.AllowedAmt) || 0)),
-      0
-    );
-    return { count, charges, allowed, paid, variance };
+    const payerPayments = tableData.reduce((sum, row) => sum + (Number(row.PaidAmount || row.PaidAmt || row.Paid) || 0), 0);
+    const patientResp = tableData.reduce((sum, row) => sum + (Number(row.PatientResp || row.PatientResponsibility) || 0), 0);
+    return { count, charges, allowed, payerPayments, patientResp, balance: 0 };
   }, [tableData]);
   // Mirror the facility value used in the Claim (837) detail view.
   const getFacility = (row) => {
@@ -350,18 +347,23 @@ const DataTable = (props) => {
 
   return (
     <>
-      <div className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? 'bg-[#2f3036] border-[#3b3c43] text-white' : 'bg-white border-gray-200 text-[#0f172a]'}`}>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div
+        className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? 'border-transparent text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]' : 'bg-white border-gray-200 text-[#0f172a]'}`}
+        style={isDarkMode ? { background: 'linear-gradient(90deg, #4B9187 0%, #6911AC 100%)' } : undefined}
+      >
+        <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           {[
             { label: 'Count', value: summaryTotals?.count ?? summary.count },
             { label: 'Charges', value: formatCurrency(summaryTotals?.charges ?? summary.charges) },
-            { label: 'Exp Reimbursement', value: formatCurrency(summaryTotals?.paid ?? summary.paid) },
-            { label: 'Allowed', value: formatCurrency(summaryTotals?.allowed ?? summary.allowed) },
-            { label: 'Payment Variance', value: formatCurrency(summaryTotals?.variance ?? summary.variance) },
+            { label: 'Exp Reimbursement', value: formatCurrency(0) },
+            { label: 'Allowed Amt', value: formatCurrency(summaryTotals?.allowed ?? summary.allowed) },
+            { label: 'Payer Payments', value: formatCurrency(summaryTotals?.payerPayments ?? summary.payerPayments) },
+            { label: 'Patient Resp', value: formatCurrency(summaryTotals?.patientResp ?? summary.patientResp) },
+            { label: 'Balance', value: formatCurrency(0) },
           ].map((item) => (
             <div
               key={item.label}
-              className={`rounded-xl px-4 py-3 text-sm ${isDarkMode ? 'bg-[#3a3b42] text-white shadow-[0_4px_10px_rgba(0,0,0,0.35)]' : 'bg-slate-50 text-slate-900 border border-gray-200'}`}
+              className={`rounded-xl px-4 py-3 text-sm ${isDarkMode ? 'bg-black/15 text-white border border-white/20 shadow-[0_4px_4px_rgba(0,0,0,0.25)]' : 'bg-slate-50 text-slate-900 border border-gray-200'}`}
             >
               <p className={`text-xs uppercase tracking-wide ${isDarkMode ? 'text-white/70' : 'text-slate-500'}`}>{item.label}</p>
               <p className="mt-1 text-lg font-semibold">{item.value}</p>

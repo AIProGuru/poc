@@ -276,7 +276,8 @@ def get_rebound_data_summary():
             count(ID) AS cnt,
             COALESCE(sum(CUSTOM_ALL.Amount), 0) AS total_amount,
             COALESCE(sum(CUSTOM_ALL.AllowedAmt), 0) AS total_allowed,
-            COALESCE(sum(CUSTOM_ALL.PaidAmt), 0) AS total_paid
+            COALESCE(sum(CUSTOM_ALL.PaidAmt), 0) AS total_payer_paid,
+            COALESCE(sum(CUSTOM_ALL.PatientResp), 0) AS total_patient_resp
             {newGenerateSQL(
                 tab_index,
                 keyword,
@@ -294,15 +295,17 @@ def get_rebound_data_summary():
         result = cursor.fetchone() or {}
         charges = result.get("total_amount") or 0
         allowed = result.get("total_allowed") or 0
-        paid = result.get("total_paid") or 0
-        variance = charges - allowed
+        payer_paid = result.get("total_payer_paid") or 0
+        patient_resp = result.get("total_patient_resp") or 0
+        balance = charges - allowed
         return jsonify(
             {
                 "count": result.get("cnt") or 0,
                 "charges": charges,
                 "allowed": allowed,
-                "paid": paid,
-                "variance": variance,
+                "payerPayments": payer_paid,
+                "patientResp": patient_resp,
+                "balance": balance,
             }
         ), 200
     except Exception as e:
