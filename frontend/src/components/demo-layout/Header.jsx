@@ -60,7 +60,7 @@ const Header = () => {
   };
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "light";
+    const savedTheme = localStorage.getItem("theme") || "dark";
     dispatch(setTheme(savedTheme));
     document.body.classList.toggle("dark-mode", savedTheme === "dark");
   }, [dispatch]);
