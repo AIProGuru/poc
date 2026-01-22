@@ -164,7 +164,6 @@ const Sidebar = () => {
   const navTabIndexMap = useMemo(
     () => ({
       home: 0,
-      "claim-status": 0,
       "claim-status:pend-277": 6,
       "claim-status:pend-835": 6,
       "claim-status": 6,
