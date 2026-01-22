@@ -268,34 +268,43 @@ def get_rebound_data_summary():
         procedure = request.json.get("procedure", "")
         pos = request.json.get("pos", "")
 
+        patient_resp_join = """
+            LEFT JOIN (
+                SELECT
+                    matching_for_table.ClaimNo AS ClaimNo,
+                    COALESCE(SUM(CUSTOM_PAID_AMOUNT.PatientResp), 0) AS patient_resp
+                FROM matching_for_table
+                LEFT JOIN CUSTOM_PAID_AMOUNT
+                    ON CUSTOM_PAID_AMOUNT.ID=matching_for_table.id_835
+                GROUP BY matching_for_table.ClaimNo
+            ) AS patient_resp_by_claim
+                ON patient_resp_by_claim.ClaimNo=CUSTOM_ALL.ClaimNo
+        """.strip()
+        base_sql = newGenerateSQL(
+            tab_index,
+            keyword,
+            selectedTags,
+            startDate,
+            endDate,
+            code,
+            remark,
+            procedure,
+            pos,
+            extra,
+            ""
+        )
+        base_sql = base_sql.replace(
+            "from CUSTOM_ALL",
+            f"from CUSTOM_ALL {patient_resp_join}",
+            1
+        )
         summary_sql = f"""select
             count(ID) AS cnt,
             COALESCE(sum(CUSTOM_ALL.Amount), 0) AS total_amount,
             COALESCE(sum(CUSTOM_ALL.AllowedAmt), 0) AS total_allowed,
             COALESCE(sum(CUSTOM_ALL.PaidAmt), 0) AS total_payer_paid,
-            COALESCE(
-                sum((
-                    SELECT COALESCE(sum(CUSTOM_PAID_AMOUNT.PatientResp), 0)
-                    FROM matching_for_table
-                    LEFT JOIN CUSTOM_PAID_AMOUNT
-                        ON CUSTOM_PAID_AMOUNT.ID=matching_for_table.id_835
-                    WHERE matching_for_table.ClaimNo=CUSTOM_ALL.ClaimNo
-                )),
-                0
-            ) AS total_patient_resp
-            {newGenerateSQL(
-                tab_index,
-                keyword,
-                selectedTags,
-                startDate,
-                endDate,
-                code,
-                remark,
-                procedure,
-                pos,
-                extra,
-                ""
-            )}"""
+            COALESCE(sum(patient_resp_by_claim.patient_resp), 0) AS total_patient_resp
+            {base_sql}"""
         cursor.execute(summary_sql)
         result = cursor.fetchone() or {}
         charges = result.get("total_amount") or 0
