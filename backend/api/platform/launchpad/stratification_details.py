@@ -273,7 +273,16 @@ def get_rebound_data_summary():
             COALESCE(sum(CUSTOM_ALL.Amount), 0) AS total_amount,
             COALESCE(sum(CUSTOM_ALL.AllowedAmt), 0) AS total_allowed,
             COALESCE(sum(CUSTOM_ALL.PaidAmt), 0) AS total_payer_paid,
-            COALESCE(sum(CUSTOM_ALL.PatientResp), 0) AS total_patient_resp
+            COALESCE(
+                sum((
+                    SELECT COALESCE(sum(CUSTOM_PAID_AMOUNT.PatientResp), 0)
+                    FROM matching_for_table
+                    LEFT JOIN CUSTOM_PAID_AMOUNT
+                        ON CUSTOM_PAID_AMOUNT.ID=matching_for_table.id_835
+                    WHERE matching_for_table.ClaimNo=CUSTOM_ALL.ClaimNo
+                )),
+                0
+            ) AS total_patient_resp
             {newGenerateSQL(
                 tab_index,
                 keyword,

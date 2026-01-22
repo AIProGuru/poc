@@ -161,6 +161,40 @@ const Sidebar = () => {
     }),
     []
   );
+  const navTabIndexMap = useMemo(
+    () => ({
+      home: 0,
+      "claim-status": 0,
+      "claim-status:pend-277": 6,
+      "claim-status:pend-835": 6,
+      "claim-status": 6,
+      denials: 0,
+      "denials:authorization": 0,
+      "denials:billing": 0,
+      "denials:cob": 0,
+      "denials:documentation": 0,
+      "denials:duplicate": 0,
+      "denials:eligibility": 0,
+      "denials:loc": 0,
+      "denials:medical-coding": 0,
+      "denials:medical-necessity": 0,
+      "denials:non-covered": 0,
+      "denials:other": 0,
+      "denials:provider": 0,
+      "denials:timely-filing": 0,
+      "patient-responsibility": 2,
+      "patient-responsibility:bal-due": 2,
+      "payment-posting": 1,
+      "payment-posting:contractual-adj": 1,
+      "payment-posting:payment": 1,
+      "payment-posting:writeoff": 1,
+      "payment-posting:refund": 1,
+      "payment-variance": 0,
+      "payment-variance:payer-overpaid": 0,
+      "payment-variance:payer-underpaid": 0,
+    }),
+    []
+  );
 
   const navTagFilters = useMemo(
     () => ({
@@ -427,6 +461,8 @@ const Sidebar = () => {
       const isAiLibrary = navId === "ai-library";
       let extra = navExtraFilters[navId] || navExtraFilters[fallbackTab] || {};
       let tagOverride = navTagFilters[navId];
+      const resolvedTabIndex =
+        navTabIndexMap[navId] ?? navTabIndexMap[fallbackTab] ?? 0;
 
       if (navId === "home") {
         extra = { IncludeAllCategories: true };
@@ -434,20 +470,20 @@ const Sidebar = () => {
       }
 
       dispatch(setExtraFilter(extra));
+      if (!isAiLibrary) {
+        dispatch(setTabIndex(resolvedTabIndex));
+      }
 
       if (tagOverride && tagOverride.length > 0) {
         dispatch(setSelectedTags(tagOverride));
-        dispatch(setTabIndex(6));
       } else if (navId === "ai-library") {
         // Keep denial categories visible when browsing AI Library
         dispatch(setSelectedTags(tags));
-        dispatch(setTabIndex(6));
       } else if (navId === "denials") {
         const defaultTags = tags.filter(
           (tag) => tag && tag !== "Contractual Adj" && tag !== "Patient Resp"
         );
         dispatch(setSelectedTags(defaultTags));
-        dispatch(setTabIndex(6));
       } else {
         dispatch(setSelectedTags([]));
       }
