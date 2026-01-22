@@ -268,10 +268,6 @@ def get_rebound_data_summary():
         procedure = request.json.get("procedure", "")
         pos = request.json.get("pos", "")
 
-        include_all_categories = extra.get("IncludeAllCategories") and tab_index == 0
-        if not include_all_categories and not selectedTags:
-            return jsonify({"count": 0, "charges": 0, "allowed": 0, "paid": 0, "variance": 0}), 200
-
         summary_sql = f"""select
             count(ID) AS cnt,
             COALESCE(sum(CUSTOM_ALL.Amount), 0) AS total_amount,

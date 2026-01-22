@@ -61,7 +61,14 @@ const DataTable = (props) => {
     return Number.isNaN(dateObj.getTime()) ? '' : dateObj.toISOString().substring(0, 10);
   };
   const formatCurrency = (value) => `$${samplifyInteger(Number(value) || 0)}`;
-  const [summaryTotals, setSummaryTotals] = useState(null);
+  const [summaryTotals, setSummaryTotals] = useState({
+    count: 0,
+    charges: 0,
+    allowed: 0,
+    payerPayments: 0,
+    patientResp: 0,
+    balance: 0,
+  });
   const summaryRequestRef = useRef(0);
   const summary = React.useMemo(() => {
     const count = tableData.length;
@@ -161,7 +168,14 @@ const DataTable = (props) => {
     if (apiUrl === '') return;
     const includeAllCategories = extra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) {
-      setSummaryTotals(null);
+      setSummaryTotals({
+        count: 0,
+        charges: 0,
+        allowed: 0,
+        payerPayments: 0,
+        patientResp: 0,
+        balance: 0,
+      });
       return;
     }
     const requestId = ++summaryRequestRef.current;
@@ -178,10 +192,24 @@ const DataTable = (props) => {
       extra,
     }).then((res) => {
       if (summaryRequestRef.current !== requestId) return;
-      setSummaryTotals(res.data);
+      setSummaryTotals({
+        count: res.data?.count ?? 0,
+        charges: res.data?.charges ?? 0,
+        allowed: res.data?.allowed ?? 0,
+        payerPayments: res.data?.payerPayments ?? 0,
+        patientResp: res.data?.patientResp ?? 0,
+        balance: res.data?.balance ?? 0,
+      });
     }).catch(() => {
       if (summaryRequestRef.current !== requestId) return;
-      setSummaryTotals(null);
+      setSummaryTotals({
+        count: 0,
+        charges: 0,
+        allowed: 0,
+        payerPayments: 0,
+        patientResp: 0,
+        balance: 0,
+      });
     });
   }, [apiUrl, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, extra])
 
@@ -353,12 +381,12 @@ const DataTable = (props) => {
       >
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           {[
-            { label: 'Count', value: summaryTotals?.count ?? summary.count },
-            { label: 'Charges', value: formatCurrency(summaryTotals?.charges ?? summary.charges) },
+            { label: 'Count', value: summaryTotals.count },
+            { label: 'Charges', value: formatCurrency(summaryTotals.charges) },
             { label: 'Exp Reimbursement', value: formatCurrency(0) },
-            { label: 'Allowed Amt', value: formatCurrency(summaryTotals?.allowed ?? summary.allowed) },
-            { label: 'Payer Payments', value: formatCurrency(summaryTotals?.payerPayments ?? summary.payerPayments) },
-            { label: 'Patient Resp', value: formatCurrency(summaryTotals?.patientResp ?? summary.patientResp) },
+            { label: 'Allowed Amt', value: formatCurrency(summaryTotals.allowed) },
+            { label: 'Payer Payments', value: formatCurrency(summaryTotals.payerPayments) },
+            { label: 'Patient Resp', value: formatCurrency(summaryTotals.patientResp) },
             { label: 'Balance', value: formatCurrency(0) },
           ].map((item) => (
             <div
