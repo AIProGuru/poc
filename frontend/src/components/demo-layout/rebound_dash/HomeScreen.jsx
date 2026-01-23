@@ -8,7 +8,7 @@ const HomeScreen = ({ isDark }) => (
         : "bg-white border-gray-200 text-gray-700"
     }`}
   >
-    Home Screenn
+    Home Screen
   </div>
 );
 
