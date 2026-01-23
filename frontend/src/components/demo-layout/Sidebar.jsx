@@ -503,6 +503,23 @@ const Sidebar = () => {
       "patient-responsibility": 2,
       "patient-responsibility:bal-due": 2,
       "payment-posting:contractual-adj": 1,
+      denials: 0,
+      "denials:authorization": 0,
+      "denials:billing": 0,
+      "denials:cob": 0,
+      "denials:documentation": 0,
+      "denials:duplicate": 0,
+      "denials:eligibility": 0,
+      "denials:loc": 0,
+      "denials:medical-coding": 0,
+      "denials:medical-necessity": 0,
+      "denials:non-covered": 0,
+      "denials:other": 0,
+      "denials:provider": 0,
+      "denials:timely-filing": 0,
+      "claim-status": 6,
+      "claim-status:pend-277": 6,
+      "claim-status:pend-835": 6,
     };
     const requests = [];
     const addRequest = (navId, parentTab, allowEmptyTags = false) => {
