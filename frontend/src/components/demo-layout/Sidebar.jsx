@@ -505,19 +505,20 @@ const Sidebar = () => {
       "payment-posting:contractual-adj": 1,
     };
     const requests = [];
-    const addRequest = (navId, parentTab) => {
+    const addRequest = (navId, parentTab, allowEmptyTags = false) => {
       const tagOverride = navTagFilters[navId];
-      if (!tagOverride || tagOverride.length === 0) return;
+      if ((!tagOverride || tagOverride.length === 0) && !allowEmptyTags) return;
       const tabIndex =
         tabOverrideMap[navId] ??
         (typeof parentTab === "number" ? parentTab : 6);
       const extra = navExtraFilters[navId] || {};
+      const selectedTags = tagOverride || [];
       requests.push(
         axios
           .post(`${apiUrl}/part1_all`, {
             tabIndex,
             keyword: "",
-            selectedTags: tagOverride,
+            selectedTags,
             startDate: null,
             endDate: null,
             code: "",
@@ -536,11 +537,15 @@ const Sidebar = () => {
 
     navItems.forEach((item) => {
       const parentTab = item.tab;
-      if (navTagFilters[item.id]) {
-        addRequest(item.id, parentTab);
+      const hasIncludeAll = navExtraFilters[item.id]?.IncludeAllCategories;
+      if (navTagFilters[item.id] || hasIncludeAll) {
+        addRequest(item.id, parentTab, hasIncludeAll);
       }
       if (Array.isArray(item.children)) {
-        item.children.forEach((child) => addRequest(child.id, parentTab));
+        item.children.forEach((child) => {
+          const childIncludeAll = navExtraFilters[child.id]?.IncludeAllCategories;
+          addRequest(child.id, parentTab, childIncludeAll);
+        });
       }
     });
 
@@ -688,10 +693,10 @@ const Sidebar = () => {
             : 0;
           const parentBadge = navBadges[item.id];
           const computedBadge =
-            typeof parentBadge === "number" && parentBadge > 0
-              ? parentBadge
-              : childSum > 0
-                ? childSum
+            hasChildren && childSum > 0
+              ? childSum
+              : typeof parentBadge === "number" && parentBadge > 0
+                ? parentBadge
                 : item.badge;
           const navStateClass = isActive
             ? isDark

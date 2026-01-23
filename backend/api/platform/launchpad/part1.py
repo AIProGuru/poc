@@ -122,8 +122,9 @@ def get_rebound_data_part1_all():
         pos = request.json.get("pos", "")
         extra = request.json.get("extra", {})
         
-        # If no tags are selected, return an empty response
-        if not selectedTags:
+        include_all_categories = extra.get("IncludeAllCategories") and tab_index == 0
+        # If no tags are selected and we're not in an "all categories" view, return empty.
+        if not include_all_categories and not selectedTags:
             return jsonify({"Count": 0, "Charge": 0, "DeniedAmt": 0, "Days": 0}), 200
         
         # Generate SQL query
