@@ -433,11 +433,17 @@ const Sidebar = () => {
         tagOverride = [];
       }
 
+      const tabOverrideMap = {
+        "patient-responsibility": 2,
+        "patient-responsibility:bal-due": 2,
+        "payment-posting:contractual-adj": 1,
+      };
+
       dispatch(setExtraFilter(extra));
 
       if (tagOverride && tagOverride.length > 0) {
         dispatch(setSelectedTags(tagOverride));
-        dispatch(setTabIndex(6));
+        dispatch(setTabIndex(tabOverrideMap[navId] ?? 6));
       } else if (navId === "ai-library") {
         // Keep denial categories visible when browsing AI Library
         dispatch(setSelectedTags(tags));
@@ -517,6 +523,18 @@ const Sidebar = () => {
         .forEach(({ navId, count }) => {
           next[navId] = Number(count) || 0;
         });
+      const paymentPostingChildren = [
+        "payment-posting:contractual-adj",
+        "payment-posting:payment",
+        "payment-posting:writeoff",
+        "payment-posting:refund",
+      ];
+      if (paymentPostingChildren.some((id) => Object.prototype.hasOwnProperty.call(next, id))) {
+        next["payment-posting"] = paymentPostingChildren.reduce(
+          (total, id) => total + (next[id] || 0),
+          0
+        );
+      }
       setNavBadges(next);
     });
   }, [apiUrl, tags, navItems, navExtraFilters, navTagFilters]);

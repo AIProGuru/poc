@@ -356,6 +356,12 @@ const ReboundDetailView = () => {
     return Number.isNaN(numericValue) ? "N/A" : `$${samplifyDouble(numericValue)}`;
   };
 
+  const shouldExcludeAdjustment = (groupCode, reasonCode) => {
+    const normalizedGroup = `${groupCode || ""}`.trim().toUpperCase();
+    const normalizedReason = `${reasonCode || ""}`.trim().replace(/^0+/, "");
+    return normalizedGroup === "CO" && normalizedReason === "45";
+  };
+
   const getClaimSummary = () => {
     if (!currentClaim?.Claim?.Data) return null;
     const charges = Number(currentClaim.Claim.Data.Amount) || 0;
@@ -535,7 +541,10 @@ const ReboundDetailView = () => {
         const summary = getClaimSummary();
         if (!summary) return null;
         return (
-          <div className={`rounded-2xl border m-4 p-4 ${isDark ? 'bg-[#2f3036] border-[#3b3c43] text-white' : 'bg-white border-gray-200 text-[#0f172a]'}`}>
+          <div
+            className={`rounded-2xl border m-4 p-4 ${isDark ? 'border-transparent text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]' : 'bg-white border-gray-200 text-[#0f172a]'}`}
+            style={isDark ? { background: 'linear-gradient(90deg, #4B9187 0%, #6911AC 100%)' } : undefined}
+          >
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {[
                 { label: 'Count', value: summary.count },
@@ -546,7 +555,7 @@ const ReboundDetailView = () => {
               ].map((item) => (
                 <div
                   key={item.label}
-                  className={`rounded-xl px-4 py-3 text-sm ${isDark ? 'bg-[#3a3b42] text-white shadow-[0_4px_10px_rgba(0,0,0,0.35)]' : 'bg-slate-50 text-slate-900 border border-gray-200'}`}
+                  className={`rounded-xl px-4 py-3 text-sm ${isDark ? 'bg-black/15 text-white border border-white/20 shadow-[0_4px_4px_rgba(0,0,0,0.25)]' : 'bg-slate-50 text-slate-900 border border-gray-200'}`}
                 >
                   <p className={`text-xs uppercase tracking-wide ${isDark ? 'text-white/70' : 'text-slate-500'}`}>{item.label}</p>
                   <p className="mt-1 text-lg font-semibold">{item.value}</p>
@@ -674,36 +683,31 @@ const ReboundDetailView = () => {
                 This was <span className="text-[#FF5C5C] font-semibold">DENIED</span> for:
               </p>
               <ul className="mt-3 space-y-2 text-sm">
-                {((currentClaim?.Remit?.[0]?.ServiceLine || [])
+              {(() => {
+                const reasons = (currentClaim?.Remit?.[0]?.ServiceLine || [])
                   .flatMap((line) => (line.Codes || []).map((code) => {
                     const groupCode = `${code.AdjustmentGroup || ''}`.trim();
                     const reasonCode = `${code.AdjustmentReason || ''}`.trim();
                     const description = `${code.Description || ''}`.trim();
                     if (!groupCode && !reasonCode && !description) return '';
-                    if (groupCode === 'CO' && reasonCode === '45') return '';
+                    if (shouldExcludeAdjustment(groupCode, reasonCode)) return '';
                     const prefix = groupCode ? `${groupCode} ${reasonCode}`.trim() : reasonCode;
                     return description ? `${prefix} - ${description}`.trim() : prefix;
                   }))
-                  .filter(Boolean)
-                  .slice(0, 6)).map((reason, idx) => (
-                    <li key={`insight-${idx}`} className={isDark ? 'text-gray-200' : 'text-gray-700'}>
-                      • {reason}
-                    </li>
-                  ))}
-                {((currentClaim?.Remit?.[0]?.ServiceLine || [])
-                  .flatMap((line) => (line.Codes || []).map((code) => {
-                    const groupCode = `${code.AdjustmentGroup || ''}`.trim();
-                    const reasonCode = `${code.AdjustmentReason || ''}`.trim();
-                    const description = `${code.Description || ''}`.trim();
-                    if (!groupCode && !reasonCode && !description) return '';
-                    if (groupCode === 'CO' && reasonCode === '45') return '';
-                    const prefix = groupCode ? `${groupCode} ${reasonCode}`.trim() : reasonCode;
-                    return description ? `${prefix} - ${description}`.trim() : prefix;
-                  }))
-                  .filter(Boolean)
-                  .length === 0) && (
-                    <li className={isDark ? 'text-gray-400' : 'text-gray-500'}>• No adjustment details available.</li>
-                  )}
+                  .filter(Boolean);
+
+                if (reasons.length === 0) {
+                  return (
+                    <li className={isDark ? 'text-gray-400' : 'text-gray-500'}>- No adjustment details available.</li>
+                  );
+                }
+
+                return reasons.slice(0, 6).map((reason, idx) => (
+                  <li key={`insight-${idx}`} className={isDark ? 'text-gray-200' : 'text-gray-700'}>
+                    - {reason}
+                  </li>
+                ));
+              })()}
               </ul>
             </div>
           )}
@@ -713,7 +717,14 @@ const ReboundDetailView = () => {
               <SectionCard title="Claim Details" showBorder={false}>
                 <InfoGrid
                   fields={[
-                    { label: "Claim No", value: formatValue(currentClaim?.Claim?.Data?.ClaimNo) },
+                    {
+                      label: "Claim Number",
+                      value: formatValue(
+                        currentClaim?.Claim?.Data?.ClaimNo ||
+                          currentClaim?.ClaimNo ||
+                          currentClaim?.Claim?.Data?.ClaimID
+                      ),
+                    },
                     { label: "Patient Name", value: formatValue(currentClaim?.Claim?.Data?.PatientName || currentClaim?.Claim?.Data?.Patient) },
                     { label: "Patient DOB", value: formatDateValue(currentClaim?.Claim?.Data?.PatientDOB) },
                     { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.Facility || currentClaim?.Claim?.Data?.BillProvName) },
@@ -966,7 +977,15 @@ const ReboundDetailView = () => {
                           <SectionCard title="Claim Information" showBorder={false}>
                               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-6 text-sm">
                                 {[
-                                  { label: "Claim No", value: formatValue(row.ClaimID || row.PayerClaimNumber || currentClaim?.Claim?.Data?.ClaimNo) },
+                                  {
+                                    label: "Claim Number",
+                                    value: formatValue(
+                                      row.ClaimID ||
+                                        currentClaim?.Claim?.Data?.ClaimNo ||
+                                        currentClaim?.ClaimNo ||
+                                        row.PayerClaimNumber
+                                    ),
+                                  },
                                   { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.BillProvName || currentClaim?.Claim?.Data?.ProviderName) },
                                   { label: "Tax ID", value: formatValue(currentClaim?.Claim?.Data?.ProvTaxID) },
                                 { label: "NPI", value: formatValue(currentClaim?.Claim?.Data?.ProvNPI || row.NPI) },

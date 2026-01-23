@@ -381,10 +381,15 @@ const ReboundDash = () => {
       // Avoid kicking off table loads while in the AI Library grid (no DataTable rendered).
       return;
     }
+    const tabOverrideMap = {
+      'patient-responsibility': 2,
+      'patient-responsibility:bal-due': 2,
+      'payment-posting:contractual-adj': 1,
+    };
     dispatch(setExtraFilter(filterPayload));
     if (tagOverride) {
       dispatch(setSelectedTags(tagOverride));
-      dispatch(setTabIndex(6));
+      dispatch(setTabIndex(tabOverrideMap[navId] ?? 6));
     }
     dispatch(setCurrentPage(1));
     dispatch(setTableLoading(true));
