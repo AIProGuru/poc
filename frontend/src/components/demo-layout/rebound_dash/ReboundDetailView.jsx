@@ -846,13 +846,12 @@ const ReboundDetailView = () => {
                     <thead>
                       <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
                         {[
-                          'Service Line #',
-                          'Service Date',
-                          'Proc Code - Units',
-                          'Charge $',
-                          'Allowed $',
-                          'Contractual $',
-                          'Deductible $',
+                          'Rev Code',
+                          'Proc Code',
+                          'Mod Cd1',
+                          'Mod Cd2',
+                          'Mod Cd3',
+                          'Proc Description',
                         ].map((col, idx, arr) => (
                           <th
                             key={col}
@@ -866,14 +865,18 @@ const ReboundDetailView = () => {
                     <tbody>
                       {(currentClaim?.Claim?.ServiceLine || []).map((line, lineIndex, arr) => {
                         const modifiers = extractModifiers(line.Modifier || line.Modifiers || line.ModifierCodes || line.Mods || line);
+                        const revCode = formatValue(line.RevCode || line.RevenueCode || line.Revenue || line.Rev);
+                        const procCode = formatValue(line.ProcedureCode || line.Code);
+                        const procDescription = formatValue(
+                          line.Description || line.ProcedureDescription || line.ProcDescription
+                        );
                         const cells = [
-                          lineIndex + 1,
-                          formatDateValue(line.ServiceDate || line.ServiceDateFrom || line.ServiceDateTo),
-                          [formatValue(line.ProcedureCode || line.Code), formatValue(line.UnitsPaid || line.Units || line.Quantity), modifiers.filter(Boolean).join(', ')].filter((v) => v && v !== 'N/A').join(' '),
-                          formatCurrency(line.ChargedAmount || line.ChargeAmount || line.Amount),
-                          formatCurrency(line.AllowedAmount),
-                          formatCurrency((line.ChargedAmount || 0) - (line.AllowedAmount || 0)),
-                          formatCurrency(line.Deductible),
+                          revCode,
+                          procCode,
+                          formatValue(modifiers[0]),
+                          formatValue(modifiers[1]),
+                          formatValue(modifiers[2]),
+                          procDescription,
                         ];
                         return (
                           <tr key={`${line.Code || lineIndex}-${lineIndex}`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
@@ -882,7 +885,7 @@ const ReboundDetailView = () => {
                                 key={`${lineIndex}-${idx}`}
                                 className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== cells.length - 1 ? 'border-r' : ''} ${lineIndex === arr.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === cells.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
                               >
-                                {renderTruncated(val, ['72px', '120px', '220px', '120px', '120px', '120px', '120px'][idx] || '180px')}
+                                {renderTruncated(val, ['90px', '110px', '80px', '80px', '80px', '260px'][idx] || '180px')}
                               </td>
                             ))}
                           </tr>
@@ -890,7 +893,7 @@ const ReboundDetailView = () => {
                       })}
                       {(currentClaim?.Claim?.ServiceLine || []).length === 0 && (
                         <tr>
-                          <td colSpan={7} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No service line detail.</td>
+                          <td colSpan={6} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No service line detail.</td>
                         </tr>
                       )}
                     </tbody>
