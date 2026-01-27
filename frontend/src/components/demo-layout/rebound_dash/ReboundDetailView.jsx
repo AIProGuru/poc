@@ -453,14 +453,12 @@ const ReboundDetailView = () => {
             {collapsed ? "-" : "+"}
           </button>
         </div>
-        {!collapsed && (
-          <>
-            <div className="px-4 sm:px-6">
-              <div className={`h-px w-full ${dividerClass}`} />
-            </div>
-            <div className="px-4 sm:px-6 py-4">{children}</div>
-          </>
-        )}
+        <div className={`collapse-panel ${collapsed ? '' : 'collapse-panel--open'}`} aria-hidden={collapsed}>
+          <div className="px-4 sm:px-6">
+            <div className={`h-px w-full ${dividerClass}`} />
+          </div>
+          <div className="px-4 sm:px-6 py-4">{children}</div>
+        </div>
       </div>
     );
   };
@@ -1149,8 +1147,9 @@ const ReboundDetailView = () => {
 
             <div className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark ? 'text-gray-100 bg-[#27282D] border-[#1f2433] shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'text-gray-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
 
-              <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
-                <table className="w-full text-sm border-separate border-spacing-0">
+              <div className={`rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
+                <div className="max-h-[360px] overflow-auto datatable-scroll">
+                  <table className="w-full text-sm border-separate border-spacing-0">
                   <thead>
                     <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
                       {[
@@ -1210,7 +1209,8 @@ const ReboundDetailView = () => {
                       </tr>
                     )}
                   </tbody>
-                </table>
+                  </table>
+                </div>
               </div>
             </div>
 

@@ -93,11 +93,11 @@ const Footer = () => {
                 </svg>
               </span>
             </h3>
-            {isPlatformOpen && (
+            <div className={`collapse-panel ${isPlatformOpen ? 'collapse-panel--open' : ''}`} aria-hidden={!isPlatformOpen}>
               <ul className="space-y-2">
 
               </ul>
-            )}
+            </div>
           </div>
           
           {/* Column 2: Solution */}
@@ -125,7 +125,7 @@ const Footer = () => {
                 </svg>
               </span>
             </h3>
-            {isSolutionOpen && (
+            <div className={`collapse-panel ${isSolutionOpen ? 'collapse-panel--open' : ''}`} aria-hidden={!isSolutionOpen}>
               <ul className="space-y-2">
                 <Link
                   to="/clients/hospitals-and-health-systems"
@@ -161,7 +161,7 @@ const Footer = () => {
                   </li>
                 </Link>
               </ul>
-            )}
+            </div>
           </div>
           
           {/* Column 3: Resources and Company */}
@@ -190,7 +190,7 @@ const Footer = () => {
                   </svg>
                 </span>
               </h3>
-              {isResourcesOpen && (
+              <div className={`collapse-panel ${isResourcesOpen ? 'collapse-panel--open' : ''}`} aria-hidden={!isResourcesOpen}>
                 <ul className="space-y-2">
                   <Link to="/blog" onClick={scrollToTop}>
                     <li>Blog</li>
@@ -199,7 +199,7 @@ const Footer = () => {
                     <li>White Paper</li>
                   </Link>
                 </ul>
-              )}
+              </div>
             </div>
             <div className="mt-6">
               <h3
@@ -225,7 +225,7 @@ const Footer = () => {
                   </svg>
                 </span>
               </h3>
-              {isCompanyOpen && (
+              <div className={`collapse-panel ${isCompanyOpen ? 'collapse-panel--open' : ''}`} aria-hidden={!isCompanyOpen}>
                 <ul className="space-y-2">
                   <Link to="/about" onClick={scrollToTop}>
                     <li>About us</li>
@@ -237,7 +237,7 @@ const Footer = () => {
                     <li>Careers</li>
                   </Link>
                 </ul>
-              )}
+              </div>
             </div>
           </div>
           

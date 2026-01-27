@@ -163,7 +163,10 @@ const ArIntel = ({ onModelSelect }) => {
             {isFilterOpen ? '-' : '+'}
           </span>
         </button>
-        {isFilterOpen && (
+        <div
+          className={`collapse-panel ${isFilterOpen ? 'collapse-panel--open' : ''}`}
+          aria-hidden={!isFilterOpen}
+        >
           <div className="px-6 pb-6">
             <div className={`flex items-center gap-2 rounded-2xl border px-4 py-3 ${isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
               <svg className={`h-4 w-4 ${isDark ? 'text-[#F4F4F4]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -199,7 +202,7 @@ const ArIntel = ({ onModelSelect }) => {
               ))}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       <div className={`rounded-xl border ${isDark ? 'bg-[#27282D] border-[#222632] text-[#F4F4F4]' : 'bg-white border-slate-200 text-slate-900'} shadow-none`}>
@@ -218,48 +221,49 @@ const ArIntel = ({ onModelSelect }) => {
             {isModelsOpen ? '-' : '+'}
           </span>
         </button>
-        {isModelsOpen && (
-          <>
-            <div className="px-6">
-              <div className={`h-px w-full ${isDark ? 'bg-[#CDCDCD]' : 'bg-slate-200'}`} />
-            </div>
+        <div
+          className={`collapse-panel ${isModelsOpen ? 'collapse-panel--open' : ''}`}
+          aria-hidden={!isModelsOpen}
+        >
+          <div className="px-6">
+            <div className={`h-px w-full ${isDark ? 'bg-[#CDCDCD]' : 'bg-slate-200'}`} />
+          </div>
 
-            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredModels.length === 0 && (
-                <div className={`col-span-full rounded-2xl border text-sm text-center py-6 ${isDark ? 'border-white/10 bg-white/5 text-white/70' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
-                  No AI models available.
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredModels.length === 0 && (
+              <div className={`col-span-full rounded-2xl border text-sm text-center py-6 ${isDark ? 'border-white/10 bg-white/5 text-white/70' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+                No AI models available.
+              </div>
+            )}
+            {filteredModels.map((row) => (
+              <button
+                type="button"
+                key={row.id}
+                title={buildTooltip(row)}
+                onClick={() => handleModelClick(row)}
+                className={`group flex items-start justify-between rounded-2xl border px-[14px] py-[10px] transition cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#24B47E] ${isDark ? 'border-white/10 bg-white/5 text-white hover:bg-white/10' : 'border-slate-200 bg-white text-slate-900 hover:shadow-lg hover:-translate-y-0.5'}`}
+              >
+                <div className="flex flex-col min-w-0 pr-3 h-full">
+                  <p className="font-inter text-[18px] font-medium leading-[1.2] tracking-normal uppercase tracking-[0.2em] text-[#0E7D81] break-words line-clamp-2">
+                    {row.Category || 'Model'}
+                  </p>
+                  <h3
+                    className={`text-sm font-semibold truncate leading-snug mt-2 ${isDark ? 'text-[#F4F4F4]' : 'text-slate-900'}`}
+                    title={row.Title}
+                  >
+                    {row.Title}
+                  </h3>
+                  <p className={`text-xs mt-auto ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
+                    {row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleDateString() : 'Date'}
+                  </p>
                 </div>
-              )}
-              {filteredModels.map((row) => (
-                <button
-                  type="button"
-                  key={row.id}
-                  title={buildTooltip(row)}
-                  onClick={() => handleModelClick(row)}
-                  className={`group flex items-start justify-between rounded-2xl border px-[14px] py-[10px] transition cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#24B47E] ${isDark ? 'border-white/10 bg-white/5 text-white hover:bg-white/10' : 'border-slate-200 bg-white text-slate-900 hover:shadow-lg hover:-translate-y-0.5'}`}
-                >
-                  <div className="flex flex-col min-w-0 pr-3 h-full">
-                    <p className="font-inter text-[18px] font-medium leading-[1.2] tracking-normal uppercase tracking-[0.2em] text-[#0E7D81] break-words line-clamp-2">
-                      {row.Category || 'Model'}
-                    </p>
-                    <h3
-                      className={`text-sm font-semibold truncate leading-snug mt-2 ${isDark ? 'text-[#F4F4F4]' : 'text-slate-900'}`}
-                      title={row.Title}
-                    >
-                      {row.Title}
-                    </h3>
-                    <p className={`text-xs mt-auto ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
-                      {row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleDateString() : 'Date'}
-                    </p>
-                  </div>
-                  <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border self-center ${isDark ? 'border-white/15 bg-white/5 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
-                    {row.Count ?? 0}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+                <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border self-center ${isDark ? 'border-white/15 bg-white/5 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                  {row.Count ?? 0}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
