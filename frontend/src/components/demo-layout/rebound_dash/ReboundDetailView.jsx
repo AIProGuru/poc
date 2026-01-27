@@ -368,6 +368,16 @@ const ReboundDetailView = () => {
     const allowed = (currentClaim.Remit?.[0]?.ServiceLine || [])
       .map((rr) => Number(rr.AllowedAmount) || 0)
       .reduce((sum, val) => sum + val, 0);
+    const adjustment45 = (currentClaim.Remit?.[0]?.ServiceLine || [])
+      .flatMap((line) => line.Codes || [])
+      .reduce((sum, code) => {
+        const group = `${code.AdjustmentGroup || ''}`.trim().toUpperCase();
+        const reason = `${code.AdjustmentReason || ''}`.trim().replace(/^0+/, '');
+        if (group === 'CO' && reason === '45') {
+          return sum + (Number(code.AdjustmentAmount) || 0);
+        }
+        return sum;
+      }, 0);
     const expReimbursement = Number(
       currentClaim.Claim.Data.ExpReimbursement ||
       currentClaim.Claim.Data.ExpectedReimbursement ||
@@ -375,7 +385,7 @@ const ReboundDetailView = () => {
     ) || 0;
     const payerPayments = Number(currentClaim.Claim.Data.PaidAmount) || 0;
     const patientResp = Number(currentClaim.Claim.Data.PatientResp) || 0;
-    const balance = 0;
+    const balance = charges - adjustment45 - allowed;
     return { count: 1, charges, expReimbursement, allowed, payerPayments, patientResp, balance };
   };
 

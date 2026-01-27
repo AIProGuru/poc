@@ -60,7 +60,28 @@ const DataTable = (props) => {
     const dateObj = new Date(value);
     return Number.isNaN(dateObj.getTime()) ? '' : dateObj.toISOString().substring(0, 10);
   };
-  const formatCurrency = (value) => `$${samplifyInteger(Number(value) || 0)}`;
+  const formatCurrencyRounded = (value) => `$${samplifyInteger(Number(value) || 0)}`;
+  const formatCurrencyExact = (value) => `$${samplifyDouble(Number(value) || 0)}`;
+  const getAdjustment45Value = (row) => {
+    if (!row) return 0;
+    const candidates = [
+      row.Adjustment45,
+      row.Adjustment45Amt,
+      row.Adjustment45Amount,
+      row.AdjustmentAmount45,
+      row.Adj45,
+      row.CO45,
+      row.CO_45,
+      row.Denied45,
+      row.DeniedAmt45,
+    ];
+    for (const value of candidates) {
+      if (value !== undefined && value !== null && value !== '') {
+        return Number(value) || 0;
+      }
+    }
+    return 0;
+  };
   const [summaryTotals, setSummaryTotals] = useState(null);
   const summaryRequestRef = useRef(0);
   const summary = React.useMemo(() => {
@@ -69,7 +90,9 @@ const DataTable = (props) => {
     const allowed = tableData.reduce((sum, row) => sum + (Number(row.AllowedAmt) || 0), 0);
     const payerPayments = tableData.reduce((sum, row) => sum + (Number(row.PaidAmount || row.PaidAmt || row.Paid) || 0), 0);
     const patientResp = tableData.reduce((sum, row) => sum + (Number(row.PatientResp || row.PatientResponsibility) || 0), 0);
-    return { count, charges, allowed, payerPayments, patientResp, balance: 0 };
+    const adjustment45 = tableData.reduce((sum, row) => sum + getAdjustment45Value(row), 0);
+    const balance = charges - adjustment45 - allowed;
+    return { count, charges, allowed, payerPayments, patientResp, adjustment45, balance };
   }, [tableData]);
   // Mirror the facility value used in the Claim (837) detail view.
   const getFacility = (row) => {
@@ -354,12 +377,28 @@ const DataTable = (props) => {
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           {[
             { label: 'Count', value: summaryTotals?.count ?? summary.count },
-            { label: 'Charges', value: formatCurrency(summaryTotals?.charges ?? summary.charges) },
-            { label: 'Exp Reimbursement', value: formatCurrency(0) },
-            { label: 'Allowed Amt', value: formatCurrency(summaryTotals?.allowed ?? summary.allowed) },
-            { label: 'Payer Payments', value: formatCurrency(summaryTotals?.payerPayments ?? summary.payerPayments) },
-            { label: 'Patient Resp', value: formatCurrency(summaryTotals?.patientResp ?? summary.patientResp) },
-            { label: 'Balance', value: formatCurrency(0) },
+            { label: 'Charges', value: formatCurrencyRounded(summaryTotals?.charges ?? summary.charges) },
+            { label: 'Exp Reimbursement', value: formatCurrencyRounded(0) },
+            { label: 'Allowed Amt', value: formatCurrencyRounded(summaryTotals?.allowed ?? summary.allowed) },
+            { label: 'Payer Payments', value: formatCurrencyRounded(summaryTotals?.payerPayments ?? summary.payerPayments) },
+            { label: 'Patient Resp', value: formatCurrencyRounded(summaryTotals?.patientResp ?? summary.patientResp) },
+            {
+              label: 'Balance',
+              value: (() => {
+                const adjustment45 =
+                  summaryTotals?.adjustment45 ??
+                  summaryTotals?.Adjustment45 ??
+                  summaryTotals?.Adjustment45Amount ??
+                  summaryTotals?.Denied45 ??
+                  summary.adjustment45 ??
+                  0;
+                const charges = summaryTotals?.charges ?? summary.charges;
+                const allowed = summaryTotals?.allowed ?? summary.allowed;
+                const balanceValue =
+                  (Number(charges) || 0) - (Number(adjustment45) || 0) - (Number(allowed) || 0);
+                return formatCurrencyRounded(balanceValue);
+              })(),
+            },
           ].map((item) => (
             <div
               key={item.label}
@@ -596,13 +635,17 @@ const DataTable = (props) => {
                         className="text-wrap"
                         onClick={() => showDetail(row.ClaimNo)}
                         style={{ ...bodyCellStyle, minWidth: "140px" }}  >
-                        {formatCurrency(row.Amount)}
+                        {formatCurrencyExact(row.Amount)}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                        {formatCurrency(row.AllowedAmt)}
+                        {formatCurrencyExact(row.AllowedAmt)}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                        {formatCurrency((Number(row.Amount) || 0) - (Number(row.AllowedAmt) || 0))}
+                        {formatCurrencyExact(
+                          (Number(row.Amount) || 0) -
+                            getAdjustment45Value(row) -
+                            (Number(row.AllowedAmt) || 0)
+                        )}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {(() => {
