@@ -356,6 +356,19 @@ const ReboundDetailView = () => {
     return Number.isNaN(numericValue) ? "N/A" : `$${samplifyDouble(numericValue)}`;
   };
 
+  const moduleTitle = `${routeTitle || appTitle || ""}`.toLowerCase();
+  const isDenialsOrVariance =
+    moduleTitle.includes("denials") || moduleTitle.includes("payment variance");
+  const resolveActionDate = () => actionDate || currentClaim?.Action?.[0]?.action_date || null;
+  const isAfterActionDate = (checkDate) => {
+    const action = resolveActionDate();
+    if (!action || !checkDate) return false;
+    const actionTime = Date.parse(action);
+    const checkTime = Date.parse(checkDate);
+    if (Number.isNaN(actionTime) || Number.isNaN(checkTime)) return false;
+    return isDenialsOrVariance ? checkTime > actionTime : checkTime >= actionTime;
+  };
+
   const shouldExcludeAdjustment = (groupCode, reasonCode) => {
     const normalizedGroup = `${groupCode || ""}`.trim().toUpperCase();
     const normalizedReason = `${reasonCode || ""}`.trim().replace(/^0+/, "");
@@ -1516,7 +1529,7 @@ const ReboundDetailView = () => {
                             currentClaim.Action.length === 0
                               ? 0
                               : currentClaim.Remit
-                                .filter((item) => Date.parse(item.CheckDate) >= Date.parse(currentClaim.Action[0].action_date))
+                                .filter((item) => isAfterActionDate(item.CheckDate))
                                 .flatMap((item) => item.ServiceLine.map((it) => Number(it.AllowedAmount)))
                                 .reduce((partialSum, a) => partialSum + a, 0)
                           )}

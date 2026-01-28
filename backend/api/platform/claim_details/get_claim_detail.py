@@ -236,10 +236,16 @@ def get_rebound_claim():
         cursor.execute(q)
         results = cursor.fetchall()
         overturn = 0
-        
+        action_date_value = None
+        if len(ret.get('Action', [])) != 0:
+            action_date = ret['Action'][0].get('action_date')
+            if action_date:
+                try:
+                    action_date_value = datetime.strptime(action_date, '%m/%d/%Y').date()
+                except ValueError:
+                    action_date_value = None
+
         for row in results:
-            if len(ret['Action']) != 0 and datetime.strptime(ret['Action'][0]['action_date'], '%m/%d/%Y').date() <= row['CheckDate']:
-                overturn += row['PaidAmount']
             ret['Remit'].append(row)
             ret['Remit'][-1]['ServiceLine'] = []
             if row['id_835'] != None:
@@ -260,6 +266,16 @@ def get_rebound_claim():
                 """
                 cursor.execute(q)
                 rows = cursor.fetchall()
+                allowed_after_action = 0
+                if action_date_value:
+                    check_date = row['CheckDate']
+                    if isinstance(check_date, datetime):
+                        check_date = check_date.date()
+                    if check_date > action_date_value:
+                        allowed_after_action = sum(
+                            float(r.get('AllowedAmount') or 0) for r in rows
+                        )
+                        overturn += allowed_after_action
                 for r in rows:
                     ret['Remit'][-1]['ServiceLine'].append(r)
                     q = f"""
