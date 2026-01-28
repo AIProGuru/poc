@@ -203,6 +203,7 @@ def get_rebound_data_all():
             CUSTOM_ALL.PlaceOfService,
             CUSTOM_ALL.Amount,
             CUSTOM_ALL.AllowedAmt,
+            CUSTOM_ALL.RecoveryAllowed,
             COALESCE(CUSTOM_ALL.BillProvName, '') AS FacilityName,
             COALESCE(NULLIF(TRIM(CUSTOM_ALL.Category), ''), '{delinquent_label}') AS Category,
             COALESCE(CUSTOM_ALL.PrimaryGroup, '') AS PrimaryGroup,

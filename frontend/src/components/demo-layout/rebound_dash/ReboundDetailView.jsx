@@ -378,19 +378,11 @@ const ReboundDetailView = () => {
   const getClaimSummary = () => {
     if (!currentClaim?.Claim?.Data) return null;
     const charges = Number(currentClaim.Claim.Data.Amount) || 0;
-    const serviceLines = (() => {
-      const remits = currentClaim?.Remit || [];
-      if (!resolveActionDate()) {
-        return getAllServiceLines();
-      }
-      return remits
-        .filter((remit) => isAfterActionDate(remit.CheckDate))
-        .flatMap((remit) => remit.ServiceLine || []);
-    })();
-    const allowed = serviceLines
+    const latestLines = currentClaim?.Remit?.[0]?.ServiceLine || [];
+    const allowed = latestLines
       .map((rr) => Number(rr.AllowedAmount) || 0)
       .reduce((sum, val) => sum + val, 0);
-    const adjustment45 = serviceLines
+    const adjustment45 = latestLines
       .flatMap((line) => line.Codes || [])
       .reduce((sum, code) => {
         const group = `${code.AdjustmentGroup || ''}`.trim().toUpperCase();

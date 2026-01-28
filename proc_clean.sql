@@ -285,7 +285,8 @@ SELECT
   CUSTOM_EDI_Claims_CLONE.ServiceDate,
   CUSTOM_EDI_Claims_CLONE.PlaceOfService,
   CUSTOM_EDI_Claims_CLONE.Amount,
-  COALESCE(allowed_by_action.AllowedAfterAction, 0) AS AllowedAmt,
+  COALESCE(allowed_latest.AllowedAmount, 0) AS AllowedAmt,
+  COALESCE(allowed_by_action.AllowedAfterAction, 0) AS RecoveryAllowed,
   CUSTOM_EDI_PaidClaims_CLONE.ClaimPaid AS PaidAmt,
   CAST(COALESCE(CUSTOM_EDI_PaidClaims_CLONE.PatientResp, 0) AS DECIMAL(12,2)) AS PatientResp,
   adjustment.AdjustmentAmount AS DeniedAmt,
@@ -320,6 +321,13 @@ LEFT JOIN CUSTOM_EDI_PaidClaims_CLONE ON subquery1.id_835=CUSTOM_EDI_PaidClaims_
 LEFT JOIN EDI_ClaimPayment ON EDI_ClaimPayment.ID=CUSTOM_EDI_PaidClaims_CLONE.PaymentID
 LEFT JOIN CUSTOM_CATEGORY ON CUSTOM_CATEGORY.ID=CUSTOM_EDI_PaidClaims_CLONE.ID
 LEFT JOIN adjustment ON adjustment.id_837=CUSTOM_EDI_Claims_CLONE.ID
+LEFT JOIN (
+  SELECT
+    ClaimID,
+    SUM(AllowedAmount) AS AllowedAmount
+  FROM EDI_PaidClaimLines
+  GROUP BY ClaimID
+) allowed_latest ON allowed_latest.ClaimID=CUSTOM_EDI_PaidClaims_CLONE.ID
 LEFT JOIN (
   SELECT
     m.ClaimNo,
