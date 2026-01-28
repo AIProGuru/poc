@@ -356,9 +356,6 @@ const ReboundDetailView = () => {
     return Number.isNaN(numericValue) ? "N/A" : `$${samplifyDouble(numericValue)}`;
   };
 
-  const moduleTitle = `${routeTitle || appTitle || ""}`.toLowerCase();
-  const isDenialsOrVariance =
-    moduleTitle.includes("denials") || moduleTitle.includes("payment variance");
   const resolveActionDate = () => actionDate || currentClaim?.Action?.[0]?.action_date || null;
   const isAfterActionDate = (checkDate) => {
     const action = resolveActionDate();
@@ -366,7 +363,7 @@ const ReboundDetailView = () => {
     const actionTime = Date.parse(action);
     const checkTime = Date.parse(checkDate);
     if (Number.isNaN(actionTime) || Number.isNaN(checkTime)) return false;
-    return isDenialsOrVariance ? checkTime > actionTime : checkTime >= actionTime;
+    return checkTime > actionTime;
   };
 
   const shouldExcludeAdjustment = (groupCode, reasonCode) => {
@@ -375,13 +372,25 @@ const ReboundDetailView = () => {
     return normalizedGroup === "CO" && normalizedReason === "45";
   };
 
+  const getAllServiceLines = () =>
+    (currentClaim?.Remit || []).flatMap((remit) => remit.ServiceLine || []);
+
   const getClaimSummary = () => {
     if (!currentClaim?.Claim?.Data) return null;
     const charges = Number(currentClaim.Claim.Data.Amount) || 0;
-    const allowed = (currentClaim.Remit?.[0]?.ServiceLine || [])
+    const serviceLines = (() => {
+      const remits = currentClaim?.Remit || [];
+      if (!resolveActionDate()) {
+        return getAllServiceLines();
+      }
+      return remits
+        .filter((remit) => isAfterActionDate(remit.CheckDate))
+        .flatMap((remit) => remit.ServiceLine || []);
+    })();
+    const allowed = serviceLines
       .map((rr) => Number(rr.AllowedAmount) || 0)
       .reduce((sum, val) => sum + val, 0);
-    const adjustment45 = (currentClaim.Remit?.[0]?.ServiceLine || [])
+    const adjustment45 = serviceLines
       .flatMap((line) => line.Codes || [])
       .reduce((sum, code) => {
         const group = `${code.AdjustmentGroup || ''}`.trim().toUpperCase();
