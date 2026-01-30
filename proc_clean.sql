@@ -367,7 +367,7 @@ LEFT JOIN (
     m.ClaimNo,
     SUM(
       CASE
-        WHEN la.action_date IS NULL THEN COALESCE(allowed_lines.AllowedAmount, 0)
+        WHEN la.action_date IS NULL THEN 0
         WHEN EDI_ClaimPayment.EffectiveDate > STR_TO_DATE(la.action_date, '%m/%d/%Y')
           THEN COALESCE(allowed_lines.AllowedAmount, 0)
         ELSE 0

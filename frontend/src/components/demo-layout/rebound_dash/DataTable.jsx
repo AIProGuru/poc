@@ -293,7 +293,7 @@ const DataTable = (props) => {
 
     // Define the CSV headers based on the table headers
     const tableHeaders = [
-      'Priority', 'Facility Name', 'Provider Tax ID', 'Claim ID', 'Payer ID', 'Payer Name', 'Payer Seq', 'Patient Name', 'Service Date', 'Place of Service', 'Charges', 'Allowed Amt', 'Recovery', 'Balance', 'Category', 'CARC', 'RARC', 'Primary Dx', 'Primary Service'
+      'Priority', 'Facility Name', 'Provider Tax ID', 'Claim ID', 'Payer ID', 'Payer Name', 'Payer Seq', 'Patient Name', 'Service Date', 'Place of Service', 'Charges', 'Allowed Amt', 'Payer Payments', 'Patient Resp', 'Recovery', 'Balance', 'Category', 'CARC', 'RARC', 'Primary Dx', 'Primary Service'
     ];
     let csv_data = [tableHeaders.join(',')];
 
@@ -323,6 +323,8 @@ const DataTable = (props) => {
         row.PlaceOfService || '',
         charges ? `$${charges}` : '$0',
         `$${allowed}`,
+        `$${Number(row.PaidAmt || row.PaidAmount || row.Paid || 0)}`,
+        `$${Number(row.PatientResp || row.PatientResponsibility || 0)}`,
         `$${Number(row.RecoveryAllowed || 0)}`,
         `$${balance}`,
         row.Category || '',
@@ -571,6 +573,18 @@ const DataTable = (props) => {
                         {renderSortIcon('AllowedAmt')}
                       </div>
                     </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PaidAmt")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Payer Payments
+                        {renderSortIcon('PaidAmt')}
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PatientResp")} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        Patient Resp
+                        {renderSortIcon('PatientResp')}
+                      </div>
+                    </TableCell>
                     <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
                       Recovery
                     </TableCell>
@@ -658,6 +672,12 @@ const DataTable = (props) => {
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                         {formatCurrencyExact(row.AllowedAmt)}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                        {formatCurrencyExact(row.PaidAmt || row.PaidAmount || row.Paid)}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                        {formatCurrencyExact(row.PatientResp || row.PatientResponsibility)}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                         {formatCurrencyExact(row.RecoveryAllowed)}
