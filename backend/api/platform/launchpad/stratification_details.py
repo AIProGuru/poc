@@ -317,16 +317,16 @@ def get_rebound_data_summary():
         payer_paid = float(payer_paid or 0)
         patient_resp = float(patient_resp or 0)
         adjustment45 = float(adjustment45 or 0)
-        balance = charges - adjustment45 - allowed
+        balance = float(charges) - float(adjustment45) - float(allowed)
         return jsonify(
             {
                 "count": result.get("cnt") or 0,
-                "charges": charges,
-                "allowed": allowed,
-                "payerPayments": payer_paid,
-                "patientResp": patient_resp,
-                "adjustment45": adjustment45,
-                "balance": balance,
+                "charges": float(charges),
+                "allowed": float(allowed),
+                "payerPayments": float(payer_paid),
+                "patientResp": float(patient_resp),
+                "adjustment45": float(adjustment45),
+                "balance": float(balance),
             }
         ), 200
     except Exception as e:
