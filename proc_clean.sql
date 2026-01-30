@@ -214,8 +214,8 @@ FROM (
 INNER JOIN EDI_PaidClaims ON subquery1.id_835=EDI_PaidClaims.ID
 LEFT JOIN EDI_PaidClaimLines ON EDI_PaidClaims.ID=EDI_PaidClaimLines.ClaimID
 LEFT JOIN EDI_PaidClaimLineAdj ON EDI_PaidClaimLineAdj.LineID=EDI_PaidClaimLines.ID
-  AND EDI_PaidClaimLineAdj.AdjustmentGroup='CO'
-  AND EDI_PaidClaimLineAdj.AdjustmentReason='45'
+  AND TRIM(EDI_PaidClaimLineAdj.AdjustmentGroup)='CO'
+  AND TRIM(EDI_PaidClaimLineAdj.AdjustmentReason) IN ('45','045','0045')
 GROUP BY subquery1.id_837;
 
 

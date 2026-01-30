@@ -383,14 +383,16 @@ const ReboundDetailView = () => {
 
   const getContractualCO45Amount = (line) => {
     const codes = Array.isArray(line?.Codes) ? line.Codes : [];
-    const primaryCode = codes[0];
-    if (!primaryCode) return 0;
-    const group = `${primaryCode?.AdjustmentGroup || primaryCode?.GroupCode || ""}`.trim().toUpperCase();
-    const reason = `${primaryCode?.AdjustmentReason || primaryCode?.ReasonCode || ""}`.trim().replace(/^0+/, "");
-    if (group === "CO" && reason === "45") {
-      return Number(primaryCode?.AdjustmentAmount) || 0;
-    }
-    return 0;
+    return codes.reduce((sum, code) => {
+      const group = `${code?.AdjustmentGroup || code?.GroupCode || ""}`.trim().toUpperCase();
+      const reasonRaw = `${code?.AdjustmentReason || code?.ReasonCode || ""}`.trim();
+      const reason = reasonRaw.replace(/^0+/, "");
+      const isNumeric = /^\d+$/.test(reason);
+      if (group === "CO" && isNumeric && reason === "45") {
+        return sum + (Number(code?.AdjustmentAmount) || 0);
+      }
+      return sum;
+    }, 0);
   };
 
   const getAllServiceLines = () =>
@@ -1005,7 +1007,7 @@ const ReboundDetailView = () => {
                                 {
                                   label: "Contractual",
                                   value: formatCurrency(
-                                    row.ServiceLine.map((rr) => Number(rr.ChargedAmount) - Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0)
+                                    row.ServiceLine.reduce((sum, line) => sum + getContractualCO45Amount(line), 0)
                                   ),
                                 },
                                 { label: "Check Date", value: formatDate(row.CheckDate) },
