@@ -90,10 +90,12 @@ SELECT
   CUSTOM_PAID_AMOUNT.ChargeAmount,
   CoverageAmount, ClaimPaid,
   CUSTOM_PAID_AMOUNT.PatientResp AS PatientResp,
-  PaymentID
+  PaymentID,
+  EDI_ClaimPayment.EffectiveDate AS CheckDate
 FROM EDI_PaidClaims
 LEFT JOIN CUSTOM_PAID_AMOUNT ON CUSTOM_PAID_AMOUNT.ID=EDI_PaidClaims.ID
-LEFT JOIN servicedate_835 ON servicedate_835.ID=EDI_PaidClaims.ID;
+LEFT JOIN servicedate_835 ON servicedate_835.ID=EDI_PaidClaims.ID
+LEFT JOIN EDI_ClaimPayment ON EDI_PaidClaims.PaymentID=EDI_ClaimPayment.ID;
 
 
 
@@ -104,7 +106,7 @@ SELECT
   CUSTOM_EDI_PaidClaims_CLONE.ID AS id_835,
   CUSTOM_EDI_Claims_CLONE.ClaimNo,
   CUSTOM_EDI_PaidClaims_CLONE.ServiceDate AS ServiceDate835,
-  ROW_NUMBER() OVER(PARTITION BY CUSTOM_EDI_Claims_CLONE.ID ORDER BY CUSTOM_EDI_PaidClaims_CLONE.ServiceDate DESC, CUSTOM_EDI_PaidClaims_CLONE.ID DESC) rn
+  ROW_NUMBER() OVER(PARTITION BY CUSTOM_EDI_Claims_CLONE.ID ORDER BY CUSTOM_EDI_PaidClaims_CLONE.CheckDate DESC, CUSTOM_EDI_PaidClaims_CLONE.ID DESC) rn
 FROM CUSTOM_EDI_Claims_CLONE
 LEFT JOIN CUSTOM_EDI_PaidClaims_CLONE ON CUSTOM_EDI_Claims_CLONE.ClaimNoFirst=CUSTOM_EDI_PaidClaims_CLONE.ClaimIDFirst
 AND CUSTOM_EDI_PaidClaims_CLONE.ServiceDate=CUSTOM_EDI_Claims_CLONE.ServiceDate

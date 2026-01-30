@@ -393,6 +393,29 @@ const ReboundDetailView = () => {
     }, 0);
   };
 
+  const normalizeAdjustmentReason = (value) => {
+    const raw = `${value || ""}`.trim();
+    if (!raw) return "N/A";
+    const normalized = raw.replace(/^0+/, "");
+    return normalized || "0";
+  };
+
+  const getLineAdjustmentSummary = (line) => {
+    const codes = Array.isArray(line?.Codes) ? line.Codes : [];
+    const summaryMap = new Map();
+    codes.forEach((code) => {
+      const group = `${code?.AdjustmentGroup || code?.GroupCode || ""}`.trim().toUpperCase() || "N/A";
+      const reason = normalizeAdjustmentReason(code?.AdjustmentReason || code?.ReasonCode || "");
+      const description = `${code?.Description || ""}`.trim();
+      const amount = Number(code?.AdjustmentAmount) || 0;
+      const key = `${group}|${reason}|${description}`;
+      const existing = summaryMap.get(key) || { group, reason, description, amount: 0 };
+      existing.amount += amount;
+      summaryMap.set(key, existing);
+    });
+    return Array.from(summaryMap.values());
+  };
+
   const getAllServiceLines = () =>
     (currentClaim?.Remit || []).flatMap((remit) => remit.ServiceLine || []);
 
@@ -421,8 +444,10 @@ const ReboundDetailView = () => {
       currentClaim.Claim.Data.ExpectedReimbursement ||
       currentClaim.Claim.Data.ExpectedAmount
     ) || 0;
-    const payerPayments = Number(currentClaim.Claim.Data.PaidAmount) || 0;
-    const patientResp = Number(currentClaim.Claim.Data.PatientResp) || 0;
+    const payerPayments = latestLines
+      .map((rr) => Number(rr.PaidAmount) || 0)
+      .reduce((sum, val) => sum + val, 0);
+    const patientResp = Number(currentClaim?.Remit?.[0]?.PatientResp) || 0;
     const balance = charges - adjustment45 - allowed;
     return { count: 1, charges, expReimbursement, allowed, payerPayments, patientResp, balance };
   };
@@ -1081,16 +1106,17 @@ const ReboundDetailView = () => {
                               <table className="w-full text-sm border-separate border-spacing-0">
                                 <thead>
                                   <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
-                                    {[
-                                      'Service Line #',
-                                      'Service Date',
-                                      'Proc Code',
-                                      'Units',
-                                      'Charge $',
-                                      'Allowed $',
-                                      'Contractual $',
-                                      'Deductible $',
-                                    ].map((col, idx, arr) => (
+                                      {[
+                                        'Service Line #',
+                                        'Service Date',
+                                        'Proc Code',
+                                        'Units',
+                                        'Charge $',
+                                        'Allowed $',
+                                        'Contractual $',
+                                        'Deductible $',
+                                        'Adjustments',
+                                      ].map((col, idx, arr) => (
                                       <th
                                         key={col}
                                         className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
@@ -1102,31 +1128,66 @@ const ReboundDetailView = () => {
                                 </thead>
                                 <tbody>
                                   {(row.ServiceLine || []).map((line, lineIndex) => {
+                                    const adjustments = getLineAdjustmentSummary(line);
+                                    const rowCount = (row.ServiceLine || []).length;
+                                    const baseCells = [
+                                      lineIndex + 1,
+                                      formatDateValue(line.ServiceDate),
+                                      formatValue(line.ProcedureCode || line.Code),
+                                      formatUnitsValue(line.UnitsPaid || line.Units || line.Quantity),
+                                      formatCurrency(line.ChargedAmount || line.ChargeAmount || line.Amount),
+                                      formatCurrency(line.AllowedAmount),
+                                      formatCurrency(getContractualCO45Amount(line)),
+                                      formatCurrency(line.Deductible),
+                                    ];
                                     return (
                                       <tr key={`${line.Code || lineIndex}-${lineIndex}`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
-                                        {[
-                                          lineIndex + 1,
-                                          formatDateValue(line.ServiceDate),
-                                          formatValue(line.ProcedureCode || line.Code),
-                                          formatUnitsValue(line.UnitsPaid || line.Units || line.Quantity),
-                                          formatCurrency(line.ChargedAmount || line.ChargeAmount || line.Amount),
-                                          formatCurrency(line.AllowedAmount),
-                                          formatCurrency(getContractualCO45Amount(line)),
-                                          formatCurrency(line.Deductible),
-                                        ].map((val, idx, arr) => (
+                                        {baseCells.map((val, idx) => (
                                           <td
                                             key={`${lineIndex}-${idx}`}
-                                            className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${lineIndex === (row.ServiceLine || []).length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                                            className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b border-r ${lineIndex === rowCount - 1 && idx === 0 ? 'rounded-bl-2xl' : ''}`}
                                           >
                                             {renderTruncated(val, ['72px', '120px', '140px', '100px', '120px', '120px', '120px', '120px'][idx] || '180px')}
                                           </td>
                                         ))}
+                                        <td
+                                          className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${lineIndex === rowCount - 1 ? 'rounded-br-2xl' : ''}`}
+                                        >
+                                          {adjustments.length === 0 ? (
+                                            <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>N/A</span>
+                                          ) : (
+                                            <div className="flex flex-wrap gap-2">
+                                              {adjustments.slice(0, 3).map((adj, adjIndex) => {
+                                                const label = `${adj.group} ${adj.reason}`.trim();
+                                                const title = adj.description
+                                                  ? `${label} - ${adj.description}`
+                                                  : label;
+                                                return (
+                                                  <span
+                                                    key={`${label}-${adjIndex}`}
+                                                    title={title}
+                                                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${isDark ? 'bg-[#303544] text-gray-200' : 'bg-gray-100 text-gray-700'}`}
+                                                  >
+                                                    <span>{label}</span>
+                                                    <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>&middot;</span>
+                                                    <span>{formatCurrency(adj.amount)}</span>
+                                                  </span>
+                                                );
+                                              })}
+                                              {adjustments.length > 3 && (
+                                                <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                  +{adjustments.length - 3} more
+                                                </span>
+                                              )}
+                                            </div>
+                                          )}
+                                        </td>
                                       </tr>
                                     );
                                   })}
                                   {(row.ServiceLine || []).length === 0 && (
                                     <tr>
-                                      <td colSpan={8} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No service line detail.</td>
+                                      <td colSpan={9} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No service line detail.</td>
                                     </tr>
                                   )}
                                 </tbody>
@@ -1141,7 +1202,8 @@ const ReboundDetailView = () => {
                                   <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
                                     {[
                                       'Service Line #',
-                                      'Supp/Adj Group Code',
+                                      'Adj Code',
+                                      'Amount',
                                       'Description',
                                     ].map((col, idx, arr) => (
                                       <th
@@ -1155,30 +1217,53 @@ const ReboundDetailView = () => {
                                 </thead>
                                 <tbody>
                                   {(row.ServiceLine || []).map((line, lineIndex) => {
-                                    const firstCode = (line.Codes || [])[0] || {};
-                                    const groupCode = formatValue(firstCode.AdjustmentGroup || firstCode.GroupCode || 'N/A');
-                                    const reasonCode = formatValue(firstCode.AdjustmentReason || firstCode.ReasonCode || 'N/A');
-                                    const groupReason = `${groupCode} ${reasonCode}`.trim();
-                                    return (
-                                      <tr key={`supp-${lineIndex}`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
-                                        {[
-                                          lineIndex + 1,
-                                          formatValue(groupReason || 'N/A'),
-                                          formatValue(firstCode.Description || firstCode.AdjustmentReason || 'N/A'),
-                                        ].map((val, idx, arr) => (
-                                          <td
-                                            key={`${lineIndex}-${idx}`}
-                                            className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${lineIndex === (row.ServiceLine || []).length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
-                                          >
-                                            {renderTruncated(val, ['72px', '180px', '260px'][idx] || '180px')}
-                                          </td>
-                                        ))}
-                                      </tr>
-                                    );
+                                    const adjustments = getLineAdjustmentSummary(line);
+                                    if (adjustments.length === 0) {
+                                      return (
+                                        <tr key={`supp-${lineIndex}-none`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                                          {[
+                                            lineIndex + 1,
+                                            'N/A',
+                                            'N/A',
+                                            'N/A',
+                                          ].map((val, idx, arr) => (
+                                            <td
+                                              key={`${lineIndex}-none-${idx}`}
+                                              className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${lineIndex === (row.ServiceLine || []).length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                                            >
+                                              {renderTruncated(val, ['72px', '180px', '120px', '260px'][idx] || '180px')}
+                                            </td>
+                                          ))}
+                                        </tr>
+                                      );
+                                    }
+
+                                    return adjustments.map((adj, adjIndex) => {
+                                      const label = `${adj.group} ${adj.reason}`.trim();
+                                      const isLastLine = lineIndex === (row.ServiceLine || []).length - 1;
+                                      const isLastAdj = adjIndex === adjustments.length - 1;
+                                      return (
+                                        <tr key={`supp-${lineIndex}-${adjIndex}`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                                          {[
+                                            lineIndex + 1,
+                                            label || 'N/A',
+                                            formatCurrency(adj.amount),
+                                            formatValue(adj.description || 'N/A'),
+                                          ].map((val, idx, arr) => (
+                                            <td
+                                              key={`${lineIndex}-${adjIndex}-${idx}`}
+                                              className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${isLastLine && isLastAdj ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                                            >
+                                              {renderTruncated(val, ['72px', '180px', '120px', '260px'][idx] || '180px')}
+                                            </td>
+                                          ))}
+                                        </tr>
+                                      );
+                                    });
                                   })}
                                   {(row.ServiceLine || []).length === 0 && (
                                     <tr>
-                                      <td colSpan={3} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No supplemental data.</td>
+                                      <td colSpan={4} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No supplemental data.</td>
                                     </tr>
                                   )}
                                 </tbody>
