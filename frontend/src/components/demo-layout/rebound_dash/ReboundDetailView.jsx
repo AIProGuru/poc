@@ -1039,7 +1039,9 @@ const ReboundDetailView = () => {
                                 {
                                   label: "Contractual",
                                   value: formatCurrency(
-                                    row.ServiceLine.map((rr) => Number(rr.ChargedAmount) - Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0)
+                                    row.ServiceLine
+                                      .map((rr) => getContractualCO45Amount(rr))
+                                      .reduce((sum, a) => sum + a, 0)
                                   ),
                                 },
                                 { label: "Check Date", value: formatDate(row.CheckDate) },
