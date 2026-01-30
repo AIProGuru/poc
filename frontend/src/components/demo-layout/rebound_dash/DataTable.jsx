@@ -293,7 +293,7 @@ const DataTable = (props) => {
 
     // Define the CSV headers based on the table headers
     const tableHeaders = [
-      'Priority', 'Facility Name', 'Provider Tax ID', 'Claim ID', 'Payer ID', 'Payer Name', 'Payer Seq', 'Patient Name', 'Service Date', 'Place of Service', 'Charges', 'Allowed Amt', 'Payer Payments', 'Patient Resp', 'Recovery', 'Balance', 'Category', 'CARC', 'RARC', 'Primary Dx', 'Primary Service'
+      'Priority', 'Facility Name', 'Provider Tax ID', 'Claim ID', 'Payer ID', 'Payer Name', 'Payer Seq', 'Patient Name', 'Service Date', 'Place of Service', 'Charges', 'Allowed Amt', 'Payer Payments', 'Patient Resp', 'Balance', 'Category', 'CARC', 'RARC', 'Primary Dx', 'Primary Service'
     ];
     let csv_data = [tableHeaders.join(',')];
 
@@ -325,7 +325,6 @@ const DataTable = (props) => {
         `$${allowed}`,
         `$${Number(row.PaidAmt || row.PaidAmount || row.Paid || 0)}`,
         `$${Number(row.PatientResp || row.PatientResponsibility || 0)}`,
-        `$${Number(row.RecoveryAllowed || 0)}`,
         `$${balance}`,
         row.Category || '',
         `${row.PrimaryGroup || ''} ${row.PrimaryCode || ''}`.trim(),
@@ -586,9 +585,6 @@ const DataTable = (props) => {
                       </div>
                     </TableCell>
                     <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
-                      Recovery
-                    </TableCell>
-                    <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
                       Balance
                     </TableCell>
                     <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("Category")} className="cursor-pointer">
@@ -678,9 +674,6 @@ const DataTable = (props) => {
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {formatCurrencyExact(row.PatientResp || row.PatientResponsibility)}
-                      </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                        {formatCurrencyExact(row.RecoveryAllowed)}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                         {formatCurrencyExact(
