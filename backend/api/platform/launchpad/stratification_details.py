@@ -312,6 +312,11 @@ def get_rebound_data_summary():
         payer_paid = result.get("total_payer_paid") or 0
         patient_resp = result.get("total_patient_resp") or 0
         adjustment45 = result.get("total_adjustment45") or 0
+        charges = float(charges or 0)
+        allowed = float(allowed or 0)
+        payer_paid = float(payer_paid or 0)
+        patient_resp = float(patient_resp or 0)
+        adjustment45 = float(adjustment45 or 0)
         balance = charges - adjustment45 - allowed
         return jsonify(
             {
