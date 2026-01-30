@@ -65,9 +65,9 @@ const DataTable = (props) => {
   const getAdjustment45Value = (row) => {
     if (!row) return 0;
     const candidates = [
-      row.Adjustment45,
-      row.Adjustment45Amt,
       row.Adjustment45Amount,
+      row.Adjustment45Amt,
+      row.Adjustment45,
       row.AdjustmentAmount45,
       row.Adj45,
       row.CO45,
