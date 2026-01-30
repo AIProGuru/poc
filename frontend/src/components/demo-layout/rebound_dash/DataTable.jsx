@@ -86,7 +86,15 @@ const DataTable = (props) => {
   const summaryRequestRef = useRef(0);
   const summary = React.useMemo(() => {
     const count = tableData.length;
-    const charges = tableData.reduce((sum, row) => sum + (Number(row.Amount) || 0), 0);
+    const charges = tableData.reduce((sum, row) => {
+      if (row?.Balance !== undefined && row?.Balance !== null && row?.Balance !== "") {
+        const balance = Number(row.Balance) || 0;
+        const adjustment45 = getAdjustment45Value(row);
+        const allowed = Number(row.AllowedAmt) || 0;
+        return sum + balance + adjustment45 + allowed;
+      }
+      return sum + (Number(row.Amount) || 0);
+    }, 0);
     const allowed = tableData.reduce((sum, row) => sum + (Number(row.AllowedAmt) || 0), 0);
     const payerPayments = tableData.reduce((sum, row) => sum + (Number(row.PaidAmount || row.PaidAmt || row.Paid) || 0), 0);
     const patientResp = tableData.reduce((sum, row) => sum + (Number(row.PatientResp || row.PatientResponsibility) || 0), 0);
@@ -292,9 +300,16 @@ const DataTable = (props) => {
     // Process each row of data
     tableData.forEach((row, index) => {
       const remark = row.Remark ? [...new Set(row.Remark.split('*'))].join('*') : '';
-      const charges = Number(row.Amount) || 0;
+      const adjustment45 = getAdjustment45Value(row);
+      const charges =
+        row?.Balance !== undefined && row?.Balance !== null && row?.Balance !== ""
+          ? (Number(row.Balance) || 0) + adjustment45 + (Number(row.AllowedAmt) || 0)
+          : Number(row.Amount) || 0;
       const allowed = Number(row.AllowedAmt) || 0;
-      const balance = charges - allowed;
+      const balance =
+        row?.Balance !== undefined && row?.Balance !== null && row?.Balance !== ""
+          ? Number(row.Balance) || 0
+          : charges - adjustment45 - allowed;
       let value = [
         row.Priority || '',
         getFacility(row),
@@ -649,9 +664,11 @@ const DataTable = (props) => {
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                         {formatCurrencyExact(
-                          (Number(row.Amount) || 0) -
-                            getAdjustment45Value(row) -
-                            (Number(row.AllowedAmt) || 0)
+                          row?.Balance !== undefined && row?.Balance !== null && row?.Balance !== ""
+                            ? Number(row.Balance) || 0
+                            : (Number(row.Amount) || 0) -
+                              getAdjustment45Value(row) -
+                              (Number(row.AllowedAmt) || 0)
                         )}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>

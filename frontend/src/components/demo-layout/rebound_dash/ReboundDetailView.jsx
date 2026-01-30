@@ -385,10 +385,8 @@ const ReboundDetailView = () => {
     const codes = Array.isArray(line?.Codes) ? line.Codes : [];
     return codes.reduce((sum, code) => {
       const group = `${code?.AdjustmentGroup || code?.GroupCode || ""}`.trim().toUpperCase();
-      const reasonRaw = `${code?.AdjustmentReason || code?.ReasonCode || ""}`.trim();
-      const reason = reasonRaw.replace(/^0+/, "");
-      const isNumeric = /^\d+$/.test(reason);
-      if (group === "CO" && isNumeric && reason === "45") {
+      const reason = `${code?.AdjustmentReason || code?.ReasonCode || ""}`.trim().replace(/^0+/, "");
+      if (group === "CO" && reason === "45") {
         return sum + (Number(code?.AdjustmentAmount) || 0);
       }
       return sum;
@@ -400,8 +398,17 @@ const ReboundDetailView = () => {
 
   const getClaimSummary = () => {
     if (!currentClaim?.Claim?.Data) return null;
-    const charges = Number(currentClaim.Claim.Data.Amount) || 0;
     const latestLines = currentClaim?.Remit?.[0]?.ServiceLine || [];
+    const chargesFromLines = latestLines.reduce(
+      (sum, line) => sum + (Number(line?.ChargedAmount) || 0),
+      0
+    );
+    const chargesFromRemit = Number(currentClaim?.Remit?.[0]?.ChargeAmount) || 0;
+    const charges =
+      chargesFromLines ||
+      chargesFromRemit ||
+      Number(currentClaim.Claim.Data.Amount) ||
+      0;
     const allowed = latestLines
       .map((rr) => Number(rr.AllowedAmount) || 0)
       .reduce((sum, val) => sum + val, 0);
@@ -1007,7 +1014,7 @@ const ReboundDetailView = () => {
                                 {
                                   label: "Contractual",
                                   value: formatCurrency(
-                                    row.ServiceLine.reduce((sum, line) => sum + getContractualCO45Amount(line), 0)
+                                    row.ServiceLine.map((rr) => Number(rr.ChargedAmount) - Number(rr.AllowedAmount)).reduce((sum, a) => sum + a, 0)
                                   ),
                                 },
                                 { label: "Check Date", value: formatDate(row.CheckDate) },

@@ -200,11 +200,19 @@ LEFT JOIN EDI_PaidClaimLines ON EDI_PaidClaims.ID=EDI_PaidClaimLines.ClaimID
 LEFT JOIN EDI_PaidClaimLineAdj ON EDI_PaidClaimLineAdj.LineID=EDI_PaidClaimLines.ID
 GROUP BY subquery1.id_837;
 
-DROP TABLE IF EXISTS adjustment45;
-CREATE TABLE adjustment45 AS
+
+DROP TABLE IF EXISTS adjustment_45;
+CREATE TABLE adjustment_45 AS
 SELECT
   subquery1.id_837,
-  SUM(EDI_PaidClaimLineAdj.AdjustmentAmount) AS Adjustment45Amount
+  SUM(
+    CASE
+      WHEN UPPER(EDI_PaidClaimLineAdj.AdjustmentGroup) = 'CO'
+        AND TRIM(LEADING '0' FROM EDI_PaidClaimLineAdj.AdjustmentReason) = '45'
+        THEN EDI_PaidClaimLineAdj.AdjustmentAmount
+      ELSE 0
+    END
+  ) AS Adjustment45Amount
 FROM (
   SELECT
     *
@@ -214,9 +222,8 @@ FROM (
 INNER JOIN EDI_PaidClaims ON subquery1.id_835=EDI_PaidClaims.ID
 LEFT JOIN EDI_PaidClaimLines ON EDI_PaidClaims.ID=EDI_PaidClaimLines.ClaimID
 LEFT JOIN EDI_PaidClaimLineAdj ON EDI_PaidClaimLineAdj.LineID=EDI_PaidClaimLines.ID
-  AND TRIM(EDI_PaidClaimLineAdj.AdjustmentGroup)='CO'
-  AND TRIM(EDI_PaidClaimLineAdj.AdjustmentReason) IN ('45','045','0045')
 GROUP BY subquery1.id_837;
+
 
 
 
@@ -303,12 +310,17 @@ SELECT
   CUSTOM_EDI_Claims_CLONE.ServiceDate,
   CUSTOM_EDI_Claims_CLONE.PlaceOfService,
   CUSTOM_EDI_Claims_CLONE.Amount,
+  COALESCE(adjustment_45.Adjustment45Amount, 0) AS Adjustment45Amount,
   COALESCE(allowed_latest.AllowedAmount, 0) AS AllowedAmt,
   COALESCE(allowed_by_action.AllowedAfterAction, 0) AS RecoveryAllowed,
   CUSTOM_EDI_PaidClaims_CLONE.ClaimPaid AS PaidAmt,
   CAST(COALESCE(CUSTOM_EDI_PaidClaims_CLONE.PatientResp, 0) AS DECIMAL(12,2)) AS PatientResp,
   adjustment.AdjustmentAmount AS DeniedAmt,
-  COALESCE(adjustment45.Adjustment45Amount, 0) AS Adjustment45Amount,
+  (
+    COALESCE(CUSTOM_EDI_PaidClaims_CLONE.ChargeAmount, CUSTOM_EDI_Claims_CLONE.Amount, 0)
+    - COALESCE(adjustment_45.Adjustment45Amount, 0)
+    - COALESCE(allowed_latest.AllowedAmount, 0)
+  ) AS Balance,
   CUSTOM_CATEGORY.Category,
   CUSTOM_CATEGORY.AdjustmentGroup AS PrimaryGroup,
   CUSTOM_CATEGORY.AdjustmentReason AS PrimaryCode,
@@ -340,7 +352,7 @@ LEFT JOIN CUSTOM_EDI_PaidClaims_CLONE ON subquery1.id_835=CUSTOM_EDI_PaidClaims_
 LEFT JOIN EDI_ClaimPayment ON EDI_ClaimPayment.ID=CUSTOM_EDI_PaidClaims_CLONE.PaymentID
 LEFT JOIN CUSTOM_CATEGORY ON CUSTOM_CATEGORY.ID=CUSTOM_EDI_PaidClaims_CLONE.ID
 LEFT JOIN adjustment ON adjustment.id_837=CUSTOM_EDI_Claims_CLONE.ID
-LEFT JOIN adjustment45 ON adjustment45.id_837=CUSTOM_EDI_Claims_CLONE.ID
+LEFT JOIN adjustment_45 ON adjustment_45.id_837=CUSTOM_EDI_Claims_CLONE.ID
 LEFT JOIN (
   SELECT
     ClaimID,
