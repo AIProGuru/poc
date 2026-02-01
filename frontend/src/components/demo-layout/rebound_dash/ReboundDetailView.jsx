@@ -922,6 +922,7 @@ const ReboundDetailView = () => {
                           'Mod Cd1',
                           'Mod Cd2',
                           'Mod Cd3',
+                          'Charge $',
                           'Proc Description',
                         ].map((col, idx, arr) => (
                           <th
@@ -941,12 +942,20 @@ const ReboundDetailView = () => {
                         const procDescription = formatValue(
                           line.Description || line.ProcedureDescription || line.ProcDescription
                         );
+                        const charge = formatCurrency(
+                          line.Charges ||
+                          line.Charge ||
+                          line.Amount ||
+                          line.BilledAmount ||
+                          line.Billed
+                        );
                         const cells = [
                           revCode,
                           procCode,
                           formatValue(modifiers[0]),
                           formatValue(modifiers[1]),
                           formatValue(modifiers[2]),
+                          charge,
                           procDescription,
                         ];
                         return (
@@ -956,7 +965,7 @@ const ReboundDetailView = () => {
                                 key={`${lineIndex}-${idx}`}
                                 className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== cells.length - 1 ? 'border-r' : ''} ${lineIndex === arr.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === cells.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
                               >
-                                {renderTruncated(val, ['90px', '110px', '80px', '80px', '80px', '260px'][idx] || '180px')}
+                                {renderTruncated(val, ['90px', '110px', '80px', '80px', '80px', '120px', '260px'][idx] || '180px')}
                               </td>
                             ))}
                           </tr>
@@ -964,7 +973,7 @@ const ReboundDetailView = () => {
                       })}
                       {(currentClaim?.Claim?.ServiceLine || []).length === 0 && (
                         <tr>
-                          <td colSpan={6} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No service line detail.</td>
+                          <td colSpan={7} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No service line detail.</td>
                         </tr>
                       )}
                     </tbody>
