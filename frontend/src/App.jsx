@@ -6,6 +6,7 @@ import routesConfig from "./routes";
 import { MAINTAINING } from "./utils/config";
 import {
   setAuth,
+  setAuthReady,
   setUsername,
   setRole,
   setFirstname,
@@ -23,6 +24,8 @@ import ChatBot from "./components/demo-layout/rebound_dash/ChatBot";
 import ChatBotButton from "./components/demo-layout/rebound_dash/ChatBotButton";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { doc, getFirestore, onSnapshot } from "firebase/firestore";
+import { app, auth } from "./FirebaseConfig";
 
 const showlist = [
   '/',
@@ -51,6 +54,7 @@ function App() {
   const showChatBot = useSelector((state) => state.gpt.showGPT)
   const chatbot = useRef(null);
   const getAuth = useSelector((state) => state.auth.isAuthenticated);
+  const realtimeDb = useRef(getFirestore(app));
 
   const onCloseChatbot = () => {
     dispatch(setShowGPT(false));
@@ -118,7 +122,37 @@ function App() {
         dispatch(setRole(0));
         dispatch(decreaseLoading())
       })
+      .finally(() => {
+        dispatch(setAuthReady(true));
+      });
   }, []);
+
+  useEffect(() => {
+    let unsubscribeDoc = null;
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (unsubscribeDoc) {
+        unsubscribeDoc();
+        unsubscribeDoc = null;
+      }
+      if (!user) return;
+      const docRef = doc(realtimeDb.current, "users", user.uid);
+      unsubscribeDoc = onSnapshot(docRef, (snapshot) => {
+        if (!snapshot.exists()) return;
+        const userData = snapshot.data() || {};
+        dispatch(setFirstname(userData.firstname ?? ""));
+        dispatch(setLastname(userData.lastname ?? ""));
+        dispatch(setEmail(userData.email ?? ""));
+        dispatch(setRole(userData.role ?? ""));
+      });
+    });
+
+    return () => {
+      if (unsubscribeDoc) {
+        unsubscribeDoc();
+      }
+      unsubscribeAuth();
+    };
+  }, [dispatch]);
 
   return (
     <div className="w-full h-screen">

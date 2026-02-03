@@ -3,6 +3,7 @@ import { ROLE_STANDARD } from "../../utils/roles";
 
 const initialState = {
   isAuthenticated: true,
+  authReady: false,
   username: '',
   firstname: '',
   lastname: '',
@@ -17,6 +18,9 @@ const authReducer = createSlice({
   reducers: {
     setAuth: (state, action) => {
       state.isAuthenticated = action.payload
+    },
+    setAuthReady: (state, action) => {
+      state.authReady = action.payload
     },
     setUsername: (state, action) => {
       state.username = action.payload
@@ -41,6 +45,7 @@ const authReducer = createSlice({
 
 export const {
   setAuth,
+  setAuthReady,
   setRole,
   setUsername,
   setEmail,

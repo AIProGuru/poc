@@ -7,6 +7,14 @@ const managementRoutes = [
     path: "",
     element: <PrivateRoute role={USER_MANAGEMENT_ROLES} element={ReboundDash} />
   },
+  {
+    path: "users",
+    element: <PrivateRoute role={USER_MANAGEMENT_ROLES} element={ReboundDash} />
+  },
+  {
+    path: "users/new",
+    element: <PrivateRoute role={USER_MANAGEMENT_ROLES} element={ReboundDash} />
+  },
 ];
 
 export default managementRoutes;

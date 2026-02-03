@@ -44,7 +44,9 @@ const ReboundDash = () => {
   const location = useLocation();
   const params = useParams();
   const rawToken = params.token ?? null;
-  const isManagementRoute = location.pathname === '/management' || location.pathname.endsWith('/management');
+  const isManagementRoute = location.pathname === '/management' || location.pathname.startsWith('/management/');
+  const isUserAddRoute = location.pathname === '/management/users/new';
+  const isUserListRoute = location.pathname.startsWith('/management/users');
   const [selectedNav, setSelectedNav] = useState(() => {
     if (isManagementRoute) return 'user-management';
     return location.pathname.includes('/denials') ? 'denials' : 'home';
@@ -851,25 +853,12 @@ const ReboundDash = () => {
     <div className={`flex ${isDark ? 'text-white' : 'bg-slate-50 text-slate-900'}`}>
       <div className="flex-1 flex flex-col gap-8 px-6 md:px-10 py-4 min-w-0 overflow-hidden">
         {isUserManagementView ? (
-          <div className={`rounded-[40px] border ${isDark ? 'bg-[#070B18] border-[#161B2D] text-white' : 'bg-white border-slate-200 text-slate-900'} shadow-[0_35px_80px_rgba(3,7,18,0.35)]`}>
-            <div className={`flex flex-wrap items-center justify-between gap-4 px-6 py-5 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
-              <div>
-                <p className={`${isDark ? 'text-white/50' : 'text-slate-400'} text-sm uppercase tracking-[0.35em]`}>Administration</p>
-                <h2 className="text-3xl font-semibold mt-2">User Management</h2>
-                <p className={`${isDark ? 'text-white/60' : 'text-slate-500'} text-sm mt-1`}>
-                  Manage access, roles, and assignments without leaving the dashboard.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate(baseAppPath)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold border ${isDark ? 'border-white/20 text-white/80 hover:bg-white/10' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-              >
-                Back to Dashboard
-              </button>
-            </div>
-            <UserManagement embedded />
-          </div>
+          
+          <UserManagement
+            embedded
+            view={isUserAddRoute ? 'add' : isUserListRoute ? 'table' : 'actions'}
+          />
+
         ) : (
           <>
 
@@ -930,9 +919,8 @@ const ReboundDash = () => {
                 <ArIntel onModelSelect={() => setAiLibraryDrilldown(true)} />
               ) : showPlaceholder ? (
                 <div
-                  className={`rounded-2xl border px-6 py-10 text-center text-lg font-semibold ${
-                    isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-200' : 'bg-white border-gray-200 text-gray-700'
-                  }`}
+                  className={`rounded-2xl border px-6 py-10 text-center text-lg font-semibold ${isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-200' : 'bg-white border-gray-200 text-gray-700'
+                    }`}
                 >
                   Coming soon
                 </div>

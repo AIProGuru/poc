@@ -22,30 +22,66 @@ import {
   setSelectedTags,
 } from './redux/reducers/tag.reducer';
 
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 const ApiEndpointContext = createContext();
+const LAST_APP_TYPE_KEY = 'lastAppType';
 
 export const ApiEndpointProvider = ({ children }) => {
   const location = useLocation();
   const dispatch = useDispatch();
+  const appType = useSelector((state) => state.app.type);
   const [apiUrl, setApiUrl] = useState('');
 
   useEffect(() => {
     if (location.pathname.startsWith('/rebound')) {
       setApiUrl(`${SERVER_URL}/api/v1/rebound`)
       dispatch(setType(0))
+      try {
+        localStorage.setItem(LAST_APP_TYPE_KEY, '0');
+      } catch (err) {
+        // Ignore storage write errors (private mode, etc.)
+      }
     } else if (location.pathname.startsWith('/pilotcustomer')) {
       setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
       dispatch(setType(1))
+      try {
+        localStorage.setItem(LAST_APP_TYPE_KEY, '1');
+      } catch (err) {
+        // Ignore storage write errors (private mode, etc.)
+      }
     } else if(location.pathname.startsWith('/demo')) {
       // setApiUrl(`${SERVER_URL}/api/v1/demo`)
       setApiUrl(`${SERVER_URL}/api/v1/rebound`)
       dispatch(setType(2))
+      try {
+        localStorage.setItem(LAST_APP_TYPE_KEY, '2');
+      } catch (err) {
+        // Ignore storage write errors (private mode, etc.)
+      }
+    } else if (location.pathname.startsWith('/management')) {
+      let resolvedType = appType;
+      if (resolvedType !== 1 && resolvedType !== 2) {
+        try {
+          const storedType = Number(localStorage.getItem(LAST_APP_TYPE_KEY));
+          if (storedType === 1 || storedType === 2) {
+            resolvedType = storedType;
+            dispatch(setType(storedType));
+          }
+        } catch (err) {
+          // Ignore storage read errors.
+        }
+      }
+      if (resolvedType === 1) {
+        setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
+      } else {
+        setApiUrl(`${SERVER_URL}/api/v1/rebound`)
+      }
     }
-  }, [location.pathname]);
+  }, [location.pathname, appType, dispatch]);
 
   useEffect(() => {
+    if (!apiUrl) return;
     dispatch(setPart1Loading(true))
     dispatch(setPart2Loading(true))
     dispatch(setTableLoading(true))
