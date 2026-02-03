@@ -75,7 +75,7 @@ const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, stat
         <div className="px-6">
           <div className="grid grid-cols-2 md:grid-cols-2 pt-5 pb-3 lg:grid-cols-3 gap-y-4 gap-x-6">
             {[
-              { label: 'Count', value: count },
+              { label: 'Count', value: samplifyInteger(count) },
               { label: 'Charges', value: `$${samplifyInteger(charge)}` },
               { label: 'Claim State', value: state },
               { label: 'Category', value: category },

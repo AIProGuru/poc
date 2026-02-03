@@ -206,6 +206,13 @@ const Sidebar = () => {
     []
   );
 
+  const formatCount = (value) => {
+    if (value === null || value === undefined) return value;
+    if (typeof value === "number") return value.toLocaleString("en-US");
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric.toLocaleString("en-US") : value;
+  };
+
   const renderIcon = (name, active) => {
     const stroke = active ? "#ffffff" : "#8A8FB1";
     const fill = active ? "#ffffff" : "none";
@@ -725,7 +732,7 @@ const Sidebar = () => {
                     <span
                       className={`${mobileExpanded ? "inline-flex" : "hidden"} md:inline-flex text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}
                     >
-                      {computedBadge}
+                      {formatCount(computedBadge)}
                     </span>
                   )}
                 </button>
@@ -781,7 +788,7 @@ const Sidebar = () => {
                               : (isDark ? 'bg-[#1F2231] text-[#F4F4F4]/50' : 'bg-slate-200 text-slate-700')
                           }`}
                         >
-                          {childBadge}
+                          {formatCount(childBadge)}
                         </span>
                       </button>
                     );

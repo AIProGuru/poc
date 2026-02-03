@@ -624,7 +624,7 @@ const ReboundDetailView = () => {
           >
             <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
               {[
-                { label: 'Count', value: summary.count },
+                { label: 'Count', value: samplifyInteger(summary.count) },
                 { label: 'Charges', value: formatCurrency(summary.charges) },
                 { label: 'Exp Reimbursement', value: formatCurrency(summary.expReimbursement) },
                 { label: 'Allowed Amt', value: formatCurrency(summary.allowed) },

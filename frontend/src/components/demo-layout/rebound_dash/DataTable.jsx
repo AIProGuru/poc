@@ -393,7 +393,7 @@ const DataTable = (props) => {
       >
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           {[
-            { label: 'Count', value: summaryTotals?.count ?? summary.count },
+            { label: 'Count', value: samplifyInteger(summaryTotals?.count ?? summary.count) },
             { label: 'Charges', value: formatCurrencyRounded(summaryTotals?.charges ?? summary.charges) },
             { label: 'Exp Reimbursement', value: formatCurrencyRounded(0) },
             { label: 'Allowed Amt', value: formatCurrencyRounded(summaryTotals?.allowed ?? summary.allowed) },

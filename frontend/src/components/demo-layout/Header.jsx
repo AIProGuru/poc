@@ -740,11 +740,11 @@ const Header = () => {
                       ? "bg-[#151619] text-white"
                       : "bg-white text-black"
                     } pl-2`}
-                // onClick={() => {
-                //   setMenuShow(false);
-                //   dispatch(setAppTitle("User Management"));
-                //   navigate("/management");
-                // }}
+                  onClick={() => {
+                    setMenuShow(false);
+                    dispatch(setAppTitle("User Management"));
+                    navigate("/management");
+                  }}
                 >
                   <svg
                     width="18"
@@ -800,11 +800,11 @@ const Header = () => {
                       ? "bg-[#151619] text-white"
                       : "bg-white text-black"
                     } pl-2`}
-                // onClick={() => {
-                //   setMenuShow(false);
-                //   dispatch(setAppTitle("Client Management"));
-                //   navigate("/clientmanagement");
-                // }}
+                  onClick={() => {
+                    setMenuShow(false);
+                    dispatch(setAppTitle("Client Management"));
+                    navigate("/clientmanagement");
+                  }}
                 >
                   <svg
                     width="20"
