@@ -35,7 +35,7 @@ def _assert_admin(uid: str):
         raise PermissionError("User profile not found.")
 
     role = user_doc.to_dict().get("role")
-    if role not in {"admin", "super-admin"}:
+    if role not in {"admin", "super-admin", "manager", "internal-admin"}:
         raise PermissionError("Admin privileges required.")
 
 
@@ -184,7 +184,10 @@ def update_user(user_id):
         if "role" in sanitized:
             auth.set_custom_user_claims(
                 user_id,
-                {"admin": sanitized["role"] in {"admin", "super-admin"}},
+                {
+                    "admin": sanitized["role"]
+                    in {"admin", "super-admin", "manager", "internal-admin"}
+                },
             )
 
         updated = doc_ref.get().to_dict()

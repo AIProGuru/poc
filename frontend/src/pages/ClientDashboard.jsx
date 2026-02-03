@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { getRoleLabel, normalizeRole } from '../utils/roles';
 import { motion } from 'framer-motion';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Filler } from 'chart.js';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
@@ -97,10 +98,16 @@ const ClientDashboard = () => {
   };
 
   const getAvatarColor = (role) => {
-    switch (role) {
-      case 'super-admin': return 'bg-purple-600';
-      case 'admin': return 'bg-green-600';
-      case 'user': default: return 'bg-blue-600';
+    switch (normalizeRole(role)) {
+      case 'internal-admin':
+        return 'bg-purple-600';
+      case 'manager':
+        return 'bg-green-600';
+      case 'executive':
+        return 'bg-sky-600';
+      case 'standard-user':
+      default:
+        return 'bg-blue-600';
     }
   };
 
@@ -707,14 +714,15 @@ case 'users':
                     </div>
                     <div className="ml-6 flex gap-2 items-center">
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        user.role === 'super-admin' 
-                        ? 'bg-purple-500/20 text-purple-400' 
-                        : user.role === 'admin' 
-                        ? 'bg-indigo-500/20 text-indigo-400' 
-                        : 'bg-blue-500/20 text-blue-400'
+                        normalizeRole(user.role) === 'internal-admin'
+                          ? 'bg-purple-500/20 text-purple-400'
+                          : normalizeRole(user.role) === 'manager'
+                          ? 'bg-indigo-500/20 text-indigo-400'
+                          : normalizeRole(user.role) === 'executive'
+                          ? 'bg-sky-500/20 text-sky-300'
+                          : 'bg-blue-500/20 text-blue-400'
                       }`}>
-                        {user.role === 'super-admin' ? 'Super Admin' : 
-                         user.role === 'admin' ? 'Admin' : 'User'}
+                        {getRoleLabel(user.role)}
                       </span>
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         user.status === 0 

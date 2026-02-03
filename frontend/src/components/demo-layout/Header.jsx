@@ -11,6 +11,7 @@ import {
   Switch,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { canAccessClientManagement, canAccessUserManagement } from "../../utils/roles";
 
 const Header = () => {
   const role = useSelector((state) => state.auth.role);
@@ -734,7 +735,7 @@ const Header = () => {
                   <span className="pl-2">Dark</span>
                 </button>
               </div>
-              {role === "admin" && (
+              {canAccessUserManagement(role) && (
                 <div
                   className={`flex items-center gap-2 h-[48px] cursor-pointer ${theme === "dark"
                       ? "bg-[#151619] text-white"
@@ -794,7 +795,7 @@ const Header = () => {
                 </div>
               )}
 
-              {role === "admin" && (
+              {canAccessClientManagement(role) && (
                 <div
                   className={`flex items-center gap-2 h-[48px] cursor-pointer ${theme === "dark"
                       ? "bg-[#151619] text-white"

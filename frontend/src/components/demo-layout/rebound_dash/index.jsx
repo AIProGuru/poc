@@ -35,9 +35,9 @@ import ArIntel from "./ArIntel";
 import UserManagement from "./UserManagement";
 import HomeScreen from "./HomeScreen";
 import DashboardScreen from "./DashboardScreen";
-import SupportScreen from "./SupportScreen";
 import SettingsScreen from "./SettingsScreen";
 import { AccountContext } from "../../../utils/Account";
+import { canAccessUserManagement } from "../../../utils/roles";
 
 const ReboundDash = () => {
   const apiUrl = useApiEndpoint();
@@ -82,7 +82,6 @@ const ReboundDash = () => {
   const showPlaceholder = placeholderNavs.includes(selectedNav);
   const showHomeView = appTitle === 'Home';
   const showDashboardView = appTitle === 'Dashboard';
-  const showSupportView = appTitle === 'Support';
   const showSettingsView = appTitle === 'Settings';
   const count = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
@@ -297,9 +296,8 @@ const ReboundDash = () => {
       ],
     },
     { id: 'ai-library', label: 'AI Library', badge: denialCount || null, icon: 'book' },
-    { id: 'support', label: 'Support', badge: null, icon: 'lifebuoy' },
     { id: 'settings', label: 'Settings', badge: null, icon: 'cog' },
-    ...(role === 'admin'
+    ...(canAccessUserManagement(role)
       ? [{ id: 'user-management', label: 'User Management', badge: null, icon: 'users' }]
       : []),
   ], [denialCount, patientResponsibilityCount, role]);
@@ -926,8 +924,6 @@ const ReboundDash = () => {
                 <HomeScreen isDark={isDark} />
               ) : showDashboardView ? (
                 <DashboardScreen isDark={isDark} />
-              ) : showSupportView ? (
-                <SupportScreen isDark={isDark} />
               ) : showSettingsView ? (
                 <SettingsScreen isDark={isDark} />
               ) : showAiModels ? (

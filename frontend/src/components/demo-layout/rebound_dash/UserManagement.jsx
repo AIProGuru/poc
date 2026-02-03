@@ -17,13 +17,21 @@ import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { auth } from '../../../FirebaseConfig';
 import { SERVER_URL } from '../../../utils/config';
+import { ROLE_OPTIONS, ROLE_STANDARD, normalizeRole } from "../../../utils/roles";
 
 
-const UserRoleCell = ({ row, onUpdateRole,theme }) => {
-  const [selectedRole, setSelectedRole] = useState(row.role || 'user');
+const getRoleValue = (role) => {
+  const normalized = normalizeRole(role);
+  return ROLE_OPTIONS.some((option) => option.value === normalized)
+    ? normalized
+    : ROLE_STANDARD;
+};
+
+const UserRoleCell = ({ row, onUpdateRole, theme }) => {
+  const [selectedRole, setSelectedRole] = useState(getRoleValue(row.role));
 
   useEffect(() => {
-    setSelectedRole(row.role || 'user');
+    setSelectedRole(getRoleValue(row.role));
   }, [row.role]);
 
   const handleRoleChange = (event) => {
@@ -35,21 +43,28 @@ const UserRoleCell = ({ row, onUpdateRole,theme }) => {
     <td>
       <div className="flex items-center space-x-2">
       <select
-  value={selectedRole}
-  onChange={handleRoleChange}
-  className={`border border-gray-600 w-[159px] px-2 py-1 rounded-lg appearance-none cursor-pointer ${
-    theme === 'dark' 
-      ? "bg-[#151619] text-white" 
-      : "bg-white text-gray-500"
-  }`}
-  style={{
-    WebkitAppearance: 'none',
-    MozAppearance: 'none'
-  }}
->
-  <option value="user" className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}>User</option>
-      <option value="admin" className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}>Admin</option>
-</select>
+        value={selectedRole}
+        onChange={handleRoleChange}
+        className={`border border-gray-600 w-[159px] px-2 py-1 rounded-lg appearance-none cursor-pointer ${
+          theme === 'dark'
+            ? "bg-[#151619] text-white"
+            : "bg-white text-gray-500"
+        }`}
+        style={{
+          WebkitAppearance: 'none',
+          MozAppearance: 'none'
+        }}
+      >
+        {ROLE_OPTIONS.map((option) => (
+          <option
+            key={option.value}
+            value={option.value}
+            className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}
+          >
+            {option.label}
+          </option>
+        ))}
+      </select>
       </div>
     </td>
   );
@@ -85,13 +100,16 @@ const UserManagement = ({ embedded = false }) => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [showAdminActions, setShowAdminActions] = useState(true);
+  const [showSkillsets, setShowSkillsets] = useState(true);
+  const tableRef = React.useRef(null);
 
   const [user, setUser] = useState({
     user_id:'',
     firstname: '',
     lastname: '',
     email: '',
-    role: 'user',
+    role: ROLE_STANDARD,
     password: '',
     status: 0,
     access_level: 0,
@@ -102,6 +120,24 @@ const UserManagement = ({ embedded = false }) => {
     payer: [],
     value: [],
   });
+  const resetUserForm = () => {
+    setUser({
+      user_id: '',
+      firstname: '',
+      lastname: '',
+      email: '',
+      role: ROLE_STANDARD,
+      password: '',
+      status: 0,
+      access_level: 0,
+      client: [],
+      facility: [],
+      clientState: [],
+      denialCategory: [],
+      payer: [],
+      value: [],
+    });
+  };
 
   const requireAuthToken = async () => {
     if (!auth.currentUser) {
@@ -194,7 +230,7 @@ const UserManagement = ({ embedded = false }) => {
       firstname: userData?.firstname || '',
       lastname: userData?.lastname || '',
       email: userData?.email || '',
-      role: userData?.role || 'user',
+      role: getRoleValue(userData?.role),
       status: userData?.status || 0,
       id: userData?.id
     });
@@ -205,7 +241,7 @@ const UserManagement = ({ embedded = false }) => {
           firstname: userData.firstname || '',
           lastname: userData.lastname || '',
           email: userData.email || '',
-          role: userData.role || 'user',
+          role: getRoleValue(userData.role),
           status: userData.status || 0,
           id: userData.id
         });
@@ -275,8 +311,11 @@ const UserManagement = ({ embedded = false }) => {
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
+                {ROLE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
   
@@ -348,15 +387,7 @@ const UserManagement = ({ embedded = false }) => {
     if (data.status === 200) {
       toast.success("User created!")
       setShowUserModal(false);
-      setUser({
-        user_id:'',
-        firstname: '',
-        lastname: '',
-        email: '',
-        role: 'user',
-        password: '',
-        status: 0
-      })
+      resetUserForm();
       fetchUsers();
     } else {
       toast.error(res?.error || 'Failed to create user');
@@ -590,6 +621,84 @@ const DeleteConfirmationModal = () => (
   return (
     <div className={shellClasses} style={{ fontFamily: 'Nunito, sans-serif' }}>
      <div className={panelClasses}>
+      <div className="px-4 sm:px-6 pt-6">
+        <h1 className="text-lg font-semibold">User Management</h1>
+      </div>
+      <div className={`mx-4 sm:mx-6 rounded-2xl border ${theme === 'dark' ? 'border-[#1F2231] bg-[#151A26]' : 'border-slate-200 bg-white'} p-4`}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Admin Actions</h2>
+          <button
+            type="button"
+            onClick={() => setShowAdminActions((prev) => !prev)}
+            className={`h-8 w-8 rounded-full flex items-center justify-center ${
+              theme === 'dark' ? 'text-white/70 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'
+            }`}
+            aria-label="Toggle admin actions"
+          >
+            <span className="text-lg leading-none">{showAdminActions ? "-" : "+"}</span>
+          </button>
+        </div>
+        {showAdminActions && (
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => {
+                resetUserForm();
+                generatePassword(12);
+                setShowUserModal(true);
+              }}
+              className={`rounded-xl border px-4 py-3 text-left transition ${
+                theme === 'dark'
+                  ? 'bg-[#1C212E] border-[#2A3242] hover:border-[#3A465B]'
+                  : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <p className={`text-xs uppercase tracking-wide ${theme === 'dark' ? 'text-[#3ABFF8]' : 'text-slate-400'}`}>
+                User Management
+              </p>
+              <p className="mt-2 text-sm font-semibold">Add New User</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className={`rounded-xl border px-4 py-3 text-left transition ${
+                theme === 'dark'
+                  ? 'bg-[#1C212E] border-[#2A3242] hover:border-[#3A465B]'
+                  : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <p className={`text-xs uppercase tracking-wide ${theme === 'dark' ? 'text-[#3ABFF8]' : 'text-slate-400'}`}>
+                User Management
+              </p>
+              <p className="mt-2 text-sm font-semibold">Manage Users</p>
+            </button>
+            <div
+              className={`rounded-xl border px-4 py-3 ${
+                theme === 'dark'
+                  ? 'bg-[#1C212E] border-[#2A3242] text-white/80'
+                  : 'bg-slate-50 border-slate-200 text-slate-600'
+              }`}
+            >
+              <p className={`text-xs uppercase tracking-wide ${theme === 'dark' ? 'text-[#3ABFF8]' : 'text-slate-400'}`}>
+                Category
+              </p>
+              <p className="mt-2 text-sm font-semibold">Action Name</p>
+            </div>
+            <div
+              className={`rounded-xl border px-4 py-3 ${
+                theme === 'dark'
+                  ? 'bg-[#1C212E] border-[#2A3242] text-white/80'
+                  : 'bg-slate-50 border-slate-200 text-slate-600'
+              }`}
+            >
+              <p className={`text-xs uppercase tracking-wide ${theme === 'dark' ? 'text-[#3ABFF8]' : 'text-slate-400'}`}>
+                Category
+              </p>
+              <p className="mt-2 text-sm font-semibold">Action Name</p>
+            </div>
+          </div>
+        )}
+      </div>
      <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4">
   {/* Desktop and Mobile Container */}
   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -644,6 +753,7 @@ const DeleteConfirmationModal = () => (
   </div>
       <div className='flex-shrink-0 flex items-center justify-center bg-[#005DE2] rounded-lg w-[40px] h-[40px] text-white cursor-pointer hover:bg-blue-700 transition-colors'
         onClick={() => {
+          resetUserForm();
           generatePassword(12);
           setShowUserModal(true);
         }}
@@ -656,7 +766,10 @@ const DeleteConfirmationModal = () => (
   </div>
 </div>
 
-      <div className={`flex flex-col rounded-3xl border ${theme === 'dark' ? 'border-[#1F2231] bg-[#111525]' : 'border-slate-200 bg-white'} p-2`}>
+      <div
+        ref={tableRef}
+        className={`flex flex-col rounded-3xl border ${theme === 'dark' ? 'border-[#1F2231] bg-[#111525]' : 'border-slate-200 bg-white'} p-2`}
+      >
       <div className="w-full overflow-x-auto rounded-2xl" style={{ maxHeight: '500px' }}>
   <table className="min-w-full  font-nunito">
     <thead className=" sticky top-0 z-10">
@@ -1025,208 +1138,225 @@ const DeleteConfirmationModal = () => (
         open={showUserModal}
         onClose={() => {
           setShowUserModal(false)
-          setUser({
-            user_id:'',
-            firstname: '',
-            lastname: '',
-            email: '',
-            role: 'user',
-            password: '',
-            status: 0
-          })
+          resetUserForm();
         }}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        <Box className={`absolute   w-[600px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 rounded-xl ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}` }>
-          <div className={`flex  p-9 rounded-xl flex-col gap-4 ${theme === 'dark' ? 'bg-[#151619] text-white' :'bg-white text-gray-800'}`}>
-            <div className='text-[32px] font-semibold text-center '>
-              Add New User
+        <Box className={`absolute w-[760px] max-w-[94vw] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 rounded-2xl ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}>
+          <div className={`flex flex-col gap-6 rounded-2xl p-6 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-800'}`}>
+            <div>
+              <p className={`text-xs uppercase tracking-[0.35em] ${theme === 'dark' ? 'text-white/50' : 'text-slate-400'}`}>
+                User Management &gt; Add New User
+              </p>
+              <h2 className="mt-2 text-xl font-semibold">Add New User</h2>
             </div>
-            <div className='flex gap-2'>
-              <div className='flex flex-col gap-[6px] w-1/2'>
-                <span className='text-[14px] font-medium'>First Name</span>
-                <input type="input" className="text-sm rounded-lg block w-full py-2 px-3   border border-gray-600  bg-transparent cursor-pointer"
+
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <input
+                  type="text"
+                  className={`text-sm rounded-full px-4 py-2.5 border ${
+                    theme === 'dark' ? 'bg-[#2B2F35] text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
+                  }`}
                   value={user.firstname}
-                  placeholder='First Name'
+                  placeholder="First Name"
                   onChange={(e) => setUser({ ...user, firstname: e.target.value })}
                 />
-              </div>
-              <div className='flex flex-col gap-[6px] w-1/2'>
-                <span className='text-[14px] font-medium'>Last Name</span>
-                <input type="input" className="text-sm rounded-lg block w-full py-2 px-3   border border-gray-600  bg-transparent cursor-pointer"
+                <input
+                  type="text"
+                  className={`text-sm rounded-full px-4 py-2.5 border ${
+                    theme === 'dark' ? 'bg-[#2B2F35] text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
+                  }`}
                   value={user.lastname}
-                  placeholder='Last Name'
+                  placeholder="Last Name"
                   onChange={(e) => setUser({ ...user, lastname: e.target.value })}
                 />
               </div>
-            </div>
-          
-            <div className='flex flex-col gap-2'>
-              <span>Email</span>
-              <div className="relative w-full">
-                <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                  <svg width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1.66406 3.83337L8.46816 8.59624C9.01914 8.98193 9.29463 9.17477 9.59428 9.24946C9.85898 9.31544 10.1358 9.31544 10.4005 9.24946C10.7002 9.17477 10.9757 8.98193 11.5266 8.59624L18.3307 3.83337M5.66406 14.6667H14.3307C15.7309 14.6667 16.4309 14.6667 16.9657 14.3942C17.4361 14.1545 17.8186 13.7721 18.0582 13.3017C18.3307 12.7669 18.3307 12.0668 18.3307 10.6667V5.33337C18.3307 3.93324 18.3307 3.23318 18.0582 2.6984C17.8186 2.22799 17.4361 1.84554 16.9657 1.60586C16.4309 1.33337 15.7309 1.33337 14.3307 1.33337H5.66406C4.26393 1.33337 3.56387 1.33337 3.02909 1.60586C2.55868 1.84554 2.17623 2.22799 1.93655 2.6984C1.66406 3.23318 1.66406 3.93324 1.66406 5.33337V10.6667C1.66406 12.0668 1.66406 12.7669 1.93655 13.3017C2.17623 13.7721 2.55868 14.1545 3.02909 14.3942C3.56387 14.6667 4.26393 14.6667 5.66406 14.6667Z" stroke="#828385" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 items-center">
                 <input
-                  type='email'
-                  placeholder="emailexample@gmail.com"
-                 className="text-sm rounded-lg block w-full py-2 px-3 pl-9  border border-gray-600  bg-transparent cursor-pointer"
+                  type="email"
+                  className={`text-sm rounded-full px-4 py-2.5 border ${
+                    theme === 'dark' ? 'bg-[#2B2F35] text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
+                  }`}
                   value={user.email}
+                  placeholder="Email Address"
                   onChange={(e) => setUser({ ...user, email: e.target.value })}
                 />
+                <div className="flex items-center justify-between gap-3 rounded-full border px-4 py-2.5">
+                  <span className="text-sm font-medium">Active</span>
+                  <div className={`flex items-center rounded-full border ${theme === 'dark' ? 'border-white/10 bg-[#21242B]' : 'border-slate-200 bg-white'}`}>
+                    <button
+                      type="button"
+                      onClick={() => setUser({ ...user, status: 0 })}
+                      className={`px-4 py-1.5 text-xs font-semibold rounded-full transition ${
+                        user.status === 0
+                          ? theme === 'dark'
+                            ? 'bg-white text-[#111318]'
+                            : 'bg-slate-900 text-white'
+                          : theme === 'dark'
+                            ? 'text-white/60'
+                            : 'text-slate-500'
+                      }`}
+                    >
+                      ON
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUser({ ...user, status: 1 })}
+                      className={`px-4 py-1.5 text-xs font-semibold rounded-full transition ${
+                        user.status !== 0
+                          ? theme === 'dark'
+                            ? 'bg-white text-[#111318]'
+                            : 'bg-slate-900 text-white'
+                          : theme === 'dark'
+                            ? 'text-white/60'
+                            : 'text-slate-500'
+                      }`}
+                    >
+                      OFF
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`rounded-2xl border px-4 py-4 ${theme === 'dark' ? 'border-[#2A2F38] bg-[#20242B]' : 'border-slate-200 bg-slate-50'}`}>
+                <div className="text-sm font-semibold">Role</div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                  {ROLE_OPTIONS.map((option) => (
+                    <label key={option.value} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={getRoleValue(user.role) === option.value}
+                        onChange={() => setUser({ ...user, role: option.value })}
+                        className="h-4 w-4 rounded border-gray-400"
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className={`rounded-2xl border px-4 py-4 ${theme === 'dark' ? 'border-[#2A2F38] bg-[#20242B]' : 'border-slate-200 bg-slate-50'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold">Skillsets</div>
+                  <button
+                    type="button"
+                    onClick={() => setShowSkillsets((prev) => !prev)}
+                    className={`h-7 w-7 rounded-full flex items-center justify-center ${
+                      theme === 'dark' ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-white'
+                    }`}
+                    aria-label="Toggle skillsets"
+                  >
+                    <span className="text-lg leading-none">{showSkillsets ? "-" : "+"}</span>
+                  </button>
+                </div>
+                {showSkillsets && (
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <MultiSelect
+                      label="Module"
+                      options={assignFilter.client}
+                      selected={user.client}
+                      onChange={(value) => setUser({ ...user, client: value })}
+                      placeholder="Select Module"
+                      theme={theme}
+                    />
+                    <MultiSelect
+                      label="Balance"
+                      options={assignFilter.value}
+                      selected={user.value}
+                      onChange={(value) => setUser({ ...user, value: value })}
+                      placeholder="Select Balance"
+                      theme={theme}
+                    />
+                    <MultiSelect
+                      label="Category"
+                      options={assignFilter.denialCategory}
+                      selected={user.denialCategory}
+                      onChange={(value) => setUser({ ...user, denialCategory: value })}
+                      placeholder="Select Category"
+                      theme={theme}
+                    />
+                    <MultiSelect
+                      label="Payer"
+                      options={assignFilter.payer}
+                      selected={user.payer}
+                      onChange={(value) => setUser({ ...user, payer: value })}
+                      placeholder="Select Payer"
+                      theme={theme}
+                    />
+                    <MultiSelect
+                      label="Facility"
+                      options={assignFilter.facility}
+                      selected={user.facility}
+                      onChange={(value) => setUser({ ...user, facility: value })}
+                      placeholder="Select Facility"
+                      theme={theme}
+                    />
+                    <MultiSelect
+                      label="Client State"
+                      options={assignFilter.clientState}
+                      selected={user.clientState}
+                      onChange={(value) => setUser({ ...user, clientState: value })}
+                      placeholder="Select Client State"
+                      theme={theme}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-[1fr_auto] items-center">
+                <div className="relative">
+                  <input
+                    type="text"
+                    readOnly
+                    className={`text-sm rounded-full px-4 py-2.5 border w-full ${
+                      theme === 'dark' ? 'bg-[#2B2F35] text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
+                    }`}
+                    value={user.password}
+                    placeholder="Generated Password"
+                  />
+                  <span className={`absolute right-4 top-1/2 -translate-y-1/2 text-xs ${theme === 'dark' ? 'text-white/40' : 'text-slate-400'}`}>
+                    Auto
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => generatePassword(12)}
+                  className={`px-4 py-2 rounded-full text-xs font-semibold border ${
+                    theme === 'dark' ? 'border-white/10 text-white/70 hover:bg-white/10' : 'border-slate-200 text-slate-600 hover:bg-white'
+                  }`}
+                >
+                  Regenerate
+                </button>
               </div>
             </div>
-       
-            <div className='flex flex-col gap-2'>
-  <span className={theme === 'dark' ? 'text-white' : ''}>Role</span>
-  <select 
-    className={`text-sm rounded-lg block w-full py-2 px-3 border border-gray-300 ${
-      theme === 'dark' 
-        ? 'bg-[#151619] text-white border-gray-600' 
-        : 'bg-white text-gray-500'
-    }`}
-    value={user.role}
-    onChange={(e) => setUser({ ...user, role: e.target.value })}
-  >
-    <option value="user" className={theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}>
-      User
-    </option>
-    <option value="admin" className={theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}>
-      Admin
-    </option>
-  </select>
-</div>
 
-<div className='flex flex-col gap-2'>
-  <span className={theme === 'dark' ? 'text-white' : ''}>Password</span>
-  <div className='flex items-center'>
-    <div className="relative w-full flex-1">
-      <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke={theme === 'dark' ? '#9CA3AF' : '#828385'} className="size-6">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
-        </svg>
-      </div>
-      <input
-        type='text'
-        readOnly
-        className={`text-sm rounded-l-lg block w-full py-2 px-3 pl-9 border border-gray-300 ${
-          theme === 'dark' 
-            ? 'bg-[#151619] text-white border-gray-600' 
-            : 'bg-white text-gray-500'
-        }`}
-        value={user.password}
-      />
-    </div>
-    <div 
-      className={`rounded-r-lg py-[6px] px-[6px] border-y border-r border-gray-300 cursor-pointer ${
-        theme === 'dark' 
-          ? 'bg-[#151619] text-gray-400 border-gray-600' 
-          : 'bg-white text-gray-500'
-      }`}
-      onClick={() => generatePassword(12)}
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-      </svg>
-    </div>
-  </div>
-</div>
-         
-            <div className='flex flex-col gap-2'>
-            <span className={theme === 'dark' ? 'text-white' : ''}>Status</span>
-  <div className={`relative p-1 rounded-lg flex w-full max-w-md ${
-    theme === 'dark' ? 'bg-[#1E1E1E]' : 'bg-gray-100'
-  }`}>
-    {/* Sliding background */}
-    <div 
-      className={`absolute transition-all duration-200 ease-in-out h-[90%] top-[5%] w-1/3 rounded-md shadow-sm ${
-        theme === 'dark' ? 'bg-[#151619]' : 'bg-white'
-      } ${
-        user.status === 0 ? 'left-[2px]' : 
-        user.status === 1 ? 'left-[33.33%]' : 'left-[66.66%]'
-      }`}
-    />
-    
-    {/* Buttons */}
-    <button
-      onClick={() => setUser({ ...user, status: 0 })}
-      className={`relative flex-1 flex items-center justify-center gap-2 py-2 px-3 z-10 transition-colors duration-200 ${
-        user.status === 0 ? 'text-green-600' : 'text-gray-600'
-      }`}
-    >
-      <svg width="16" height="11" viewBox="0 0 16 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14.6693 1L5.5026 10.1667L1.33594 6" 
-          stroke={user.status === 0 ? "#16a34a" : "#4B5563"} 
-          strokeWidth="1.66667" 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-        />
-      </svg>
-      <span className="text-sm font-medium">Approved</span>
-    </button>
-
-    <button
-      onClick={() => setUser({ ...user, status: 1 })}
-      className={`relative flex-1 flex items-center justify-center gap-2 py-2 px-3 z-10 transition-colors duration-200 ${
-        user.status === 1 ? 'text-orange-400' : 'text-gray-600'
-      }`}
-    >
-      <svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M17.9166 8.58333L16.2505 10.25L14.5833 8.58333M16.4542 9.83333C16.4845 9.55972 16.5 9.28167 16.5 9C16.5 4.85786 13.1421 1.5 9 1.5C4.85786 1.5 1.5 4.85786 1.5 9C1.5 13.1421 4.85786 16.5 9 16.5C11.3561 16.5 13.4584 15.4136 14.8333 13.7144M9 4.83333V9L11.5 10.6667" 
-          stroke={user.status === 1 ? "#ea580c" : "#4B5563"} 
-          strokeWidth="1.66667" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
-      </svg>
-      <span className="text-sm font-medium">Pending</span>
-    </button>
-
-    <button
-      onClick={() => setUser({ ...user, status: 2 })}
-      className={`relative flex-1 flex items-center justify-center gap-2 py-2 px-3 z-10 transition-colors duration-200 ${
-        user.status === 2 ? 'text-red-600' : 'text-gray-600'
-      }`}
-    >
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4.10573 4.10829L15.8891 15.8916M18.3307 9.99996C18.3307 14.6023 14.5998 18.3333 9.9974 18.3333C5.39502 18.3333 1.66406 14.6023 1.66406 9.99996C1.66406 5.39759 5.39502 1.66663 9.9974 1.66663C14.5998 1.66663 18.3307 5.39759 18.3307 9.99996Z" 
-          stroke={user.status === 2 ? "#dc2626" : "#4B5563"} 
-          strokeWidth="1.66667" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
-      </svg>
-      <span className="text-sm font-medium">Refused</span>
-    </button>
-  </div>
-</div>
-            
-          </div>
-          <div className='flex gap-4 mb-2 justify-end pt-3 pr-3'>
-              <div className='rounded-lg text-[16px] font-semibold bg-[#c1d8fa] text-[#005DE2] px-[33px] py-[10px] border border-solid cursor-pointer select-none'
+            <div className="flex flex-wrap gap-3 justify-end">
+              <button
+                type="button"
+                className={`rounded-full px-6 py-2 text-sm font-semibold ${
+                  theme === 'dark'
+                    ? 'bg-white/10 text-white hover:bg-white/20'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
                 onClick={() => {
-                  setShowUserModal(false)
-                  setUser({
-                    firstname: '',
-                    lastname: '',
-                    email: '',
-                    role: '',
-                    password: '',
-                    status: 0
-                  })
+                  setShowUserModal(false);
+                  resetUserForm();
                 }}
               >
                 Cancel
-              </div>
-              <div className='rounded-lg text-[16px] font-semibold px-[33px] py-[10px] border border-solid text-white bg-[#005DE2] cursor-pointer select-none'
+              </button>
+              <button
+                type="button"
+                className="rounded-full px-6 py-2 text-sm font-semibold text-white bg-[#005DE2] hover:bg-blue-700"
                 onClick={addUser_backend}
               >
                 Add User
-              </div>
+              </button>
             </div>
+          </div>
         </Box>
       </Modal>
 

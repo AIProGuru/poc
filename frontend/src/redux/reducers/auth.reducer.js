@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { ROLE_STANDARD } from "../../utils/roles";
 
 const initialState = {
   isAuthenticated: true,
@@ -6,7 +7,7 @@ const initialState = {
   firstname: '',
   lastname: '',
   email: '',
-  role: 'admin',
+  role: ROLE_STANDARD,
   permission: '',
 };
 

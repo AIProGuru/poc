@@ -36,8 +36,9 @@ import ClientDashboard from "../pages/ClientDashboard";
 import Edit_client from "../pages/Client/Edit_client";
 import demoRoutes from "./demo";
 import AccountSettings from "../pages/AccountSettings";
+import { ALL_ROLES, CLIENT_MANAGEMENT_ROLES, USER_MANAGEMENT_ROLES } from "../utils/roles";
 
-const AUTH_ROLES = ["demo", "admin", "user", "super-admin"];
+const AUTH_ROLES = ALL_ROLES;
 
 const routesConfig = [
   {
@@ -50,7 +51,7 @@ const routesConfig = [
   // },
   {
     path: "/management",
-    element: <PrivateRoute role={["admin"]} element={Demo} />,
+    element: <PrivateRoute role={USER_MANAGEMENT_ROLES} element={Demo} />,
     children: managementRoutes,
   },
   {
@@ -94,23 +95,23 @@ const routesConfig = [
   // },
   {
     path: "/train",
-    element: <PrivateRoute role={["admin"]} element={NormalChat} />,
+    element: <PrivateRoute role={USER_MANAGEMENT_ROLES} element={NormalChat} />,
   },
   {
     path: "/train",
-    element: <PrivateRoute role={["admin"]} element={NormalChat} />,
+    element: <PrivateRoute role={USER_MANAGEMENT_ROLES} element={NormalChat} />,
   },
   {
     path: "/clientmanagement",
-    element: <PrivateRoute role={AUTH_ROLES} element={ClientManagement} />,
+    element: <PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={ClientManagement} />,
   },
   {
     path: "/client/:clientId",
-    element: <PrivateRoute role={AUTH_ROLES} element={ClientDashboard} />,
+    element: <PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={ClientDashboard} />,
   },
   {
     path: "/client/:id/edit",
-    element: <PrivateRoute role={AUTH_ROLES} element={Edit_client} />,
+    element: <PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={Edit_client} />,
   },
   {
     // path: "/home",

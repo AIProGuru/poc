@@ -5,8 +5,9 @@ import ReboundDetailView from "../components/demo-layout/rebound_dash/ReboundDet
 import ArIntel from "../components/demo-layout/rebound_dash/ArIntel";
 import AIDetail from "../components/demo-layout/rebound_dash/AIDetail";
 import RCMGPT from "../components/demo-layout/rebound_dash/RCMGPT";
+import { ALL_ROLES } from "../utils/roles";
 
-const AUTH_ROLES = ["demo", "admin", "user", "super-admin"];
+const AUTH_ROLES = ALL_ROLES;
 
 const reboundRoutes = [
   {

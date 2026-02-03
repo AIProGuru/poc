@@ -4,6 +4,7 @@ import { Outlet } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import MySidebar from "../components/demo-layout/Sidebar";
 import Header from '../components/demo-layout/Header';
+import SupportWidget from "../components/demo-layout/SupportWidget";
 import { setToggleMenu } from "../redux/reducers/menu.reducer";
 
 const Demo = () => {
@@ -25,6 +26,7 @@ const Demo = () => {
         <div className="flex-1 overflow-y-auto content-scrollbar">
           <Outlet />
         </div>
+        <SupportWidget />
       </div>
     </div>
   );

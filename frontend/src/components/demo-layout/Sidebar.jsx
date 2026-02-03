@@ -20,6 +20,7 @@ import {
 } from "../../redux/reducers/app.reducer";
 import { setSelectedTags } from "../../redux/reducers/tag.reducer";
 import { useApiEndpoint } from "../../ApiEndpointContext";
+import { canAccessWorklists } from "../../utils/roles";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
@@ -27,6 +28,7 @@ const Sidebar = () => {
   const location = useLocation();
   const type = useSelector((state) => state.app.type);
   const theme = useSelector((state) => state.app.theme);
+  const role = useSelector((state) => state.auth.role);
   const counts = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   const models = useSelector((state) => state.app.models) || [];
@@ -69,7 +71,7 @@ const Sidebar = () => {
       (sum, row) => sum + (Number(row.Count) || 0),
       0
     );
-    return [
+    const baseItems = [
       { id: "home", title: "Home", icon: "home", badge: null, tab: 0 },
       { id: "dashboard", title: "Dashboard", icon: "dashboard", badge: null },
       {
@@ -150,10 +152,14 @@ const Sidebar = () => {
         icon: "book",
         badge: aiBadge || null,
       },
-      { id: "support", title: "Support", icon: "lifebuoy", badge: null },
       { id: "settings", title: "Settings", icon: "cog", badge: null },
     ];
-  }, [denialsCount, models, patientResponsibilityCount]);
+    if (!canAccessWorklists(role)) {
+      const allowedIds = new Set(["home", "dashboard", "ai-library", "settings"]);
+      return baseItems.filter((item) => allowedIds.has(item.id));
+    }
+    return baseItems;
+  }, [denialsCount, models, patientResponsibilityCount, role]);
 
   const navExtraFilters = useMemo(
     () => ({

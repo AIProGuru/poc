@@ -7,8 +7,9 @@ import AIDetail from "../components/demo-layout/rebound_dash/AIDetail";
 import RCMGPT from "../components/demo-layout/rebound_dash/RCMGPT";
 import DemoDash from "../demo/DemoDash";
 import DetailView from "../demo/DetailView";
+import { ALL_ROLES } from "../utils/roles";
 
-const AUTH_ROLES = ["demo", "admin", "user", "super-admin"];
+const AUTH_ROLES = ALL_ROLES;
 
 const demoRoutes = [
   {
