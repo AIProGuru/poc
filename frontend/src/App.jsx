@@ -13,6 +13,10 @@ import {
   setLastname,
   setPermission,
   setEmail,
+  setModules,
+  setDenialCategory,
+  setPayer,
+  setValue,
 } from "./redux/reducers/auth.reducer";
 import { useApiEndpoint } from "./ApiEndpointContext";
 import {
@@ -143,6 +147,10 @@ function App() {
         dispatch(setLastname(userData.lastname ?? ""));
         dispatch(setEmail(userData.email ?? ""));
         dispatch(setRole(userData.role ?? ""));
+        dispatch(setModules(userData.client ?? []));
+        dispatch(setDenialCategory(userData.denialCategory ?? []));
+        dispatch(setPayer(userData.payer ?? []));
+        dispatch(setValue(userData.value ?? []));
       });
     });
 

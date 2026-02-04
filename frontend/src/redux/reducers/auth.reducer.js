@@ -10,6 +10,10 @@ const initialState = {
   email: '',
   role: ROLE_STANDARD,
   permission: '',
+  modules: [],
+  denialCategory: [],
+  payer: [],
+  value: [],
 };
 
 const authReducer = createSlice({
@@ -40,6 +44,18 @@ const authReducer = createSlice({
     setPermission: (state, action) => {
       state.permission = action.payload
     },
+    setModules: (state, action) => {
+      state.modules = Array.isArray(action.payload) ? action.payload : [];
+    },
+    setDenialCategory: (state, action) => {
+      state.denialCategory = Array.isArray(action.payload) ? action.payload : [];
+    },
+    setPayer: (state, action) => {
+      state.payer = Array.isArray(action.payload) ? action.payload : [];
+    },
+    setValue: (state, action) => {
+      state.value = Array.isArray(action.payload) ? action.payload : [];
+    },
   }
 });
 
@@ -52,6 +68,10 @@ export const {
   setFirstname,
   setLastname,
   setPermission,
+  setModules,
+  setDenialCategory,
+  setPayer,
+  setValue,
 } = authReducer.actions;
 
 export default authReducer.reducer;

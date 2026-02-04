@@ -21,6 +21,7 @@ import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, s
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { toast } from "react-toastify";
 import DataTableTags from "./DataTableTags";
+import { buildAccessExtra } from "../../../utils/accessFilters";
 
 const DataTable = (props) => {
   const apiUrl = useApiEndpoint();
@@ -31,6 +32,12 @@ const DataTable = (props) => {
   const dispatch = useDispatch();
   const tableScrollRef = useRef(null);
   const role = useSelector((state) => state.auth.role);
+  const access = useSelector((state) => ({
+    modules: state.auth.modules,
+    denialCategory: state.auth.denialCategory,
+    payer: state.auth.payer,
+    value: state.auth.value,
+  }));
   const startDate = useSelector((state) => state.app.startDate)
   const endDate = useSelector((state) => state.app.endDate)
   const selectedTags = useSelector((state) => state.tags.selectedTags)
@@ -157,7 +164,8 @@ const DataTable = (props) => {
 
     if (apiUrl === '') return;
     if (!tableLoading) return;
-    const includeAllCategories = extra?.IncludeAllCategories;
+    const accessExtra = buildAccessExtra(extra, access, role);
+    const includeAllCategories = accessExtra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) return;
     requestInFlightRef.current = true;
     const requestId = ++requestRef.current;
@@ -173,7 +181,7 @@ const DataTable = (props) => {
       remark: remark,
       procedure: procedure,
       pos: pos,
-      extra: extra,
+      extra: accessExtra,
       sort: order
     }).then(res => {
       if (requestRef.current !== requestId) return;
@@ -186,11 +194,12 @@ const DataTable = (props) => {
       requestInFlightRef.current = false;
       dispatch(setTableLoading(false));
     });
-  }, [tableLoading, selectedTags, order, extra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate])
+  }, [tableLoading, selectedTags, order, extra, access, role, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate])
 
   useEffect(() => {
     if (apiUrl === '') return;
-    const includeAllCategories = extra?.IncludeAllCategories;
+    const accessExtra = buildAccessExtra(extra, access, role);
+    const includeAllCategories = accessExtra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) {
       setSummaryTotals(null);
       return;
@@ -206,7 +215,7 @@ const DataTable = (props) => {
       remark,
       procedure,
       pos,
-      extra,
+      extra: accessExtra,
     }).then((res) => {
       if (summaryRequestRef.current !== requestId) return;
       setSummaryTotals(res.data);
@@ -214,7 +223,7 @@ const DataTable = (props) => {
       if (summaryRequestRef.current !== requestId) return;
       setSummaryTotals(null);
     });
-  }, [apiUrl, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, extra])
+  }, [apiUrl, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, extra, access, role])
 
   const setOrder = (ord) => {
     const ordName = order[order.length - 1] === '-' ? order.substring(0, order.length - 1) : order;

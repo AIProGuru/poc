@@ -5,6 +5,7 @@ import { samplifyInteger } from "../../../utils/config";
 import { setPart1Count } from "../../../redux/reducers/count.reducer";
 import { setPart1Loading } from "../../../redux/reducers/app.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
+import { buildAccessExtra } from "../../../utils/accessFilters";
 
 const Part1 = (props) => {
   const apiUrl = useApiEndpoint();
@@ -22,11 +23,20 @@ const Part1 = (props) => {
   const pos = useSelector((state) => state.app.pos);
   const extra = useSelector((state) => state.app.extraFilter);
   const theme = useSelector((state) => state.app.theme);
+  const role = useSelector((state) => state.auth.role);
+  const access = useSelector((state) => ({
+    modules: state.auth.modules,
+    denialCategory: state.auth.denialCategory,
+    payer: state.auth.payer,
+    value: state.auth.value,
+  }));
 
   useEffect(() => {
     if (apiUrl === '') return;
     if (!part1Loading) return;
-    if (selectedTags.length === 0) return;
+    const accessExtra = buildAccessExtra(extra, access, role);
+    const includeAllCategories = accessExtra?.IncludeAllCategories;
+    if (!includeAllCategories && selectedTags.length === 0) return;
     axios.post(`${apiUrl}/part1_all`, {
       tabIndex,
       keyword,
@@ -37,12 +47,12 @@ const Part1 = (props) => {
       remark,
       procedure,
       pos,
-      extra
+      extra: accessExtra
     }).then(res => {
       dispatch(setPart1Count([res.data]));
       dispatch(setPart1Loading(false));
     });
-  }, [part1Loading, selectedTags]);
+  }, [part1Loading, selectedTags, extra, access, role]);
 
   return (
     <div className="w-full md:w-[60%]">

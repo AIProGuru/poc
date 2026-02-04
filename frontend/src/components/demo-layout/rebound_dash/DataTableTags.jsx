@@ -22,6 +22,7 @@ import { SERVER_URL } from "../../../utils/config";
 import { setSelectedTags } from "../../../redux/reducers/tag.reducer";
 import { setPart1Count, setPart2Count } from "../../../redux/reducers/count.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
+import { buildAccessExtra } from "../../../utils/accessFilters";
 
 export default function DataTableTags(props) {
   const apiUrl = useApiEndpoint();
@@ -33,6 +34,13 @@ export default function DataTableTags(props) {
   const perPage = useSelector((state) => state.app.pageSize)
   const keyword = useSelector((state) => state.app.keyword)
   const tabIndex = useSelector((state) => state.app.tabIndex)
+  const role = useSelector((state) => state.auth.role);
+  const access = useSelector((state) => ({
+    modules: state.auth.modules,
+    denialCategory: state.auth.denialCategory,
+    payer: state.auth.payer,
+    value: state.auth.value,
+  }));
 
   const [startDate, set_startDate] = useState(useSelector((state) => state.app.startDate))
   const [endDate, set_endDate] = useState(useSelector((state) => state.app.endDate))
@@ -56,6 +64,7 @@ export default function DataTableTags(props) {
 
   const applyFilter = () => {
     const extraPayload = selectedTags.length === 0 ? { IncludeAllCategories: true } : {};
+    const accessExtra = buildAccessExtra(extraPayload, access, role);
     // dispatch(increasePart1Loading())
     dispatch(setPart1Loading(true))
     dispatch(setPart2Loading(true))
@@ -83,7 +92,7 @@ export default function DataTableTags(props) {
       remark: remark,
       procedure: procedure,
       pos: pos,
-      extra: extraPayload,
+      extra: accessExtra,
       sort: props.order
     }).then(res => {
       dispatch(setTableData(res.data.data));
@@ -99,7 +108,8 @@ export default function DataTableTags(props) {
       code: code,
       remark: remark,
       procedure: procedure,
-      pos: pos
+      pos: pos,
+      extra: accessExtra
     }).then(res => {
       dispatch(setPart1Count(res.data));
       // dispatch(decreasePart1Loading())
@@ -114,7 +124,8 @@ export default function DataTableTags(props) {
       code: code,
       remark: remark,
       procedure: procedure,
-      pos: pos
+      pos: pos,
+      extra: accessExtra
     }).then(res => {
       dispatch(setPart2Count(res.data));
       dispatch(setPart2Loading(false))

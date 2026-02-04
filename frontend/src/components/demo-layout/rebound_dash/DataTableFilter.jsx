@@ -22,6 +22,7 @@ import { SERVER_URL } from "../../../utils/config";
 import { setSelectedTags } from "../../../redux/reducers/tag.reducer";
 import { setPart1Count, setPart2Count } from "../../../redux/reducers/count.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
+import { buildAccessExtra } from "../../../utils/accessFilters";
 import {
   increasePart1Loading, setStartDate, setEndDate, setCurrentPage, setTableData, setTotalPage, setPart1Loading, setPart2Loading, setTableLoading, setCode, setRemark, setProcedure, setPOS, decreasePart1Loading, setExtraFilter
 } from "../../../redux/reducers/app.reducer";
@@ -36,6 +37,13 @@ export default function DataTableFilter(props) {
   const perPage = useSelector((state) => state.app.pageSize)
   const keyword = useSelector((state) => state.app.keyword)
   const tabIndex = useSelector((state) => state.app.tabIndex)
+  const role = useSelector((state) => state.auth.role);
+  const access = useSelector((state) => ({
+    modules: state.auth.modules,
+    denialCategory: state.auth.denialCategory,
+    payer: state.auth.payer,
+    value: state.auth.value,
+  }));
 
   const [startDate, set_startDate] = useState(useSelector((state) => state.app.startDate))
   const [endDate, set_endDate] = useState(useSelector((state) => state.app.endDate))
@@ -58,6 +66,8 @@ const theme = useSelector((state) => state.app.theme)
   };
 
   const applyFilter = () => {
+    const extraPayload = selectedTags.length === 0 ? { IncludeAllCategories: true } : {};
+    const accessExtra = buildAccessExtra(extraPayload, access, role);
     dispatch(setPart1Loading(true))
     dispatch(setPart2Loading(true))
     dispatch(setTableLoading(true))
@@ -69,7 +79,7 @@ const theme = useSelector((state) => state.app.theme)
     dispatch(setRemark(remark))
     dispatch(setProcedure(procedure))
     dispatch(setPOS(pos))
-    dispatch(setExtraFilter({}))
+    dispatch(setExtraFilter(extraPayload))
     setAnchorEl(null);
   
     axios.post(`${apiUrl}/data_all`, {
@@ -84,6 +94,7 @@ const theme = useSelector((state) => state.app.theme)
       remark: remark,
       procedure: procedure,
       pos: pos,
+      extra: accessExtra,
       sort: props.order
     }).then(res => {
       dispatch(setTableData(res.data.data));
@@ -103,7 +114,8 @@ const theme = useSelector((state) => state.app.theme)
       code: code,
       remark: remark,
       procedure: procedure,
-      pos: pos
+      pos: pos,
+      extra: accessExtra
     }).then(res => {
       console.log("rebound_data_part1_all response:", res.data);
       dispatch(setPart1Count(res.data));
@@ -122,7 +134,8 @@ const theme = useSelector((state) => state.app.theme)
       code: code,
       remark,
       procedure,
-      pos
+      pos,
+      extra: accessExtra
     }).then(res => {
       console.log("rebound_data_part2_all response:", res.data);
       dispatch(setPart2Count(res.data));

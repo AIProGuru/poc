@@ -26,12 +26,21 @@ def generate_sql(
     sort = "",
 ):
     include_all_categories = extra.get("IncludeAllCategories", False)
+    allowed_categories = extra.get("AllowedCategories") or []
+    allowed_set = set([str(item).strip() for item in allowed_categories if item])
     apply_tag_filters = not (include_all_categories and tab_index == TabIndex.MAIN)
     tags = ""
     flag = False
     filteredTags = []
+    effective_tags = selectedTags or []
+    if allowed_set:
+        if include_all_categories and tab_index == TabIndex.MAIN:
+            effective_tags = list(allowed_set)
+            apply_tag_filters = True
+        else:
+            effective_tags = [item for item in effective_tags if str(item).strip() in allowed_set]
     if apply_tag_filters:
-        for item in selectedTags:
+        for item in effective_tags:
             if not item:
                 continue
             if tab_index == 0:
@@ -55,6 +64,8 @@ def generate_sql(
             tags += f"'{tag}',"
         if tags.endswith(","):
             tags = tags[: len(tags) - 1]
+    if allowed_set and tags == "" and apply_tag_filters:
+        tags = "'__none__'"
     group = ""
     if code != "":
         group = code[:2].upper()
@@ -124,6 +135,16 @@ def generate_sql(
             else:
                 query += f" OR CUSTOM_ALL.PayerName LIKE '%{name}%'"
         query += ')'
+    if "AllowedPayers" in extra:
+        allowed_payers = [name for name in extra.get("AllowedPayers", []) if name]
+        if len(allowed_payers) > 0:
+            query += " AND ("
+            for name in allowed_payers:
+                if query[-1] == '(':
+                    query += f"CUSTOM_ALL.PayerName LIKE '%{name}%'"
+                else:
+                    query += f" OR CUSTOM_ALL.PayerName LIKE '%{name}%'"
+            query += ")"
     if "Only" in extra:
         query += f"""
             AND EXISTS (
@@ -136,6 +157,28 @@ def generate_sql(
         query += f"and CUSTOM_ALL.PayerName LIKE '%{extra['PayerNameAll']}%' "
     if "InsuranceType" in extra:
         query += f"and CUSTOM_ALL.InsuranceType='{extra['InsuranceType']}' "
+    if "AllowedValueRanges" in extra:
+        ranges = extra.get("AllowedValueRanges") or []
+        conditions = []
+        for item in ranges:
+            try:
+                min_val = float(item.get("min")) if item.get("min") is not None else None
+            except (TypeError, ValueError, AttributeError):
+                min_val = None
+            try:
+                max_val = float(item.get("max")) if item.get("max") is not None else None
+            except (TypeError, ValueError, AttributeError):
+                max_val = None
+            if min_val is None and max_val is None:
+                continue
+            if min_val is not None and max_val is not None:
+                conditions.append(f"(CUSTOM_ALL.Amount BETWEEN {min_val} AND {max_val})")
+            elif min_val is not None:
+                conditions.append(f"(CUSTOM_ALL.Amount >= {min_val})")
+            elif max_val is not None:
+                conditions.append(f"(CUSTOM_ALL.Amount <= {max_val})")
+        if len(conditions) > 0:
+            query += f" AND ({' OR '.join(conditions)})"
     if extra.get("Missing835"):
         query += "AND CUSTOM_ALL.id_835 IS NULL "
     exclude_ai_models = extra.get("ExcludeAiModels")

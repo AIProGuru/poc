@@ -27,6 +27,8 @@ const ArIntel = ({ onModelSelect }) => {
   const models = useSelector((state) => state.app.models);
   const theme = useSelector((state) => state.app.theme);
   const tags = useSelector((state) => state.tags.allTags);
+  const role = useSelector((state) => state.auth.role);
+  const allowedModules = useSelector((state) => state.auth.modules);
   const isDark = theme === 'dark';
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -50,30 +52,42 @@ const ArIntel = ({ onModelSelect }) => {
     return `${tag.label || tag.name || tag.value || tag.id || ''}`.trim();
   };
 
-  const availableFilters = useMemo(
-    () => (tags || []).map(normalizeTag).filter(Boolean),
-    [tags]
-  );
+  const availableFilters = useMemo(() => {
+    const seen = new Set();
+    return (models || [])
+      .map((row) => `${row.ModelTitle || row.model_title || 'AI Agent'}`.trim())
+      .filter((title) => title !== '')
+      .filter((title) => {
+        if (seen.has(title)) return false;
+        seen.add(title);
+        return true;
+      });
+  }, [models]);
 
   const filteredModels = useMemo(() => {
     const needle = searchTerm.trim().toLowerCase();
     const selectedSet = new Set(selectedFilters);
+    const restrictModules = Array.isArray(allowedModules) && allowedModules.length > 0
+      && !['admin', 'super-admin', 'manager', 'internal-admin'].includes(role);
     return (models || []).filter((row) => {
       const title = `${row.Title || ''}`.toLowerCase();
       const category = `${row.Category || row.Group || ''}`.toLowerCase();
       const code = `${row.Code || ''}`.toLowerCase();
+      const modelTitle = `${row.ModelTitle || row.model_title || ''}`.toLowerCase();
+      const matchesModule = !restrictModules || allowedModules.includes(row.ModelTitle || row.model_title || 'AI Agent');
       const matchesSearch =
         !needle ||
         title.includes(needle) ||
         category.includes(needle) ||
-        code.includes(needle);
-      const categoryLabel = normalizeTag(row.Category || row.Group);
+        code.includes(needle) ||
+        modelTitle.includes(needle);
+      const categoryLabel = `${row.ModelTitle || row.model_title || ''}`.trim();
       const matchesFilters =
         selectedSet.size === 0 ||
         (categoryLabel && selectedSet.has(categoryLabel));
-      return matchesSearch && matchesFilters;
+      return matchesModule && matchesSearch && matchesFilters;
     });
-  }, [models, searchTerm, selectedFilters]);
+  }, [models, searchTerm, selectedFilters, allowedModules, role]);
 
   const groupedModels = useMemo(() => {
     const groups = new Map();
@@ -167,7 +181,7 @@ const ArIntel = ({ onModelSelect }) => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <div className={`text-xs font-semibold uppercase tracking-[0.2em] ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
+        <div className={`ont-inter font-semibold text-[24px] leading-none tracking-normal ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
           Denials &gt; Automation Catalog
         </div>
       </div>
@@ -201,7 +215,7 @@ const ArIntel = ({ onModelSelect }) => {
                 className={`w-full bg-transparent text-sm outline-none ${isDark ? 'placeholder:text-white/40 text-white' : 'placeholder:text-slate-400 text-slate-700'}`}
               />
             </div>
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {availableFilters.length === 0 && (
                 <div className={`text-xs ${isDark ? 'text-white/50' : 'text-slate-500'}`}>
                   No filters available.
@@ -228,17 +242,14 @@ const ArIntel = ({ onModelSelect }) => {
       <div className={`rounded-xl border ${isDark ? 'bg-[#27282D] border-[#222632] text-[#F4F4F4]' : 'bg-white border-slate-200 text-slate-900'} shadow-none`}>
         <div className="w-full px-6 py-5 text-left shadow-none">
           <div>
-            <p className="font-inter font-medium text-[24px] leading-[100%] tracking-[0%] text-[#0E7D81]">AI Models</p>
-            <h2 className="text-xl font-semibold mt-1 leading-tight">Denial Automation Catalog</h2>
+            <p className="font-inter font-medium text-[24px] leading-[100%] tracking-[0%]">AI Agent</p>
+
           </div>
         </div>
-        <div className="px-6">
-          <div className={`h-px w-full ${isDark ? 'bg-[#CDCDCD]' : 'bg-slate-200'}`} />
-        </div>
 
-        <div className="p-6 flex flex-col gap-6">
+        <div className="px-6 pb-6 flex flex-col gap-6">
           {groupedModels.length === 0 && (
-            <div className={`rounded-2xl border text-sm text-center py-6 ${isDark ? 'border-white/10 bg-white/5 text-white/70' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+            <div className={`rounded-2xl border text-sm text-center py-6 ${isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
               No AI models available.
             </div>
           )}
@@ -265,9 +276,6 @@ const ArIntel = ({ onModelSelect }) => {
                   className="w-full flex items-center justify-between px-6 py-4 text-left"
                 >
                   <div>
-                    <p className={`text-xs uppercase tracking-[0.2em] ${isDark ? 'text-[#8AE5E6]' : 'text-[#0E7D81]'}`}>
-                      AI Agent
-                    </p>
                     <h3 className={`mt-1 text-lg font-semibold ${isDark ? 'text-[#F4F4F4]' : 'text-slate-900'}`}>
                       {group.title}
                     </h3>

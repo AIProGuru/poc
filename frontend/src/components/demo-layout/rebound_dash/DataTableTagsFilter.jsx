@@ -10,6 +10,13 @@ import { useParams } from "react-router-dom";
 
 export default function DataTableTagsFilter(props) {
   const allTags = useSelector((state) => state.tags.allTags);
+  const allowedCategories = useSelector((state) => state.auth.denialCategory);
+  const role = useSelector((state) => state.auth.role);
+  const hasCategoryRestrictions = Array.isArray(allowedCategories) && allowedCategories.length > 0
+    && !['admin', 'super-admin', 'manager', 'internal-admin'].includes(role);
+  const tagOptions = hasCategoryRestrictions
+    ? allTags.filter((tag) => allowedCategories.includes(tag))
+    : allTags;
 
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +24,7 @@ export default function DataTableTagsFilter(props) {
     <Autocomplete
       multiple
       id="checkboxes-tags-demo"
-      options={allTags}
+      options={tagOptions}
       value={props.selectedTags}
       onChange={(event, value) => {
         props.setSelectedTags(value);
