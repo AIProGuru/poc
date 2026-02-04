@@ -140,10 +140,11 @@ def generate_sql(
         if len(allowed_payers) > 0:
             query += " AND ("
             for name in allowed_payers:
+                safe_name = str(name).replace("'", "''")
                 if query[-1] == '(':
-                    query += f"CUSTOM_ALL.PayerName LIKE '%{name}%'"
+                    query += f"CUSTOM_ALL.PayerName LIKE '%{safe_name}%'"
                 else:
-                    query += f" OR CUSTOM_ALL.PayerName LIKE '%{name}%'"
+                    query += f" OR CUSTOM_ALL.PayerName LIKE '%{safe_name}%'"
             query += ")"
     if "Only" in extra:
         query += f"""

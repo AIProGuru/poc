@@ -14,9 +14,14 @@ export default function DataTableTagsFilter(props) {
   const role = useSelector((state) => state.auth.role);
   const hasCategoryRestrictions = Array.isArray(allowedCategories) && allowedCategories.length > 0
     && !['admin', 'super-admin', 'manager', 'internal-admin'].includes(role);
-  const tagOptions = hasCategoryRestrictions
-    ? allTags.filter((tag) => allowedCategories.includes(tag))
-    : allTags;
+  const tagOptions = (() => {
+    if (!hasCategoryRestrictions) return allTags;
+    const allowedSet = new Set(allowedCategories);
+    if (allowedSet.has('Pend 835')) {
+      allowedSet.add('Delinquent');
+    }
+    return allTags.filter((tag) => allowedSet.has(tag));
+  })();
 
   const [loading, setLoading] = useState(false);
 

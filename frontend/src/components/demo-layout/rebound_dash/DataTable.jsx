@@ -102,6 +102,7 @@ const DataTable = (props) => {
   };
   const [summaryTotals, setSummaryTotals] = useState(null);
   const summaryRequestRef = useRef(0);
+  const summarySignatureRef = useRef('');
   const summary = React.useMemo(() => {
     const count = tableData.length;
     const charges = tableData.reduce((sum, row) => {
@@ -213,6 +214,20 @@ const DataTable = (props) => {
       setSummaryTotals(null);
       return;
     }
+    const signature = JSON.stringify({
+      selectedTags,
+      keyword,
+      tabIndex,
+      startDate,
+      endDate,
+      code,
+      remark,
+      procedure,
+      pos,
+      accessExtra,
+    });
+    if (summarySignatureRef.current === signature) return;
+    summarySignatureRef.current = signature;
     const requestId = ++summaryRequestRef.current;
     axios.post(`${apiUrl}/data_summary`, {
       selectedTags,

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import TableContainer from "@mui/material/TableContainer";
@@ -19,7 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { auth } from '../../../FirebaseConfig';
 import { SERVER_URL } from '../../../utils/config';
-import { useApiEndpoint } from "../../../ApiEndpointContext";
+import { MODULE_OPTIONS, MODULE_CATEGORY_MAP } from "../../../utils/moduleCatalog";
 import { ROLE_OPTIONS, ROLE_STANDARD, normalizeRole } from "../../../utils/roles";
 import { setRole } from '../../../redux/reducers/auth.reducer';
 
@@ -79,12 +78,11 @@ const UserRoleCell = ({ row, onUpdateRole, theme }) => {
 
 const UserManagement = ({ embedded = false, view = 'actions' }) => {
   const navigate = useNavigate();
-  const apiUrl = useApiEndpoint();
   const isTableView = view === 'table';
   const isActionsView = view === 'actions';
   const isAddView = view === 'add';
   const [assignFilter, setAssignFilter] = useState({
-    client: [],
+    client: MODULE_OPTIONS,
     selectedClient: [],
     facility: [],
     selectedFacility: [],
@@ -111,7 +109,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   const [showAdminActions, setShowAdminActions] = useState(view === 'actions');
   const [showSkillsets, setShowSkillsets] = useState(true);
   const tableRef = React.useRef(null);
-  const [moduleCatalog, setModuleCatalog] = useState({});
 
   const [user, setUser] = useState({
     user_id: '',
@@ -149,37 +146,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   };
 
   useEffect(() => {
-    if (!apiUrl) return;
-    let cancelled = false;
-    axios.get(`${apiUrl}/get_artificial_intelligence`).then((res) => {
-      if (cancelled) return;
-      const map = {};
-      (res.data || []).forEach((row) => {
-        const title = `${row.ModelTitle || row.model_title || 'AI Agent'}`.trim();
-        if (!title) return;
-        if (!map[title]) {
-          map[title] = new Set();
-        }
-        if (row.Category) {
-          map[title].add(row.Category);
-        }
-      });
-      const options = Object.keys(map).sort();
-      setModuleCatalog(map);
-      setAssignFilter((prev) => ({
-        ...prev,
-        client: options,
-        denialCategory: [],
-      }));
-    }).catch(() => {
-      // Ignore module load errors for now.
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [apiUrl]);
-
-  useEffect(() => {
     const modules = Array.isArray(user.client) ? user.client : [];
     if (modules.length === 0) {
       setAssignFilter((prev) => ({ ...prev, denialCategory: [] }));
@@ -188,10 +154,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     }
     const allowed = new Set();
     modules.forEach((module) => {
-      const categories = moduleCatalog[module];
-      if (categories) {
-        categories.forEach((category) => allowed.add(category));
-      }
+      const categories = MODULE_CATEGORY_MAP[module] || [];
+      categories.forEach((category) => allowed.add(category));
     });
     const allowedList = Array.from(allowed).sort();
     setAssignFilter((prev) => ({ ...prev, denialCategory: allowedList }));
@@ -199,7 +163,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       ...prev,
       denialCategory: (prev.denialCategory || []).filter((category) => allowed.has(category)),
     }));
-  }, [user.client, moduleCatalog]);
+  }, [user.client]);
 
   const requireAuthToken = async () => {
     if (!auth.currentUser) {
