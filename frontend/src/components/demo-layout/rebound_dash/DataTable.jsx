@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -32,12 +32,19 @@ const DataTable = (props) => {
   const dispatch = useDispatch();
   const tableScrollRef = useRef(null);
   const role = useSelector((state) => state.auth.role);
-  const access = useSelector((state) => ({
-    modules: state.auth.modules,
-    denialCategory: state.auth.denialCategory,
-    payer: state.auth.payer,
-    value: state.auth.value,
-  }));
+  const accessModules = useSelector((state) => state.auth.modules);
+  const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
+  const accessPayer = useSelector((state) => state.auth.payer);
+  const accessValue = useSelector((state) => state.auth.value);
+  const access = useMemo(
+    () => ({
+      modules: accessModules,
+      denialCategory: accessDenialCategory,
+      payer: accessPayer,
+      value: accessValue,
+    }),
+    [accessModules, accessDenialCategory, accessPayer, accessValue]
+  );
   const startDate = useSelector((state) => state.app.startDate)
   const endDate = useSelector((state) => state.app.endDate)
   const selectedTags = useSelector((state) => state.tags.selectedTags)
@@ -57,6 +64,10 @@ const DataTable = (props) => {
   const procedure = useSelector((state) => state.app.procedure)
   const pos = useSelector((state) => state.app.pos)
   const extra = useSelector((state) => state.app.extraFilter);
+  const accessExtra = useMemo(
+    () => buildAccessExtra(extra, access, role),
+    [extra, access, role]
+  );
   const appTitle = useSelector((state) => state.app.title);
   const [order, _setOrder] = useState("ClaimNo");
   const theme = useSelector((state) => state.app.theme);
@@ -164,7 +175,6 @@ const DataTable = (props) => {
 
     if (apiUrl === '') return;
     if (!tableLoading) return;
-    const accessExtra = buildAccessExtra(extra, access, role);
     const includeAllCategories = accessExtra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) return;
     requestInFlightRef.current = true;
@@ -194,11 +204,10 @@ const DataTable = (props) => {
       requestInFlightRef.current = false;
       dispatch(setTableLoading(false));
     });
-  }, [tableLoading, selectedTags, order, extra, access, role, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate])
+  }, [tableLoading, selectedTags, order, accessExtra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate])
 
   useEffect(() => {
     if (apiUrl === '') return;
-    const accessExtra = buildAccessExtra(extra, access, role);
     const includeAllCategories = accessExtra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) {
       setSummaryTotals(null);
@@ -223,7 +232,7 @@ const DataTable = (props) => {
       if (summaryRequestRef.current !== requestId) return;
       setSummaryTotals(null);
     });
-  }, [apiUrl, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, extra, access, role])
+  }, [apiUrl, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, accessExtra])
 
   const setOrder = (ord) => {
     const ordName = order[order.length - 1] === '-' ? order.substring(0, order.length - 1) : order;

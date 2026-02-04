@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { setPart2Count } from '../../../redux/reducers/count.reducer';
@@ -24,12 +24,19 @@ const Part2 = () => {
   const extra = useSelector((state) => state.app.extraFilter);
   const theme = useSelector((state) => state.app.theme);
   const role = useSelector((state) => state.auth.role);
-  const access = useSelector((state) => ({
-    modules: state.auth.modules,
-    denialCategory: state.auth.denialCategory,
-    payer: state.auth.payer,
-    value: state.auth.value,
-  }));
+  const accessModules = useSelector((state) => state.auth.modules);
+  const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
+  const accessPayer = useSelector((state) => state.auth.payer);
+  const accessValue = useSelector((state) => state.auth.value);
+  const access = useMemo(
+    () => ({
+      modules: accessModules,
+      denialCategory: accessDenialCategory,
+      payer: accessPayer,
+      value: accessValue,
+    }),
+    [accessModules, accessDenialCategory, accessPayer, accessValue]
+  );
 
   useEffect(() => {
     if (apiUrl === '') return;
