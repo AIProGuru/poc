@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from typing import Dict, List, Optional, Tuple
+import json
 import time
 import logging
 from datetime import date, datetime
@@ -499,7 +500,7 @@ def get_triage_actions():
             return jsonify([]), 200
 
         q = f"""
-            SELECT action_label, allow_free_text, sort_order
+            SELECT action_label, allow_free_text, sort_order, transaction_options
             FROM claim_action_items
             WHERE category='{denial_category}' AND is_active=1
             ORDER BY sort_order, action_label
@@ -513,10 +514,20 @@ def get_triage_actions():
 
         ret = []
         for row in rows or []:
+            transaction_options = []
+            raw_options = row.get("transaction_options")
+            if raw_options:
+                try:
+                    parsed = json.loads(raw_options)
+                    if isinstance(parsed, list):
+                        transaction_options = parsed
+                except (json.JSONDecodeError, TypeError):
+                    transaction_options = []
             ret.append(
                 {
                     "label": row["action_label"],
                     "allowFreeText": bool(row.get("allow_free_text", 0)),
+                    "transactionOptions": transaction_options,
                 }
             )
         return jsonify(ret), 200

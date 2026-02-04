@@ -85,6 +85,8 @@ const ReboundDetailView = () => {
     label: "Action",
     checked: false,
     allowFreeText: false,
+    transactionCode: "",
+    transactionOptions: [],
   }));
 
   let { token } = useParams()
@@ -174,6 +176,10 @@ const ReboundDetailView = () => {
             label: item.label || item.action || "Action",
             checked: false,
             allowFreeText: Boolean(item.allowFreeText || item.allow_free_text),
+            transactionCode: "",
+            transactionOptions: Array.isArray(item.transactionOptions)
+              ? item.transactionOptions
+              : [],
           })), savedTriageValue)
         );
       })
@@ -206,16 +212,20 @@ const ReboundDetailView = () => {
   };
 
   const parseTriageActionValue = (value) => {
-    if (!value) return { selected: [], otherText: "" };
+    if (!value) return { selected: [], otherText: "", transactionCodes: {} };
     try {
       const parsed = JSON.parse(value);
       if (Array.isArray(parsed)) {
-        return { selected: parsed.filter(Boolean), otherText: "" };
+        return { selected: parsed.filter(Boolean), otherText: "", transactionCodes: {} };
       }
       if (parsed && typeof parsed === "object") {
         return {
           selected: Array.isArray(parsed.selected) ? parsed.selected.filter(Boolean) : [],
           otherText: parsed.otherText ? `${parsed.otherText}` : "",
+          transactionCodes:
+            parsed.transactionCodes && typeof parsed.transactionCodes === "object"
+              ? parsed.transactionCodes
+              : {},
         };
       }
     } catch (err) {
@@ -227,6 +237,7 @@ const ReboundDetailView = () => {
         .map((item) => item.trim())
         .filter(Boolean),
       otherText: "",
+      transactionCodes: {},
     };
   };
 
@@ -237,7 +248,11 @@ const ReboundDetailView = () => {
       const label = `${item.label || ""}`.trim();
       const isOther = item.allowFreeText || label.toLowerCase() === "other";
       const checked = savedSet.has(label.toLowerCase()) || (isOther && savedOther);
-      return { ...item, checked };
+      const transactionCode =
+        saved.transactionCodes && saved.transactionCodes[label]
+          ? `${saved.transactionCodes[label]}`
+          : "";
+      return { ...item, checked, transactionCode };
     });
   };
 
@@ -279,6 +294,12 @@ const ReboundDetailView = () => {
   const onSubmitTriage = () => {
     if (!currentClaim) return;
     const selected = triageActions.filter((item) => item.checked).map((item) => item.label);
+    const transactionCodes = triageActions.reduce((acc, item) => {
+      if (item.checked && item.transactionCode) {
+        acc[item.label] = item.transactionCode;
+      }
+      return acc;
+    }, {});
     const otherText = triageOtherText.trim();
     if (otherText && !selected.some((label) => `${label}`.toLowerCase() === "other")) {
       selected.push("Other");
@@ -289,7 +310,7 @@ const ReboundDetailView = () => {
     }
     toast.info("Saving triage actions...");
     setTriageSaving(true);
-    const actionPayload = JSON.stringify({ selected, otherText });
+    const actionPayload = JSON.stringify({ selected, otherText, transactionCodes });
     axios
       .post(`${apiUrl}/save_action`, {
         claimno: currentClaim.Claim.Data.ClaimNo,
@@ -1377,23 +1398,55 @@ const ReboundDetailView = () => {
                       const isOther =
                         action.allowFreeText ||
                         `${action.label || ""}`.trim().toLowerCase() === "other";
+                      const transactionOptions = Array.isArray(action.transactionOptions)
+                        ? action.transactionOptions
+                        : [];
                       return (
                         <div key={`triage-${idx}`} className="flex flex-col gap-2">
-                          <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 rounded border-gray-400"
-                              checked={action.checked}
-                              onChange={() =>
-                                setTriageActions((prev) =>
-                                  prev.map((item, i) =>
-                                    i === idx ? { ...item, checked: !item.checked } : item
+                          <div className="flex flex-wrap items-center justify-between gap-4">
+                            <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-gray-400"
+                                checked={action.checked}
+                                onChange={() =>
+                                  setTriageActions((prev) =>
+                                    prev.map((item, i) =>
+                                      i === idx
+                                        ? {
+                                          ...item,
+                                          checked: !item.checked,
+                                          transactionCode: item.checked ? "" : item.transactionCode,
+                                        }
+                                        : item
+                                    )
                                   )
-                                )
-                              }
-                            />
-                            <span className={isDark ? 'text-gray-200' : 'text-gray-700'}>{action.label}</span>
-                          </label>
+                                }
+                              />
+                              <span className={isDark ? 'text-gray-200' : 'text-gray-700'}>{action.label}</span>
+                            </label>
+                            {transactionOptions.length > 0 && (
+                              <select
+                                value={action.transactionCode || ""}
+                                onChange={(e) =>
+                                  setTriageActions((prev) =>
+                                    prev.map((item, i) =>
+                                      i === idx ? { ...item, transactionCode: e.target.value } : item
+                                    )
+                                  )
+                                }
+                                disabled={!action.checked}
+                                className={`min-w-[240px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                              >
+                                <option value="">Select transaction code...</option>
+                                {transactionOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
                           {isOther && (
                             <input
                               type="text"
