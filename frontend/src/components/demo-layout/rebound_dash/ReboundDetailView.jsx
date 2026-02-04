@@ -1436,7 +1436,7 @@ const ReboundDetailView = () => {
                                   )
                                 }
                                 disabled={!action.checked}
-                                className={`min-w-[240px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                                className={`min-w-[240px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
                               >
                                 <option value="">Select transaction code...</option>
                                 {transactionOptions.map((option) => (
@@ -1454,7 +1454,7 @@ const ReboundDetailView = () => {
                               onChange={(e) => setTriageOtherText(e.target.value)}
                               disabled={!action.checked}
                               placeholder="Enter other action..."
-                              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
                             />
                           )}
                         </div>

@@ -94,6 +94,7 @@ def get_artificial_intelligence():
                         {
                             "id": item["id"],
                             "Title": item["title"],
+                            "ModelTitle": item.get("model_title") or "",
                             "Count": row["cnt"],
                             "Amount": row["amount"],
                             "Code": row["AdjustmentReason"],

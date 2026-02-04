@@ -413,12 +413,13 @@ const ReboundDash = () => {
   // If navigation happens via the shared Sidebar (sets title to "AI Library"),
   // keep this view in sync so the AI models grid renders instead of the claims table.
   useEffect(() => {
+    if (isManagementRoute) return;
     if ((appTitle === 'AI Library' || appTitle === 'AI Automation') && selectedNav !== 'ai-library') {
       setSelectedNav('ai-library');
       setAiLibraryDrilldown(false);
       applyNavFilters('ai-library');
     }
-  }, [appTitle, selectedNav, applyNavFilters]);
+  }, [appTitle, selectedNav, applyNavFilters, isManagementRoute]);
 
   // When tags finish loading, re-apply filters for denials views so data loads.
   useEffect(() => {

@@ -47,6 +47,7 @@ const UserRoleCell = ({ row, onUpdateRole, theme }) => {
         <select
           value={selectedRole}
           onChange={handleRoleChange}
+          name="user-role"
           className={`border border-gray-600 w-[159px] px-2 py-1 rounded-lg appearance-none cursor-pointer ${theme === 'dark'
             ? "bg-[#151619] text-white"
             : "bg-white text-gray-500"
@@ -287,6 +288,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                 <span className='text-[14px] font-medium'>First Name</span>
                 <input
                   type="text"
+                  id="edit-first-name"
+                  name="edit-first-name"
                   className="text-sm rounded-lg block w-full py-2 px-3 border border-gray-600 bg-transparent"
                   value={formData.firstname}
                   onChange={(e) => setFormData({ ...formData, firstname: e.target.value })}
@@ -296,6 +299,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                 <span className='text-[14px] font-medium'>Last Name</span>
                 <input
                   type="text"
+                  id="edit-last-name"
+                  name="edit-last-name"
                   className="text-sm rounded-lg block w-full py-2 px-3 border border-gray-600 bg-transparent"
                   value={formData.lastname}
                   onChange={(e) => setFormData({ ...formData, lastname: e.target.value })}
@@ -307,6 +312,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
               <span>Email</span>
               <input
                 type="email"
+                id="edit-email"
+                name="edit-email"
                 className="text-sm rounded-lg block w-full py-2 px-3 border border-gray-600 bg-transparent"
                 value={formData.email}
                 readOnly
@@ -316,6 +323,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
             <div className='flex flex-col gap-2'>
               <span>Role</span>
               <select
+                id="edit-role"
+                name="edit-role"
                 className={`text-sm rounded-lg block w-full py-2 px-3 border border-gray-600 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'
                   }`}
                 value={formData.role}
@@ -732,6 +741,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                         setKeyword(e.target.value);
                         setSearchKeyword(e.target.value);
                       }}
+                      id="user-search"
+                      name="user-search"
                       className={`text-sm rounded-lg block w-full py-2.5 px-4 pl-10 text-gray-700 ${theme === 'dark'
                         ? "bg-[#151619] text-white border border-gray-600"
                         : "text-black bg-white border border-gray-300"
@@ -1143,6 +1154,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
               <div className="grid gap-4 sm:grid-cols-2">
                 <input
                   type="text"
+                  id="add-first-name"
+                  name="add-first-name"
                   className={`text-sm rounded-full px-4 py-2.5 border ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
                     }`}
                   value={user.firstname}
@@ -1151,6 +1164,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                 />
                 <input
                   type="text"
+                  id="add-last-name"
+                  name="add-last-name"
                   className={`text-sm rounded-full px-4 py-2.5 border ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
                     }`}
                   value={user.lastname}
@@ -1162,6 +1177,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
               <div className="grid gap-4 sm:grid-cols-2 items-center">
                 <input
                   type="email"
+                  id="add-email"
+                  name="add-email"
                   className={`text-sm rounded-full px-4 py-2.5 border ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
                     }`}
                   value={user.email}
@@ -1208,12 +1225,13 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                 <div className="mt-3 grid gap-3 sm:grid-cols-4">
                   {ROLE_OPTIONS.map((option) => (
                     <label key={option.value} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={getRoleValue(user.role) === option.value}
-                        onChange={() => setUser({ ...user, role: option.value })}
-                        className="h-4 w-4 rounded border-gray-400"
-                      />
+                  <input
+                    type="checkbox"
+                    name="add-role"
+                    checked={getRoleValue(user.role) === option.value}
+                    onChange={() => setUser({ ...user, role: option.value })}
+                    className="h-4 w-4 rounded border-gray-400"
+                  />
                       <span>{option.label}</span>
                     </label>
                   ))}
@@ -1292,6 +1310,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                   <input
                     type="text"
                     readOnly
+                    id="add-password"
+                    name="add-password"
                     className={`text-sm rounded-full px-4 py-2.5 border w-full ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
                       }`}
                     value={user.password}

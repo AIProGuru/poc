@@ -29,9 +29,9 @@ const ArIntel = ({ onModelSelect }) => {
   const tags = useSelector((state) => state.tags.allTags);
   const isDark = theme === 'dark';
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isModelsOpen, setIsModelsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilters, setSelectedFilters] = useState([]);
+  const [openModelGroups, setOpenModelGroups] = useState(() => new Set());
 
   useEffect(() => {
     if (!apiUrl) return;
@@ -74,6 +74,26 @@ const ArIntel = ({ onModelSelect }) => {
       return matchesSearch && matchesFilters;
     });
   }, [models, searchTerm, selectedFilters]);
+
+  const groupedModels = useMemo(() => {
+    const groups = new Map();
+    (filteredModels || []).forEach((row) => {
+      const groupTitle = `${row.ModelTitle || row.model_title || 'AI Agent'}`.trim() || 'AI Agent';
+      if (!groups.has(groupTitle)) {
+        groups.set(groupTitle, []);
+      }
+      groups.get(groupTitle).push(row);
+    });
+    return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
+  }, [filteredModels]);
+
+  useEffect(() => {
+    setOpenModelGroups((prev) => {
+      const next = new Set(prev);
+      groupedModels.forEach((group) => next.add(group.title));
+      return next;
+    });
+  }, [groupedModels]);
 
   const toggleFilter = (filter) => {
     setSelectedFilters((prev) => {
@@ -206,63 +226,93 @@ const ArIntel = ({ onModelSelect }) => {
       </div>
 
       <div className={`rounded-xl border ${isDark ? 'bg-[#27282D] border-[#222632] text-[#F4F4F4]' : 'bg-white border-slate-200 text-slate-900'} shadow-none`}>
-        <button
-          type="button"
-          onClick={() => setIsModelsOpen((prev) => !prev)}
-          className="w-full flex items-start justify-between px-6 py-5 text-left shadow-none"
-        >
+        <div className="w-full px-6 py-5 text-left shadow-none">
           <div>
             <p className="font-inter font-medium text-[24px] leading-[100%] tracking-[0%] text-[#0E7D81]">AI Models</p>
-            {isModelsOpen && (
-              <h2 className="text-xl font-semibold mt-1 leading-tight">Denial Automation Catalog</h2>
-            )}
+            <h2 className="text-xl font-semibold mt-1 leading-tight">Denial Automation Catalog</h2>
           </div>
-          <span className={`text-lg leading-none ${isDark ? 'text-white/70' : 'text-slate-500'}`}>
-            {isModelsOpen ? '-' : '+'}
-          </span>
-        </button>
-        <div
-          className={`collapse-panel ${isModelsOpen ? 'collapse-panel--open' : ''}`}
-          aria-hidden={!isModelsOpen}
-        >
-          <div className="px-6">
-            <div className={`h-px w-full ${isDark ? 'bg-[#CDCDCD]' : 'bg-slate-200'}`} />
-          </div>
+        </div>
+        <div className="px-6">
+          <div className={`h-px w-full ${isDark ? 'bg-[#CDCDCD]' : 'bg-slate-200'}`} />
+        </div>
 
-          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredModels.length === 0 && (
-              <div className={`col-span-full rounded-2xl border text-sm text-center py-6 ${isDark ? 'border-white/10 bg-white/5 text-white/70' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
-                No AI models available.
-              </div>
-            )}
-            {filteredModels.map((row) => (
-              <button
-                type="button"
-                key={row.id}
-                title={buildTooltip(row)}
-                onClick={() => handleModelClick(row)}
-                className={`group flex items-start justify-between rounded-2xl border px-[14px] py-[10px] transition cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#24B47E] ${isDark ? 'border-white/10 bg-white/5 text-white hover:bg-white/10' : 'border-slate-200 bg-white text-slate-900 hover:shadow-lg hover:-translate-y-0.5'}`}
+        <div className="p-6 flex flex-col gap-6">
+          {groupedModels.length === 0 && (
+            <div className={`rounded-2xl border text-sm text-center py-6 ${isDark ? 'border-white/10 bg-white/5 text-white/70' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+              No AI models available.
+            </div>
+          )}
+          {groupedModels.map((group) => {
+            const isOpen = openModelGroups.has(group.title);
+            return (
+              <div
+                key={group.title}
+                className={`rounded-2xl border ${isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}
               >
-                <div className="flex flex-col min-w-0 pr-3 h-full">
-                  <p className="font-inter text-[18px] font-medium leading-[1.2] tracking-normal uppercase tracking-[0.2em] text-[#0E7D81] break-words line-clamp-2">
-                    {row.Category || 'Model'}
-                  </p>
-                  <h3
-                    className={`text-sm font-semibold truncate leading-snug mt-2 ${isDark ? 'text-[#F4F4F4]' : 'text-slate-900'}`}
-                    title={row.Title}
-                  >
-                    {row.Title}
-                  </h3>
-                  <p className={`text-xs mt-auto ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
-                    {row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleDateString() : 'Date'}
-                  </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpenModelGroups((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(group.title)) {
+                        next.delete(group.title);
+                      } else {
+                        next.add(group.title);
+                      }
+                      return next;
+                    })
+                  }
+                  className="w-full flex items-center justify-between px-6 py-4 text-left"
+                >
+                  <div>
+                    <p className={`text-xs uppercase tracking-[0.2em] ${isDark ? 'text-[#8AE5E6]' : 'text-[#0E7D81]'}`}>
+                      AI Agent
+                    </p>
+                    <h3 className={`mt-1 text-lg font-semibold ${isDark ? 'text-[#F4F4F4]' : 'text-slate-900'}`}>
+                      {group.title}
+                    </h3>
+                  </div>
+                  <span className={`text-lg leading-none ${isDark ? 'text-white/70' : 'text-slate-500'}`}>
+                    {isOpen ? '-' : '+'}
+                  </span>
+                </button>
+                <div className={`collapse-panel ${isOpen ? 'collapse-panel--open' : ''}`} aria-hidden={!isOpen}>
+                  <div className="px-6">
+                    <div className={`h-px w-full ${isDark ? 'bg-[#CDCDCD]' : 'bg-slate-200'}`} />
+                  </div>
+                  <div className="p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {group.items.map((row) => (
+                      <button
+                        type="button"
+                        key={row.id}
+                        title={buildTooltip(row)}
+                        onClick={() => handleModelClick(row)}
+                        className={`group flex items-start justify-between rounded-2xl border px-[14px] py-[10px] transition cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#24B47E] ${isDark ? 'border-white/10 bg-white/5 text-white hover:bg-white/10' : 'border-slate-200 bg-white text-slate-900 hover:shadow-lg hover:-translate-y-0.5'}`}
+                      >
+                        <div className="flex flex-col min-w-0 pr-3 h-full">
+                          <p className="font-inter text-[18px] font-medium leading-[1.2] tracking-normal uppercase tracking-[0.2em] text-[#0E7D81] break-words line-clamp-2">
+                            {row.Category || 'Model'}
+                          </p>
+                          <h3
+                            className={`text-sm font-semibold truncate leading-snug mt-2 ${isDark ? 'text-[#F4F4F4]' : 'text-slate-900'}`}
+                            title={row.Title}
+                          >
+                            {row.Title}
+                          </h3>
+                          <p className={`text-xs mt-auto ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
+                            {row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleDateString() : 'Date'}
+                          </p>
+                        </div>
+                        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border self-center ${isDark ? 'border-white/15 bg-white/5 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                          {row.Count ?? 0}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border self-center ${isDark ? 'border-white/15 bg-white/5 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
-                  {row.Count ?? 0}
-                </span>
-              </button>
-            ))}
-          </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
