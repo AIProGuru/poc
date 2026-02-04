@@ -263,6 +263,13 @@ def get_rebound_data_summary():
     conn = None
     cursor = None
     try:
+        if os.getenv("LOG_SUMMARY_REQUESTS", "0") == "1":
+            logger.info(
+                "data_summary request: ip=%s ua=%s payload=%s",
+                request.remote_addr,
+                request.headers.get("User-Agent", ""),
+                request.get_json(silent=True),
+            )
         conn, cursor, db_name = get_connection(request.base_url)
         tab_index = request.json.get("tabIndex")
         keyword = request.json.get("keyword")
