@@ -204,6 +204,7 @@ const ReboundDash = () => {
     () => JSON.stringify(accessExtra),
     [accessExtra]
   );
+  const aiFetchModeRef = useRef("post");
 
   useEffect(() => {
     if (!apiUrl) return;
@@ -229,11 +230,28 @@ const ReboundDash = () => {
     const fetchModels = async () => {
       try {
         dispatch(setModels([]));
-        const res = await axios.post(`${apiUrl}/get_artificial_intelligence`, { extra: accessExtra });
+        let res;
+        if (aiFetchModeRef.current === "get") {
+          res = await axios.get(`${apiUrl}/get_artificial_intelligence`);
+        } else {
+          res = await axios.post(`${apiUrl}/get_artificial_intelligence`, { extra: accessExtra });
+        }
         if (!cancelled) {
           dispatch(setModels(mapModels(res.data)));
         }
       } catch (error) {
+        if (error?.response?.status === 405 && aiFetchModeRef.current !== "get") {
+          aiFetchModeRef.current = "get";
+          try {
+            const res = await axios.get(`${apiUrl}/get_artificial_intelligence`);
+            if (!cancelled) {
+              dispatch(setModels(mapModels(res.data)));
+            }
+          } catch (fallbackError) {
+            console.error('Failed to load AI models', fallbackError);
+          }
+          return;
+        }
         console.error('Failed to load AI models', error);
       }
     };

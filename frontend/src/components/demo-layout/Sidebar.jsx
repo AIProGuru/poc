@@ -229,6 +229,8 @@ const Sidebar = () => {
     }),
     []
   );
+  const accessExtra = useMemo(() => buildAccessExtra({}, access, role), [access, role]);
+  const badgeSignatureRef = useRef("");
 
   const formatCount = (value) => {
     if (value === null || value === undefined) return value;
@@ -501,7 +503,12 @@ const Sidebar = () => {
 
   useEffect(() => {
     if (!apiUrl || !tags || tags.length === 0) return;
-    const accessExtra = buildAccessExtra({}, access, role);
+    const signature = JSON.stringify({
+      tagsCount: tags.length,
+      accessExtra,
+    });
+    if (badgeSignatureRef.current === signature) return;
+    badgeSignatureRef.current = signature;
     const tabOverrideMap = {
       "patient-responsibility": 2,
       "patient-responsibility:bal-due": 2,
