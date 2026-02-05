@@ -13,9 +13,9 @@ rebound_api_ai = Blueprint('rebound_api_ai', __name__, url_prefix='/api/v1/rebou
 medevolve_api_ai = Blueprint('medevolve_api_ai', __name__, url_prefix='/api/v1/medevolve')
 pilotcustomer_api_ai = Blueprint('pilotcustomer_api_ai', __name__, url_prefix='/api/v1/pilotcustomer')
 
-@rebound_api_ai.route("/get_artificial_intelligence", methods=["GET"])
-@medevolve_api_ai.route("/get_artificial_intelligence", methods=["GET"])
-@pilotcustomer_api_ai.route("/get_artificial_intelligence", methods=["GET"])
+@rebound_api_ai.route("/get_artificial_intelligence", methods=["GET", "POST"])
+@medevolve_api_ai.route("/get_artificial_intelligence", methods=["GET", "POST"])
+@pilotcustomer_api_ai.route("/get_artificial_intelligence", methods=["GET", "POST"])
 def get_artificial_intelligence():
     """
     This endpoint fetches artificial intelligence model data.
@@ -68,22 +68,94 @@ def get_artificial_intelligence():
         conn, cursor, db_name = get_connection(request.base_url)
 
         ret = []
+        payload = request.get_json(silent=True) or {}
+        extra = payload.get("extra", {}) or {}
+
+        def build_extra_conditions(extra_filters):
+            conditions = []
+            allowed_categories = [
+                (item or "").strip() for item in extra_filters.get("AllowedCategories", []) if item
+            ]
+            if "Pend 835" in allowed_categories:
+                allowed_categories.append("Delinquent")
+            allowed_categories = [item.replace("'", "''") for item in allowed_categories if item]
+            if allowed_categories:
+                conditions.append(
+                    f"CUSTOM_ALL.Category IN ({','.join([f\"'{c}'\" for c in allowed_categories])})"
+                )
+
+            allowed_payers = [
+                (item or "").strip() for item in extra_filters.get("AllowedPayers", []) if item
+            ]
+            allowed_payers = [item.replace("'", "''") for item in allowed_payers if item]
+            if allowed_payers:
+                payer_conditions = " OR ".join(
+                    [f"CUSTOM_ALL.PayerName LIKE '%{name}%'" for name in allowed_payers]
+                )
+                conditions.append(f"({payer_conditions})")
+
+            ranges = extra_filters.get("AllowedValueRanges") or []
+            range_conditions = []
+            for item in ranges:
+                try:
+                    min_val = float(item.get("min")) if item.get("min") is not None else None
+                except (TypeError, ValueError, AttributeError):
+                    min_val = None
+                try:
+                    max_val = float(item.get("max")) if item.get("max") is not None else None
+                except (TypeError, ValueError, AttributeError):
+                    max_val = None
+                if min_val is None and max_val is None:
+                    continue
+                if min_val is not None and max_val is not None:
+                    range_conditions.append(f"(CUSTOM_ALL.Amount BETWEEN {min_val} AND {max_val})")
+                elif min_val is not None:
+                    range_conditions.append(f"(CUSTOM_ALL.Amount >= {min_val})")
+                elif max_val is not None:
+                    range_conditions.append(f"(CUSTOM_ALL.Amount <= {max_val})")
+            if range_conditions:
+                conditions.append(f"({' OR '.join(range_conditions)})")
+
+            return " AND ".join(conditions)
+
+        def inject_conditions(query_text, conditions_sql):
+            if not conditions_sql:
+                return query_text
+            lower = query_text.lower()
+            from_idx = lower.find("from custom_all")
+            if from_idx == -1:
+                return query_text
+            tail = query_text[from_idx:]
+            end_idx = tail.lower().find(") as subquery1")
+            if end_idx == -1:
+                end_idx = tail.lower().find(") subquery1")
+            if end_idx == -1:
+                return query_text
+            subquery_block = tail[:end_idx]
+            if "where" in subquery_block.lower():
+                updated_block = f"{subquery_block} AND {conditions_sql} "
+            else:
+                updated_block = f"{subquery_block} WHERE {conditions_sql} "
+            return query_text[:from_idx] + updated_block + tail[end_idx:]
+
+        extra_conditions = build_extra_conditions(extra)
 
         q = "select * from ai_model"
         cursor.execute(q)
         queries_for_ai_model = cursor.fetchall()
 
         for item in queries_for_ai_model:
-            logger.info(f"Executing query: {item['query']}")
+            query_text = item.get("query") or ""
+            filtered_query = inject_conditions(query_text, extra_conditions)
+            logger.info(f"Executing query: {filtered_query}")
             try:
-                cursor.execute(item["query"])
+                cursor.execute(filtered_query)
                 row = cursor.fetchone()
                 if row is not None:
                     try:
                         extra_data = json.loads(item["extra"])
                     except json.JSONDecodeError:
                         extra_data = {}
-                    query_text = item.get("query") or ""
                     remark_codes = re.findall(r"RemarkCode='([^']+)'", query_text)
                     if remark_codes and "remarkCodes" not in extra_data:
                         extra_data["remarkCodes"] = remark_codes

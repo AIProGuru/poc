@@ -28,7 +28,7 @@ const ArIntel = ({ onModelSelect }) => {
   const theme = useSelector((state) => state.app.theme);
   const tags = useSelector((state) => state.tags.allTags);
   const role = useSelector((state) => state.auth.role);
-  const allowedModules = useSelector((state) => state.auth.modules);
+  const allowedCategories = useSelector((state) => state.auth.denialCategory);
   const isDark = theme === 'dark';
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,14 +67,15 @@ const ArIntel = ({ onModelSelect }) => {
   const filteredModels = useMemo(() => {
     const needle = searchTerm.trim().toLowerCase();
     const selectedSet = new Set(selectedFilters);
-    const restrictModules = Array.isArray(allowedModules) && allowedModules.length > 0
+    const restrictCategories = Array.isArray(allowedCategories) && allowedCategories.length > 0
       && !['admin', 'super-admin', 'manager', 'internal-admin'].includes(role);
     return (models || []).filter((row) => {
       const title = `${row.Title || ''}`.toLowerCase();
       const category = `${row.Category || row.Group || ''}`.toLowerCase();
       const code = `${row.Code || ''}`.toLowerCase();
       const modelTitle = `${row.ModelTitle || row.model_title || ''}`.toLowerCase();
-      const matchesModule = !restrictModules || allowedModules.includes(row.ModelTitle || row.model_title || 'AI Agent');
+      const normalizedCategory = row.Category === 'Delinquent' ? 'Pend 835' : row.Category;
+      const matchesCategory = !restrictCategories || allowedCategories.includes(normalizedCategory);
       const matchesSearch =
         !needle ||
         title.includes(needle) ||
@@ -85,9 +86,9 @@ const ArIntel = ({ onModelSelect }) => {
       const matchesFilters =
         selectedSet.size === 0 ||
         (categoryLabel && selectedSet.has(categoryLabel));
-      return matchesModule && matchesSearch && matchesFilters;
+      return matchesCategory && matchesSearch && matchesFilters;
     });
-  }, [models, searchTerm, selectedFilters, allowedModules, role]);
+  }, [models, searchTerm, selectedFilters, allowedCategories, role]);
 
   const groupedModels = useMemo(() => {
     const groups = new Map();

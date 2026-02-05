@@ -38,6 +38,7 @@ import DashboardScreen from "./DashboardScreen";
 import SettingsScreen from "./SettingsScreen";
 import { AccountContext } from "../../../utils/Account";
 import { canAccessUserManagement } from "../../../utils/roles";
+import { buildAccessExtra } from "../../../utils/accessFilters";
 
 const ReboundDash = () => {
   const apiUrl = useApiEndpoint();
@@ -62,6 +63,19 @@ const ReboundDash = () => {
   const theme = useSelector((state) => state.app.theme);
   const appType = useSelector((state) => state.app.type);
   const role = useSelector((state) => state.auth.role);
+  const accessModules = useSelector((state) => state.auth.modules);
+  const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
+  const accessPayer = useSelector((state) => state.auth.payer);
+  const accessValue = useSelector((state) => state.auth.value);
+  const access = useMemo(
+    () => ({
+      modules: accessModules,
+      denialCategory: accessDenialCategory,
+      payer: accessPayer,
+      value: accessValue,
+    }),
+    [accessModules, accessDenialCategory, accessPayer, accessValue]
+  );
   const appTitle = useSelector((state) => state.app.title);
   const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/pilotcustomer' : '/demo';
   const isDenialsRoute = location.pathname.includes('/denials');
@@ -182,8 +196,17 @@ const ReboundDash = () => {
   }, [models]);
   const denialCount = models.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
 
+  const accessExtra = useMemo(
+    () => buildAccessExtra({}, access, role),
+    [access, role]
+  );
+  const accessSignature = useMemo(
+    () => JSON.stringify(accessExtra),
+    [accessExtra]
+  );
+
   useEffect(() => {
-    if (!apiUrl || models.length > 0) return;
+    if (!apiUrl) return;
     let cancelled = false;
 
     const mapModels = (rows) =>
@@ -205,7 +228,8 @@ const ReboundDash = () => {
 
     const fetchModels = async () => {
       try {
-        const res = await axios.get(`${apiUrl}/get_artificial_intelligence`);
+        dispatch(setModels([]));
+        const res = await axios.post(`${apiUrl}/get_artificial_intelligence`, { extra: accessExtra });
         if (!cancelled) {
           dispatch(setModels(mapModels(res.data)));
         }
@@ -218,7 +242,7 @@ const ReboundDash = () => {
     return () => {
       cancelled = true;
     };
-  }, [apiUrl, dispatch, models.length]);
+  }, [apiUrl, dispatch, accessSignature]);
 
   const navItems = useMemo(() => [
     { id: 'home', label: 'Home', badge: null, icon: 'home', tab: 0 },

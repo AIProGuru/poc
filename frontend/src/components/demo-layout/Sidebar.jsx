@@ -21,6 +21,7 @@ import {
 import { setSelectedTags } from "../../redux/reducers/tag.reducer";
 import { useApiEndpoint } from "../../ApiEndpointContext";
 import { canAccessWorklists } from "../../utils/roles";
+import { buildAccessExtra } from "../../utils/accessFilters";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
@@ -29,6 +30,19 @@ const Sidebar = () => {
   const type = useSelector((state) => state.app.type);
   const theme = useSelector((state) => state.app.theme);
   const role = useSelector((state) => state.auth.role);
+  const accessModules = useSelector((state) => state.auth.modules);
+  const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
+  const accessPayer = useSelector((state) => state.auth.payer);
+  const accessValue = useSelector((state) => state.auth.value);
+  const access = useMemo(
+    () => ({
+      modules: accessModules,
+      denialCategory: accessDenialCategory,
+      payer: accessPayer,
+      value: accessValue,
+    }),
+    [accessModules, accessDenialCategory, accessPayer, accessValue]
+  );
   const counts = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   const models = useSelector((state) => state.app.models) || [];
@@ -56,15 +70,19 @@ const Sidebar = () => {
   const isDark = theme === "dark";
 
   const denialsCount = useMemo(() => {
+    if (typeof navBadges?.denials === "number") return navBadges.denials;
     const value = counts?.[0]?.count;
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : 0;
-  }, [counts]);
+  }, [counts, navBadges]);
   const patientResponsibilityCount = useMemo(() => {
+    if (typeof navBadges?.["patient-responsibility"] === "number") {
+      return navBadges["patient-responsibility"];
+    }
     const value = counts?.[2]?.count;
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : 0;
-  }, [counts]);
+  }, [counts, navBadges]);
 
   const navItems = useMemo(() => {
     const aiBadge = models.reduce(
@@ -483,6 +501,7 @@ const Sidebar = () => {
 
   useEffect(() => {
     if (!apiUrl || !tags || tags.length === 0) return;
+    const accessExtra = buildAccessExtra({}, access, role);
     const tabOverrideMap = {
       "patient-responsibility": 2,
       "patient-responsibility:bal-due": 2,
@@ -508,7 +527,7 @@ const Sidebar = () => {
             remark: "",
             procedure: "",
             pos: "",
-            extra,
+            extra: { ...extra, ...accessExtra },
           })
           .then((res) => ({
             navId,
@@ -550,7 +569,7 @@ const Sidebar = () => {
       }
       setNavBadges(next);
     });
-  }, [apiUrl, tags, navItems, navExtraFilters, navTagFilters]);
+  }, [apiUrl, tags, navItems, navExtraFilters, navTagFilters, access, role]);
 
   useEffect(() => {
     const handleResize = () => {
