@@ -28,6 +28,7 @@ const Header = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const keyword = useSelector((state) => state.app.keyword);
   const inputKeywordRef = useRef();
+  const menuButtonRef = useRef(null);
 
   const filterByKeyword = () => {
     dispatch(setExtraFilter({}));
@@ -45,7 +46,7 @@ const Header = () => {
   }, [keyword]);
 
   const handleMenuClick = (event) => {
-    setAnchorEl(event.currentTarget);
+    setAnchorEl(menuButtonRef.current || event.currentTarget);
     setMenuShow(true);
   };
 
@@ -58,6 +59,9 @@ const Header = () => {
   const handleClose = () => {
     setAnchorEl(null);
     setMenuShow(false);
+    if (menuButtonRef.current) {
+      menuButtonRef.current.focus();
+    }
   };
 
   useEffect(() => {
@@ -109,13 +113,15 @@ const Header = () => {
         </div>
         
         <div className="font-inter hidden sm:flex text-[28px] font-semibold relative cursor-pointer select-none">
-          <div
+          <button
+            type="button"
             className={`flex  w-full h-[48px] font-semibold text-[16px] font-inter justify-between pr-2 items-center gap-2 pl-2 ${menuShow ? "rounded-t-lg" : "rounded-lg"
               }`}
             onClick={handleMenuClick}
+            ref={menuButtonRef}
           >
             <img src="/man.svg" width={32} height={32} />
-          </div>
+          </button>
           <Backdrop
             open={menuShow}
             onClick={handleClose}
@@ -125,7 +131,7 @@ const Header = () => {
             }}
           />
           <Popover
-            open={Boolean(anchorEl)}
+            open={menuShow}
             anchorEl={anchorEl}
             onClose={handleClose}
             anchorOrigin={{

@@ -26,6 +26,18 @@ export default function SignIn() {
 
   const { authenticate } = useContext(AccountContext);
 
+  const resolveLandingPath = (userData = {}) => {
+    const rawTenant = `${userData.tenant || userData.product || userData.basePath || ""}`.toLowerCase();
+    if (rawTenant === "rebound" || rawTenant === "pilotcustomer" || rawTenant === "demo") {
+      return `/${rawTenant}`;
+    }
+    const rawType = userData.appType ?? userData.type;
+    if (rawType === 0) return "/rebound";
+    if (rawType === 1) return "/pilotcustomer";
+    if (rawType === 2) return "/demo";
+    return "/pilotcustomer";
+  };
+
   const signIn = async () => {
     setLoading(true);
     setError("");
@@ -45,7 +57,7 @@ export default function SignIn() {
         dispatch(setRole(userDoc.data().role));
         dispatch(setPermission(""));
         dispatch(setUsername(userDoc.data().firstname ?? ""));
-        navigate("/pilotcustomer");
+        navigate(resolveLandingPath(userDoc.data()));
         toast.success("Login Successful!");
         }
       } else {

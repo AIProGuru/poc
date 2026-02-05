@@ -13,6 +13,10 @@ import {
   setEmail,
   setRole,
   setPermission,
+  setModules,
+  setDenialCategory,
+  setPayer,
+  setValue,
 } from '../redux/reducers/auth.reducer';
 import {  doc, getDoc } from 'firebase/firestore/lite'; // Import Firestore methods
 import { db } from '../FirebaseConfig';
@@ -106,6 +110,15 @@ const getSession = () => {
         dispatch(setEmail(''));
         dispatch(setRole('demo'));
         dispatch(setPermission(''));
+        dispatch(setModules([]));
+        dispatch(setDenialCategory([]));
+        dispatch(setPayer([]));
+        dispatch(setValue([]));
+        try {
+          localStorage.removeItem('lastAppType');
+        } catch (err) {
+          // Ignore storage errors.
+        }
         navigate('/');
         toast.success("Logged out.");
       })

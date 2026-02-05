@@ -17,6 +17,7 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { auth } from '../../../FirebaseConfig';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { SERVER_URL } from '../../../utils/config';
 import { MODULE_OPTIONS, MODULE_CATEGORY_MAP } from "../../../utils/moduleCatalog";
 import { ROLE_OPTIONS, ROLE_STANDARD, normalizeRole } from "../../../utils/roles";
@@ -428,7 +429,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     const res = await data.json().catch(() => ({}));
     if (data.status === 200) {
       toast.success("User created!")
-      setShowUserModal(false);
       resetUserForm();
       fetchUsers();
     } else {
@@ -522,6 +522,20 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       console.error('Error deleting user:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (email) => {
+    if (!email) {
+      toast.error('User email is missing.');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success('Password reset email sent.');
+    } catch (error) {
+      console.error('Error sending reset email:', error);
+      toast.error(error?.message || 'Failed to send reset email.');
     }
   };
 
@@ -988,7 +1002,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                                 </>
                               ) : (
                                 <span className={`text-xs italic ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
-                                  No clients
+                                  No modules
                                 </span>
                               )}
                             </div>
@@ -1039,7 +1053,33 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                               </svg>
                             </div>
 
+                            {/* Reset Password Button */}
+                            <div
+                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
+                              onClick={() => handleResetPassword(row.email)}
+                              title="Reset Password"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M4 12a8 8 0 1 1 2.34 5.66" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M4 8v4h4" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+
                             {/* Delete Button */}
+                            <div
+                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
+                              onClick={() => {
+                                setUserToDelete(row);
+                                setShowDeleteModal(true);
+                              }}
+                              title="Delete User"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M3 6h18" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M8 6V4h8v2" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M6 6l1 14h10l1-14" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
 
                           </div>
                         </td>

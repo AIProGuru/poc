@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -48,6 +48,7 @@ const Sidebar = () => {
   const models = useSelector((state) => state.app.models) || [];
   const apiUrl = useApiEndpoint();
   const [navBadges, setNavBadges] = useState({});
+  const isPrivilegedRole = ["admin", "super-admin", "manager", "internal-admin"].includes(role);
   const placeholderNavs = [
     "dashboard",
     "support",
@@ -85,10 +86,24 @@ const Sidebar = () => {
   }, [counts, navBadges]);
 
   const navItems = useMemo(() => {
-    const aiBadge = models.reduce(
-      (sum, row) => sum + (Number(row.Count) || 0),
-      0
-    );
+    const normalizeCategory = (category) => {
+      if (!category) return "";
+      if (category === "Delinquent") return "Pend 835";
+      return category;
+    };
+    const allowedCategories = Array.isArray(accessDenialCategory)
+      ? accessDenialCategory
+      : [];
+    const restrictCategories = allowedCategories.length > 0 && !isPrivilegedRole;
+    const aiBadge = models.reduce((sum, row) => {
+      const normalizedCategory = normalizeCategory(row.Category);
+      const matchesCategory =
+        !restrictCategories ||
+        !normalizedCategory ||
+        allowedCategories.includes(normalizedCategory);
+      if (!matchesCategory) return sum;
+      return sum + (Number(row.Count) || 0);
+    }, 0);
     const baseItems = [
       { id: "home", title: "Home", icon: "home", badge: null, tab: 0 },
       { id: "dashboard", title: "Dashboard", icon: "dashboard", badge: null },
@@ -177,7 +192,7 @@ const Sidebar = () => {
       return baseItems.filter((item) => allowedIds.has(item.id));
     }
     return baseItems;
-  }, [denialsCount, models, patientResponsibilityCount, role]);
+  }, [denialsCount, models, patientResponsibilityCount, role, accessDenialCategory, isPrivilegedRole]);
 
   const navExtraFilters = useMemo(
     () => ({
@@ -231,6 +246,8 @@ const Sidebar = () => {
   );
   const accessExtra = useMemo(() => buildAccessExtra({}, access, role), [access, role]);
   const badgeSignatureRef = useRef("");
+  const fetchedBadgeIdsRef = useRef(new Set());
+  const canSeeWorklists = canAccessWorklists(role);
 
   const formatCount = (value) => {
     if (value === null || value === undefined) return value;
@@ -503,21 +520,53 @@ const Sidebar = () => {
 
   useEffect(() => {
     if (!apiUrl || !tags || tags.length === 0) return;
+    if (!canSeeWorklists) {
+      setNavBadges({});
+      fetchedBadgeIdsRef.current = new Set();
+      return;
+    }
     const signature = JSON.stringify({
       tagsCount: tags.length,
       accessExtra,
     });
-    if (badgeSignatureRef.current === signature) return;
-    badgeSignatureRef.current = signature;
+    if (badgeSignatureRef.current !== signature) {
+      badgeSignatureRef.current = signature;
+      fetchedBadgeIdsRef.current = new Set();
+      setNavBadges({});
+    }
     const tabOverrideMap = {
       "patient-responsibility": 2,
       "patient-responsibility:bal-due": 2,
       "payment-posting:contractual-adj": 1,
     };
+    const badgeTargets = new Set();
+    // Always fetch top-level badges so counts are visible on load.
+    navItems.forEach((item) => {
+      if (navTagFilters[item.id]) {
+        badgeTargets.add(item.id);
+      }
+    });
+    // Only fetch child badges when their parent is expanded or active.
+    navItems.forEach((item) => {
+      const isExpanded =
+        expandedNav.has(item.id) ||
+        selectedNav === item.id ||
+        (selectedNav && selectedNav.startsWith(`${item.id}:`));
+      if (!isExpanded) return;
+      if (Array.isArray(item.children)) {
+        item.children.forEach((child) => {
+          if (navTagFilters[child.id]) {
+            badgeTargets.add(child.id);
+          }
+        });
+      }
+    });
     const requests = [];
     const addRequest = (navId, parentTab) => {
       const tagOverride = navTagFilters[navId];
       if (!tagOverride || tagOverride.length === 0) return;
+      if (fetchedBadgeIdsRef.current.has(navId)) return;
+      fetchedBadgeIdsRef.current.add(navId);
       const tabIndex =
         tabOverrideMap[navId] ??
         (typeof parentTab === "number" ? parentTab : 6);
@@ -540,18 +589,16 @@ const Sidebar = () => {
             navId,
             count: res.data?.Count ?? res.data?.count ?? 0,
           }))
-          .catch(() => null)
+          .catch(() => {
+            fetchedBadgeIdsRef.current.delete(navId);
+            return null;
+          })
       );
     };
 
-    navItems.forEach((item) => {
-      const parentTab = item.tab;
-      if (navTagFilters[item.id]) {
-        addRequest(item.id, parentTab);
-      }
-      if (Array.isArray(item.children)) {
-        item.children.forEach((child) => addRequest(child.id, parentTab));
-      }
+    badgeTargets.forEach((navId) => {
+      const parentTab = navItems.find((item) => item.id === navId)?.tab;
+      addRequest(navId, parentTab);
     });
 
     if (requests.length === 0) return;
@@ -574,9 +621,11 @@ const Sidebar = () => {
           0
         );
       }
-      setNavBadges(next);
+      if (Object.keys(next).length > 0) {
+        setNavBadges((prev) => ({ ...prev, ...next }));
+      }
     });
-  }, [apiUrl, tags, navItems, navExtraFilters, navTagFilters, access, role]);
+  }, [apiUrl, tags.length, accessExtra, navItems, navExtraFilters, navTagFilters, canSeeWorklists, expandedNav, selectedNav]);
 
   useEffect(() => {
     const handleResize = () => {

@@ -75,7 +75,10 @@ const ArIntel = ({ onModelSelect }) => {
       const code = `${row.Code || ''}`.toLowerCase();
       const modelTitle = `${row.ModelTitle || row.model_title || ''}`.toLowerCase();
       const normalizedCategory = row.Category === 'Delinquent' ? 'Pend 835' : row.Category;
-      const matchesCategory = !restrictCategories || allowedCategories.includes(normalizedCategory);
+      const matchesCategory =
+        !restrictCategories ||
+        !normalizedCategory ||
+        allowedCategories.includes(normalizedCategory);
       const matchesSearch =
         !needle ||
         title.includes(needle) ||

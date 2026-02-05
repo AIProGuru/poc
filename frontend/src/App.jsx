@@ -138,10 +138,29 @@ function App() {
         unsubscribeDoc();
         unsubscribeDoc = null;
       }
-      if (!user) return;
+      if (!user) {
+        dispatch(setAuth(false));
+        dispatch(setUsername(''));
+        dispatch(setFirstname(''));
+        dispatch(setLastname(''));
+        dispatch(setEmail(''));
+        dispatch(setRole(''));
+        dispatch(setPermission(''));
+        dispatch(setModules([]));
+        dispatch(setDenialCategory([]));
+        dispatch(setPayer([]));
+        dispatch(setValue([]));
+        return;
+      }
       const docRef = doc(realtimeDb.current, "users", user.uid);
       unsubscribeDoc = onSnapshot(docRef, (snapshot) => {
-        if (!snapshot.exists()) return;
+        if (!snapshot.exists()) {
+          // If the user profile is deleted, force sign-out immediately.
+          auth.signOut().catch((error) => {
+            console.error("Failed to sign out deleted user", error);
+          });
+          return;
+        }
         const userData = snapshot.data() || {};
         dispatch(setFirstname(userData.firstname ?? ""));
         dispatch(setLastname(userData.lastname ?? ""));

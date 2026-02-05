@@ -88,6 +88,12 @@ def admin_delete_user():
         if not user_id_to_delete:
             return jsonify({"error": "User ID required"}), 400
 
+        # Revoke refresh tokens so existing sessions are forced to re-auth
+        try:
+            auth.revoke_refresh_tokens(user_id_to_delete)
+        except Exception as revoke_err:
+            logger.warning(f"Failed to revoke tokens for {user_id_to_delete}: {revoke_err}")
+
         # Delete from Firestore
         db.collection("users").document(user_id_to_delete).delete()
         
