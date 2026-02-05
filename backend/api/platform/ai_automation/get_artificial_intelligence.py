@@ -80,9 +80,8 @@ def get_artificial_intelligence():
                 allowed_categories.append("Delinquent")
             allowed_categories = [item.replace("'", "''") for item in allowed_categories if item]
             if allowed_categories:
-                conditions.append(
-                    f"CUSTOM_ALL.Category IN ({','.join([f\"'{c}'\" for c in allowed_categories])})"
-                )
+                allowed_list = ",".join([f"'{c}'" for c in allowed_categories])
+                conditions.append(f"CUSTOM_ALL.Category IN ({allowed_list})")
 
             allowed_payers = [
                 (item or "").strip() for item in extra_filters.get("AllowedPayers", []) if item
