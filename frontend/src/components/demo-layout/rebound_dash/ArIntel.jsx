@@ -301,7 +301,7 @@ const ArIntel = ({ onModelSelect }) => {
                         onClick={() => handleModelClick(row)}
                         className={`group flex items-start justify-between rounded-2xl border px-[14px] py-[10px] transition cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#24B47E] ${isDark ? 'border-white/10 bg-white/5 text-white hover:bg-white/10' : 'border-slate-200 bg-white text-slate-900 hover:shadow-lg hover:-translate-y-0.5'}`}
                       >
-                        <div className="flex flex-col min-w-0 pr-3 h-full">
+                        <div className="flex flex-col min-w-0 pr-3 h-full justify-between">
                           <p className="font-inter text-[18px] font-medium leading-[1.2] tracking-normal uppercase tracking-[0.2em] text-[#0E7D81] break-words line-clamp-2">
                             {row.Category || 'Model'}
                           </p>
@@ -311,9 +311,9 @@ const ArIntel = ({ onModelSelect }) => {
                           >
                             {row.Title}
                           </h3>
-                          <p className={`text-xs mt-auto ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
+                          {/* <p className={`text-xs mt-auto ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
                             {row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleDateString() : 'Date'}
-                          </p>
+                          </p> */}
                         </div>
                         <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border self-center ${isDark ? 'border-white/15 bg-white/5 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
                           {row.Count ?? 0}
