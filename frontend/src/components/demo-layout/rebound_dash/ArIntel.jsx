@@ -34,6 +34,7 @@ const ArIntel = ({ onModelSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [openModelGroups, setOpenModelGroups] = useState(() => new Set());
+  const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(false);
 
   useEffect(() => {
     if (!apiUrl) return;
@@ -108,7 +109,13 @@ const ArIntel = ({ onModelSelect }) => {
   useEffect(() => {
     setOpenModelGroups((prev) => {
       const next = new Set(prev);
-      groupedModels.forEach((group) => next.add(group.title));
+      // Keep only groups that still exist; do not auto-expand.
+      const validTitles = new Set(groupedModels.map((group) => group.title));
+      Array.from(next).forEach((title) => {
+        if (!validTitles.has(title)) {
+          next.delete(title);
+        }
+      });
       return next;
     });
   }, [groupedModels]);
@@ -247,14 +254,22 @@ const ArIntel = ({ onModelSelect }) => {
       </div>
 
       <div className={`rounded-xl border ${isDark ? 'bg-[#27282D] border-[#222632] text-[#F4F4F4]' : 'bg-white border-slate-200 text-slate-900'} shadow-none`}>
-        <div className="w-full px-6 py-5 text-left shadow-none">
-          <div>
-            <p className="font-inter font-medium text-[24px] leading-[100%] tracking-[0%]">AI Agent</p>
+        <button
+          type="button"
+          onClick={() => setIsAgentPanelOpen((prev) => !prev)}
+          className="w-full flex items-center justify-between px-6 py-5 text-left shadow-none"
+        >
+          <p className="font-inter font-medium text-[24px] leading-[100%] tracking-[0%]">AI Agent</p>
+          <span className={`text-lg leading-none ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
+            {isAgentPanelOpen ? '-' : '+'}
+          </span>
+        </button>
 
-          </div>
-        </div>
-
-        <div className="px-6 pb-6 flex flex-col gap-6">
+        <div
+          className={`collapse-panel ${isAgentPanelOpen ? 'collapse-panel--open' : ''}`}
+          aria-hidden={!isAgentPanelOpen}
+        >
+          <div className="px-6 pb-6 flex flex-col gap-6">
           {groupedModels.length === 0 && (
             <div className={`rounded-2xl border text-sm text-center py-6 ${isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
               No AI models available.
@@ -333,6 +348,7 @@ const ArIntel = ({ onModelSelect }) => {
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     </div>
