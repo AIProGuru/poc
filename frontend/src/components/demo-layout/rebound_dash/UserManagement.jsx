@@ -731,29 +731,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     User Management
                   </p>
                   <p className="mt-2 text-sm font-semibold">Manage Users</p>
-                </button>
-                <div
-                  className={`rounded-xl border px-4 py-3 ${theme === 'dark'
-                    ? 'bg-[#FFFFFF]/10 border-white/5 shadow-[0_4px_4px_rgba(0,0,0,0.25)] text-white/80'
-                    : 'bg-slate-50 border-slate-200 text-slate-600'
-                    }`}
-                >
-                  <p className={`text-xs uppercase tracking-wide ${theme === 'dark' ? 'text-[#3ABFF8]' : 'text-slate-400'}`}>
-                    Category
-                  </p>
-                  <p className="mt-2 text-sm font-semibold">Action Name</p>
-                </div>
-                <div
-                  className={`rounded-xl border px-4 py-3 ${theme === 'dark'
-                    ? 'bg-[#FFFFFF]/10 border-white/5 shadow-[0_4px_4px_rgba(0,0,0,0.25)] text-white/80'
-                    : 'bg-slate-50 border-slate-200 text-slate-600'
-                    }`}
-                >
-                  <p className={`text-xs uppercase tracking-wide ${theme === 'dark' ? 'text-[#3ABFF8]' : 'text-slate-400'}`}>
-                    Category
-                  </p>
-                  <p className="mt-2 text-sm font-semibold">Action Name</p>
-                </div>
+                </button>                
               </div>
             )}
           </div>

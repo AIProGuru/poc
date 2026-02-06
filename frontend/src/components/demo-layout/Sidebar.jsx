@@ -181,7 +181,7 @@ const Sidebar = () => {
       },
       {
         id: "ai-library",
-        title: "AI Library",
+        title: "AI Agents",
         icon: "book",
         badge: aiBadge || null,
       },
@@ -495,7 +495,7 @@ const Sidebar = () => {
         dispatch(setSelectedTags(tagOverride));
         dispatch(setTabIndex(tabOverrideMap[navId] ?? 6));
       } else if (navId === "ai-library") {
-        // Keep denial categories visible when browsing AI Library
+        // Keep denial categories visible when browsing AI Agents
         dispatch(setSelectedTags(tags));
         dispatch(setTabIndex(6));
       } else if (navId === "denials") {

@@ -80,9 +80,9 @@ const ReboundDash = () => {
   const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/pilotcustomer' : '/demo';
   const isDenialsRoute = location.pathname.includes('/denials');
   const isUserManagementView = selectedNav === 'user-management';
-  // Show AI models only when the app title indicates AI Library/Automation (set by Sidebar or ArIntel),
+  // Show AI models only when the app title indicates AI Agents/Automation (set by Sidebar or ArIntel),
   // and not when drilled into claim results.
-  const isAiTitle = appTitle === 'AI Library' || appTitle === 'AI Automation';
+  const isAiTitle = appTitle === 'AI Agents' || appTitle === 'AI Automation';
   const showAiModels = !isUserManagementView && isAiTitle && !aiLibraryDrilldown;
   const placeholderNavs = [
     'settings',
@@ -339,7 +339,7 @@ const ReboundDash = () => {
         { id: 'payment-posting:refund', label: 'Refund' },
       ],
     },
-    { id: 'ai-library', label: 'AI Library', badge: denialCount || null, icon: 'book' },
+    { id: 'ai-library', label: 'AI Agents', badge: denialCount || null, icon: 'book' },
     { id: 'settings', label: 'Settings', badge: null, icon: 'cog' },
     ...(canAccessUserManagement(role)
       ? [{ id: 'user-management', label: 'User Management', badge: null, icon: 'users' }]
@@ -415,12 +415,12 @@ const ReboundDash = () => {
       if (aiModelFilters.length > 0) {
         filterPayload.ExcludeAiModels = aiModelFilters;
       }
-      // For AI Library we still want to expose Denial categories so users can drill back into them.
+      // For AI Agents we still want to expose Denial categories so users can drill back into them.
       dispatch(setSelectedTags(tags));
       dispatch(setTabIndex(6));
       dispatch(setExtraFilter(filterPayload));
       dispatch(setCurrentPage(1));
-      // Avoid kicking off table loads while in the AI Library grid (no DataTable rendered).
+      // Avoid kicking off table loads while in the AI Agents grid (no DataTable rendered).
       return;
     }
     const tabOverrideMap = {
@@ -438,7 +438,7 @@ const ReboundDash = () => {
   }, [aiModelFilters, dispatch, navExtraFilters, navTagFilters, tags]);
 
   const resetFilters = useCallback(() => {
-    // Clear drill-down filters (e.g., from AI Library payload) before applying new nav defaults.
+    // Clear drill-down filters (e.g., from AI Agents payload) before applying new nav defaults.
     dispatch(setKeyword(''));
     dispatch(setCode(''));
     dispatch(setRemark(''));
@@ -452,11 +452,11 @@ const ReboundDash = () => {
     dispatch(setCurrentPage(1));
   }, [dispatch]);
 
-  // If navigation happens via the shared Sidebar (sets title to "AI Library"),
+  // If navigation happens via the shared Sidebar (sets title to "AI Agents"),
   // keep this view in sync so the AI models grid renders instead of the claims table.
   useEffect(() => {
     if (isManagementRoute) return;
-    if ((appTitle === 'AI Library' || appTitle === 'AI Automation') && selectedNav !== 'ai-library') {
+    if ((appTitle === 'AI Agents' || appTitle === 'AI Automation') && selectedNav !== 'ai-library') {
       setSelectedNav('ai-library');
       setAiLibraryDrilldown(false);
       applyNavFilters('ai-library');

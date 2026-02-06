@@ -49,8 +49,10 @@ const ReboundDetailView = () => {
   const [triageNotes, setTriageNotes] = useState("");
   const [triageSaving, setTriageSaving] = useState(false);
   const [generatingAppeal, setGeneratingAppeal] = useState(false);
+  const [openTriageDropdown, setOpenTriageDropdown] = useState(null);
   const type = useSelector((state) => state.app.type)
   const claimStatus = useRef(null);
+  const triageDropdownRefs = useRef({});
   const [originalComment, setOriginalComment] = useState({
     Additional: "",
     CPT: "",
@@ -71,7 +73,7 @@ const ReboundDetailView = () => {
     Evidence1: "",
     Evidence2: "",
   })
-  const [document, setDocument] = useState({
+  const [documentForm, setDocumentForm] = useState({
     Category: "",
     DenialCode: "",
     Comments: "",
@@ -188,6 +190,20 @@ const ReboundDetailView = () => {
       });
   }, [apiUrl, currentClaim])
 
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (openTriageDropdown === null) return;
+      const container = triageDropdownRefs.current[openTriageDropdown];
+      if (container && !container.contains(event.target)) {
+        setOpenTriageDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [openTriageDropdown]);
+
   const showDetail = (claimNo) => {
     const token = {
       claimNo
@@ -198,7 +214,7 @@ const ReboundDetailView = () => {
 
 
   const submitDocument = () => {
-    axios.post(`${apiUrl}/add_document`, { ...document, ClaimNo: currentClaim.ClaimNo }).then(res => {
+    axios.post(`${apiUrl}/add_document`, { ...documentForm, ClaimNo: currentClaim.ClaimNo }).then(res => {
       toast.success("Saved successfully!")
     })
   }
@@ -604,7 +620,7 @@ const ReboundDetailView = () => {
       console.log("@@@@@@@@@@@@@@", res.data)
       setCurrentClaim(res.data);
       setOriginalComment(res.data.Comment);
-      setDocument(res.data.Document);
+      setDocumentForm(res.data.Document);
       setAppeal([...res.data.Appeal]);
       setThumb(res.data.rate);
     })
@@ -1401,13 +1417,16 @@ const ReboundDetailView = () => {
                       const transactionOptions = Array.isArray(action.transactionOptions)
                         ? action.transactionOptions
                         : [];
+                      const selectedOption = transactionOptions.find(
+                        (option) => option.value === action.transactionCode
+                      );
                       return (
                         <div key={`triage-${idx}`} className="flex flex-col gap-2">
-                          <div className="flex flex-wrap items-center justify-between gap-4">
-                            <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none min-w-0 sm:flex-1">
                               <input
                                 type="checkbox"
-                                className="h-4 w-4 rounded border-gray-400"
+                                className="sr-only peer"
                                 checked={action.checked}
                                 onChange={() =>
                                   setTriageActions((prev) =>
@@ -1423,28 +1442,87 @@ const ReboundDetailView = () => {
                                   )
                                 }
                               />
+                              <span
+                                className={`relative h-7 w-7 rounded-lg border transition-all duration-200
+                                  ${isDark ? 'border-[#4B4F5A] bg-[#2B2F36]' : 'border-gray-300 bg-white'}
+                                  peer-checked:border-[#6f7074] peer-checked:bg-[#24252a] peer-checked:shadow-[0_2px_6px_rgba(0,0,0,0.35)]
+                                  peer-checked:[&>svg]:opacity-100
+                                  `}
+                              >
+                                <svg
+                                  className="absolute inset-0 m-auto h-4 w-4 opacity-0 transition-opacity duration-150"
+                                  viewBox="0 0 16 16"
+                                  fill="none"
+                                  stroke="#F4F4F4"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
+                                </svg>
+                              </span>
                               <span className={isDark ? 'text-gray-200' : 'text-gray-700'}>{action.label}</span>
                             </label>
-                            {transactionOptions.length > 0 && (
-                              <select
-                                value={action.transactionCode || ""}
-                                onChange={(e) =>
-                                  setTriageActions((prev) =>
-                                    prev.map((item, i) =>
-                                      i === idx ? { ...item, transactionCode: e.target.value } : item
-                                    )
-                                  )
-                                }
-                                disabled={!action.checked}
-                                className={`min-w-[240px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                            {transactionOptions.length > 0 && action.checked && (
+                              <div
+                                ref={(el) => {
+                                  if (el) {
+                                    triageDropdownRefs.current[idx] = el;
+                                  }
+                                }}
+                                className="relative w-full sm:w-[260px] shrink-0"
                               >
-                                <option value="">Select transaction code...</option>
-                                {transactionOptions.map((option) => (
-                                  <option key={option.value} value={option.value}>
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </select>
+                                <button
+                                  type="button"
+                                  disabled={!action.checked}
+                                  onClick={() =>
+                                    setOpenTriageDropdown((prev) =>
+                                      prev === idx ? null : idx
+                                    )
+                                  }
+                                  className={`w-full rounded-lg border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#6f7074] focus:border-[#6f7074] disabled:opacity-60 flex items-center justify-between gap-2 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                                >
+                                  <span className="truncate">
+                                    {selectedOption?.label || "Select transaction code..."}
+                                  </span>
+                                  <svg
+                                    className={`h-4 w-4 transition-transform ${openTriageDropdown === idx ? 'rotate-180' : ''} ${isDark ? 'text-gray-300' : 'text-gray-500'}`}
+                                    viewBox="0 0 20 20"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.6"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M6 8l4 4 4-4" />
+                                  </svg>
+                                </button>
+                                {openTriageDropdown === idx && action.checked && (
+                                  <div
+                                    className={`triage-dropdown absolute z-20 mt-2 max-h-48 w-full overflow-y-auto rounded-lg border shadow-lg ${isDark ? 'border-[#1f2433] bg-[#24252a]' : 'border-gray-200 bg-white'}`}
+                                  >
+                                    {transactionOptions.map((option) => (
+                                      <button
+                                        key={option.value}
+                                        type="button"
+                                        onClick={() => {
+                                          setTriageActions((prev) =>
+                                            prev.map((item, i) =>
+                                              i === idx
+                                                ? { ...item, transactionCode: option.value }
+                                                : item
+                                            )
+                                          );
+                                          setOpenTriageDropdown(null);
+                                        }}
+                                        className={`triage-dropdown-item w-full px-3 py-2 text-left text-sm ${isDark ? 'text-[#F4F4F4]' : 'text-gray-800'}`}
+                                      >
+                                        {option.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
                           {isOther && (
@@ -1454,7 +1532,7 @@ const ReboundDetailView = () => {
                               onChange={(e) => setTriageOtherText(e.target.value)}
                               disabled={!action.checked}
                               placeholder="Enter other action..."
-                              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] focus:border-[#6f7074] disabled:opacity-60 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
                             />
                           )}
                         </div>

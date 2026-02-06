@@ -48,8 +48,6 @@ def get_artificial_intelligence():
                 type: string
               Status:
                 type: string
-              UpdatedAt:
-                type: string
               User:
                 type: string
               extra:
@@ -173,11 +171,6 @@ def get_artificial_intelligence():
                             "Remark": item["remark"],
                             "Category": row["DenialCategory"],
                             "Status": item["status"],
-                            "UpdatedAt": (
-                                item["updated_at"].strftime("%Y-%m-%d %H:%M:%S")
-                                if item["updated_at"] is not None
-                                else ""
-                            ),
                             "User": item["user"],
                             "extra": extra_data,
                         }

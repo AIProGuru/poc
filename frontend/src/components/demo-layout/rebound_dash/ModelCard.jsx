@@ -7,7 +7,7 @@ import { samplifyInteger } from '../../../utils/config';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useApiEndpoint } from '../../../ApiEndpointContext';
 
-const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, status, group_code, updated_at, extra, backgroundColor, setStatus, setUpdatedAt, user, setUser }) => {
+const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, status, group_code, extra, backgroundColor, setStatus, user, setUser }) => {
   const apiUrl = useApiEndpoint();
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,7 +15,6 @@ const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, stat
   const theme = useSelector((state) => state.app.theme);
   const tags = useSelector((state) => state.tags.allTags);
   const [_status, _setStatus] = useState(status);
-  const [_updatedAt, _setUpdatedAt] = useState(updated_at);
   const [loading, setLoading] = useState(false);
   const firstname = useSelector((state) => state.auth.firstname);
   const lastname = useSelector((state) => state.auth.lastname);
@@ -29,8 +28,6 @@ const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, stat
       status: value,
       user: `${firstname} ${lastname}`
     }).then((res) => {
-      _setUpdatedAt(res.data);
-      setUpdatedAt(res.data);
       setUser(`${firstname[0]?.toUpperCase() || ''} ${lastname[0]?.toUpperCase() || ''}`);
       setLoading(false);
     });
@@ -44,7 +41,7 @@ const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, stat
           <div className="flex flex-col sm:flex-row justify-between">
   <div className="text-[20px] font-semibold flex flex-col">
     <span>{title}</span>
-    {!loading && user != null && <span className='text-[12px]'>{`${user.split(' ').map((row, index) => row).filter((row) => row != "").map((row) => row[0].toUpperCase()).join(' ')}, ${_updatedAt}`}</span>}
+    {!loading && user != null && <span className='text-[12px]'>{`${user.split(' ').map((row, index) => row).filter((row) => row != "").map((row) => row[0].toUpperCase()).join(' ')}`}</span>}
     {loading && <div className="spinner-3"></div>}
   </div>
   <div className="w-full  sm:w-[40%] flex sm:justify-end justify-start mt-4 sm:mt-0">

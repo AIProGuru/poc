@@ -43,9 +43,6 @@ const appReducer = createSlice({
     setRecoveryLoading: (state, action) => {
       state.recoveryLoading = action.payload;
     },
-    setUpdatedAt: (state, action) => {
-      state.models[action.payload.index].UpdatedAt = action.payload.UpdatedAt;
-    },
     setExtraFilter: (state, action) => {
       state.extraFilter = action.payload;
     },
@@ -157,7 +154,6 @@ const appReducer = createSlice({
 export const {
   setUser,
   setStatus,
-  setUpdatedAt,
   setExtraFilter,
   increaseLoading,
   decreaseLoading,

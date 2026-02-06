@@ -136,8 +136,7 @@ const ArIntel = ({ onModelSelect }) => {
     `Claim State: ${row.Group ?? 'N/A'}`,
     `Category: ${row.Category ?? 'N/A'}`,
     `CARC: ${row.Code ?? 'N/A'}`,
-    `RARC: ${row.Remark ?? 'N/A'}`,
-    `Updated: ${row.UpdatedAt ?? 'N/A'}`
+    `RARC: ${row.Remark ?? 'N/A'}`
   ].join('\n');
 
   const handleModelClick = (row) => {
@@ -176,7 +175,7 @@ const ArIntel = ({ onModelSelect }) => {
     dispatch(setPOS(''));
     dispatch(setExtraFilter(payload.extra));
     dispatch(setSelectedTags(tags));
-    // Ensure any in-flight AI Library requests are cleared so the drilldown triggers a single load.
+    // Ensure any in-flight AI Agents requests are cleared so the drilldown triggers a single load.
     dispatch(setTableLoading(false));
     dispatch(setPart1Loading(false));
     dispatch(setPart2Loading(false));
@@ -195,9 +194,9 @@ const ArIntel = ({ onModelSelect }) => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <div className={`ont-inter font-semibold text-[24px] leading-none tracking-normal ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
-          Denials &gt; Automation Catalog
-        </div>
+      <div className={`ont-inter font-semibold text-[24px] leading-none tracking-normal ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
+        {`AI Agents${selectedFilters.length ? ` > ${selectedFilters.join(', ')}` : ''}`}
+      </div>
       </div>
 
       <div className={`rounded-xl border ${isDark ? 'bg-[#27282D] border-[#222632] text-[#F4F4F4]' : 'bg-white border-slate-200 text-slate-900'} shadow-none`}>
@@ -259,7 +258,7 @@ const ArIntel = ({ onModelSelect }) => {
           onClick={() => setIsAgentPanelOpen((prev) => !prev)}
           className="w-full flex items-center justify-between px-6 py-5 text-left shadow-none"
         >
-          <p className="font-inter font-medium text-[24px] leading-[100%] tracking-[0%]">AI Agent</p>
+          <p className="font-inter font-medium text-[24px] leading-[100%] tracking-[0%]">AI Agents</p>
           <span className={`text-lg leading-none ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
             {isAgentPanelOpen ? '-' : '+'}
           </span>
@@ -332,11 +331,11 @@ const ArIntel = ({ onModelSelect }) => {
                           >
                             {row.Title}
                           </h3>
-                          <p className={`text-xs mt-auto ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
-                            {row?.Status === 'draft'
-                              ? 'Coming soon'
-                              : (row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleDateString() : 'Date')}
-                          </p>
+                          {row?.Status === 'draft' && (
+                            <p className={`text-xs mt-auto ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
+                              Coming soon
+                            </p>
+                          )}
                         </div>
                         <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border self-center ${isDark ? 'border-white/15 bg-white/5 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
                           {row.Count ?? 0}
