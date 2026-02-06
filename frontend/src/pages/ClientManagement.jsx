@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
@@ -20,6 +21,8 @@ ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tool
 const ClientManagement = () => {
   const navigate = useNavigate();
   const apiUrl = useApiEndpoint();
+  const theme = useSelector((state) => state.app.theme);
+  const isDark = theme === 'dark';
 
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -495,7 +498,7 @@ const handleQuickAction = async (action, clientId, e) => {
       {filteredClients.map(client => (
         <motion.div
           key={client.id}
-          className="bg-gradient-to-br from-[#121953] to-[#0B0C14] rounded-xl overflow-hidden shadow-lg border border-[#6C9BE030] hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]"
+          className="client-card bg-gradient-to-br from-[#2b2f38] to-[#14161b] rounded-xl overflow-hidden shadow-lg border border-[#9ca3af30] hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]"
           variants={itemVariants}
           whileHover={{ y: -5 }}
         >
@@ -516,7 +519,7 @@ const handleQuickAction = async (action, clientId, e) => {
                 {showActionMenu === client.id && (
                   <div 
                     ref={actionMenuRef}
-                    className="absolute right-0 mt-1 py-1 w-48 bg-[#1a1f35] rounded-md shadow-lg z-10 border border-[#6C9BE030]"
+                    className="absolute right-0 mt-1 py-1 w-48 bg-[#1c1f26] rounded-md shadow-lg z-10 border border-[#9ca3af30]"
                   >
                     <button 
                       className="px-4 py-2 text-sm text-white hover:bg-[#ffffff15] w-full text-left flex items-center" 
@@ -551,12 +554,12 @@ const handleQuickAction = async (action, clientId, e) => {
             </div>
             
             <div className="flex items-center mb-4" onClick={() => handleClientClick(client)}>
-              <div className="w-16 h-16 bg-[#0B0C14] rounded-lg flex items-center justify-center p-2 mr-4">
+              <div className="w-16 h-16 bg-[#14161b] rounded-lg flex items-center justify-center p-2 mr-4">
                 <img src={client.logo} alt={client.name} className="max-w-full max-h-full" />
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-white">{client.name}</h3>
-                <p className="text-[#6C9BE0] text-sm">{client.tier} Tier</p>
+                <p className="text-[#9ca3af] text-sm">{client.tier} Tier</p>
               </div>
             </div>
             
@@ -582,11 +585,11 @@ const handleQuickAction = async (action, clientId, e) => {
             {/* <div className="mt-auto pt-3 border-t border-[#ffffff20]" onClick={() => handleClientClick(client)}>
               <div className="flex justify-between text-sm">
                 <div>
-                  <p className="text-[#6C9BE0]">Denials Captured</p>
+                  <p className="text-[#9ca3af]">Denials Captured</p>
                   <p className="text-white font-semibold">{client.denialsCaptured.toLocaleString()}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[#6C9BE0]">Revenue Recovered</p>
+                  <p className="text-[#9ca3af]">Revenue Recovered</p>
                   <p className="text-white font-semibold">{formatCurrency(client.revenueRecovered)}</p>
                 </div>
               </div>
@@ -601,7 +604,7 @@ const handleQuickAction = async (action, clientId, e) => {
     <div className="overflow-x-auto">
       <table className="min-w-full bg-transparent">
         <thead>
-          <tr className="text-[#6C9BE0] border-b border-[#ffffff20]">
+          <tr className="text-[#9ca3af] border-b border-[#ffffff20]">
             <th className="px-4 py-3 text-left" onClick={() => handleSort('name')}>
               Client Name
               {sortConfig.key === 'name' && (
@@ -651,12 +654,12 @@ const handleQuickAction = async (action, clientId, e) => {
             >
               <td className="px-4 py-4" onClick={() => handleClientClick(client)}>
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-[#0B0C14] rounded-md flex items-center justify-center p-1 mr-2">
+                  <div className="w-8 h-8 bg-[#14161b] rounded-md flex items-center justify-center p-1 mr-2">
                     <img src={client.logo} alt={client.name} className="max-w-full max-h-full" />
                   </div>
                   <div>
                     <p className="font-medium text-white">{client.name}</p>
-                    <p className="text-xs text-[#6C9BE0]">{client.tier}</p>
+                    <p className="text-xs text-[#9ca3af]">{client.tier}</p>
                   </div>
                 </div>
               </td>
@@ -747,7 +750,7 @@ const handleQuickAction = async (action, clientId, e) => {
         onClick={closeModal}
       >
         <motion.div 
-          className="bg-gradient-to-br from-[#121953] to-[#0B0C14] rounded-xl w-full max-w-5xl overflow-hidden border border-[#6C9BE050] shadow-2xl"
+          className="bg-gradient-to-br from-[#2b2f38] to-[#14161b] rounded-xl w-full max-w-5xl overflow-hidden border border-[#9ca3af50] shadow-2xl"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
@@ -757,14 +760,14 @@ const handleQuickAction = async (action, clientId, e) => {
           {/* Header Section */}
           <div className="relative flex items-center justify-between p-6 border-b border-[#ffffff15]">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-[#0B0C14] rounded-lg flex items-center justify-center p-2">
+              <div className="w-16 h-16 bg-[#14161b] rounded-lg flex items-center justify-center p-2">
                 <img src={selectedClient.logo} alt={selectedClient.name} className="max-w-full max-h-full" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-white">{selectedClient.name}</h2>
                 <div className="flex items-center mt-1">
                   <span className={`inline-block w-2 h-2 rounded-full ${getStatusColor(selectedClient.status)} mr-2`}></span>
-                  <span className="text-[#6C9BE0] text-sm">{selectedClient.tier} • {selectedClient.status}</span>
+                  <span className="text-[#9ca3af] text-sm">{selectedClient.tier} • {selectedClient.status}</span>
                 </div>
               </div>
             </div>
@@ -868,17 +871,12 @@ const handleQuickAction = async (action, clientId, e) => {
 
   // Main component render
   return (
-    <div className="min-h-screen bg-[#0B0C14] text-white overflow-x-hidden"
-         style={{
-           backgroundImage: "url('/bg-optimized.png')",
-           backgroundPosition: "center top",
-           backgroundRepeat: "no-repeat"
-         }}>
+    <div className={`client-management min-h-screen overflow-x-hidden ${isDark ? 'theme-dark bg-[#14161b] text-white' : 'theme-light bg-slate-50 text-slate-900'}`}>
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">Client Management</h1>
-            <p className="text-[#6C9BE0]">Monitor and manage your clients' performance metrics</p>
+            <p className={isDark ? "text-[#9ca3af]" : "text-slate-500"}>Monitor and manage your clients' performance metrics</p>
           </div>
           <button
             onClick={openNewClientModal}
@@ -902,7 +900,7 @@ const handleQuickAction = async (action, clientId, e) => {
               </div>
               <input
                 type="text"
-                className="pl-10 p-2.5 w-full lg:w-64 bg-[#ffffff10] rounded-lg text-white placeholder-gray-400 border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={`pl-10 p-2.5 w-full lg:w-64 rounded-lg border focus:ring-gray-500 focus:border-gray-500 focus:outline-none ${isDark ? 'bg-[#ffffff10] text-white placeholder-gray-400 border-[#ffffff20]' : 'bg-white text-slate-900 placeholder-slate-400 border-slate-200'}`}
                 placeholder="Search clients..."
                 value={searchTerm}
                 onChange={handleSearch}
@@ -910,14 +908,14 @@ const handleQuickAction = async (action, clientId, e) => {
             </div>
             
             <select
-              className="p-2.5 pr-4 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none "
+              className={`p-2.5 pr-4 rounded-lg border focus:ring-gray-500 focus:border-gray-500 focus:outline-none ${isDark ? 'bg-[#ffffff10] text-white border-[#ffffff20]' : 'bg-white text-slate-900 border-slate-200'}`}
               value={filterStatus}
               onChange={handleFilterChange}
             >
-              <option value="All" className='dark:bg-black dark:text-white'>All Statuses</option>
-              <option value="Active" className='dark:bg-black dark:text-white'>Active</option>
-              <option value="Pending" className='dark:bg-black dark:text-white'>Pending</option>
-              <option value="On Hold" className='dark:bg-black dark:text-white'>On Hold</option>
+              <option value="All" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>All Statuses</option>
+              <option value="Active" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Active</option>
+              <option value="Pending" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Pending</option>
+              <option value="On Hold" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>On Hold</option>
             </select>
           </div>
           
@@ -953,7 +951,7 @@ const handleQuickAction = async (action, clientId, e) => {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="w-12 h-12 border-4 border-gray-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-[#6C9BE0]">Loading clients...</p>
+            <p className={isDark ? "text-[#9ca3af]" : "text-slate-500"}>Loading clients...</p>
           </div>
         ) : filteredClients.length === 0 ? (
           <div className="text-center py-12">
@@ -961,13 +959,13 @@ const handleQuickAction = async (action, clientId, e) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <h3 className="mt-2 text-lg font-medium">No clients found</h3>
-            <p className="mt-1 text-[#6C9BE0]">Try adjusting your search or filter.</p>
+            <p className={`mt-1 ${isDark ? 'text-[#9ca3af]' : 'text-slate-500'}`}>Try adjusting your search or filter.</p>
           </div>
         ) : (
           <>
             {viewMode === 'grid' ? renderGrid() : renderTable()}
             
-            <div className="mt-8 text-center text-[#6C9BE0]">
+            <div className={`mt-8 text-center ${isDark ? 'text-[#9ca3af]' : 'text-slate-500'}`}>
               Showing {filteredClients.length} of {clients.length} clients
             </div>
           </>
@@ -988,7 +986,7 @@ const handleQuickAction = async (action, clientId, e) => {
             onClick={closeNewClientModal}
           >
             <motion.div 
-              className="bg-gradient-to-br from-[#121953] to-[#0B0C14] rounded-xl w-full max-w-2xl overflow-hidden border border-[#6C9BE050] shadow-2xl"
+              className="client-modal bg-gradient-to-br from-[#2b2f38] to-[#14161b] rounded-xl w-full max-w-2xl overflow-hidden border border-[#9ca3af50] shadow-2xl"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -1010,7 +1008,7 @@ const handleQuickAction = async (action, clientId, e) => {
               <form onSubmit={handleNewClientSubmit} className="p-6 max-h-[70vh] overflow-y-auto">
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div className="col-span-1 md:col-span-2">
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Client Name</label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Client Name</label>
       <input 
         type="text" 
         name="name" 
@@ -1021,7 +1019,7 @@ const handleQuickAction = async (action, clientId, e) => {
     </div>
     
     <div className="col-span-1 md:col-span-2">
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Tenant Name <span className="text-red-400">*</span></label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Tenant Name <span className="text-red-400">*</span></label>
       <input 
         type="text" 
         name="tenantName" 
@@ -1033,7 +1031,7 @@ const handleQuickAction = async (action, clientId, e) => {
     </div>
     
     <div className="col-span-1 md:col-span-2">
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Facility Name <span className="text-red-400">*</span></label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Facility Name <span className="text-red-400">*</span></label>
       <input 
         type="text" 
         name="facilityName" 
@@ -1045,27 +1043,27 @@ const handleQuickAction = async (action, clientId, e) => {
     </div>
     
     <div className="col-span-1 md:col-span-2">
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Facility Type <span className="text-red-400">*</span></label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Facility Type <span className="text-red-400">*</span></label>
       <select 
         name="facilityType" 
         value={newClient.facilityType}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+        className={`w-full p-2.5 rounded-lg border focus:ring-gray-500 focus:border-gray-500 focus:outline-none ${isDark ? 'bg-[#ffffff10] text-white border-[#ffffff20]' : 'bg-white text-slate-900 border-slate-200'}`}
         required
       >
-        <option value="">Select Facility Type</option>
-        <option value="Hospital">Hospital</option>
-        <option value="Clinic">Clinic</option>
-        <option value="Specialty Center">Specialty Center</option>
-        <option value="Rehabilitation Center">Rehabilitation Center</option>
-        <option value="Long-term Care">Long-term Care</option>
-        <option value="Ambulatory Surgery Center">Ambulatory Surgery Center</option>
-        <option value="Other">Other</option>
+        <option value="" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Select Facility Type</option>
+        <option value="Hospital" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Hospital</option>
+        <option value="Clinic" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Clinic</option>
+        <option value="Specialty Center" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Specialty Center</option>
+        <option value="Rehabilitation Center" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Rehabilitation Center</option>
+        <option value="Long-term Care" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Long-term Care</option>
+        <option value="Ambulatory Surgery Center" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Ambulatory Surgery Center</option>
+        <option value="Other" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Other</option>
       </select>
     </div>
     
     <div className="col-span-1 md:col-span-2">
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Facility Address <span className="text-red-400">*</span></label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Facility Address <span className="text-red-400">*</span></label>
       <input 
         type="text" 
         name="facilityAddress" 
@@ -1077,7 +1075,7 @@ const handleQuickAction = async (action, clientId, e) => {
     </div>
     
     <div>
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Facility Tax ID <span className="text-red-400">*</span></label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Facility Tax ID <span className="text-red-400">*</span></label>
       <input 
         type="text" 
         name="facilityTaxID" 
@@ -1089,7 +1087,7 @@ const handleQuickAction = async (action, clientId, e) => {
     </div>
     
     <div>
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Facility NPI <span className="text-red-400">*</span></label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Facility NPI <span className="text-red-400">*</span></label>
       <input 
         type="text" 
         name="facilityNPI" 
@@ -1101,7 +1099,7 @@ const handleQuickAction = async (action, clientId, e) => {
     </div>
 
     <div>
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Contact Person <span className="text-red-400">*</span></label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Contact Person <span className="text-red-400">*</span></label>
       <input 
         type="text" 
         name="contact" 
@@ -1113,7 +1111,7 @@ const handleQuickAction = async (action, clientId, e) => {
     </div>
     
     <div>
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Email <span className="text-red-400">*</span></label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Email <span className="text-red-400">*</span></label>
       <input 
         type="email" 
         name="email" 
@@ -1125,7 +1123,7 @@ const handleQuickAction = async (action, clientId, e) => {
     </div>
     
     <div>
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Phone</label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Phone</label>
       <input 
         type="tel" 
         name="phone" 
@@ -1136,21 +1134,21 @@ const handleQuickAction = async (action, clientId, e) => {
     </div>
     
     <div>
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Status</label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Status</label>
       <select 
         name="status" 
         value={newClient.status}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+        className={`w-full p-2.5 rounded-lg border focus:ring-gray-500 focus:border-gray-500 focus:outline-none ${isDark ? 'bg-[#ffffff10] text-white border-[#ffffff20]' : 'bg-white text-slate-900 border-slate-200'}`}
       >
-        <option value="Active">Active</option>
-        <option value="Pending">Pending</option>
-        <option value="On Hold">On Hold</option>
+        <option value="Active" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Active</option>
+        <option value="Pending" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>Pending</option>
+        <option value="On Hold" className={isDark ? 'bg-[#151619] text-white' : 'bg-white text-slate-900'}>On Hold</option>
       </select>
     </div>
     
     {/* <div>
-      <label className="block text-[#6C9BE0] mb-2 text-sm">Tier</label>
+      <label className="block text-[#9ca3af] mb-2 text-sm">Tier</label>
       <select 
         name="tier" 
         value={newClient.tier}
@@ -1192,4 +1190,5 @@ const handleQuickAction = async (action, clientId, e) => {
 };
 
 export default ClientManagement;
+
 
