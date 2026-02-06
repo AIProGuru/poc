@@ -26,7 +26,7 @@ const initialState = {
   remark: '',
   procedure: '',
   pos: '',
-  theme: 'light'
+  theme: 'dark'
 };
 
 const appReducer = createSlice({
