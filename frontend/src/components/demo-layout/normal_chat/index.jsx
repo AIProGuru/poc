@@ -182,7 +182,7 @@ const NormalChat = () => {
     <div className="flex flex-col h-full gap-4">
       <div className="flex justify-center">
         <TEToast open={open} autohide={true} delay={3000} setOpen={setOpen}>
-          <div className="flex items-center justify-between rounded-t-lg border-b-2 border-neutral-100 border-opacity-100 bg-blue-600 px-4 pb-2 pt-2.5">
+          <div className="flex items-center justify-between rounded-t-lg border-b-2 border-neutral-100 border-opacity-100 bg-gray-600 px-4 pb-2 pt-2.5">
             <p className="font-bold text-white">Helio RCM Alert</p>
             <div className="flex items-center">
               <p className="text-xs text-white">Just now</p>
@@ -227,7 +227,7 @@ const NormalChat = () => {
                 }`}
             >
               <div
-                className="bg-blue-800 p-0.5 text-center text-xs font-medium leading-none text-white"
+                className="bg-gray-800 p-0.5 text-center text-xs font-medium leading-none text-white"
                 style={{ width: `${now}%` }}
               >
                 {now === 99 ? "Training..." : `${now}%`}
@@ -242,7 +242,7 @@ const NormalChat = () => {
               id="formFile"
             />
             <button
-              className="bg-blue-800 text-white px-6 py-2 rounded-xl"
+              className="bg-gray-800 text-white px-6 py-2 rounded-xl"
               onClick={onUpload}
             >
               Upload
@@ -266,7 +266,7 @@ const NormalChat = () => {
               <div
                 data-tooltip-target={`tooltip-${index}`}
                 className={`cursor-pointer block rounded-lg p-6 max-w-[30%] font-poppins font-semibold ${row.sender === "ChatGPT"
-                  ? "bg-blue-800 text-white"
+                  ? "bg-gray-800 text-white"
                   : "bg-yellow-700 text-white"
                   }`}
                 onClick={() => OnShowPDF(index)}
@@ -309,12 +309,12 @@ const NormalChat = () => {
       {thumb && (
         <div className="flex items-center gap-4">
           <textarea
-            className="border rounded-lg border-blue-800 p-4 focus:border-blue-800 min-h-[50px] min-w-[30%]"
+            className="border rounded-lg border-gray-800 p-4 focus:border-gray-800 min-h-[50px] min-w-[30%]"
             value={modifiedAnswer}
             onChange={(e) => setModifiedAnswer(e.target.value)}
           ></textarea>
           <button
-            className="bg-blue-800 text-white px-6 py-2 rounded-xl"
+            className="bg-gray-800 text-white px-6 py-2 rounded-xl"
             onClick={modifyAnswer}
           >
             Save
@@ -332,17 +332,17 @@ const NormalChat = () => {
           <div className="flex flex-col items-center transition-transform">
             <div className="grid grid-cols-1 gap-3 justify-center items-center min-w-[400px] md:grid-cols-2">
               <div
-                className="bg-blue-600 text-white font-semibold px-5 py-2 rounded-2xl cursor-pointer"
+                className="bg-gray-600 text-white font-semibold px-5 py-2 rounded-2xl cursor-pointer"
                 onClick={() => setChatType("UHC")}
               >
                 UHC
               </div>
-              <div className="bg-blue-600 text-white font-semibold px-5 py-2 rounded-2xl cursor-pointer"
+              <div className="bg-gray-600 text-white font-semibold px-5 py-2 rounded-2xl cursor-pointer"
                 onClick={() => setChatType("Medicare")}>
                 Medicare
               </div>
               <div
-                className="bg-blue-600 text-white font-semibold px-5 py-2 rounded-2xl cursor-pointer"
+                className="bg-gray-600 text-white font-semibold px-5 py-2 rounded-2xl cursor-pointer"
                 onClick={() => setChatType("General")}
               >
                 General
@@ -353,7 +353,7 @@ const NormalChat = () => {
         <div className="flex justify-center gap-7 items-center">
           <input
             type="text"
-            className="border rounded-lg border-blue-800 min-w-[50%] p-4 focus:border-blue-800"
+            className="border rounded-lg border-gray-800 min-w-[50%] p-4 focus:border-gray-800"
             autoFocus={true}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -364,7 +364,7 @@ const NormalChat = () => {
             }}
           />
           <button
-            className="bg-blue-800 text-white px-6 py-2 rounded-xl"
+            className="bg-gray-800 text-white px-6 py-2 rounded-xl"
             onClick={handleSend}
           >
             Send
@@ -375,3 +375,4 @@ const NormalChat = () => {
   );
 };
 export default NormalChat;
+

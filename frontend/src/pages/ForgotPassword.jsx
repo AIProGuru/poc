@@ -53,7 +53,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
         {/* Back Arrow */}
         <div className="mb-6">

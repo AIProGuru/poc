@@ -4,11 +4,11 @@
       }
       
       .swiper-pagination-bullet {
-        @apply w-3 h-3 rounded-full bg-blue-300 transition-colors duration-300;
+        @apply w-3 h-3 rounded-full bg-gray-300 transition-colors duration-300;
       }
       
       .swiper-pagination-bullet-active {
-        @apply bg-blue-500;
+        @apply bg-gray-500;
       }
 }
 
@@ -18,12 +18,13 @@
       }
       
       .swiper-pagination-bullet {
-        @apply w-3 h-3 rounded-full bg-blue-300 transition-colors duration-300;
+        @apply w-3 h-3 rounded-full bg-gray-300 transition-colors duration-300;
       }
       
       .swiper-pagination-bullet-active {
-        @apply bg-blue-500;
+        @apply bg-gray-500;
       }
 }
+
 
 

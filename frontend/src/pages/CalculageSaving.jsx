@@ -311,14 +311,14 @@ function CalculateSavingsPage() {
               Monthly
             </p>
             <div className="flex flex-col border-b border-[#16192D] px-[32px] gap-1 py-[12px]">
-              <p className="text-[#A9C5ED] text-[16px]">Projected Cost Sav:</p>
+              <p className="text-[#BFC5CF] text-[16px]">Projected Cost Sav:</p>
               <p className="text-[#EBEDF0] text-[20px]">
                 {" "}
                 ${projected_cost_saving.toFixed(1).toLocaleString()}
               </p>
             </div>
             <div className="flex flex-col border-b border-[#16192D] px-[32px] gap-1 py-[12px]">
-              <p className="text-[#A9C5ED] text-[16px]">
+              <p className="text-[#BFC5CF] text-[16px]">
                 Estimated FTE Reduction:
               </p>
               <p className="text-[#EBEDF0] text-[20px]">
@@ -326,7 +326,7 @@ function CalculateSavingsPage() {
               </p>
             </div>
             <div className="flex flex-col border-b border-[#16192D] px-[32px] gap-1 py-[12px]">
-              <p className="text-[#A9C5ED] text-[16px]">
+              <p className="text-[#BFC5CF] text-[16px]">
                 Potential Write-off Savings
               </p>
               <p className="text-[#EBEDF0] text-[20px]">
@@ -337,14 +337,14 @@ function CalculateSavingsPage() {
               Yearly
             </p>
             <div className="flex flex-col border-b border-[#16192D] px-[32px] gap-1 py-[12px]">
-              <p className="text-[#A9C5ED] text-[16px]">Projected Cost Sav:</p>
+              <p className="text-[#BFC5CF] text-[16px]">Projected Cost Sav:</p>
               <p className="text-[#EBEDF0] text-[20px]">
                 {" "}
                 ${(projected_cost_saving * 12).toFixed(1).toLocaleString()}
               </p>
             </div>
             <div className="flex flex-col border-b border-[#16192D] px-[32px] gap-1 py-[12px]">
-              <p className="text-[#A9C5ED] text-[16px]">
+              <p className="text-[#BFC5CF] text-[16px]">
                 Estimated FTE Reduction:
               </p>
               <p className="text-[#EBEDF0] text-[20px]">
@@ -353,7 +353,7 @@ function CalculateSavingsPage() {
               </p>
             </div>
             <div className="flex flex-col px-[32px] gap-1 py-[12px]">
-              <p className="text-[#A9C5ED] text-[16px]">
+              <p className="text-[#BFC5CF] text-[16px]">
                 Potential Write-off Savings
               </p>
               <p className="text-[#EBEDF0] text-[20px]">
@@ -367,7 +367,7 @@ function CalculateSavingsPage() {
       {/* Display Helio RCM results based on the condition */}
       {projected_cost_saving > 0 ? (
         <div className="container">
-          <div className="bg-gradient-to-r from-[#3849D866] to-[#0048FF] text-center w-full rounded-t-3xl h-full gap-4 flex flex-col pb-10">
+          <div className="bg-gradient-to-r from-[#3849D866] to-[#3b3f46] text-center w-full rounded-t-3xl h-full gap-4 flex flex-col pb-10">
             <h2 className="md:text-[54px] text-[32px] font-bold text-[#EBEDF0] pt-10 md:pt-0">
               Congratulations!
             </h2>
@@ -401,7 +401,7 @@ function CalculateSavingsPage() {
         </div>
       ) : (
         <div>
-          <div className="bg-gradient-to-r from-[#0080FF] to-[#0048FF] text-center rounded-t-3xl h-full gap-4 flex flex-col pb-10">
+          <div className="bg-gradient-to-r from-[#0080FF] to-[#3b3f46] text-center rounded-t-3xl h-full gap-4 flex flex-col pb-10">
             <h2 className="text-[54px] font-bold text-[#EBEDF0]">Sorry!</h2>
             <p>
               Seems like your operations are already efficient; Helio RCM can't help
@@ -415,3 +415,4 @@ function CalculateSavingsPage() {
 }
 
 export default CalculateSavingsPage;
+

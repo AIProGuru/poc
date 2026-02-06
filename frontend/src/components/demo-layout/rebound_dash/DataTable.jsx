@@ -764,7 +764,7 @@ const DataTable = (props) => {
           </label>
           <select
             id="pageSize"
-            className={` border-none text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block  p-3  ${theme === 'dark' ? 'bg-[#27282D] text-white' : 'bg-gray-50 text-black'}`}
+            className={` border-none text-black text-sm rounded-lg focus:ring-gray-500 focus:border-gray-500 block  p-3  ${theme === 'dark' ? 'bg-[#27282D] text-white' : 'bg-gray-50 text-black'}`}
             value={pageSize}
             onChange={(e) => {
               dispatch(setPageSize(parseInt(e.target.value)))
@@ -957,3 +957,4 @@ const DataTable = (props) => {
 };
 
 export default DataTable;
+

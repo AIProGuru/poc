@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 
 const colors = [
   "#3B82F6", "#60A5FA", "#38BDF8", "#22D3EE", "#A78BFA",
-  "#F6A521", "#005DE2", "#34D399", "#10B981", "#059669",
+  "#F6A521", "#3b3f46", "#34D399", "#10B981", "#059669",
   "#D97706", "#F59E0B", "#FBBF24", "#FCD34D", "#FDE68A",
   "#EF4444", "#F87171", "#FCA5A5", "#FECACA", "#FEE2E2"
 ];
@@ -137,3 +137,4 @@ export default function SingleBarWithList({ data_pie, type = 1 }) {
     </div>
   );
 }
+

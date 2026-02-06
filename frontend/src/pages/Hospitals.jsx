@@ -29,7 +29,7 @@ const Hospitals = () => {
 
         <div className="container mx-auto flex overflow-hidden">
           <div className="flex flex-col text-center sm:text-left w-full overflow-visible">
-            <p className="text-[#0048FF] text-[20px] leading-7 z-20">
+            <p className="text-[#3b3f46] text-[20px] leading-7 z-20">
               HOSPITALS AND HEALTH SYSTEMS
             </p>
             <h1
@@ -38,12 +38,12 @@ const Hospitals = () => {
               Maximize Revenue, Minimize Effort
             </h1>
             <p className="text-[20px] text-[#475569] leading-[28px] md:w-[72%] w-full z-20">
-              Learn how <u className="text-[#0048FF]">Helio RCM</u> can help
+              Learn how <u className="text-[#3b3f46]">Helio RCM</u> can help
               reduce manual effort and significantly increase revenue recovery
               through powerful AI{" "}
             </p>
 
-            <button className="h-[70px] md:w-[240px] w-full bg-[#0048FF] shadow-xl shadow-[#0048FF]/50 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[42px] justify-center gap-2 z-20">
+            <button className="h-[70px] md:w-[240px] w-full bg-[#3b3f46] shadow-xl shadow-[#3b3f46]/50 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[42px] justify-center gap-2 z-20">
               Get Started
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -62,8 +62,8 @@ const Hospitals = () => {
               alt=""
               className="sm:absolute -top-6 right-0 z-0 md:w-[1099px] w-[160%] h-[100%] max-w-none sm:ml-0 -ml-40"
             /> */}
-            <p className="md:px-7 md:py-[40.5px] px-1 py-2 border-l-[#0048FF] border-l text-[20px] leading-[28px] text-[#475569] md:w-[92%] w-full z-20 sm:mt-0 -mt-64 text-left">
-              <u className="text-[#0048FF]">Helio RCM</u> transforms denial
+            <p className="md:px-7 md:py-[40.5px] px-1 py-2 border-l-[#3b3f46] border-l text-[20px] leading-[28px] text-[#475569] md:w-[92%] w-full z-20 sm:mt-0 -mt-64 text-left">
+              <u className="text-[#3b3f46]">Helio RCM</u> transforms denial
               management for hospitals and health systems with cutting-edge
               AI-driven automation. Our AI agents work 24/7 to help your team
               recover lost revenue and reduce days in A/R while minimizing
@@ -263,3 +263,4 @@ const Hospitals = () => {
 };
 
 export default Hospitals;
+

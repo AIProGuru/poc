@@ -25,7 +25,7 @@ export default function Discover_all({ title, desc, link, button }) {
         <Link
           to={link}
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="mx-auto p-4 px-6 bg-[#0048FF] flex flex-row justify-center sm:w-fit text-white font-semibold rounded-xl w-full gap-4"
+          className="mx-auto p-4 px-6 bg-[#3b3f46] flex flex-row justify-center sm:w-fit text-white font-semibold rounded-xl w-full gap-4"
         >
           {button}
           <svg
@@ -63,3 +63,4 @@ export default function Discover_all({ title, desc, link, button }) {
     </div>
   );
 }
+

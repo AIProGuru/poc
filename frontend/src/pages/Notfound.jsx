@@ -43,7 +43,7 @@ If you believe this is an error, <span><a href='/contact' className=' text-[#002
                         </p>
 
       {/* <button
-        className="mt-6 px-6 py-2 bg-blue-600 text-white text-lg rounded hover:bg-blue-700 transition duration-300"
+        className="mt-6 px-6 py-2 bg-gray-600 text-white text-lg rounded hover:bg-gray-700 transition duration-300"
         onClick={handleGoBack}
       >
         Go Back Home

@@ -12,7 +12,7 @@ export default function Discover_collab() {
       </div>
       <div className="getstarted mx-2 z-50 mt-4 sm:mt-0">
         <Link to='/contact'>
-          <button className="p-4 px-6 bg-[#0048FF] flex flex-row justify-evenly w-[160px] mt-10 mr-10 text-white font-semibold rounded-xl">
+          <button className="p-4 px-6 bg-[#3b3f46] flex flex-row justify-evenly w-[160px] mt-10 mr-10 text-white font-semibold rounded-xl">
             Contact Us
             <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M16.5 12L13 15.5M8.5 12H16.5H8.5ZM16.5 12L13 8.5L16.5 12Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

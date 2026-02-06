@@ -61,7 +61,7 @@ const Apply = () => {
             <h3 className="text-[#EBEDF0] font-bold">
               What We're Looking For:
             </h3>
-            <ul className="text-[#A9C5ED]">
+            <ul className="text-[#BFC5CF]">
               {params &&
                 params.lookingfor.map((item) => (
                   <li className="list-disc ml-8">{item}</li>
@@ -70,7 +70,7 @@ const Apply = () => {
           </div>
           <div className="text-[20px] flex flex-col">
             <h3 className="text-[#EBEDF0] font-bold">Who You Are:</h3>
-            <ul className="text-[#A9C5ED]">
+            <ul className="text-[#BFC5CF]">
               {params &&
                 params.whoyouare.map((item) => (
                   <li className="list-disc ml-8">{item}</li>
@@ -83,7 +83,7 @@ const Apply = () => {
             <h1 className="font-bold text-white md:text-[54px] text-[38px]">
               Apply for this job
             </h1>
-            <p className="text-[22px] text-[#A9C5ED]">
+            <p className="text-[22px] text-[#BFC5CF]">
               *indicates a required field
             </p>
           </div>
@@ -146,11 +146,11 @@ const Apply = () => {
               <p>MyCV.PDF</p>
               <p>342.Kb</p>
             </div>
-            <button className="md:block hidden bg-gradient-to-r from-[#16192D] to-[#0810503D] text-[#0048FF] font-bold text-[14px] px-[10px] py-[17px] rounded-xl w-[160px]">
+            <button className="md:block hidden bg-gradient-to-r from-[#16192D] to-[#0810503D] text-[#3b3f46] font-bold text-[14px] px-[10px] py-[17px] rounded-xl w-[160px]">
               Change CV file
             </button>
           </div>
-          <button className="md:hidden block bg-gradient-to-r from-[#16192D] to-[#0810503D] text-[#0048FF] font-bold text-[14px] px-[10px] py-[17px] rounded-xl w-[180px]">
+          <button className="md:hidden block bg-gradient-to-r from-[#16192D] to-[#0810503D] text-[#3b3f46] font-bold text-[14px] px-[10px] py-[17px] rounded-xl w-[180px]">
             Change CV file
           </button>
           <div className="flex justify-between rounded-[7px] border border-[#1219537D] py-[6px] px-[7px] items-center">
@@ -158,11 +158,11 @@ const Apply = () => {
               <p>My Cover Letter</p>
               <p>342.Kb</p>
             </div>
-            <button className="md:block hidden bg-gradient-to-r from-[#16192D] to-[#0810503D] text-[#0048FF] font-bold text-[14px] px-[10px] py-[17px] rounded-xl w-[160px]">
+            <button className="md:block hidden bg-gradient-to-r from-[#16192D] to-[#0810503D] text-[#3b3f46] font-bold text-[14px] px-[10px] py-[17px] rounded-xl w-[160px]">
               Change Cover Letter
             </button>
           </div>
-          <button className="md:hidden block bg-gradient-to-r from-[#16192D] to-[#0810503D] text-[#0048FF] font-bold text-[14px] px-[10px] py-[17px] rounded-xl w-[180px]">
+          <button className="md:hidden block bg-gradient-to-r from-[#16192D] to-[#0810503D] text-[#3b3f46] font-bold text-[14px] px-[10px] py-[17px] rounded-xl w-[180px]">
             Change CV file
           </button>
           <div className="bg-gradient-to-r from-[#06060CCC] to-[#0810503D] border border-[#1219538F] p-[25px] gap-8 flex flex-col rounded-xl">
@@ -219,7 +219,7 @@ const Apply = () => {
             </div>
           </div>
           <div className="flex justify-end">
-            <button className="text-white md:text-[20px] text-[16px] font-black bg-[#0048FF] shadow-xl shadow-[#0048FF]/50 items-center rounded-xl flex gap-2 md:py-[23px] py-[13px] px-[56px] ">
+            <button className="text-white md:text-[20px] text-[16px] font-black bg-[#3b3f46] shadow-xl shadow-[#3b3f46]/50 items-center rounded-xl flex gap-2 md:py-[23px] py-[13px] px-[56px] ">
               Submit application
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -242,3 +242,4 @@ const Apply = () => {
 };
 
 export default Apply;
+

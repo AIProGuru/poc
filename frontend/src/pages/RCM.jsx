@@ -30,7 +30,7 @@ const RCM = () => {
 
         <div className="container mx-auto flex overflow-hidden">
           <div className="xl:w-1/2 lg:w-[60%] gap-8 flex flex-col text-center sm:text-left sm:w-[80%] w-full overflow-visible">
-            <p className="text-[#0048FF] text-[20px] leading-7 z-20">
+            <p className="text-[#3b3f46] text-[20px] leading-7 z-20">
               Revenue Cycle Management (RCM) Vendors
             </p>
             <h1
@@ -43,11 +43,11 @@ const RCM = () => {
             </h1>
             <p className="text-[22px] text-[#6C9BE0] leading-[30.8px] md:w-[72%] w-full z-20">
               Your customers in the healthcare industry are relying on you to
-              deliver measurable ROI. <u className="text-[#0048FF]">Helio RCM</u>{" "}
+              deliver measurable ROI. <u className="text-[#3b3f46]">Helio RCM</u>{" "}
               can help you do just that.
             </p>
 
-            <button className="h-[70px] md:w-[240px] w-full bg-[#0048FF] shadow-xl shadow-[#0048FF]/50 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[42px] justify-center gap-2 z-20">
+            <button className="h-[70px] md:w-[240px] w-full bg-[#3b3f46] shadow-xl shadow-[#3b3f46]/50 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[42px] justify-center gap-2 z-20">
               Get Started
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -89,7 +89,7 @@ const RCM = () => {
             <p className="text-[20px] text-[#6C9BE0] leading-[28px]">
               Clients are relying on you to do the heavy lifting for their
               revenue cycle management.{" "}
-              <u className="text-[#0048FF]">Helio RCM</u> enables you to
+              <u className="text-[#3b3f46]">Helio RCM</u> enables you to
               significantly improve your denial recovery services with powerful
               AI-driven solutions that increase client satisfaction and ROI.
             </p>
@@ -155,7 +155,7 @@ const RCM = () => {
             <p className="text-[20px] leading-[24px] text-[#6C9BE0]">
               Our AI solutions enhance optimization across your entire
               organization, freeing up valuable human resource for more
-              important tasks. <u className="text-[#0048FF]">Helio RCM's</u> AI
+              important tasks. <u className="text-[#3b3f46]">Helio RCM's</u> AI
               agents work autonomously to handle the entire resubmissions and
               appeals process.
             </p>
@@ -319,3 +319,4 @@ const RCM = () => {
 };
 
 export default RCM;
+

@@ -8,7 +8,7 @@ const CustomTooltip = ({ active, payload, label }) => {
       <div className="bg-white/90 backdrop-blur-md p-3 rounded-lg shadow-xl border border-gray-100">
         <p className="font-semibold text-gray-800 mb-2">{label}</p>
         {payload.map((entry, index) => (
-          <p key={index} className="text-sm text-blue-500">
+          <p key={index} className="text-sm text-gray-500">
             {entry.name}: {(entry.value / 1000).toFixed(2)}k
           </p>
         ))}

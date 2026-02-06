@@ -28,7 +28,7 @@ const About = () => {
             
 
           </div>
-          <button className="h-[70px] mt-5 md:w-[235px] w-full bg-[#0048FF] shadow-xl shadow-[#0048FF]/30 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[42px] justify-center gap-2">
+          <button className="h-[70px] mt-5 md:w-[235px] w-full bg-[#3b3f46] shadow-xl shadow-[#3b3f46]/30 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[42px] justify-center gap-2">
               Get Started
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -122,7 +122,7 @@ const About = () => {
             <div className="flex flex-col md:flex-row md:gap-x-8 items-center md:h-[376px] gap-y-8">
               <div className="relative flex items-center rounded-2xl shadow-sm bg-white border border-[#E2E8F0] lg:w-[60%] sm:w-[80%] w-full h-full">
                 <div className="w-full py-8 px-6 py-4">
-                  <h3 className="md:text-[40px] text-[32px] font-bold text-[#0048FF] mb-4">
+                  <h3 className="md:text-[40px] text-[32px] font-bold text-[#3b3f46] mb-4">
                     Mission
                   </h3>
                   <p className="text-[22px] text-[#475569]">
@@ -135,7 +135,7 @@ const About = () => {
 
               <div className="flex flex-col justify-center bg-white border border-[#E2E8F0] rounded-lg shadow-sm lg:w-2/5 sm:w-[80%] w-full h-full">
                 <div className="lg:w-2/3 w-full py-8 px-6 md:py-[10px] md:px-6">
-                  <h3 className="md:text-[40px] text-[32px] font-bold text-[#0048FF] mb-4">
+                  <h3 className="md:text-[40px] text-[32px] font-bold text-[#3b3f46] mb-4">
                     Vision
                   </h3>
                   <p className="text-[22px] text-[#475569]">
@@ -149,7 +149,7 @@ const About = () => {
             <div className="flex flex-col md:flex-row md:gap-x-8 items-center md:h-[376px] gap-y-8">
               <div className="flex flex-col justify-center bg-white border border-[#E2E8F0] rounded-lg shadow-sm lg:w-2/5 sm:w-[80%] w-full h-full">
                 <div className="lg:w-2/3 w-full py-8 px-6 md:py-[10px] md:px-6">
-                  <h3 className="md:text-[40px] text-[32px] font-bold text-[#0048FF] mb-4">
+                  <h3 className="md:text-[40px] text-[32px] font-bold text-[#3b3f46] mb-4">
                     Core Values
                   </h3>
                   <p className="text-[22px] text-[#475569]">
@@ -160,7 +160,7 @@ const About = () => {
 
               <div className="relative flex items-center rounded-2xl shadow-sm bg-white border border-[#E2E8F0] lg:w-[60%] sm:w-[80%] w-full h-full">
                 <div className="w-full py-8 px-6 md:py-[10px] md:px-6">
-                  <h3 className="md:text-[40px] text-[32px] font-bold text-[#0048FF] mb-4">
+                  <h3 className="md:text-[40px] text-[32px] font-bold text-[#3b3f46] mb-4">
                     Presentation
                   </h3>
                   {/* <div className="flex items-center gap-2">
@@ -228,3 +228,4 @@ const About = () => {
 };
 
 export default About;
+

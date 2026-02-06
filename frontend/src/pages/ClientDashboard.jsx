@@ -107,7 +107,7 @@ const ClientDashboard = () => {
         return 'bg-sky-600';
       case 'standard-user':
       default:
-        return 'bg-blue-600';
+        return 'bg-gray-600';
     }
   };
 
@@ -306,8 +306,8 @@ const TenantDetailsModal = () => {
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
                 <div className="space-y-4">
                   <div className="flex items-start">
-                    <div className="min-w-[40px] h-10 flex items-center justify-center bg-blue-500/20 rounded-full mr-3">
-                      <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="min-w-[40px] h-10 flex items-center justify-center bg-gray-500/20 rounded-full mr-3">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
@@ -358,7 +358,7 @@ const TenantDetailsModal = () => {
               Close
             </button>
             <button 
-              className="px-4 py-2 bg-[#0048FF] text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-lg hover:shadow-blue-500/30"
+              className="px-4 py-2 bg-[#3b3f46] text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition shadow-lg hover:shadow-gray-500/30"
               onClick={() => {
                 // Add tenant editing functionality here
                 handleClose();
@@ -401,7 +401,7 @@ const TenantDetailsModal = () => {
       case 'warning': return 'border-yellow-500 bg-yellow-900/20 text-yellow-400';
       case 'error': return 'border-red-500 bg-red-900/20 text-red-400';
       case 'info':
-      default: return 'border-blue-500 bg-blue-900/20 text-blue-400';
+      default: return 'border-gray-500 bg-gray-900/20 text-gray-400';
     }
   };
 
@@ -568,7 +568,7 @@ const TenantDetailsModal = () => {
                   <h3 className="text-lg font-semibold text-white">Tenants</h3>
                   <button 
                     onClick={() => setIsTenantModalOpen(true)}
-                    className="px-4 py-2 bg-[#0048FF] text-white rounded-lg hover:bg-blue-700 transition flex items-center"
+                    className="px-4 py-2 bg-[#3b3f46] text-white rounded-lg hover:bg-gray-700 transition flex items-center"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -655,7 +655,7 @@ case 'users':
               <input
                 type="text"
                 placeholder="Search users..."
-                className="bg-[#ffffff15] text-white px-4 py-2 rounded-lg w-56 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-[#ffffff15] text-white px-4 py-2 rounded-lg w-56 pr-10 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 value={searchKeyword}
                 onChange={handleUserSearch}
               />
@@ -664,7 +664,7 @@ case 'users':
               </svg>
             </div>
             <button 
-              className="px-4 py-2 bg-[#0048FF] text-white rounded-lg hover:bg-blue-700 transition flex items-center"
+              className="px-4 py-2 bg-[#3b3f46] text-white rounded-lg hover:bg-gray-700 transition flex items-center"
               onClick={() => setIsUserModalOpen(true)}
             >
               <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -678,7 +678,7 @@ case 'users':
         {/* Loading State */}
         {usersLoading && (
           <div className="py-16 flex justify-center items-center">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-12 h-12 border-4 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
         
@@ -720,7 +720,7 @@ case 'users':
                           ? 'bg-indigo-500/20 text-indigo-400'
                           : normalizeRole(user.role) === 'executive'
                           ? 'bg-sky-500/20 text-sky-300'
-                          : 'bg-blue-500/20 text-blue-400'
+                          : 'bg-gray-500/20 text-gray-400'
                       }`}>
                         {getRoleLabel(user.role)}
                       </span>
@@ -772,20 +772,20 @@ case 'users':
                     {user.client && user.client.length > 0 ? (
                       <>
                         {user.role === 'super-admin' ? (
-                          <span className="px-2 py-1 text-xs rounded-full bg-[#ffffff15] text-blue-300">
+                          <span className="px-2 py-1 text-xs rounded-full bg-[#ffffff15] text-gray-300">
                             All Clients
                           </span>
                         ) : (
                           <>
                             {user.client.slice(0, 3).map((clientName, idx) => (
-                              <span key={idx} className="px-2 py-1 text-xs rounded-full bg-[#ffffff15] text-blue-300">
+                              <span key={idx} className="px-2 py-1 text-xs rounded-full bg-[#ffffff15] text-gray-300">
                                 {clientName}
                               </span>
                             ))}
                             
                             {user.client.length > 3 && (
                               <div className="group relative">
-                                <span className="px-2 py-1 text-xs rounded-full bg-[#ffffff15] text-blue-300 cursor-pointer">
+                                <span className="px-2 py-1 text-xs rounded-full bg-[#ffffff15] text-gray-300 cursor-pointer">
                                   +{user.client.length - 3} more
                                 </span>
                                 
@@ -793,7 +793,7 @@ case 'users':
                                   <div className="p-2 rounded-lg shadow-lg bg-[#232429] text-white border border-gray-700">
                                     <div className="flex flex-wrap gap-1">
                                       {user.client.slice(3).map((clientName, idx) => (
-                                        <span key={idx} className="px-2 py-1 text-xs rounded-full bg-[#191a1d] text-blue-300">
+                                        <span key={idx} className="px-2 py-1 text-xs rounded-full bg-[#191a1d] text-gray-300">
                                           {clientName}
                                         </span>
                                       ))}
@@ -832,7 +832,7 @@ case 'users':
                   </svg>
                 </button>
                 <div className="flex">
-                  <button className="px-3 py-1 rounded-lg bg-[#0048FF] text-white">1</button>
+                  <button className="px-3 py-1 rounded-lg bg-[#3b3f46] text-white">1</button>
                   <button className="px-3 py-1 rounded-lg text-gray-400 hover:bg-[#ffffff15]">2</button>
                   <button className="px-3 py-1 rounded-lg text-gray-400 hover:bg-[#ffffff15]">3</button>
                 </div>
@@ -940,7 +940,7 @@ case 'users':
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" defaultChecked className="sr-only peer" />
-                      <div className="w-11 h-6 bg-[#ffffff20] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-[#ffffff20] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-600"></div>
                     </label>
                   </div>
                   
@@ -951,7 +951,7 @@ case 'users':
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" defaultChecked className="sr-only peer" />
-                      <div className="w-11 h-6 bg-[#ffffff20] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-[#ffffff20] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-600"></div>
                     </label>
                   </div>
                   
@@ -962,7 +962,7 @@ case 'users':
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" />
-                      <div className="w-11 h-6 bg-[#ffffff20] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-[#ffffff20] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-600"></div>
                     </label>
                   </div>
                 </div>
@@ -972,7 +972,7 @@ case 'users':
                 <button className="px-4 py-2 bg-[#ffffff10] text-white rounded-lg hover:bg-[#ffffff20] transition">
                   Reset Defaults
                 </button>
-                <button className="px-4 py-2 bg-[#0048FF] text-white rounded-lg hover:bg-blue-700 transition">
+                <button className="px-4 py-2 bg-[#3b3f46] text-white rounded-lg hover:bg-gray-700 transition">
                   Save Changes
                 </button>
               </div>
@@ -994,7 +994,7 @@ case 'users':
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-[#ffffff08] p-4 rounded-lg">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-3">
+                    <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center mr-3">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M3 16V8C3 5.23858 5.23858 3 8 3H16C18.7614 3 21 5.23858 21 8V16C21 18.7614 18.7614 21 16 21H8C5.23858 21 3 18.7614 3 16Z" stroke="white" strokeWidth="2"/>
@@ -1243,7 +1243,7 @@ const TenantModal = () => {
                 name="name" 
                 value={formState.name}
                 onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                 required
               />
             </div>
@@ -1255,7 +1255,7 @@ const TenantModal = () => {
                 name="type" 
                 value={formState.type}
                 onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                 required
               >
                 <option value="" disabled>Select Tenant Type</option>
@@ -1277,7 +1277,7 @@ const TenantModal = () => {
                 name="address" 
                 value={formState.address}
                 onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                 required
               />
             </div>
@@ -1290,7 +1290,7 @@ const TenantModal = () => {
                 name="city" 
                 value={formState.city}
                 onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                 required
               />
             </div>
@@ -1303,7 +1303,7 @@ const TenantModal = () => {
                   name="state" 
                   value={formState.state}
                   onChange={handleLocalInputChange}
-                  className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                  className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                   required
                 />
               </div>
@@ -1315,7 +1315,7 @@ const TenantModal = () => {
                   name="zip" 
                   value={formState.zip}
                   onChange={handleLocalInputChange}
-                  className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                  className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                   required
                 />
               </div>
@@ -1329,7 +1329,7 @@ const TenantModal = () => {
                 name="contactName" 
                 value={formState.contactName}
                 onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                 required
               />
             </div>
@@ -1341,7 +1341,7 @@ const TenantModal = () => {
                 name="contactEmail" 
                 value={formState.contactEmail}
                 onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                 required
               />
             </div>
@@ -1353,7 +1353,7 @@ const TenantModal = () => {
                 name="contactPhone" 
                 value={formState.contactPhone}
                 onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                 required
               />
             </div>
@@ -1364,7 +1364,7 @@ const TenantModal = () => {
                 name="status" 
                 value={formState.status}
                 onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               >
                 <option value="Active">Active</option>
                 <option value="Pending">Pending</option>
@@ -1383,7 +1383,7 @@ const TenantModal = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-[#0048FF] hover:bg-blue-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-blue-500/30"
+              className="px-5 py-2.5 bg-[#3b3f46] hover:bg-gray-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-gray-500/30"
             >
               Add Tenant
             </button>
@@ -1449,7 +1449,7 @@ const TenantModal = () => {
       {loading ? (
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-24">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <div className="w-12 h-12 border-4 border-gray-600 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-[#6C9BE0]">Loading client dashboard...</p>
           </div>
         </div>
@@ -1463,7 +1463,7 @@ const TenantModal = () => {
             <p className="mt-2 text-[#6C9BE0]">We couldn't find the client you're looking for.</p>
             <button 
               onClick={() => navigate('/client-management')}
-              className="mt-6 px-4 py-2 bg-[#0048FF] text-white rounded-lg hover:bg-blue-700 transition"
+              className="mt-6 px-4 py-2 bg-[#3b3f46] text-white rounded-lg hover:bg-gray-700 transition"
             >
               Return to Client Management
             </button>
@@ -1521,38 +1521,38 @@ const TenantModal = () => {
           <div className="container mx-auto px-4 py-4">
             <div className="flex flex-wrap gap-2 border-b border-[#ffffff20]">
               {/* <button 
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'overview' ? 'text-white bg-[#ffffff15] border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`} 
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'overview' ? 'text-white bg-[#ffffff15] border-b-2 border-gray-500' : 'text-gray-400 hover:text-white'}`} 
                 onClick={() => handleTabChange('overview')}
               >
                 Overview
               </button>
               <button 
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'claims' ? 'text-white bg-[#ffffff15] border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`} 
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'claims' ? 'text-white bg-[#ffffff15] border-b-2 border-gray-500' : 'text-gray-400 hover:text-white'}`} 
                 onClick={() => handleTabChange('claims')}
               >
                 Claims
               </button>
               <button 
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'ai-agents' ? 'text-white bg-[#ffffff15] border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`} 
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'ai-agents' ? 'text-white bg-[#ffffff15] border-b-2 border-gray-500' : 'text-gray-400 hover:text-white'}`} 
                 onClick={() => handleTabChange('ai-agents')}
               >
                 AI Agents
               </button> */}
               <button 
-      className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'client-management' ? 'text-white bg-[#ffffff15] border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`} 
+      className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'client-management' ? 'text-white bg-[#ffffff15] border-b-2 border-gray-500' : 'text-gray-400 hover:text-white'}`} 
       onClick={() => handleTabChange('client-management')}
     >
       Tenant Management
     </button>
 
     <button 
-      className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'users' ? 'text-white bg-[#ffffff15] border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`} 
+      className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'users' ? 'text-white bg-[#ffffff15] border-b-2 border-gray-500' : 'text-gray-400 hover:text-white'}`} 
       onClick={() => handleTabChange('users')}
     >
       Users
     </button>
               <button 
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'settings' ? 'text-white bg-[#ffffff15] border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`} 
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'settings' ? 'text-white bg-[#ffffff15] border-b-2 border-gray-500' : 'text-gray-400 hover:text-white'}`} 
                 onClick={() => handleTabChange('settings')}
               >
                 Settings
@@ -1575,3 +1575,4 @@ const TenantModal = () => {
 };
 
 export default ClientDashboard;
+

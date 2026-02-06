@@ -295,9 +295,9 @@ export default function Header(props) {
               <li>
                 <button
                   data-target="mega-menu-full-dropdown-serve"
-                  className={`flex items-center justify-between w-full text-neutral-800 rounded md:w-auto hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-600 md:p-0 dark:text-neutral-800 md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-blue-500 md:dark:hover:bg-transparent dark:border-gray-700 ${
+                  className={`flex items-center justify-between w-full text-neutral-800 rounded md:w-auto hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-gray-600 md:p-0 dark:text-neutral-800 md:dark:hover:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-500 md:dark:hover:bg-transparent dark:border-gray-700 ${
                     activeDropdown === "mega-menu-full-dropdown-serve"
-                      ? "text-blue-600"
+                      ? "text-gray-600"
                       : ""
                   }`}
                   onClick={() =>
@@ -325,9 +325,9 @@ export default function Header(props) {
               <li>
                 <button
                   data-target="mega-menu-full-dropdown-resources"
-                  className={`flex items-center justify-between w-full text-neutral-800 rounded md:w-auto hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-600 md:p-0 dark:text-neutral-800 md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-blue-500 md:dark:hover:bg-transparent dark:border-gray-700 ${
+                  className={`flex items-center justify-between w-full text-neutral-800 rounded md:w-auto hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-gray-600 md:p-0 dark:text-neutral-800 md:dark:hover:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-500 md:dark:hover:bg-transparent dark:border-gray-700 ${
                     activeDropdown === "mega-menu-full-dropdown-resources"
-                      ? "text-blue-600"
+                      ? "text-gray-600"
                       : ""
                   }`}
                   onClick={() =>
@@ -355,9 +355,9 @@ export default function Header(props) {
               <li>
                 <button
                   data-target="mega-menu-full-dropdown-company"
-                  className={`flex items-center justify-between w-full text-neutral-800 rounded md:w-auto hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-600 md:p-0 dark:text-neutral-800 md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-blue-500 md:dark:hover:bg-transparent dark:border-gray-700 ${
+                  className={`flex items-center justify-between w-full text-neutral-800 rounded md:w-auto hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-gray-600 md:p-0 dark:text-neutral-800 md:dark:hover:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-500 md:dark:hover:bg-transparent dark:border-gray-700 ${
                     activeDropdown === "mega-menu-full-dropdown-company"
-                      ? "text-blue-600"
+                      ? "text-gray-600"
                       : ""
                   }`}
                   onClick={() =>
@@ -408,7 +408,7 @@ export default function Header(props) {
               <>
                 <Link
                   to="/signup"
-                  className="text-sm text-center h-[50px] cursor-pointer font-poppins bg-[#0048FF] px-6 py-3 rounded-lg leading-6 text-white w-[160px]"
+                  className="text-sm text-center h-[50px] cursor-pointer font-poppins bg-[#3b3f46] px-6 py-3 rounded-lg leading-6 text-white w-[160px]"
                 >
                   Start Free Trial
                 </Link>
@@ -536,7 +536,7 @@ export default function Header(props) {
                 <Link
                   to="/blog/3"
                   onClick={scrollToTop}
-                  className="inline-flex font-medium items-center text-blue-600 hover:underline"
+                  className="inline-flex font-medium items-center text-gray-600 hover:underline"
                 >
                   Click to read the article
                   <svg
@@ -1119,7 +1119,7 @@ export default function Header(props) {
                   )}
                   {!isAuthenticated && (
                     <Link to="/signup">
-                      <div className="text-sm text-center h-[50px] cursor-pointer font-bold font-poppins mt-5 bg-[#0048FF] px-8 py-3 rounded-lg leading-6 text-white">
+                      <div className="text-sm text-center h-[50px] cursor-pointer font-bold font-poppins mt-5 bg-[#3b3f46] px-8 py-3 rounded-lg leading-6 text-white">
                         <span className="">Start Free Trial</span>
                       </div>
                     </Link>
@@ -1132,7 +1132,7 @@ export default function Header(props) {
                   {isAuthenticated && (
                     <Link to="#">
                       <button onClick={logout}>
-                        <span className="text-sm text-center h-[50px] cursor-pointer font-bold font-poppins mt-5 bg-[#0048FF] px-8 py-3 rounded-lg leading-6 text-white">
+                        <span className="text-sm text-center h-[50px] cursor-pointer font-bold font-poppins mt-5 bg-[#3b3f46] px-8 py-3 rounded-lg leading-6 text-white">
                           Log out
                         </span>
                       </button>
@@ -1147,3 +1147,4 @@ export default function Header(props) {
     </header>
   );
 }
+

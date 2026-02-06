@@ -75,7 +75,7 @@ const TimelineItem = ({ title, year, description, side, index }) => {
       }}
     >
       <div className="relative p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-        <div className="inline-block rounded-lg bg-blue-500/10 px-3 py-1 text-sm font-semibold text-blue-500 mb-4">
+        <div className="inline-block rounded-lg bg-gray-500/10 px-3 py-1 text-sm font-semibold text-gray-500 mb-4">
           {year}
         </div>
         <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
@@ -122,7 +122,7 @@ const Timeline = () => {
               </h1>
               </div>
             
-              <p className="text-[#A9C5ED] md:text-[18px] lg:text-[22px] leading-[30.8px]">and incorporated in Delaware with a 
+              <p className="text-[#BFC5CF] md:text-[18px] lg:text-[22px] leading-[30.8px]">and incorporated in Delaware with a 
               mission to disrupt traditional revenue cycle management. Since then, we’ve been breaking the rules of RevCycle by bringing AI-driven innovation to denial recovery. </p>
             </div>
           </motion.div>
@@ -142,7 +142,7 @@ const Timeline = () => {
             <div className="relative p-6 rounded-xl  backdrop-blur-sm border border-[#0C0F27]">
             
               <h3 className="text-xl font-bold text-white mb-2">Rapid growth, recruiting top talent to expand our team.</h3>
-              <p className="text-[#A9C5ED]">Helio RCM Corp experienced rapid growth, attracting top talent to build a world-class team and drive innovation in healthcare revenue management.</p>
+              <p className="text-[#BFC5CF]">Helio RCM Corp experienced rapid growth, attracting top talent to build a world-class team and drive innovation in healthcare revenue management.</p>
             </div>
           </motion.div>
 
@@ -160,7 +160,7 @@ const Timeline = () => {
             </h1>
             <div className="relative p-6 rounded-xl  backdrop-blur-sm border border-[#0C0F27]">
               <h3 className="text-xl font-bold text-white mb-2">Helio RCM Corp incorporated in Delaware</h3>
-              <p className="text-[#A9C5ED]">Helio RCM began its journey to transform healthcare revenue management by developing AI-driven solutions, leveraging advanced technology and top talent to address key industry challenges.</p>
+              <p className="text-[#BFC5CF]">Helio RCM began its journey to transform healthcare revenue management by developing AI-driven solutions, leveraging advanced technology and top talent to address key industry challenges.</p>
             </div>
           </motion.div>
 
@@ -180,7 +180,7 @@ const Timeline = () => {
              
               <h3 className="text-xl font-bold text-white mb-2">Continuing to lead in AI-driven solutions
               </h3>
-              <p className="text-[#A9C5ED]">Driving innovation to redefine revenue cycle management.</p>
+              <p className="text-[#BFC5CF]">Driving innovation to redefine revenue cycle management.</p>
             </div>
           </motion.div>
         </div>

@@ -285,7 +285,7 @@ const DenialMenu = () => {
           ].map((item, index) => (
             <button
               key={index}
-              className="px-4 py-2 bg-gradient-to-br text-[#A9C5ED] font-bold from-[#0C0F27] to-[#1e1a6b] rounded-md hover:bg-blue-600"
+              className="px-4 py-2 bg-gradient-to-br text-[#BFC5CF] font-bold from-[#0C0F27] to-[#1e1a6b] rounded-md hover:bg-gray-600"
               onClick={() => handlePopularSearchClick(item)}
             >
               {item.replace(/^\d+\.\s*/, "").replace(" Denials", "")}

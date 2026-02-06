@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const Home = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800">
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,7 +47,7 @@ const Home = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content - AI Hand Image */}
             <div className="relative">
-              <div className="w-full h-96 bg-gradient-to-br from-slate-800 to-blue-900 rounded-2xl overflow-hidden">
+              <div className="w-full h-96 bg-gradient-to-br from-slate-800 to-gray-900 rounded-2xl overflow-hidden">
                 <div className="w-full h-full bg-cover bg-center" 
                      style={{
                        backgroundImage: "url('/ai-hand-image.png')"
@@ -84,7 +84,7 @@ const Home = () => {
           <div className="absolute top-20 left-10 w-2 h-2 bg-white rounded-full animate-pulse"></div>
           <div className="absolute top-40 right-20 w-1 h-1 bg-orange-500 rounded-full animate-pulse delay-500"></div>
           <div className="absolute bottom-40 left-20 w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse delay-1000"></div>
-          <div className="absolute bottom-20 right-40 w-1 h-1 bg-blue-500 rounded-full animate-pulse delay-1500"></div>
+          <div className="absolute bottom-20 right-40 w-1 h-1 bg-gray-500 rounded-full animate-pulse delay-1500"></div>
         </div>
       </main>
     </div>
@@ -92,3 +92,4 @@ const Home = () => {
 };
 
 export default Home;
+

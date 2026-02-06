@@ -7,7 +7,7 @@ function Procedure(props) {
         props.data.map((e, index) => (
           <span
             role='button'
-            className='text-white bg-blue-500 px-2 py-1 rounded-lg'
+            className='text-white bg-gray-500 px-2 py-1 rounded-lg'
             key={index}
             onClick={() => {
               props.setData(e);
@@ -22,3 +22,4 @@ function Procedure(props) {
 }
 
 export default Procedure;
+

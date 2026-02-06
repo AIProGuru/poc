@@ -5,7 +5,7 @@ function Patient(props) {
     <div>
       <span
         role='button'
-        className='text-white bg-blue-500 px-2 py-1 rounded-lg'
+        className='text-white bg-gray-500 px-2 py-1 rounded-lg'
         onClick={() => {
           props.setData({
             bus_name: props.data.addr,
@@ -22,3 +22,4 @@ function Patient(props) {
 }
 
 export default Patient;
+

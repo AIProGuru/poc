@@ -207,7 +207,7 @@ const Edi835Parser = () => {
           value={ediText} onChange={(e) => setEdiText(e.target.value)} />
         <div className='flex flex-col text-white font-semibold text-[16px] text-center gap-5'>
           <div
-            className='bg-blue-700 rounded-lg py-5 cursor-pointer'
+            className='bg-gray-700 rounded-lg py-5 cursor-pointer'
             onClick={parseEdiText}
           >
             Parse

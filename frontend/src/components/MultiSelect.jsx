@@ -50,9 +50,9 @@ const MultiSelect = ({
       <div className="relative">
         <div
           className={`min-h-[42px] p-2 border rounded-lg cursor-text flex flex-wrap gap-2 transition-all duration-200 ${theme === 'dark'
-              ? 'bg-[#27282D]/50 border-gray-600 hover:border-gray-500 focus-within:border-blue-500'
-              : 'bg-white border-gray-300 hover:border-gray-400 focus-within:border-blue-400'
-            } ${isOpen ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}`}
+              ? 'bg-[#27282D]/50 border-gray-600 hover:border-gray-500 focus-within:border-[#6f7074]'
+              : 'bg-white border-gray-300 hover:border-gray-400 focus-within:border-[#6f7074]'
+            } ${isOpen ? 'ring-2 ring-[#6f7074]/40' : ''}`}
           onClick={() => setIsOpen(true)}
         >
           {selected.map((item) => (
@@ -60,13 +60,13 @@ const MultiSelect = ({
               key={getDisplayValue(item)}
               className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium transition-colors ${theme === 'dark'
                   ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                  : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               {getDisplayValue(item)}
               <button
                 type="button"
-                className={`ml-1.5 hover:bg-opacity-80 rounded-full p-0.5 transition-colors ${theme === 'dark' ? 'hover:bg-gray-500' : 'hover:bg-blue-200'
+                className={`ml-1.5 hover:bg-opacity-80 rounded-full p-0.5 transition-colors ${theme === 'dark' ? 'hover:bg-gray-500' : 'hover:bg-gray-300'
                   }`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -109,14 +109,14 @@ const MultiSelect = ({
                     key={getDisplayValue(option)}
                     className={`flex items-center px-4 py-2.5 cursor-pointer transition-colors ${theme === 'dark'
                         ? 'hover:bg-gray-700'
-                        : 'hover:bg-gray-50'
+                        : 'hover:bg-gray-100'
                       }`}
                     onClick={() => toggleOption(option)}
                   >
                     <div className={`w-4 h-4 rounded border mr-3 flex items-center justify-center transition-colors ${isSelected(option)
                         ? theme === 'dark'
-                          ? 'bg-blue-500 border-blue-500'
-                          : 'bg-blue-500 border-blue-500'
+                          ? 'bg-[#25262b] border-[#606165]'
+                          : 'bg-[#25262b] border-[#606165]'
                         : theme === 'dark'
                           ? 'border-gray-500'
                           : 'border-gray-300'

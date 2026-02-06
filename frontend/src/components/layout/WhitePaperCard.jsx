@@ -20,7 +20,7 @@ function DocumentCard({ title, date, size, fileUrl, preview, fileType }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="relative rounded-3xl overflow-hidden flex flex-col gap-6">
-        <div className="w-full h-[230px] bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center">
+        <div className="w-full h-[230px] bg-gradient-to-br from-gray-500 to-purple-600 rounded-3xl flex items-center justify-center">
           <div className="text-center">
             <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mb-4 mx-auto">
               <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@ function DocumentCard({ title, date, size, fileUrl, preview, fileType }) {
             {fileType}.{size}MB
           </p>
           <button
-            className="flex bg-[#0048FF] shadow-xl shadow-[#0048FF]/50 text-white text-[14px] md:py-[18px] md:px-[20px] py-[12px] px-[16px] md:gap-3 gap-1 font-bold rounded-xl"
+            className="flex bg-[#3b3f46] shadow-xl shadow-[#3b3f46]/50 text-white text-[14px] md:py-[18px] md:px-[20px] py-[12px] px-[16px] md:gap-3 gap-1 font-bold rounded-xl"
             onClick={()=>openPdf(fileUrl)}
           >
             View
@@ -74,3 +74,4 @@ function DocumentCard({ title, date, size, fileUrl, preview, fileType }) {
 }
 
 export default DocumentCard;
+

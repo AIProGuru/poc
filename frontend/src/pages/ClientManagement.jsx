@@ -572,7 +572,7 @@ const handleQuickAction = async (action, clientId, e) => {
                 </div>
                 <div className="w-full bg-[#ffffff10] rounded-full h-1.5">
                   <div 
-                    className="bg-blue-500 h-1.5 rounded-full" 
+                    className="bg-gray-500 h-1.5 rounded-full" 
                     style={{ width: `${getClientProgress(client)}%` }}
                   ></div>
                 </div>
@@ -782,14 +782,14 @@ const handleQuickAction = async (action, clientId, e) => {
         {/* Tabs Navigation */}
 <div className="flex border-b border-[#ffffff15]">
   <button 
-    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'overview' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`}
+    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'overview' ? 'text-white border-b-2 border-gray-500' : 'text-gray-400 hover:text-white'}`}
     onClick={() => setActiveTab('overview')}
   >
     Overview
   </button>
   
   <button 
-    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'activity' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`}
+    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'activity' ? 'text-white border-b-2 border-gray-500' : 'text-gray-400 hover:text-white'}`}
     onClick={() => setActiveTab('activity')}
   >
     Activity Log
@@ -854,7 +854,7 @@ const handleQuickAction = async (action, clientId, e) => {
                 Edit Client
               </button>
               <button 
-                className="px-4 py-2 bg-[#0048FF] text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-lg hover:shadow-blue-500/30"
+                className="px-4 py-2 bg-[#3b3f46] text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition shadow-lg hover:shadow-gray-500/30"
                 onClick={() => navigate(`/client/${selectedClient.id}`)}
               >
                 View Dashboard
@@ -882,7 +882,7 @@ const handleQuickAction = async (action, clientId, e) => {
           </div>
           <button
             onClick={openNewClientModal}
-            className="mt-4 sm:mt-0 px-4 py-2.5 bg-[#0048FF] hover:bg-blue-700 text-white font-medium rounded-lg flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg hover:shadow-blue-500/30"
+            className="mt-4 sm:mt-0 px-4 py-2.5 bg-[#3b3f46] hover:bg-gray-700 text-white font-medium rounded-lg flex items-center gap-2 transition-all transform hover:scale-105 shadow-lg hover:shadow-gray-500/30"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 6V18M18 12H6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
@@ -902,7 +902,7 @@ const handleQuickAction = async (action, clientId, e) => {
               </div>
               <input
                 type="text"
-                className="pl-10 p-2.5 w-full lg:w-64 bg-[#ffffff10] rounded-lg text-white placeholder-gray-400 border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="pl-10 p-2.5 w-full lg:w-64 bg-[#ffffff10] rounded-lg text-white placeholder-gray-400 border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                 placeholder="Search clients..."
                 value={searchTerm}
                 onChange={handleSearch}
@@ -910,7 +910,7 @@ const handleQuickAction = async (action, clientId, e) => {
             </div>
             
             <select
-              className="p-2.5 pr-4 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none "
+              className="p-2.5 pr-4 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none "
               value={filterStatus}
               onChange={handleFilterChange}
             >
@@ -925,7 +925,7 @@ const handleQuickAction = async (action, clientId, e) => {
   <span className="text-sm text-gray-400">View:</span>
   <div className="flex p-1 bg-[#ffffff10] rounded-lg">
     <button
-      className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-blue-600' : 'hover:bg-[#ffffff15]'}`}
+      className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-gray-600' : 'hover:bg-[#ffffff15]'}`}
       onClick={() => setViewMode('grid')}
       title="Grid View"
     >
@@ -937,7 +937,7 @@ const handleQuickAction = async (action, clientId, e) => {
       </svg>
     </button>
     <button
-      className={`p-1.5 rounded-md ${viewMode === 'table' ? 'bg-blue-600' : 'hover:bg-[#ffffff15]'}`}
+      className={`p-1.5 rounded-md ${viewMode === 'table' ? 'bg-gray-600' : 'hover:bg-[#ffffff15]'}`}
       onClick={() => setViewMode('table')}
       title="Table View"
     >
@@ -952,7 +952,7 @@ const handleQuickAction = async (action, clientId, e) => {
         {/* Loading State */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <div className="w-12 h-12 border-4 border-gray-600 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-[#6C9BE0]">Loading clients...</p>
           </div>
         ) : filteredClients.length === 0 ? (
@@ -1016,7 +1016,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="name" 
         value={newClient.name}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
       />
     </div>
     
@@ -1027,7 +1027,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="tenantName" 
         value={newClient.tenantName}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
         required
       />
     </div>
@@ -1039,7 +1039,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="facilityName" 
         value={newClient.facilityName}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
         required
       />
     </div>
@@ -1050,7 +1050,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="facilityType" 
         value={newClient.facilityType}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
         required
       >
         <option value="">Select Facility Type</option>
@@ -1071,7 +1071,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="facilityAddress" 
         value={newClient.facilityAddress}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
         required
       />
     </div>
@@ -1083,7 +1083,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="facilityTaxID" 
         value={newClient.facilityTaxID}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
         required
       />
     </div>
@@ -1095,7 +1095,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="facilityNPI" 
         value={newClient.facilityNPI}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
         required
       />
     </div>
@@ -1107,7 +1107,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="contact" 
         value={newClient.contact}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
         required
       />
     </div>
@@ -1119,7 +1119,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="email" 
         value={newClient.email}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
         required
       />
     </div>
@@ -1131,7 +1131,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="phone" 
         value={newClient.phone}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
       />
     </div>
     
@@ -1141,7 +1141,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="status" 
         value={newClient.status}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
       >
         <option value="Active">Active</option>
         <option value="Pending">Pending</option>
@@ -1155,7 +1155,7 @@ const handleQuickAction = async (action, clientId, e) => {
         name="tier" 
         value={newClient.tier}
         onChange={handleNewClientInputChange}
-        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+        className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
       >
         <option value="Enterprise">Enterprise</option>
         <option value="Premium">Premium</option>
@@ -1176,7 +1176,7 @@ const handleQuickAction = async (action, clientId, e) => {
     </button>
     <button
       type="submit"
-      className="px-5 py-2.5 bg-[#0048FF] hover:bg-blue-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-blue-500/30"
+      className="px-5 py-2.5 bg-[#3b3f46] hover:bg-gray-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-gray-500/30"
     >
       Add Client
     </button>
@@ -1192,3 +1192,4 @@ const handleQuickAction = async (action, clientId, e) => {
 };
 
 export default ClientManagement;
+

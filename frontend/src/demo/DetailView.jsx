@@ -317,13 +317,13 @@ const DetailView = () => {
             <div className={`text-[16px] ${theme === 'dark' ? 'text-gray-300' : 'text-[#151618]'}  mt-0 sm:mt-5`}>{`$${samplifyDouble(currentClaim.BILLPRICE - currentClaim.ALLOWEDAMOUNT)}`}</div>
           </div>
         </div>
-        {/* <div className="text-[12px] h-[90px] font-medium  text-center text-[#005DE2]  flex justify-between items-center overflow-x-auto overflow-y-auto whitespace-nowrap">
+        {/* <div className="text-[12px] h-[90px] font-medium  text-center text-[#3b3f46]  flex justify-between items-center overflow-x-auto overflow-y-auto whitespace-nowrap">
           <ul className="flex flex-nowrap -mb-px">
             <li className="me-2">
               <a
                 href="#"
                 className={`inline-block mt-2 p-2 border-b-2 ${detailShowStatus === 4
-                  ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
+                  ? "text-[#3b3f46] border-b-2 border-[#3b3f46] rounded-t-lg active"
                   : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                   }`}
                 aria-current="page"
@@ -336,7 +336,7 @@ const DetailView = () => {
               <a
                 href="#"
                 className={`inline-block p-2 mt-2 border-b-2 ${detailShowStatus === 0
-                  ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
+                  ? "text-[#3b3f46] border-b-2 border-[#3b3f46] rounded-t-lg active"
                   : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                   }`}
                 onClick={() => onDetailShowStatusChange(0)}
@@ -348,7 +348,7 @@ const DetailView = () => {
               <a
                 href="#"
                 className={`inline-block p-2 mt-2 border-b-2 ${detailShowStatus === 1
-                  ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
+                  ? "text-[#3b3f46] border-b-2 border-[#3b3f46] rounded-t-lg active"
                   : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                   }`}
                 aria-current="page"
@@ -361,7 +361,7 @@ const DetailView = () => {
               <a
                 href="#"
                 className={`inline-block p-2 mt-2 border-b-2 ${detailShowStatus === 2
-                  ? "text-[#005DE2] border-b-2 border-[#005DE2] rounded-t-lg active"
+                  ? "text-[#3b3f46] border-b-2 border-[#3b3f46] rounded-t-lg active"
                   : "text-[#828385] border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                   }`}
                 aria-current="page"
@@ -518,3 +518,4 @@ const DetailView = () => {
 };
 
 export default DetailView;
+

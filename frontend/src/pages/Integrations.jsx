@@ -78,7 +78,7 @@ export default function Integrations() {
           <>
             <div className='mx-10 sm:mx-64 mt-20'>
 
-              <button onClick={handleBackClick} className=" bg-gradient-to-tl from-[#06060CCC] to-[#1219538F] text-white px-4 py-2 rounded-md hover:bg-blue-700 transition ">
+              <button onClick={handleBackClick} className=" bg-gradient-to-tl from-[#06060CCC] to-[#1219538F] text-white px-4 py-2 rounded-md hover:bg-gray-700 transition ">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path fill-rule="evenodd" clip-rule="evenodd" d="M12.233 4.4545C12.6723 4.89384 12.6723 5.60616 12.233 6.0455L6.27849 12L12.233 17.9545C12.6723 18.3938 12.6723 19.1062 12.233 19.5455C11.7937 19.9848 11.0813 19.9848 10.642 19.5455L3.892 12.7955C3.45267 12.3562 3.45267 11.6438 3.892 11.2045L10.642 4.4545C11.0813 4.01517 11.7937 4.01517 12.233 4.4545Z" fill="#6C9BE0" />
                   <path fill-rule="evenodd" clip-rule="evenodd" d="M4.5 12C4.5 11.3787 5.00368 10.875 5.625 10.875H19.3125C19.9338 10.875 20.4375 11.3787 20.4375 12C20.4375 12.6213 19.9338 13.125 19.3125 13.125H5.625C5.00368 13.125 4.5 12.6213 4.5 12Z" fill="#6C9BE0" />
@@ -98,7 +98,7 @@ export default function Integrations() {
           </>
         ) : (
           <div className="flex flex-col mt-10 justify-center items-center pt-24 gap-8">
-            <p className="font-poppins  max-w-[55%] text-center text-[#0048FF]  text-[20px] leading-[28px]">
+            <p className="font-poppins  max-w-[55%] text-center text-[#3b3f46]  text-[20px] leading-[28px]">
               "WE ARE INTEGRATION AGNOSTIC"
             </p>
             <p className="font-poppins max-w-[80%] sm:max-w-[90%] text-center text-[#0F172A] font-bold text-[42px] sm:text-[56px] leading-[46px] sm:leading-[56px]">
@@ -125,7 +125,7 @@ export default function Integrations() {
                         handleDetailClick(item);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className="bg-[#0048FF] text-white px-4 py-2 rounded-md hover:bg-blue-700 transition mt-4 sm:mt-0 sm:ml-4"
+                      className="bg-[#3b3f46] text-white px-4 py-2 rounded-md hover:bg-gray-700 transition mt-4 sm:mt-0 sm:ml-4"
                     >
                       <div className='flex justify-center items-center'>
                         <span className='font-poppins text-[12px] pr-2 font-bold'>Detail</span>
@@ -154,7 +154,7 @@ export default function Integrations() {
                     <div key={index} className="flex  flex-col  items-start p-6 rounded-lg">
                       <div className="flex-1 w-[200px]">
                         <img src={item.img} alt={item.title} className="mb-4 h-[48px] " />
-                        <p className="text-[20px] text-[#A9C5ED]">{item.desc}</p>
+                        <p className="text-[20px] text-[#BFC5CF]">{item.desc}</p>
                       </div>
                       <button
                         onClick={() => {
@@ -162,7 +162,7 @@ export default function Integrations() {
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                         }
-                        className="bg-[#0048FF] mt-5 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition "
+                        className="bg-[#3b3f46] mt-5 text-white px-6 py-3 rounded-md hover:bg-gray-700 transition "
                       >
                         <div className='flex justify-center items-center'>
                           <span className='font-poppins text-[12px] pr-2 font-bold'>Detail</span>

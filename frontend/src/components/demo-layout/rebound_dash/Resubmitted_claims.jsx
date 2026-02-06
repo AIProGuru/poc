@@ -106,7 +106,7 @@ const ResubmittedClaims = () => {
     <div className="container mx-auto p-6 bg-[#fefeff] min-h-screen">
       <h1 className="text-4xl font-bold mb-8 text-center text-gray-800">Resubmitted Claims Insights</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white border-[#eef4ff] border-[10px] rounded-3xl p-6 mt-5">
+        <div className="bg-white border-[#f3f4f6] border-[10px] rounded-3xl p-6 mt-5">
           <h2 className="text-2xl font-semibold mb-4 text-gray-700">Claims Amount Over Time</h2>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={formattedChartData}>
@@ -121,7 +121,7 @@ const ResubmittedClaims = () => {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white  border-[#eef4ff] border-[10px] rounded-3xl p-6 mt-5">
+        <div className="bg-white  border-[#f3f4f6] border-[10px] rounded-3xl p-6 mt-5">
           {/* <h2 className="text-2xl font-semibold mb-4 text-gray-700">Claims Metrics</h2> */}
           <div className="mb-4">
             <div className="flex justify-between mb-2">
@@ -158,7 +158,7 @@ const ResubmittedClaims = () => {
               className="p-3 border rounded-xl border-gray-300 flex-grow mr-2"
             />
             <button
-              className="bg-blue-500 text-white px-4 py-2 rounded shadow"
+              className="bg-gray-500 text-white px-4 py-2 rounded shadow"
               style={{ width: '10%' }}
               onClick={() => setIsModalOpen(true)}
             >
@@ -173,7 +173,7 @@ const ResubmittedClaims = () => {
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white  border-[#eef4ff] border-[10px] rounded-3xl">
+            <table className="min-w-full bg-white  border-[#f3f4f6] border-[10px] rounded-3xl">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="py-3 px-4 border-b text-left text-sm font-semibold text-gray-600">Claim ID</th>
@@ -216,7 +216,7 @@ const ResubmittedClaims = () => {
           </div>
           <div className="flex justify-between mt-4">
             <button
-              className="bg-blue-500 text-white px-4 py-2 rounded shadow"
+              className="bg-gray-500 text-white px-4 py-2 rounded shadow"
               onClick={() => setPage(page => Math.max(page - 1, 1))}
               disabled={page === 1 || viewTotal}
             >
@@ -224,7 +224,7 @@ const ResubmittedClaims = () => {
             </button>
             <span className="text-lg text-gray-700">Page {page}</span>
             <button
-              className="bg-blue-500 text-white px-4 py-2 rounded shadow"
+              className="bg-gray-500 text-white px-4 py-2 rounded shadow"
               onClick={() => setPage(page => page + 1)}
               disabled={viewTotal}
             >
@@ -276,7 +276,7 @@ const ResubmittedClaims = () => {
             </div>
             <div className="flex justify-end">
               <button
-                className="bg-blue-500 text-white px-4 py-2 rounded shadow mr-2"
+                className="bg-gray-500 text-white px-4 py-2 rounded shadow mr-2"
                 onClick={() => setIsModalOpen(false)}
               >
                 Apply
@@ -301,3 +301,4 @@ const ResubmittedClaims = () => {
 };
 
 export default ResubmittedClaims;
+

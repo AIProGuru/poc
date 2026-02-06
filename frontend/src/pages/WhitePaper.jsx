@@ -444,7 +444,7 @@ const WhitePaper = () => {
         )}
         {filteredFiles.length >= 9 && (
           <div>
-            <button className="w-[160px] h-[50px] bg-gradient-to-r from-[#06060CCC] to-[#0810503D] font-bold text-[#0048FF] text-[14px] rounded-xl">
+            <button className="w-[160px] h-[50px] bg-gradient-to-r from-[#06060CCC] to-[#0810503D] font-bold text-[#3b3f46] text-[14px] rounded-xl">
               Show more
             </button>
           </div>
@@ -465,3 +465,4 @@ const WhitePaper = () => {
 };
 
 export default WhitePaper;
+

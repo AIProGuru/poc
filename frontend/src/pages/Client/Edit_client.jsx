@@ -240,7 +240,7 @@ const Edit_client = () => {
                 name="name" 
                 value={formData.name || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               />
             </div>
             
@@ -251,7 +251,7 @@ const Edit_client = () => {
                 name="contact" 
                 value={formData.contact || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               />
             </div>
             
@@ -262,7 +262,7 @@ const Edit_client = () => {
                 name="email" 
                 value={formData.email || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               />
             </div>
             
@@ -273,7 +273,7 @@ const Edit_client = () => {
                 name="phone" 
                 value={formData.phone || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               />
             </div>
             
@@ -283,7 +283,7 @@ const Edit_client = () => {
                 name="status" 
                 value={formData.status || 'Pending'}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               >
                 <option value="Active">Active</option>
                 <option value="Pending">Pending</option>
@@ -299,7 +299,7 @@ const Edit_client = () => {
                 name="tenantName" 
                 value={formData.tenantName || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               />
             </div>
             
@@ -310,7 +310,7 @@ const Edit_client = () => {
                 name="facilityName" 
                 value={formData.facilityName || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               />
             </div>
             
@@ -321,7 +321,7 @@ const Edit_client = () => {
                 name="facilityType" 
                 value={formData.facilityType || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               />
             </div>
             
@@ -332,7 +332,7 @@ const Edit_client = () => {
                 name="facilityAddress" 
                 value={formData.facilityAddress || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               />
             </div>
             
@@ -343,7 +343,7 @@ const Edit_client = () => {
                 name="facilityTaxID" 
                 value={formData.facilityTaxID || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               />
             </div>
             
@@ -354,7 +354,7 @@ const Edit_client = () => {
                 name="facilityNPI" 
                 value={formData.facilityNPI || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
               />
             </div>
           </div>
@@ -370,7 +370,7 @@ const Edit_client = () => {
             <button
               type="submit"
               disabled={submitLoading}
-              className="px-5 py-2.5 bg-[#0048FF] hover:bg-blue-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-blue-500/30 flex items-center justify-center min-w-[100px]"
+              className="px-5 py-2.5 bg-[#3b3f46] hover:bg-gray-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-gray-500/30 flex items-center justify-center min-w-[100px]"
             >
               {submitLoading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
@@ -409,3 +409,4 @@ const Edit_client = () => {
 };
 
 export default Edit_client;
+

@@ -101,7 +101,7 @@ const AIDetail = () => {
       <div className="flex w-full h-4 border-[#CACBCB] border-b-[1px] border-l-[1px] border-r-[1px] bg-white">
       </div>
       <div className="flex w-full rounded-b-lg border-[#CACBCB] border-b-[1px] border-l-[1px] border-r-[1px] bg-white justify-end py-[16px] pr-[24px]">
-        <div className="font-semibold bg-[#1A3F59] rounded-lg font-inter text-[16px] px-[20px] py-[12px] text-white cursor-pointer select-none"
+        <div className="font-semibold bg-[#3a3f46] rounded-lg font-inter text-[16px] px-[20px] py-[12px] text-white cursor-pointer select-none"
           onClick={() => {
             navigate(`/${location.pathname.split('/')[1]}/${token}`);
           }}

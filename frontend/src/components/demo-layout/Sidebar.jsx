@@ -791,7 +791,7 @@ const Sidebar = () => {
                 <button
                   type="button"
                   aria-label={item.title}
-                  className={`flex-1 flex items-center justify-center gap-2 text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
+                  className={`flex-1 flex items-center justify-center gap-2 text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 ${
                     mobileExpanded ? "justify-between" : "md:justify-between"
                   }`}
                   onClick={() => handleClick(item)}
@@ -889,7 +889,7 @@ const Sidebar = () => {
             checked={isDark}
             onChange={() => dispatch(setTheme(isDark ? "light" : "dark"))}
           />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-600"></div>
         </label>
       </div> */}
     </aside>
@@ -898,3 +898,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+

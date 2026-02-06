@@ -153,7 +153,7 @@ const Contact = () => {
                 <label className="text-gray-700 font-medium">Your Name</label>
                 <input
                   type="text"
-                  className="rounded-lg bg-white mt-2 p-3 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                  className="rounded-lg bg-white mt-2 p-3 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-200 transition-colors"
                   placeholder="Enter your Name"
                 />
               </div>
@@ -161,7 +161,7 @@ const Contact = () => {
                 <label className="text-gray-700 font-medium">Email</label>
                 <input
                   type="text"
-                  className="rounded-lg bg-white mt-2 p-3 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                  className="rounded-lg bg-white mt-2 p-3 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-200 transition-colors"
                   placeholder="Enter your Email"
                 />
               </div>
@@ -169,7 +169,7 @@ const Contact = () => {
                 <label className="text-gray-700 font-medium">Company Name</label>
                 <input
                   type="text"
-                  className="rounded-lg bg-white mt-2 p-3 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                  className="rounded-lg bg-white mt-2 p-3 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-200 transition-colors"
                   placeholder="Enter your Company Name"
                 />
               </div>
@@ -177,13 +177,13 @@ const Contact = () => {
                 <label className="text-gray-700 font-medium">Write your question</label>
                 <input
                   type="text"
-                  className="rounded-lg bg-white mt-2 p-3 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                  className="rounded-lg bg-white mt-2 p-3 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-200 transition-colors"
                   placeholder="Enter your Question"
                 />
               </div>
             </div>
 
-            <button className="text-white bg-[#0048FF] py-4 px-6 flex rounded-md items-center gap-2 mt-10 w-full justify-center sm:w-fit hover:bg-blue-600 transition-colors shadow-md">
+            <button className="text-white bg-[#3b3f46] py-4 px-6 flex rounded-md items-center gap-2 mt-10 w-full justify-center sm:w-fit hover:bg-gray-600 transition-colors shadow-md">
               Send
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -204,7 +204,7 @@ const Contact = () => {
           </div>
 
           {/* <div className="flex gap-4 justify-stretch md:flex-row flex-col">
-            <div className="border border-blue-500 rounded-2xl flex gap-10 md:w-[60%] w-full items-center sm:flex-row flex-col relative bg-white shadow-md">
+            <div className="border border-gray-500 rounded-2xl flex gap-10 md:w-[60%] w-full items-center sm:flex-row flex-col relative bg-white shadow-md">
               <div className="flex flex-col md:p-4 md:w-2/3 w-full p-[24px] z-10 gap-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -213,7 +213,7 @@ const Contact = () => {
                   viewBox="0 0 256 256"
                 >
                   <path
-                    fill="#0048FF"
+                    fill="#3b3f46"
                     d="M128 66a38 38 0 1 0 38 38a38 38 0 0 0-38-38m0 64a26 26 0 1 1 26-26a26 26 0 0 1-26 26m0-112a86.1 86.1 0 0 0-86 86c0 30.91 14.34 63.74 41.47 94.94a252.3 252.3 0 0 0 41.09 38a6 6 0 0 0 6.88 0a252.3 252.3 0 0 0 41.09-38c27.13-31.2 41.47-64 41.47-94.94a86.1 86.1 0 0 0-86-86m0 206.51C113 212.93 54 163.62 54 104a74 74 0 0 1 148 0c0 59.62-59 108.93-74 120.51"
                   />
                 </svg>
@@ -231,13 +231,13 @@ const Contact = () => {
                     alt="map"
                     className="rounded-xl w-full h-full"
                   />
-                  <div className="absolute left-0 top-0 mix-blend-multiply bg-blue-100 w-full h-full rounded-xl" />
+                  <div className="absolute left-0 top-0 mix-blend-multiply bg-gray-100 w-full h-full rounded-xl" />
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-4 flex-1">
-              <div className="border border-blue-500 p-7 rounded-2xl flex flex-col gap-2 h-1/2 justify-center bg-white shadow-md">
+              <div className="border border-gray-500 p-7 rounded-2xl flex flex-col gap-2 h-1/2 justify-center bg-white shadow-md">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="1.5em"
@@ -245,7 +245,7 @@ const Contact = () => {
                   viewBox="0 0 24 24"
                 >
                   <path
-                    fill="#0048FF"
+                    fill="#3b3f46"
                     d="M19.5 22a1.5 1.5 0 0 0 1.5-1.5V17a1.5 1.5 0 0 0-1.5-1.5c-1.17 0-2.32-.18-3.42-.55a1.51 1.51 0 0 0-1.52.37l-1.44 1.44a14.77 14.77 0 0 1-5.89-5.89l1.43-1.43c.41-.39.56-.97.38-1.53c-.36-1.09-.54-2.24-.54-3.41A1.5 1.5 0 0 0 7 3H3.5A1.5 1.5 0 0 0 2 4.5C2 14.15 9.85 22 19.5 22M3.5 4H7a.5.5 0 0 1 .5.5c0 1.28.2 2.53.59 3.72c.05.14.04.34-.12.5L6 10.68c1.65 3.23 4.07 5.65 7.31 7.32l1.95-1.97c.14-.14.33-.18.51-.13c1.2.4 2.45.6 3.73.6a.5.5 0 0 1 .5.5v3.5a.5.5 0 0 1-.5.5C10.4 21 3 13.6 3 4.5a.5.5 0 0 1 .5-.5"
                   />
                 </svg>
@@ -254,7 +254,7 @@ const Contact = () => {
                 <span className="text-gray-600">408-625-7777</span>
               </div>
 
-              <div className="border border-blue-500 p-7 rounded-2xl flex flex-col gap-2 h-1/2 justify-center bg-white shadow-md">
+              <div className="border border-gray-500 p-7 rounded-2xl flex flex-col gap-2 h-1/2 justify-center bg-white shadow-md">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="1.5em"
@@ -262,7 +262,7 @@ const Contact = () => {
                   viewBox="0 0 24 24"
                 >
                   <path
-                    fill="#0048FF"
+                    fill="#3b3f46"
                     d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2zm-2 0l-8 5l-8-5zm0 12H4V8l8 5l8-5z"
                   />
                 </svg>
@@ -281,3 +281,4 @@ const Contact = () => {
 };
 
 export default Contact;
+

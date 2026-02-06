@@ -504,7 +504,7 @@ John Menton`,
           </>
         )}
 
-        {/* <button className=" mx-4 sm:mx-32 p-3 px-6 text-[16px] flex bg-gradient-to-r from-[#06060CCC] to-[#1219538F]  w-[150px] text-[#0048FF] mb-10  justify-center font-[700] mt-10 rounded-xl">
+        {/* <button className=" mx-4 sm:mx-32 p-3 px-6 text-[16px] flex bg-gradient-to-r from-[#06060CCC] to-[#1219538F]  w-[150px] text-[#3b3f46] mb-10  justify-center font-[700] mt-10 rounded-xl">
           {" "}
           Show more
         </button> */}
@@ -573,3 +573,4 @@ John Menton`,
 };
 
 export default Blog;
+

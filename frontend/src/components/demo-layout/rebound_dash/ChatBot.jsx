@@ -416,7 +416,7 @@ const ChatBot = () => {
               return (
                 <div className="flex flex-col gap-3 w-1/2 self-end" key={index}>
                   <div className="flex justify-between items-center">
-                    <div className="text-[#1A3F59] font-inter text-[14px] font-semibold">
+                    <div className="text-[#3a3f46] font-inter text-[14px] font-semibold">
                       You
                     </div>
                     <div className="text-[#45484C] text-[12px] font-normal font-inter">
@@ -761,18 +761,18 @@ const ChatBot = () => {
         {showSampleQuestion && (
           <div className="flex flex-col items-start gap-1 p-2">
             <div
-              className="rounded-full border border-[#005DE2] bg-white py-2 px-4 cursor-pointer select-none w-[100%] md:w-auto"
+              className="rounded-full border border-[#3b3f46] bg-white py-2 px-4 cursor-pointer select-none w-[100%] md:w-auto"
               onClick={() => {
                 dispatch(setShowSampleQuestion(false));
                 sendPrompt("What is the timely filing policy for BCBS?");
               }}
             >
-              <div className="font-inter text-[16px] font-medium text-[#005DE2] p-0">
+              <div className="font-inter text-[16px] font-medium text-[#3b3f46] p-0">
                 What is the timely filing policy for BCBS?
               </div>
             </div>
             <div
-              className="rounded-full border border-[#005DE2] bg-white py-2 px-4 cursor-pointer select-none w-[100%] md:w-auto"
+              className="rounded-full border border-[#3b3f46] bg-white py-2 px-4 cursor-pointer select-none w-[100%] md:w-auto"
               onClick={() => {
                 dispatch(setShowSampleQuestion(false));
                 sendPrompt(
@@ -780,18 +780,18 @@ const ChatBot = () => {
                 );
               }}
             >
-              <div className="font-inter text-[16px] font-medium text-[#005DE2] p-0">
+              <div className="font-inter text-[16px] font-medium text-[#3b3f46] p-0">
                 What is the address to send an appeal for United Healthcare?
               </div>
             </div>
             <div
-              className="rounded-full border border-[#005DE2] bg-white py-2 px-4 cursor-pointer select-none w-[100%] md:w-auto"
+              className="rounded-full border border-[#3b3f46] bg-white py-2 px-4 cursor-pointer select-none w-[100%] md:w-auto"
               onClick={() => {
                 dispatch(setShowSampleQuestion(false));
                 sendPrompt("What is the CPT code for forearm crutches?");
               }}
             >
-              <div className="font-inter text-[16px] font-medium text-[#005DE2] p-0">
+              <div className="font-inter text-[16px] font-medium text-[#3b3f46] p-0">
                 What is the CPT code for forearm crutches?
               </div>
             </div>
@@ -849,7 +849,7 @@ const ChatBot = () => {
       </div>
 
       <div
-        className={`absolute z-[100] bg-[#005DE21A] backdrop-blur-sm w-[100vw] h-[100vh] left-0 top-0 ${
+        className={`absolute z-[100] bg-[#3b3f461A] backdrop-blur-sm w-[100vw] h-[100vh] left-0 top-0 ${
           showHistory ? "block" : "hidden"
         } md:hidden`}
       >
@@ -1003,7 +1003,7 @@ const ChatBot = () => {
                               key={index}
                             >
                               <div className="flex justify-between items-center">
-                                <div className="text-[#1A3F59] font-inter text-[14px] font-semibold">
+                                <div className="text-[#3a3f46] font-inter text-[14px] font-semibold">
                                   You
                                 </div>
                                 <div className="text-[#45484C] text-[12px] font-normal font-inter">
@@ -1381,7 +1381,7 @@ const ChatBot = () => {
                       </span>
                       <div className="flex flex-col items-center gap-1 p-2">
                         <div
-                          className="rounded-full border border-[#005DE2] bg-white py-2 px-4 cursor-pointer select-none"
+                          className="rounded-full border border-[#3b3f46] bg-white py-2 px-4 cursor-pointer select-none"
                           onClick={() => {
                             dispatch(setShowSampleQuestion(false));
                             sendPrompt(
@@ -1389,12 +1389,12 @@ const ChatBot = () => {
                             );
                           }}
                         >
-                          <div className="font-inter text-[16px] font-medium text-[#005DE2] p-0">
+                          <div className="font-inter text-[16px] font-medium text-[#3b3f46] p-0">
                             What is the timely filing policy for BCBS?
                           </div>
                         </div>
                         <div
-                          className="rounded-full border border-[#005DE2] bg-white py-2 px-4 cursor-pointer select-none"
+                          className="rounded-full border border-[#3b3f46] bg-white py-2 px-4 cursor-pointer select-none"
                           onClick={() => {
                             dispatch(setShowSampleQuestion(false));
                             sendPrompt(
@@ -1402,13 +1402,13 @@ const ChatBot = () => {
                             );
                           }}
                         >
-                          <div className="font-inter text-[16px] font-medium text-[#005DE2] p-0">
+                          <div className="font-inter text-[16px] font-medium text-[#3b3f46] p-0">
                             What is the address to send an appeal for United
                             Healthcare?
                           </div>
                         </div>
                         <div
-                          className="rounded-full border border-[#005DE2] bg-white py-2 px-4 cursor-pointer select-none"
+                          className="rounded-full border border-[#3b3f46] bg-white py-2 px-4 cursor-pointer select-none"
                           onClick={() => {
                             dispatch(setShowSampleQuestion(false));
                             sendPrompt(
@@ -1416,7 +1416,7 @@ const ChatBot = () => {
                             );
                           }}
                         >
-                          <div className="font-inter text-[16px] font-medium text-[#005DE2] p-0">
+                          <div className="font-inter text-[16px] font-medium text-[#3b3f46] p-0">
                             What is the CPT code for forearm crutches?
                           </div>
                         </div>
@@ -1484,3 +1484,4 @@ const ChatBot = () => {
 };
 
 export default ChatBot;
+

@@ -11,13 +11,13 @@ const Predict = () => {
         axios.post(`${SERVER_URL}/v2/predict`, { diagnosis: diagnosis.split(" "), service: service.split(" ") }).then(res => setResult(res.data))
     }
 
-    return (<div className="text-blue-600 flex flex-col gap-4">
+    return (<div className="text-gray-600 flex flex-col gap-4">
         <input
             type="text"
             id="simple-search"
             value={diagnosis}
             onChange={(e) => setDiagnosis(e.target.value)}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gray-500 focus:border-gray-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500"
             placeholder="Input Diagnosis"
             required
         />
@@ -26,17 +26,17 @@ const Predict = () => {
             id="simple-search"
             value={service}
             onChange={(e) => setService(e.target.value)}
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gray-500 focus:border-gray-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500"
             placeholder="Input Services"
             required
         />
-        <button className="rounded-full bg-blue-600 text-white px-4 py-2 flex w-[150px] text-center" onClick={onPredict}>Predict</button>
+        <button className="rounded-full bg-gray-600 text-white px-4 py-2 flex w-[150px] text-center" onClick={onPredict}>Predict</button>
         <input
             type="text"
             id="simple-search"
             value={result}
             readOnly
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gray-500 focus:border-gray-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500"
             placeholder="The result is shown here"
             required
         />

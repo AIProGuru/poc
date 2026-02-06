@@ -321,7 +321,7 @@
   }
   
   .particle:nth-child(odd) {
-    background: #0048FF;
+    background: #3b3f46;
     box-shadow: 0 0 10px 2px rgba(0, 72, 255, 0.7);
   }
   

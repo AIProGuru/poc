@@ -64,7 +64,7 @@ const Part1 = (props) => {
   return (
     <div className="w-full md:w-[60%]">
       {!part1Loading && data.length === 1 && (
-        <div className={`border-[7px] rounded-3xl p-6 mt-5 fade-in ${theme === 'dark' ? 'bg-[#151619] border-[#191A1D] text-white' : 'bg-white border-[#eef4ff] text-black'}`}>
+        <div className={`border-[7px] rounded-3xl p-6 mt-5 fade-in ${theme === 'dark' ? 'bg-[#151619] border-[#191A1D] text-white' : 'bg-white border-[#f3f4f6] text-black'}`}>
           <div className="mb-4">
             <div className="flex justify-between mb-2">
               <span className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'}`}>Total Claims</span>
@@ -91,7 +91,7 @@ const Part1 = (props) => {
         </div>
       )}
       {part1Loading && (
-        <div className={`border-[10px] rounded-3xl p-6 mt-5 ${theme === 'dark' ? 'bg-[#151619] border-[#191A1D] text-white' : 'bg-white border-[#eef4ff] text-black'}`}>
+        <div className={`border-[10px] rounded-3xl p-6 mt-5 ${theme === 'dark' ? 'bg-[#151619] border-[#191A1D] text-white' : 'bg-white border-[#f3f4f6] text-black'}`}>
           <div className="mb-4">
             <div className="flex justify-between mb-2">
               <span className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'}`}>Total Claims</span>
@@ -122,3 +122,4 @@ const Part1 = (props) => {
 };
 
 export default Part1;
+

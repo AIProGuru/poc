@@ -16,7 +16,7 @@ export default function Discovermob({title, description}) {
           {title && !description? <></> :<span>Recover Revenue, Reduce Denials, Real Results</span>}  
           </p>
         </div>
-        <div className="getstarted mx-2 z-10 sm:mt-0 w-full flex justify-center bg-[#0048FF] rounded-xl items-center">
+        <div className="getstarted mx-2 z-10 sm:mt-0 w-full flex justify-center bg-[#3b3f46] rounded-xl items-center">
           <Link to='/contact'
             onClick={scrollToTop}
            >

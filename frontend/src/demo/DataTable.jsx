@@ -120,7 +120,7 @@ const DataTable = (props) => {
           </div>
           <div className="flex flex-row justify-end md:flex-row gap-4  w-full md:w-auto mt-0 md:mt-0">
             <div className="flex justify-center items-center">
-              <button className="w-[40px] rounded-lg flex justify-center items-center h-[40px] p-3 bg-blue-600">
+              <button className="w-[40px] rounded-lg flex justify-center items-center h-[40px] p-3 bg-gray-600">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M11.0837 5.84717C13.5837 6.06245 14.6045 7.34717 14.6045 10.1597V10.2499C14.6045 13.3541 13.3614 14.5972 10.2573 14.5972H5.73644C2.63228 14.5972 1.38922 13.3541 1.38922 10.2499V10.1597C1.38922 7.368 2.39617 6.08328 4.8545 5.85411" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M8 1.05566V10.0001" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
@@ -132,7 +132,7 @@ const DataTable = (props) => {
           </div>
         </div>
       </div>
-      <div className={`flex flex-col rounded-3xl ${theme === 'dark' ? 'bg-[#151619] border-[#191A1D] text-white' : 'bg-white border-[#eef4ff] text-black'} border-[7px] p-2`}>
+      <div className={`flex flex-col rounded-3xl ${theme === 'dark' ? 'bg-[#151619] border-[#191A1D] text-white' : 'bg-white border-[#f3f4f6] text-black'} border-[7px] p-2`}>
         <TableContainer sx={{
           maxHeight: 500,
           backgroundColor: theme === 'dark' ? '#151619' : 'white',
@@ -142,12 +142,12 @@ const DataTable = (props) => {
           <Table aria-label="sticky table" stickyHeader size="small">
             <TableHead>
               <TableRow>
-                <TableCell style={{ minWidth: "50px", background: theme === 'dark' ? '#151619' : '#ffffff', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }} className="h-[50px]">
+                <TableCell style={{ minWidth: "50px", background: theme === 'dark' ? '#151619' : '#ffffff', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }} className="h-[50px]">
                   <input type='checkbox' className=" custom-checkbox form-control border-2 border-gra rounded-sm" checked={all} onClick={() => {
                     setAll(value => !value);
                   }} />
                 </TableCell>
-                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }} onClick={() => setOrder("ClaimNo")} className="cursor-pointer">
+                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }} onClick={() => setOrder("ClaimNo")} className="cursor-pointer">
                   <div className={`flex items-center gap-2 `}>Claim ID
                     {
                       order == 'ClaimNo' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
@@ -162,7 +162,7 @@ const DataTable = (props) => {
                     }
                   </div>
                 </TableCell>
-                <TableCell style={{ minWidth: "150px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }} onClick={() => setOrder("ProvNPI")} className="cursor-pointer">
+                <TableCell style={{ minWidth: "150px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }} onClick={() => setOrder("ProvNPI")} className="cursor-pointer">
                   <div className="flex items-center gap-2">Provider NPI
                     {
                       order == 'ProvNPI' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
@@ -177,7 +177,7 @@ const DataTable = (props) => {
                     }
                   </div>
                 </TableCell>
-                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }} onClick={() => setOrder("PayerName")} className="cursor-pointer">
+                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }} onClick={() => setOrder("PayerName")} className="cursor-pointer">
                   <div className="flex items-center gap-2">Payer Name
                     {
                       order == 'PayerName' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
@@ -192,7 +192,7 @@ const DataTable = (props) => {
                     }
                   </div>
                 </TableCell>
-                <TableCell style={{ minWidth: "150px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }} onClick={() => setOrder("PayerID")} className="cursor-pointer">
+                <TableCell style={{ minWidth: "150px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }} onClick={() => setOrder("PayerID")} className="cursor-pointer">
                   <div className="flex items-center gap-2">Payer ID
                     {
                       order == 'PayerID' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
@@ -207,10 +207,10 @@ const DataTable = (props) => {
                     }
                   </div>
                 </TableCell>
-                <TableCell style={{ minWidth: "250px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
+                <TableCell style={{ minWidth: "250px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
                   Patient Name
                 </TableCell>
-                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }} onClick={() => setOrder("ServiceDate")} className="cursor-pointer">
+                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }} onClick={() => setOrder("ServiceDate")} className="cursor-pointer">
                   <div className="flex items-center gap-2">Service Date
                     {
                       order == 'ServiceDate' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
@@ -225,7 +225,7 @@ const DataTable = (props) => {
                     }
                   </div>
                 </TableCell>
-                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }} onClick={() => setOrder("Amount")} className="cursor-pointer">
+                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }} onClick={() => setOrder("Amount")} className="cursor-pointer">
                   <div className="flex items-center gap-2">Charges
                     {
                       order == 'Amount' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
@@ -240,7 +240,7 @@ const DataTable = (props) => {
                     }
                   </div>
                 </TableCell>
-                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }} onClick={() => setOrder("AllowedAmt")} className="cursor-pointer">
+                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }} onClick={() => setOrder("AllowedAmt")} className="cursor-pointer">
                   <div className="flex items-center gap-2">Allowed Amt
                     {
                       order == 'AllowedAmt' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
@@ -255,7 +255,7 @@ const DataTable = (props) => {
                     }
                   </div>
                 </TableCell>
-                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }} onClick={() => setOrder("PrimaryCode")} className="cursor-pointer">
+                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }} onClick={() => setOrder("PrimaryCode")} className="cursor-pointer">
                   <div className="flex items-center gap-2">Denial Code
                     {
                       order == 'PrimaryCode' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
@@ -270,7 +270,7 @@ const DataTable = (props) => {
                     }
                   </div>
                 </TableCell>
-                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }} onClick={() => setOrder("PrimaryProcedure")} className="cursor-pointer">
+                <TableCell style={{ minWidth: "200px", background: theme === 'dark' ? '#151619' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }} onClick={() => setOrder("PrimaryProcedure")} className="cursor-pointer">
                   <div className="flex items-center gap-2">Primary Service
                     {
                       order == 'PrimaryProcedure' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
@@ -292,7 +292,7 @@ const DataTable = (props) => {
               {!tableLoading && tableData.length === 0 && <TableRow className="flex justify-center items-center h-[100px]"><TableCell colSpan={12}><div className="flex justify-center items-center">No record</div></TableCell></TableRow>}
               {
                 !tableLoading && tableData.length !== 0 && tableData.map((row, index) => <TableRow key={index} sx={{ maxHeight: "100px" }}>
-                  <TableCell style={{ borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
+                  <TableCell style={{ borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
                     <input
                       key={index}
                       type="checkbox"
@@ -306,38 +306,38 @@ const DataTable = (props) => {
                     />
                   </TableCell>
 
-                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} className="h-[50px]" style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
+                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} className="h-[50px]" style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
                     {row.LIMS_CLINIC_ID}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
+                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
                     {row.NPI_NUMBER}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
+                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
                     {row.PAYORNAME}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
+                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
                     {row.D_PAYOR_ID}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
+                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
                     {`${row.PATIENT_FIRST_NAME} ${row.PATIENT_LAST_NAME}`}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
+                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
                     {new Date(row.LIMS_DATE_OF_SERVICE).toISOString().substring(0, 10)}
                   </TableCell>
                   <TableCell
                     className="text-wrap"
                     onClick={() => showDetail(row.LIMS_CLINIC_ID)}
-                    style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}  >
+                    style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}  >
                     {`$${samplifyDouble(row.BILLPRICE)}`}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
+                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
                     {`$${samplifyDouble(row.ALLOWEDAMOUNT)}`}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
-                    {row.ALLDENIALCODES.split(',').length > 0 && <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`}>{samplifyString(row.ALLDENIALCODES.split(',')[0])}</span>}
+                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
+                    {row.ALLDENIALCODES.split(',').length > 0 && <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#3b3f46]' : 'bg-[#f3f4f6] text-[#3b3f46]'}`}>{samplifyString(row.ALLDENIALCODES.split(',')[0])}</span>}
                   </TableCell>
-                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#eef4ff'}` }}>
-                    {row.ALLPROCCODES.split('; ').length > 0 && <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#005DE2]' : 'bg-[#eef4ff] text-[#005DE2]'}`}>{samplifyString(row.ALLPROCCODES.split('; ')[0])}</span>}
+                  <TableCell onClick={() => showDetail(row.LIMS_CLINIC_ID)} style={{ minWidth: "200px", color: theme === 'dark' ? '#ffffff' : '#151619', borderBottom: `1px solid ${theme === 'dark' ? '#191A1D' : '#f3f4f6'}` }}>
+                    {row.ALLPROCCODES.split('; ').length > 0 && <span className={`  rounded-lg p-2 ${theme === 'dark' ? 'bg-[#131D2E] text-[#3b3f46]' : 'bg-[#f3f4f6] text-[#3b3f46]'}`}>{samplifyString(row.ALLPROCCODES.split('; ')[0])}</span>}
                   </TableCell>
                 </TableRow>)
               }
@@ -350,3 +350,4 @@ const DataTable = (props) => {
 };
 
 export default DataTable;
+

@@ -48,7 +48,7 @@ const Privacy = () => {
         <Navbar />
         <div className="w-[100%] flex flex-col items-center pt-[20vh]">
           <div className="flex flex-col items-center w-full px-[10vw]">
-            <span className="text-[#0048FF] text-[20px] text-center">PROTECTING YOUR INFORMATION WITH CONFIDENCE</span>
+            <span className="text-[#3b3f46] text-[20px] text-center">PROTECTING YOUR INFORMATION WITH CONFIDENCE</span>
             <span className=" text-[42px] leading-[46px] mt-5 sm:text-[64px]  font-bold font-poppins text-center text-[#0F172A]">Data Privacy & Security</span>
             <span className="text-[#475569] z-10 font-normal text-[22px] w-full sm:w-[866px] leading-[30.8px] text-center mt-4">
               Ensuring the highest standards of data protection and compliance to safeguard your organization and patients.
@@ -101,3 +101,4 @@ const Privacy = () => {
 };
 
 export default Privacy;
+

@@ -230,12 +230,12 @@ export default function SignUp() {
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-scienceblue cursor-pointer"
+                  className="h-4 w-4 rounded border-gray-300 text-gray-600 focus:ring-[#6f7074] cursor-pointer"
                 />
               </div>
               <label className="text-sm leading-6 text-gray-600 cursor-pointer">
                 By selecting this, you agree to our{" "}
-                <a href="#" className="font-semibold text-blue-600">
+                <a href="#" className="font-semibold text-gray-600">
                   privacy&nbsp;policy
                 </a>
                 .
@@ -246,7 +246,7 @@ export default function SignUp() {
           <div className="mt-10">
             <button
               type="submit"
-              className="block w-full rounded-md bg-blue-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-600/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
+              className="block w-full rounded-md bg-gray-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-gray-600/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors"
             >
               Sign Up
             </button>
@@ -255,3 +255,4 @@ export default function SignUp() {
     </div>
   );
 }
+

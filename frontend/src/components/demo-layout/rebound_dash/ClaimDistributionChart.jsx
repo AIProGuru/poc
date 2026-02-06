@@ -16,7 +16,7 @@ const CustomTooltip = ({ active, payload, label }) => {
       <div className="bg-white/90 backdrop-blur-md p-3 rounded-lg shadow-xl border border-gray-100">
         <p className="font-semibold text-gray-800 mb-2">{label}</p>
         {payload.map((entry, index) => (
-          <p key={index} className={`text-sm ${entry.dataKey === 'Charge' ? 'text-[#005DE2]' : 'text-[#F6A521]'}`}>
+          <p key={index} className={`text-sm ${entry.dataKey === 'Charge' ? 'text-[#3b3f46]' : 'text-[#F6A521]'}`}>
             {entry.dataKey}: ${formatNumber(entry.value)}
           </p>
         ))}
@@ -80,7 +80,7 @@ const ClaimDistributionChart = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-60">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-500"></div>
       </div>
     );
   }
@@ -101,8 +101,8 @@ const ClaimDistributionChart = () => {
           </div>
           <div className="flex items-center">
             <svg width="11" height="6" viewBox="0 0 11 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="3" y="2" width="8" height="2" rx="0.3" fill="#005DE2"/>
-              <circle cx="3" cy="3" r="3" fill="#005DE2"/>
+              <rect x="3" y="2" width="8" height="2" rx="0.3" fill="#3b3f46"/>
+              <circle cx="3" cy="3" r="3" fill="#3b3f46"/>
             </svg>
             <span className='px-2'>Charge</span>
           </div>
@@ -151,7 +151,7 @@ const ClaimDistributionChart = () => {
           />
           <Bar 
             dataKey="Charge" 
-            fill="#005DE2" 
+            fill="#3b3f46" 
             barSize={isMobile ? 15 : 20}
             radius={[4, 4, 0, 0]} 
           />

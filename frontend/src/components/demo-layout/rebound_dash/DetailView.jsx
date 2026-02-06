@@ -98,7 +98,7 @@ const DetailView = (props) => {
             <a
               href="#"
               className={`inline-block p-4 border-b-2 ${detailShowStatus === 0
-                ? "text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500"
+                ? "text-gray-600 border-b-2 border-gray-600 rounded-t-lg active dark:text-gray-500 dark:border-gray-500"
                 : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                 }`}
               onClick={() => setDetailShowStatus(0)}
@@ -110,7 +110,7 @@ const DetailView = (props) => {
             <a
               href="#"
               className={`inline-block p-4 border-b-2 ${detailShowStatus === 1
-                ? "text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500"
+                ? "text-gray-600 border-b-2 border-gray-600 rounded-t-lg active dark:text-gray-500 dark:border-gray-500"
                 : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
@@ -123,7 +123,7 @@ const DetailView = (props) => {
             <a
               href="#"
               className={`inline-block p-4 border-b-2 ${detailShowStatus === 2
-                ? "text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500"
+                ? "text-gray-600 border-b-2 border-gray-600 rounded-t-lg active dark:text-gray-500 dark:border-gray-500"
                 : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
@@ -136,7 +136,7 @@ const DetailView = (props) => {
             <a
               href="#"
               className={`inline-block p-4 border-b-2 ${detailShowStatus === 3
-                ? "text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500"
+                ? "text-gray-600 border-b-2 border-gray-600 rounded-t-lg active dark:text-gray-500 dark:border-gray-500"
                 : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
@@ -149,7 +149,7 @@ const DetailView = (props) => {
             <a
               href="#"
               className={`inline-block p-4 border-b-2 ${detailShowStatus === 4
-                ? "text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500"
+                ? "text-gray-600 border-b-2 border-gray-600 rounded-t-lg active dark:text-gray-500 dark:border-gray-500"
                 : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
@@ -162,13 +162,13 @@ const DetailView = (props) => {
       </div>
       <div className="flex gap-4">
         <button
-          className="bg-blue-600 text-white font-poppins font-semibold rounded-full px-4 py-1"
+          className="bg-gray-600 text-white font-poppins font-semibold rounded-full px-4 py-1"
           onClick={() => setExpandOrCollapses(true)}
         >
           Expand All
         </button>
         <button
-          className="bg-blue-600 text-white font-poppins font-semibold rounded-full px-4 py-1"
+          className="bg-gray-600 text-white font-poppins font-semibold rounded-full px-4 py-1"
           onClick={() => setExpandOrCollapses(false)}
         >
           Collapse All
@@ -551,7 +551,7 @@ const DetailView = (props) => {
             id="formFile"
           />
           <button
-            className="bg-blue-800 text-white px-6 py-2 rounded-xl"
+            className="bg-gray-800 text-white px-6 py-2 rounded-xl"
           >
             Upload
           </button>
@@ -563,3 +563,4 @@ const DetailView = (props) => {
 };
 
 export default DetailView;
+

@@ -8,7 +8,7 @@ function Diagnosis(props) {
           <span
             role='button'
             key={index}
-            className='text-white bg-blue-500 px-2 py-1 rounded-lg'
+            className='text-white bg-gray-500 px-2 py-1 rounded-lg'
             onClick={() => {
               props.setData(e);
               props.openDialog(true);
@@ -22,3 +22,4 @@ function Diagnosis(props) {
 }
 
 export default Diagnosis;
+

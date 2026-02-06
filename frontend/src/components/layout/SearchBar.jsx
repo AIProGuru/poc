@@ -33,7 +33,7 @@ const SearchBar = () => {
         value={query}
         onChange={handleSearch}
         placeholder="Search..."
-        className="w-full p-3 text-white bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full p-3 text-white bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
       />
       {results.length > 0 && (
         <div className="absolute w-full max-h-36 bg-gray-800 rounded-lg shadow-lg overflow-y-auto mt-2">
@@ -53,3 +53,4 @@ const SearchBar = () => {
 };
 
 export default SearchBar;
+

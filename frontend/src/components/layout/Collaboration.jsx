@@ -35,7 +35,7 @@ export default function Collaboration() {
             <h2 className="text-4xl mr-[-200px] font-poppins  font-bold mb-10">
               Stories of Our Collaborations
             </h2>
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-5">
+            <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center mb-5">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
@@ -45,7 +45,7 @@ export default function Collaboration() {
             </p>
             <div className="mt-[70px] border-[1px]  border-[#3025FF] rounded-3xl   p-3">
               <div className="flex flex-row  items-center  p-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-5">
+                <div className="w-10 h-10 bg-gradient-to-r from-gray-500 to-purple-600 rounded-full flex items-center justify-center mr-5">
                   <span className="text-white font-bold text-sm">
                     {testimonials[currentIndex].name.split(' ').map(n => n[0]).join('')}
                   </span>
@@ -64,7 +64,7 @@ export default function Collaboration() {
 
           {/* Image Section */}
           <div className="relative left-[-50px] pt-5 sm:pt-44 flex flex-col items-end">
-            <div className="w-64 h-64 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-64 h-64 bg-gradient-to-br from-gray-500 to-purple-600 rounded-lg flex items-center justify-center">
               <div className="text-center text-white">
                 <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -82,7 +82,7 @@ export default function Collaboration() {
               <button
                 className={`w-3 h-3 rounded-full ${
                   index === currentIndex
-                    ? "bg-blue-600 "
+                    ? "bg-gray-600 "
                     : "bg-gray-400 hover:bg-gray-500"
                 } transition duration-300`}
                 onClick={() => handleDotClick(index)}
@@ -92,10 +92,11 @@ export default function Collaboration() {
         </div>
 
         {/* Learn More Button */}
-        {/* <button className="mt-8 bg-blue-500 text-white text-sm py-2 px-6 rounded-lg hover:bg-blue-600">
+        {/* <button className="mt-8 bg-gray-500 text-white text-sm py-2 px-6 rounded-lg hover:bg-gray-600">
         Learn More
       </button> */}
       </div>
     </>
   );
 }
+

@@ -38,37 +38,37 @@ const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, stat
       <div className={`select-none rounded-3xl ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-black'} flex flex-col py-3`}>
         <div className="flex justify-between items-center px-6 py-2">
           <div className="flex flex-col w-full">
-          <div className="flex flex-col sm:flex-row justify-between">
-  <div className="text-[20px] font-semibold flex flex-col">
-    <span>{title}</span>
-    {!loading && user != null && <span className='text-[12px]'>{`${user.split(' ').map((row, index) => row).filter((row) => row != "").map((row) => row[0].toUpperCase()).join(' ')}`}</span>}
-    {loading && <div className="spinner-3"></div>}
-  </div>
-  <div className="w-full  sm:w-[40%] flex sm:justify-end justify-start mt-4 sm:mt-0">
-    <select
-      className={`
+            <div className="flex flex-col sm:flex-row justify-between">
+              <div className="text-[20px] font-semibold flex flex-col">
+                <span>{title}</span>
+                {!loading && user != null && <span className='text-[12px]'>{`${user.split(' ').map((row, index) => row).filter((row) => row != "").map((row) => row[0].toUpperCase()).join(' ')}`}</span>}
+                {loading && <div className="spinner-3"></div>}
+              </div>
+              <div className="w-full  sm:w-[40%] flex sm:justify-end justify-start mt-4 sm:mt-0">
+                <select
+                  className={`
         bg-transparent text-sm rounded-lg h-[40px] sm:w-[80%] w-full
         border
         ${theme === 'dark' && _status === 'approved' ? 'bg-[#151D1F] text-white' : 'text-gray-900'}
         ${theme === 'dark' && _status === 'refused' ? 'bg-[#20171A] text-white' : 'text-gray-900'}
         ${theme === 'dark' && _status === 'pending' ? 'bg-[#201E18] text-white' : 'text-gray-900'}
         ${_status === 'approved' ? 'bg-[#F3FAF9] border-green-500' : ''}
-        ${_status === 'pending' ?  ' bg-[#FEFBF2] border-[#F9B701]' : ''}
-        ${_status === 'refused' ?  'bg-[#FEF4F4] border-red-500' : ''}
+        ${_status === 'pending' ? ' bg-[#FEFBF2] border-[#F9B701]' : ''}
+        ${_status === 'refused' ? 'bg-[#FEF4F4] border-red-500' : ''}
       `}
-      value={_status}
-      onClick={(e) => e.stopPropagation()}
-      onChange={(e) => saveStatus(e.target.value)}
-    >
-      <option value="approved" className={`border-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>Approved</option>
-      <option value="pending" className={`border-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>Pending</option>
-      <option value="refused" className={`border-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>Refused</option>
-    </select>
-  </div>
-</div>
+                  value={_status}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => saveStatus(e.target.value)}
+                >
+                  <option value="approved" className={`border-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>Approved</option>
+                  <option value="pending" className={`border-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>Pending</option>
+                  <option value="refused" className={`border-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>Refused</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
-<hr className = {` mx-5 mt-5 ${theme === 'dark' ? 'border-gray-800':'border-gray-300' }`}/>
+        <hr className={` mx-5 mt-5 ${theme === 'dark' ? 'border-gray-800' : 'border-gray-300'}`} />
         <div className="px-6">
           <div className="grid grid-cols-2 md:grid-cols-2 pt-5 pb-3 lg:grid-cols-3 gap-y-4 gap-x-6">
             {[
@@ -90,7 +90,7 @@ const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, stat
         </div>
       </div>
 
-      <div className="p-4 flex justify-between items-center cursor-pointer text-blue-600"
+      <div className="p-4 flex justify-between items-center cursor-pointer text-gray-600"
         onClick={() => {
           const data = {
             code: group_code + carc,
@@ -115,7 +115,7 @@ const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, stat
         >
           <path
             d="M7.85547 15.5L12.3832 10.9722C12.918 10.4375 12.918 9.5625 12.3832 9.02778L7.85547 4.5"
-            stroke="#005DE2"
+            stroke="#3b3f46"
             strokeWidth="1.4"
             strokeMiterlimit="10"
             strokeLinecap="round"
@@ -128,3 +128,4 @@ const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, stat
 };
 
 export default ModelCard;
+

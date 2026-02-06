@@ -23,7 +23,7 @@ const Workflow = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <div className="w-16 h-16 bg-blue-500 rounded-lg flex items-center justify-center">
+            <div className="w-16 h-16 bg-gray-500 rounded-lg flex items-center justify-center">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -75,7 +75,7 @@ const Workflow = () => {
         </div>
         <div className="flex justify-between items-end">
           <div className="text-center">
-            <div className="w-20 h-20 bg-blue-600 rounded-lg flex items-center justify-center mb-2">
+            <div className="w-20 h-20 bg-gray-600 rounded-lg flex items-center justify-center mb-2">
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -83,7 +83,7 @@ const Workflow = () => {
             <p className="text-sm font-semibold">Provider</p>
           </div>
           <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-2">
+            <div className="w-20 h-20 bg-gradient-to-r from-gray-500 to-purple-600 rounded-lg flex items-center justify-center mb-2">
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
@@ -105,7 +105,7 @@ const Workflow = () => {
         Helio RCM Denial management process
         </p>
         <div className="flex flex-col gap-y-3">
-          <div className="w-full h-16 bg-blue-500 rounded-lg flex items-center justify-center">
+          <div className="w-full h-16 bg-gray-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-semibold">Step 1: Claim Processing</span>
           </div>
           <div className="h-px bg-gray-300 w-full"></div>

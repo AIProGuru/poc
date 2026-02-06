@@ -1845,7 +1845,7 @@ const ReboundDetailView = () => {
                       </label>
                       <select
                         id="action-dropdown"
-                        className={`w-full p-3 border border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  `}
+                        className={`w-full p-3 border border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  `}
                         ref={claimStatus}
                         defaultValue={currentClaim.Action.length > 0 ? currentClaim.Action[0].claim_status : ''}
                       >
@@ -1860,14 +1860,14 @@ const ReboundDetailView = () => {
                   <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                     <div className='flex justify-between items-center'>
                       <h2 className="text-[14px] mb-2 text-gray-400">Notes</h2>
-                      <button className='text-[14px] text-blue-500' onClick={handleOpenNotesHistory}>View Notes</button>
+                      <button className='text-[14px] text-gray-500' onClick={handleOpenNotesHistory}>View Notes</button>
                     </div>
                     <div className="relative mt-5">
                       <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} absolute -top-2.5 left-2  px-1 text-[12px] text-gray-400`}>
                         Leave Note
                       </div>
                       <textarea
-                        className={`w-full p-3 border ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                        className={`w-full p-3 border ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                         rows="4"
                         placeholder="Enter your notes here..."
                         value={notes}
@@ -1878,7 +1878,7 @@ const ReboundDetailView = () => {
                   <div className="flex px-1 py-3 mt-3">
                     <div className='flex flex-row justify-between items-center w-full'>
                       <button className='bg-[#202123] text-white text-[14px] px-4 py-3 rounded-lg' onClick={() => setShowAppealModal(true)}>Generate Appeal Letter</button>
-                      <button className='bg-[#005DE2] text-white text-[14px] px-4 py-3 rounded-lg' onClick={onSubmitClaim}>Save Changes</button>
+                      <button className='bg-[#3b3f46] text-white text-[14px] px-4 py-3 rounded-lg' onClick={onSubmitClaim}>Save Changes</button>
                     </div>
                   </div>
                 </div>
@@ -1889,7 +1889,7 @@ const ReboundDetailView = () => {
                     <h1 className="font-bold ">
                       Your Comments
                     </h1>
-                    <button className="text-blue-600" onClick={() => {
+                    <button className="text-gray-600" onClick={() => {
                       setComment(originalComment);
                       setShowComment(!showComment);
                     }}>
@@ -1913,7 +1913,7 @@ const ReboundDetailView = () => {
                             <input
                               id="additional-info"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Additional}
                               onChange={(e) => setComment({ ...comment, Additional: e.target.value })}
                             />
@@ -1930,7 +1930,7 @@ const ReboundDetailView = () => {
                             <input
                               id="cpt-code"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.CPT}
                               onChange={(e) => setComment({ ...comment, CPT: e.target.value })}
                             />
@@ -1947,7 +1947,7 @@ const ReboundDetailView = () => {
                             <input
                               id="description"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Description}
                               onChange={(e) => setComment({ ...comment, Description: e.target.value })}
                             />
@@ -1963,7 +1963,7 @@ const ReboundDetailView = () => {
                             </label>
                             <select
                               id="recommendation"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Recommendation}
                               onChange={(e) => setComment({ ...comment, Recommendation: e.target.value })}
                             >
@@ -1985,7 +1985,7 @@ const ReboundDetailView = () => {
                             <input
                               id="root-cause"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Root}
                               onChange={(e) => setComment({ ...comment, Root: e.target.value })}
                             />
@@ -2001,7 +2001,7 @@ const ReboundDetailView = () => {
                             </label>
                             <textarea
                               id="steps"
-                              className={`w-full min-h-[120px] p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono resize-y`}
+                              className={`w-full min-h-[120px] p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'} focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 font-mono resize-y`}
                               placeholder="# Steps to resolve the issue
 1. First step
 2. Second step"
@@ -2021,7 +2021,7 @@ const ReboundDetailView = () => {
                             <input
                               id="evidence1"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Evidence1}
                               onChange={(e) => setComment({ ...comment, Evidence1: e.target.value })}
                             />
@@ -2038,7 +2038,7 @@ const ReboundDetailView = () => {
                             <input
                               id="evidence2"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Evidence2}
                               onChange={(e) => setComment({ ...comment, Evidence2: e.target.value })}
                             />
@@ -2050,7 +2050,7 @@ const ReboundDetailView = () => {
                       {/* Action Buttons */}
                       <div className="flex justify-end mb-3 gap-3 mt-6">
                         <button
-                          className="px-6 py-3 text-sm font-medium text-blue-600 bg-[#DCE8FC] rounded-lg  transition-colors duration-200"
+                          className="px-6 py-3 text-sm font-medium text-gray-600 bg-[#E5E7EB] rounded-lg  transition-colors duration-200"
                           onClick={() => {
                             setShowComment(false)
                             scrollToTop()
@@ -2061,7 +2061,7 @@ const ReboundDetailView = () => {
                           Cancel
                         </button>
                         <button
-                          className="px-6 py-3 text-sm font-medium text-white bg-[#005DE2] rounded-lg transition-colors duration-200"
+                          className="px-6 py-3 text-sm font-medium text-white bg-[#3b3f46] rounded-lg transition-colors duration-200"
                           onClick={() => {
                             setOriginalComment(comment);
                             updateComment();
@@ -2297,10 +2297,10 @@ const ReboundDetailView = () => {
             <div className="flex w-full h-4 border-[#CACBCB] border-b-[1px] border-l-[1px] border-r-[1px] bg-white">
             </div>
             <div className="flex w-full rounded-b-lg border-[#CACBCB] border-b-[1px] border-l-[1px] border-r-[1px] bg-white justify-between py-[16px] px-[24px] gap-2">
-              <div className="font-semibold bg-[#1A3F59] rounded-lg font-inter text-[16px] px-[20px] py-[12px] text-white cursor-pointer select-none"
+              <div className="font-semibold bg-[#3a3f46] rounded-lg font-inter text-[16px] px-[20px] py-[12px] text-white cursor-pointer select-none"
                 onClick={() => setShowAppealModal(true)}
               >Generate Appeal Letter</div>
-              <div className="font-semibold bg-[#1A3F59] rounded-lg font-inter text-[16px] px-[20px] py-[12px] text-white cursor-pointer select-none"
+              <div className="font-semibold bg-[#3a3f46] rounded-lg font-inter text-[16px] px-[20px] py-[12px] text-white cursor-pointer select-none"
                 onClick={onSubmitClaim}>Save</div>
             </div>
           </div> */}
@@ -2346,4 +2346,5 @@ const ReboundDetailView = () => {
 };
 
 export default ReboundDetailView;
+
 

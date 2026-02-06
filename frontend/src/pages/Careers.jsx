@@ -53,7 +53,7 @@ const Member = ({ member }) => {
           "{member.description}"
         </p>
       </div>
-      <button className="flex w-[142px] h-[50px] px-[24px] py-[17px] justify-between text-white text-[14px] font-bold bg-[#0048FF] shadow-xl shadow-[#0048FF]/50 items-center rounded-xl">
+      <button className="flex w-[142px] h-[50px] px-[24px] py-[17px] justify-between text-white text-[14px] font-bold bg-[#3b3f46] shadow-xl shadow-[#3b3f46]/50 items-center rounded-xl">
         Connect{" "}
         <img className="w-[22px] h-[22px]" src="/LinkedinIcon.svg" alt="" />
       </button>
@@ -217,7 +217,7 @@ const Careers = () => {
             Become Part of One of the Most Promising Healthcare Startups
           </h1>
           <button
-            className="h-[70px] w-[270px] bg-[#0048FF] shadow-xl shadow-[#0048FF]/50 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[38px] justify-between gap-2"
+            className="h-[70px] w-[270px] bg-[#3b3f46] shadow-xl shadow-[#3b3f46]/50 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[38px] justify-between gap-2"
             onClick={() => scrollToDiv("openings")}
           >
             View open roles
@@ -241,7 +241,7 @@ const Careers = () => {
               Become Part of One of the Most Promising Healthcare Startups
             </h1>
             <button
-              className="h-[56px] w-full bg-[#0048FF] shadow-md shadow-[#0048FF]/20 items-center rounded-xl flex text-white font-semibold text-[18px] leading-[24px] py-[16px] px-[28px] justify-center gap-2"
+              className="h-[56px] w-full bg-[#3b3f46] shadow-md shadow-[#3b3f46]/20 items-center rounded-xl flex text-white font-semibold text-[18px] leading-[24px] py-[16px] px-[28px] justify-center gap-2"
               onClick={() => scrollToDiv("openings")}
             >
               View open roles
@@ -462,7 +462,7 @@ const Careers = () => {
                       alt=""
                       className="w-[148px] py-4"
                     />
-                    <h2 className="font-bold text-[32px] leading-[40px] text-[#0048FF] w-[80%]">
+                    <h2 className="font-bold text-[32px] leading-[40px] text-[#3b3f46] w-[80%]">
                       {service.title}
                     </h2>
                     <p className="text-[18px] text-[#475569] leading-[26px] w-[82%]">
@@ -485,20 +485,20 @@ const Careers = () => {
         <div class="grid md:grid-cols-2 grid-cols-1 gap-4 max-w-[1164px]">
           {roles.map((role, idx) => (
             <div className="px-[40px] py-[30px] border border-[#E2E8F0] rounded-[24px] gap-4 bg-white shadow-sm">
-              <p className="text-[14px] leading-[22.82px] text-[#0048FF]">
+              <p className="text-[14px] leading-[22.82px] text-[#3b3f46]">
                 {role.location}
               </p>
               <h1 className="font-bold text-[#0F172A] text-[24px]">
                 {role.title}
               </h1>
-              <p className="text-[16px] text-[#0048FF] leading-[26px]">
+              <p className="text-[16px] text-[#3b3f46] leading-[26px]">
                 {role.subtitle}
               </p>
               <p className="text-[#475569] text-[16px] leading-[26px]">
                 {role.description}
               </p>
               <button
-                className="text-white bg-[#0048FF] rounded-xl px-6 py-[14px] w-[160px] h-[50px] flex items-center mt-12 shadow-md shadow-[#0048FF]/20"
+                className="text-white bg-[#3b3f46] rounded-xl px-6 py-[14px] w-[160px] h-[50px] flex items-center mt-12 shadow-md shadow-[#3b3f46]/20"
                 onClick={() => OnApply(role)}
               >
                 Apply now <img src="/Frame 143.svg" alt="" />{" "}
@@ -521,3 +521,4 @@ const Careers = () => {
 };
 
 export default Careers;
+

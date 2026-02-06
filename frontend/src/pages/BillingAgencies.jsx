@@ -26,7 +26,7 @@ const BillingAgencies = () => {
 
         <div className="container mx-auto flex overflow-hidden">
           <div className="xl:w-1/2 lg:w-[60%] gap-8 flex flex-col text-center sm:text-left sm:w-[80%] w-full overflow-visible">
-            <p className="text-[#0048FF] text-[20px] leading-7 z-20">
+            <p className="text-[#3b3f46] text-[20px] leading-7 z-20">
               Billing Agencies, MSOs, and TPAs
             </p>
             <h1
@@ -35,12 +35,12 @@ const BillingAgencies = () => {
               Fewer Denials. More Revenue.
             </h1>
             <p className="text-[20px] text-[#475569] leading-[28px] md:w-[72%] w-full z-20">
-              <u className="text-[#0048FF]">Helio RCM</u> boosts denial recovery
+              <u className="text-[#3b3f46]">Helio RCM</u> boosts denial recovery
               with smarter workflows and improved financial outcomes for your
               business.
             </p>
 
-            <button className="h-[70px] md:w-[240px] w-full bg-[#0048FF] shadow-xl shadow-[#0048FF]/50 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[42px] justify-center gap-2 z-20">
+            <button className="h-[70px] md:w-[240px] w-full bg-[#3b3f46] shadow-xl shadow-[#3b3f46]/50 items-center rounded-xl flex text-white font-semibold text-[20px] leading-[24px] py-[23px] px-[42px] justify-center gap-2 z-20">
               Get Started
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -55,12 +55,12 @@ const BillingAgencies = () => {
               </svg>
             </button>
             
-            <p className="md:px-7 md:py-[40.5px] px-1 py-2 border-l-[#0048FF] border-l text-[20px] leading-[28px] text-[#475569] md:w-[92%] w-full z-20 sm:mt-0 -mt-48 text-left">
+            <p className="md:px-7 md:py-[40.5px] px-1 py-2 border-l-[#3b3f46] border-l text-[20px] leading-[28px] text-[#475569] md:w-[92%] w-full z-20 sm:mt-0 -mt-48 text-left">
               Managing claim denials presents a unique set of challenges.
               Whether that's meeting payer-specific requirements or changing
               policies, the manual handling of this crucial process can lead to
               inefficiencies and subsequently, financial losses.{" "}
-              <u className="text-[#0048FF]">Helio RCM's</u> is here to change
+              <u className="text-[#3b3f46]">Helio RCM's</u> is here to change
               that for good.
             </p>
           </div>
@@ -77,7 +77,7 @@ const BillingAgencies = () => {
             </h1>
 
             <p className="text-[20px] text-[#475569] leading-[28px]">
-              <u className="text-[#0048FF]">Helio RCM's</u> cutting-edge
+              <u className="text-[#3b3f46]">Helio RCM's</u> cutting-edge
               AI-powered platform overhauls the denial recovery workflow by
               eliminating manual errors and reducing the need for human
               interventions in the appeals and recovery process.
@@ -296,3 +296,4 @@ const BillingAgencies = () => {
 };
 
 export default BillingAgencies;
+

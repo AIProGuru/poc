@@ -385,14 +385,14 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
             <div className='flex gap-4 mt-6'>
               <button
                 type="button"
-                className='flex-1 rounded-lg text-[16px] font-semibold bg-[#c1d8fa] text-[#005DE2] py-[10px] border border-solid'
+                className='flex-1 rounded-lg text-[16px] font-semibold bg-[#d1d5db] text-[#3b3f46] py-[10px] border border-solid'
                 onClick={onClose}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className='flex-1 rounded-lg text-[16px] font-semibold py-[10px] border border-solid text-white bg-[#005DE2]'
+                className='flex-1 rounded-lg text-[16px] font-semibold py-[10px] border border-solid text-white bg-[#3b3f46]'
               >
                 Save Changes
               </button>
@@ -481,7 +481,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
             </button>
             <button
               type="button"
-              className="mt-3 inline-flex w-full justify-center rounded-md bg-[#c1d8fa] px-4 py-2 text-base font-medium text-[#005DE2] sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              className="mt-3 inline-flex w-full justify-center rounded-md bg-[#d1d5db] px-4 py-2 text-base font-medium text-[#3b3f46] sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
               onClick={() => setShowDeleteModal(false)}
             >
               Cancel
@@ -626,7 +626,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                       value={status}
                       checked={activeFilter === status}
                       onChange={() => setActiveFilter(status)}
-                      className="form-radio text-blue-600"
+                      className="form-radio text-gray-600"
                     />
                     <span className="capitalize">{status}</span>
                   </label>
@@ -649,7 +649,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
             </button>
             <button
               onClick={() => setShowFilterModal(false)}
-              className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gray-600 text-white hover:bg-gray-700"
             >
               Apply
             </button>
@@ -683,8 +683,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     <div className={shellClasses} style={{ fontFamily: 'Nunito, sans-serif' }}>
       <div className={panelClasses}>
         <div className={`mt-2 ${isAddView ? `pb-3 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}` : ''}`}>
-          <h1 className="text-lg font-semibold">
-            {isAddView ? 'USER MANAGEMENT > ADD NEW USER' : 'User Management'}
+          <h1 className="font-inter font-semibold text-2xl leading-none tracking-normal text-[#F4F4F4]">
+            {isAddView ? 'User Management > Add New User' : 'User Management'}
           </h1>
         </div>
         {isActionsView && (
@@ -709,15 +709,15 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                   onClick={() => {
                     navigate('/management/users/new');
                   }}
-                  className={`rounded-xl border px-4 py-3 text-left transition ${theme === 'dark'
+                  className={`rounded-xl border px-3 py-6 text-left transition ${theme === 'dark'
                     ? 'bg-[#FFFFFF]/10 border-white/5 shadow-[0_4px_4px_rgba(0,0,0,0.25)] hover:border-[#3A465B]'
                     : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                     }`}
                 >
-                  <p className={`text-xs uppercase tracking-wide ${theme === 'dark' ? 'text-[#3ABFF8]' : 'text-slate-400'}`}>
+                  <p className={`font-inter font-medium text-[18px] leading-[100%] tracking-[0%] ${theme === 'dark' ? 'text-[#6b7280]' : 'text-slate-400'}`}>
                     User Management
                   </p>
-                  <p className="mt-2 text-sm font-semibold">Add New User</p>
+                  <p className="mt-3 font-inter font-bold text-xl leading-none tracking-normal">Add New User</p>
                 </button>
                 <button
                   type="button"
@@ -727,11 +727,11 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                     }`}
                 >
-                  <p className={`text-xs uppercase tracking-wide ${theme === 'dark' ? 'text-[#3ABFF8]' : 'text-slate-400'}`}>
+                  <p className={`font-inter font-medium text-[18px] leading-[100%] tracking-[0%] ${theme === 'dark' ? 'text-[#6b7280]' : 'text-slate-400'}`}>
                     User Management
                   </p>
-                  <p className="mt-2 text-sm font-semibold">Manage Users</p>
-                </button>                
+                  <p className="mt-3 font-inter font-bold text-xl leading-none tracking-normal">Manage Users</p>
+                </button>
               </div>
             )}
           </div>
@@ -779,12 +779,12 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                       </svg>
                       <span className="text-sm font-medium">Filter</span>
                       {activeFilter !== 'all' && (
-                        <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                        <span className="w-2 h-2 rounded-full bg-gray-600"></span>
                       )}
                     </button>
                   </div>
                   <div
-                    className="flex-shrink-0 flex items-center justify-center bg-[#005DE2] rounded-lg w-[40px] h-[40px] text-white cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="flex-shrink-0 flex items-center justify-center bg-[#3b3f46] rounded-lg w-[40px] h-[40px] text-white cursor-pointer hover:bg-gray-700 transition-colors"
                     onClick={() => {
                       navigate('/management/users/new');
                     }}
@@ -809,7 +809,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                         <div className="flex items-center gap-2">
                           #
                           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fillRule="evenodd" clipRule="evenodd" d="M5.9974 0.666748C6.36559 0.666748 6.66406 0.965225 6.66406 1.33341V9.05727L10.1927 5.52868C10.453 5.26833 10.8751 5.26833 11.1355 5.52868C11.3958 5.78903 11.3958 6.21114 11.1355 6.47149L6.4688 11.1382C6.20845 11.3985 5.78634 11.3985 5.52599 11.1382L0.859325 6.47149C0.598975 6.21114 0.598975 5.78903 0.859325 5.52868C1.11967 5.26833 1.54178 5.26833 1.80213 5.52868L5.33073 9.05727V1.33341C5.33073 0.965225 5.62921 0.666748 5.9974 0.666748Z" fill="#1A3F59" />
+                            <path fillRule="evenodd" clipRule="evenodd" d="M5.9974 0.666748C6.36559 0.666748 6.66406 0.965225 6.66406 1.33341V9.05727L10.1927 5.52868C10.453 5.26833 10.8751 5.26833 11.1355 5.52868C11.3958 5.78903 11.3958 6.21114 11.1355 6.47149L6.4688 11.1382C6.20845 11.3985 5.78634 11.3985 5.52599 11.1382L0.859325 6.47149C0.598975 6.21114 0.598975 5.78903 0.859325 5.52868C1.11967 5.26833 1.54178 5.26833 1.80213 5.52868L5.33073 9.05727V1.33341C5.33073 0.965225 5.62921 0.666748 5.9974 0.666748Z" fill="#3a3f46" />
                           </svg>
                         </div>
                       </th>
@@ -958,8 +958,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                                     <span
                                       key={idx}
                                       className={`text-xs px-2 py-1 rounded-full ${theme === 'dark'
-                                        ? 'bg-[#191a1d] text-blue-300'
-                                        : 'bg-blue-100 text-blue-800'
+                                        ? 'bg-[#191a1d] text-gray-300'
+                                        : 'bg-gray-100 text-gray-800'
                                         }`}
                                     >
                                       {client}
@@ -995,8 +995,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                                       <span
                                         key={idx}
                                         className={`text-xs px-2 py-1 rounded-full ${theme === 'dark'
-                                          ? 'bg-[#191a1d] text-blue-300'
-                                          : 'bg-blue-100 text-blue-800'
+                                          ? 'bg-[#191a1d] text-gray-300'
+                                          : 'bg-gray-100 text-gray-800'
                                           }`}
                                       >
                                         {client}
@@ -1119,7 +1119,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                             <button
                               onClick={() => setCurrentPage(page)}
                               className={`w-8 h-8 rounded-md ${currentPage === page
-                                ? ' text-blue-600'
+                                ? ' text-gray-600'
                                 : 'hover:bg-gray-100'
                                 }`}
                             >
@@ -1170,7 +1170,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
         </label>
         <select
           id="pageSize"
-          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gray-500 focus:border-gray-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500"
           onChange={(e) => {
             setCurrentPageSize(parseInt(e.target.value));
             setCurrentPage(1);
@@ -1197,9 +1197,9 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
               <div className="grid gap-4 sm:grid-cols-2">
                 <input
                   type="text"
-                  id="add-first-name"
-                  name="add-first-name"
-                  className={`text-sm rounded-full px-4 py-2.5 border ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
+                  className={`text-sm rounded-full px-4 py-2.5 border bg-clip-padding focus:outline-none ${theme === 'dark' ?
+                    'bg-[#FFFFFF]/10 text-white border-transparent ring-1 ring-inset ring-[#3B3F46] focus:border-[#6b6c71] focus:border-opacity-50' :
+                    'bg-slate-50 text-slate-900 border-slate-200 focus:border-gray-800'
                     }`}
                   value={user.firstname}
                   placeholder="First Name"
@@ -1207,9 +1207,9 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                 />
                 <input
                   type="text"
-                  id="add-last-name"
-                  name="add-last-name"
-                  className={`text-sm rounded-full px-4 py-2.5 border ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
+                  className={`text-sm rounded-full px-4 py-2.5 border bg-clip-padding focus:outline-none ${theme === 'dark' ?
+                    'bg-[#FFFFFF]/10 text-white border-transparent ring-1 ring-inset ring-[#3B3F46] focus:border-[#6b6c71] focus:border-opacity-50' :
+                    'bg-slate-50 text-slate-900 border-slate-200 focus:border-gray-800'
                     }`}
                   value={user.lastname}
                   placeholder="Last Name"
@@ -1219,10 +1219,10 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
               <div className="grid gap-4 sm:grid-cols-2 items-center">
                 <input
-                  type="email"
-                  id="add-email"
-                  name="add-email"
-                  className={`text-sm rounded-full px-4 py-2.5 border ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
+                  type="text"
+                  className={`text-sm rounded-full px-4 py-2.5 border bg-clip-padding focus:outline-none ${theme === 'dark' ?
+                    'bg-[#FFFFFF]/10 text-white border-transparent ring-1 ring-inset ring-[#3B3F46] focus:border-[#6b6c71] focus:border-opacity-50' :
+                    'bg-slate-50 text-slate-900 border-slate-200 focus:border-gray-800'
                     }`}
                   value={user.email}
                   placeholder="Email Address"
@@ -1264,18 +1264,41 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
               </div>
 
               <div className={`rounded-2xl border px-4 py-4 ${theme === 'dark' ? 'border-[#2A2F38] bg-[#FFFFFF]/10' : 'border-slate-200 bg-slate-50'}`}>
-                <div className="text-sm font-semibold">Role</div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                <div className="font-['Inter'] font-normal text-[18px] leading-[100%] tracking-[0%] text-[#F4F4F4]">Role</div>
+                <div className="mt-4 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                   {ROLE_OPTIONS.map((option) => (
-                    <label key={option.value} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    name="add-role"
-                    checked={getRoleValue(user.role) === option.value}
-                    onChange={() => setUser({ ...user, role: option.value })}
-                    className="h-4 w-4 rounded border-gray-400"
-                  />
-                      <span>{option.label}</span>
+                    <label key={option.value} className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        name="add-role"
+                        checked={getRoleValue(user.role) === option.value}
+                        onChange={() => setUser({ ...user, role: option.value })}
+                        className="sr-only peer"
+                      />
+                      <span
+                        className={`relative box-border flex h-[30px] w-[30px] items-center justify-center rounded-[6px] border transition-shadow shrink-0
+                          ${theme === 'dark' ? 'bg-white/10' : 'bg-white'}
+                          border-[#9b9ca1] shadow-[0_4px_4px_rgba(0,0,0,0.25)]
+                          peer-checked:bg-[#25262b] peer-checked:border-[#606165]
+                          peer-checked:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.25),inset_-4px_-4px_4px_rgba(0,0,0,0.25)]
+                          peer-checked:[&>svg]:opacity-100
+                        `}
+                      >
+                        <svg
+                          className="h-4 w-4 opacity-0 transition-opacity"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="#F4F4F4"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
+                        </svg>
+                      </span>
+                      <span className="font-['Inter'] font-normal text-[18px] leading-[20px] tracking-[0%]">
+                        {option.label}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -1283,7 +1306,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
               <div className={`rounded-2xl border px-4 py-4 ${theme === 'dark' ? 'border-[#2A2F38] bg-[#FFFFFF]/10' : 'border-slate-200 bg-slate-50'}`}>
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold">Skillsets</div>
+                  <div className="font-['Inter'] font-normal text-[18px] leading-[100%] tracking-[0%] text-[#F4F4F4]">Skillsets</div>
                   <button
                     type="button"
                     onClick={() => setShowSkillsets((prev) => !prev)}
@@ -1339,7 +1362,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     readOnly
                     id="add-password"
                     name="add-password"
-                    className={`text-sm rounded-full px-4 py-2.5 border w-full ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
+                    className={`text-sm rounded-full px-4 py-2.5 border w-full bg-clip-padding ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-transparent ring-1 ring-inset ring-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
                       }`}
                     value={user.password}
                     placeholder="Generated Password"
@@ -1375,7 +1398,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
               </button>
               <button
                 type="button"
-                className="rounded-full px-6 py-2 text-sm font-semibold text-white bg-[#005DE2] hover:bg-blue-700"
+                className="rounded-full px-6 py-2 text-sm font-semibold text-white bg-[#3b3f46] hover:bg-[#2f3238]"
                 onClick={addUser_backend}
               >
                 Add User
@@ -1435,13 +1458,13 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
                 <div className="flex gap-4 pr-3 pb-2 justify-end pt-3">
                   <div
-                    className="rounded-lg text-[16px] font-semibold bg-[#c1d8fa] text-[#005DE2] px-[33px] py-[10px] border border-solid cursor-pointer select-none"
+                    className="rounded-lg text-[16px] font-semibold bg-[#d1d5db] text-[#3b3f46] px-[33px] py-[10px] border border-solid cursor-pointer select-none"
                     onClick={() => setShowPermissionModal(false)}
                   >
                     Cancel
                   </div>
                   <div
-                    className="rounded-lg text-[16px] font-semibold px-[33px] py-[10px] border border-solid text-white bg-[#005DE2] cursor-pointer select-none"
+                    className="rounded-lg text-[16px] font-semibold px-[33px] py-[10px] border border-solid text-white bg-[#3b3f46] cursor-pointer select-none"
                     onClick={() => {
                       const updatedUser = {
                         ...user,
@@ -1470,3 +1493,4 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 }
 
 export default UserManagement;
+

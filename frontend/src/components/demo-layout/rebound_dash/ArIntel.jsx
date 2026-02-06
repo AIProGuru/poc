@@ -235,13 +235,34 @@ const ArIntel = ({ onModelSelect }) => {
                 </div>
               )}
               {availableFilters.map((filter) => (
-                <label key={filter} className="flex items-center gap-2 text-xs font-medium">
+                <label key={filter} className="flex items-center gap-[10px] text-xs font-medium">
                   <input
                     type="checkbox"
                     checked={selectedFilters.includes(filter)}
                     onChange={() => toggleFilter(filter)}
-                    className={`h-4 w-4 rounded ${isDark ? 'accent-emerald-400' : 'accent-emerald-600'}`}
+                    className="sr-only peer"
                   />
+                  <span
+                    className={`relative box-border flex h-[30px] w-[30px] items-center justify-center rounded-[5px] transition-shadow border border-[#9b9ca1]
+                      ${isDark ? 'bg-white/10' : 'bg-slate-200'}
+                      shadow-[0_4px_4px_rgba(0,0,0,0.25)]
+                      peer-checked:bg-[#25262b] peer-checked:border-[#606165]
+                      peer-checked:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.25),inset_-4px_-4px_4px_rgba(0,0,0,0.25)]
+                      peer-checked:[&>svg]:opacity-100
+                    `}
+                  >
+                    <svg
+                      className="h-4 w-4 opacity-0 transition-opacity"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="#F4F4F4"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
+                    </svg>
+                  </span>
                   <span className={isDark ? 'text-[#F4F4F4]' : 'text-slate-600'}>
                     {filter}
                   </span>
@@ -322,7 +343,7 @@ const ArIntel = ({ onModelSelect }) => {
                           : (isDark ? 'border-white/10 bg-white/5 text-white hover:bg-white/10 cursor-pointer' : 'border-slate-200 bg-white text-slate-900 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer')}`}
                       >
                         <div className="flex flex-col min-w-0 pr-3 h-full justify-between">
-                          <p className="font-inter text-[18px] font-medium leading-[1.2] tracking-normal uppercase tracking-[0.2em] text-[#0E7D81] break-words line-clamp-2">
+                          <p className="font-inter text-[18px] font-medium leading-[1.2] tracking-normal uppercase tracking-[0.2em] text-[#6b7280] break-words line-clamp-2">
                             {row.Category || 'Model'}
                           </p>
                           <h3
@@ -355,3 +376,4 @@ const ArIntel = ({ onModelSelect }) => {
 };
 
 export default ArIntel;
+
