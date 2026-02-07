@@ -343,7 +343,7 @@ const ArIntel = ({ onModelSelect }) => {
                           : (isDark ? 'border-white/10 bg-white/5 text-white hover:bg-white/10 cursor-pointer' : 'border-slate-200 bg-white text-slate-900 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer')}`}
                       >
                         <div className="flex flex-col min-w-0 pr-3 h-full justify-between">
-                          <p className="font-inter text-[18px] font-medium leading-[1.2] tracking-normal uppercase tracking-[0.2em] text-[#6b7280] break-words line-clamp-2">
+                          <p className="font-inter text-[18px] font-medium leading-[1.2] tracking-normal uppercase tracking-[0.2em] text-[#0e7d81] break-words line-clamp-2">
                             {row.Category || 'Model'}
                           </p>
                           <h3

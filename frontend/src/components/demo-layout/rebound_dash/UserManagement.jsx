@@ -714,7 +714,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                     }`}
                 >
-                  <p className={`font-inter font-medium text-[18px] leading-[100%] tracking-[0%] ${theme === 'dark' ? 'text-[#6b7280]' : 'text-slate-400'}`}>
+                  <p className={`font-inter font-medium text-[18px] leading-[100%] tracking-[0%] ${theme === 'dark' ? 'text-[#0E7D81]' : 'text-slate-400'}`}>
                     User Management
                   </p>
                   <p className="mt-3 font-inter font-bold text-xl leading-none tracking-normal">Add New User</p>
@@ -727,7 +727,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                     }`}
                 >
-                  <p className={`font-inter font-medium text-[18px] leading-[100%] tracking-[0%] ${theme === 'dark' ? 'text-[#6b7280]' : 'text-slate-400'}`}>
+                  <p className={`font-inter font-medium text-[18px] leading-[100%] tracking-[0%] ${theme === 'dark' ? 'text-[#0E7D81]' : 'text-slate-400'}`}>
                     User Management
                   </p>
                   <p className="mt-3 font-inter font-bold text-xl leading-none tracking-normal">Manage Users</p>
