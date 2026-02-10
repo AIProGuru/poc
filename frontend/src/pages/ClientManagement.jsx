@@ -126,7 +126,7 @@ const ClientManagement = () => {
 
   const fetch_clients = async () => {
     try {
-      if (!apiUrl) return;
+      if (!resolvedApiUrl) return;
       setLoading(true);
       const res = await axios.get(`${resolvedApiUrl}/clients`, { withCredentials: true });
       setClients(res.data || []);
@@ -139,9 +139,8 @@ const ClientManagement = () => {
   };
 
   useEffect(() => {
-    // Simulate API call
     fetch_clients();
-  }, []);
+  }, [resolvedApiUrl]);
 
   // Event handlers
   const handleSearch = (e) => {

@@ -83,3 +83,30 @@ def get_client(client_id):
         return jsonify(data), 200
     except Exception as exc:  # pragma: no cover - simple pass-through
         return jsonify({"error": "Failed to fetch client", "detail": str(exc)}), 500
+
+
+@clients_api.route("/clients/<client_id>/users", methods=["GET"])
+def get_client_users(client_id):
+    """
+    Return users linked to a client (by client name in users.client array).
+    """
+    try:
+        client_doc = db.collection("clients").document(client_id).get()
+        if not client_doc.exists:
+            return jsonify({"error": "Client not found"}), 404
+
+        client_data = client_doc.to_dict() or {}
+        client_name = client_data.get("name")
+        if not client_name:
+            return jsonify([]), 200
+
+        query = db.collection("users").where("client", "array-contains", client_name).stream()
+        users = []
+        for doc in query:
+            data = doc.to_dict() or {}
+            data = _serialize_value(data)
+            data["id"] = doc.id
+            users.append(data)
+        return jsonify(users), 200
+    except Exception as exc:  # pragma: no cover - simple pass-through
+        return jsonify({"error": "Failed to fetch client users", "detail": str(exc)}), 500

@@ -6,7 +6,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import './ClientManagement.css';
 import { db } from '../FirebaseConfig';
-import { doc, getDoc ,updateDoc,collection,query,where,getDocs} from 'firebase/firestore/lite';
+import { doc, getDoc ,updateDoc } from 'firebase/firestore/lite';
 import axios from 'axios';
 import { useApiEndpoint } from '../ApiEndpointContext';
 import { SERVER_URL } from '../utils/config';
@@ -57,20 +57,12 @@ const ClientDashboard = () => {
   
   // Move fetchUsersForClient function to the main component level
   const fetchUsersForClient = async () => {
-    if (!client) return;
+    if (!clientId) return;
     
     try {
       setUsersLoading(true);
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('client', 'array-contains', client.name));
-      const querySnapshot = await getDocs(q);
-      
-      const usersData = [];
-      querySnapshot.forEach((doc) => {
-        usersData.push({ id: doc.id, ...doc.data() });
-      });
-      
-      setUsers(usersData);
+      const res = await axios.get(`${resolvedApiUrl}/clients/${clientId}/users`, { withCredentials: true });
+      setUsers(res.data || []);
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
