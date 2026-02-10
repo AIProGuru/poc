@@ -7,6 +7,9 @@ import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import './ClientManagement.css';
 import { db } from '../FirebaseConfig';
 import { doc, getDoc ,updateDoc,collection,query,where,getDocs} from 'firebase/firestore/lite';
+import axios from 'axios';
+import { useApiEndpoint } from '../ApiEndpointContext';
+import { SERVER_URL } from '../utils/config';
 
 
 // Register Chart.js components
@@ -36,6 +39,8 @@ const ClientDashboard = () => {
 
   const { clientId } = useParams();
   const navigate = useNavigate();
+  const apiUrl = useApiEndpoint();
+  const resolvedApiUrl = apiUrl || `${SERVER_URL}/api`;
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('client-management');
@@ -156,30 +161,11 @@ useEffect(() => {
   
   const fetchClientData = async () => {
     try {
-      // Create a reference to the client document using the ID from URL params
-      const clientDocRef = doc(db, 'clients', clientId);
-      
-      // Get the document
-      const clientDoc = await getDoc(clientDocRef);
-      
-      // Check if document exists
-      if (clientDoc.exists()) {
-        // Get data and add the id
-        const clientData = {
-          id: clientDoc.id,
-          ...clientDoc.data()
-        };
-        
-        // Update state with client data
-        setClient(clientData);
-      } else {
-        console.log("No client found with that ID");
-        // Navigate back if client not found
-        navigate('/clientmanagement', { replace: true });
-      }
+      const res = await axios.get(`${resolvedApiUrl}/clients/${clientId}`, { withCredentials: true });
+      setClient(res.data);
     } catch (error) {
       console.error("Error fetching client data:", error);
-      // Handle error (could show error message)
+      navigate('/clientmanagement', { replace: true });
     } finally {
       // Always turn off loading state when done
       setLoading(false);

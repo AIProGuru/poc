@@ -65,6 +65,37 @@ const ClientManagement = () => {
     try {
       // Show loading state
       setLoading(true);
+
+      const requiredFields = [
+        { key: 'name', label: 'Client' },
+        { key: 'tenantName', label: 'Tenant' },
+        { key: 'facilityName', label: 'Facility' },
+        { key: 'facilityType', label: 'Facility Type' },
+        { key: 'facilityAddress', label: 'Facility Address' },
+        { key: 'facilityTaxID', label: 'Tax ID' },
+        { key: 'facilityNPI', label: 'NPI' },
+        { key: 'contact', label: 'Contact' },
+        { key: 'email', label: 'Email' }
+      ];
+
+      const missing = requiredFields
+        .filter(({ key }) => !String(newClient[key] || '').trim())
+        .map(({ label }) => label);
+
+      const emailValue = String(newClient.email || '').trim();
+      const phoneValue = String(newClient.phone || '').trim();
+      const emailValid = !emailValue || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
+      const phoneDigits = phoneValue.replace(/\D/g, '');
+      const phoneValid = !phoneValue || (phoneDigits.length >= 7 && /^[0-9()+\-.\s]+$/.test(phoneValue));
+
+      if (missing.length || !emailValid || !phoneValid) {
+        const parts = [];
+        if (missing.length) parts.push(`Missing: ${missing.join(', ')}`);
+        if (!emailValid) parts.push('Invalid email format');
+        if (!phoneValid) parts.push('Invalid phone number');
+        alert(parts.join(' | '));
+        return;
+      }
       
       const res = await axios.post(
         `${resolvedApiUrl}/clients`,
@@ -78,6 +109,7 @@ const ClientManagement = () => {
       };
       
       setClients([...clients, newClientWithId]);
+      await fetch_clients();
       
       // Reset row inputs
       resetNewClientRow();

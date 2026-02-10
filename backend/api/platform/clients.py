@@ -1,6 +1,17 @@
 from flask import Blueprint, jsonify, request
 from core.firebase.firebase_init import db
 from firebase_admin import firestore
+from datetime import datetime
+
+
+def _serialize_value(value):
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {key: _serialize_value(val) for key, val in value.items()}
+    if isinstance(value, list):
+        return [_serialize_value(item) for item in value]
+    return value
 
 clients_api = Blueprint("clients_api", __name__, url_prefix="/api")
 
@@ -15,6 +26,7 @@ def get_clients():
         clients = []
         for doc in docs:
             data = doc.to_dict() or {}
+            data = _serialize_value(data)
             data["id"] = doc.id
             clients.append(data)
         return jsonify(clients), 200
@@ -53,3 +65,21 @@ def add_client():
         return jsonify(result), 201
     except Exception as exc:  # pragma: no cover - simple pass-through
         return jsonify({"error": "Failed to add client", "detail": str(exc)}), 500
+
+
+@clients_api.route("/clients/<client_id>", methods=["GET"])
+def get_client(client_id):
+    """
+    Return a single client by ID.
+    """
+    try:
+        doc_ref = db.collection("clients").document(client_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            return jsonify({"error": "Client not found"}), 404
+        data = doc.to_dict() or {}
+        data = _serialize_value(data)
+        data["id"] = doc.id
+        return jsonify(data), 200
+    except Exception as exc:  # pragma: no cover - simple pass-through
+        return jsonify({"error": "Failed to fetch client", "detail": str(exc)}), 500
