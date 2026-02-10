@@ -2,11 +2,22 @@ from flask import Blueprint, jsonify, request
 from core.firebase.firebase_init import db
 from firebase_admin import firestore
 from datetime import datetime
+try:
+    from google.cloud.firestore_v1 import DocumentReference, GeoPoint
+except Exception:  # pragma: no cover - optional import for type checks
+    DocumentReference = None
+    GeoPoint = None
 
 
 def _serialize_value(value):
     if isinstance(value, datetime):
         return value.isoformat()
+    if DocumentReference is not None and isinstance(value, DocumentReference):
+        return value.path
+    if GeoPoint is not None and isinstance(value, GeoPoint):
+        return {"latitude": value.latitude, "longitude": value.longitude}
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
     if isinstance(value, dict):
         return {key: _serialize_value(val) for key, val in value.items()}
     if isinstance(value, list):
