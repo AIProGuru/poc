@@ -193,20 +193,20 @@ const TenantDetailsModal = () => {
       onClick={handleClose}
     >
       <div 
-        className="bg-gradient-to-br from-[#121953] to-[#0B0C14] rounded-xl w-full max-w-4xl overflow-hidden border border-[#6C9BE050] shadow-2xl"
+        className="bg-[#232429] rounded-xl w-full max-w-4xl overflow-hidden border border-[#2f333a] shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center border-b border-[#ffffff20] p-6">
           <div className="flex items-center">
-            <div className="w-12 h-12 bg-[#0B0C14] rounded-lg flex items-center justify-center p-2 mr-4">
-              <svg className="w-7 h-7 text-[#6C9BE0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-12 h-12 bg-[#1e1f24] rounded-lg flex items-center justify-center p-2 mr-4">
+              <svg className="w-7 h-7 text-[#f4f4f4]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
             <div>
               <h2 className="text-xl font-semibold text-white">{selectedTenant.name}</h2>
               <div className="flex items-center mt-1">
-                <span className="text-sm text-[#6C9BE0] mr-2">{selectedTenant.type}</span>
+                <span className="text-sm text-[#f4f4f4] mr-2">{selectedTenant.type}</span>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
                   selectedTenant.status === 'Active' 
                     ? 'bg-green-500/20 text-green-400' 
@@ -234,7 +234,7 @@ const TenantDetailsModal = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Contact Information */}
             <div>
-              <h3 className="text-[#6C9BE0] text-sm font-medium mb-3">Contact Information</h3>
+              <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Contact Information</h3>
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
                 <div className="space-y-3 text-sm">
                   <div className="flex">
@@ -255,7 +255,7 @@ const TenantDetailsModal = () => {
             
             {/* Facility Type */}
             <div>
-              <h3 className="text-[#6C9BE0] text-sm font-medium mb-3">Facility Type</h3>
+              <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Facility Type</h3>
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
                 <p className="text-white">{selectedTenant.type}</p>
                 <div className="mt-3 flex items-center">
@@ -270,7 +270,7 @@ const TenantDetailsModal = () => {
             
             {/* Location Information */}
             <div className="md:col-span-2">
-              <h3 className="text-[#6C9BE0] text-sm font-medium mb-3">Location</h3>
+              <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Location</h3>
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
                 <p className="text-white">
                   {selectedTenant.address}, {selectedTenant.city}, {selectedTenant.state} {selectedTenant.zip}
@@ -280,7 +280,7 @@ const TenantDetailsModal = () => {
             
             {/* Recent Activity */}
             <div className="md:col-span-2">
-              <h3 className="text-[#6C9BE0] text-sm font-medium mb-3">Recent Activity</h3>
+              <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Recent Activity</h3>
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
                 <div className="space-y-4">
                   <div className="flex items-start">
@@ -359,9 +359,20 @@ const TenantDetailsModal = () => {
     }).format(amount);
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (value) => {
+    if (!value) return '—';
+    let date;
+    if (value.toDate && typeof value.toDate === 'function') {
+      date = value.toDate();
+    } else if (typeof value === 'object' && (value.seconds || value._seconds)) {
+      const seconds = value.seconds || value._seconds;
+      date = new Date(seconds * 1000);
+    } else {
+      date = new Date(value);
+    }
+    if (Number.isNaN(date.getTime())) return '—';
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+    return date.toLocaleDateString('en-US', options);
   };
 
   const getStatusColor = (status) => {
@@ -457,9 +468,9 @@ const TenantDetailsModal = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <motion.div 
                 variants={itemVariants}
-                className="bg-gradient-to-br from-[#121953] to-[#0B0C14] p-6 rounded-xl border border-[#6C9BE030] shadow-lg"
+                className="bg-[#232429] p-6 rounded-xl border border-[#2f333a] shadow-lg"
               >
-                <h3 className="text-[#6C9BE0] text-sm">Total Denials Captured</h3>
+                <h3 className="text-[#f4f4f4] text-sm">Total Denials Captured</h3>
                 <p className="text-3xl font-bold text-white mt-2">{client.denialsCaptured.toLocaleString()}</p>
                 <div className="flex items-center mt-4">
                   <div className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs flex items-center">
@@ -474,9 +485,9 @@ const TenantDetailsModal = () => {
 
               <motion.div 
                 variants={itemVariants}
-                className="bg-gradient-to-br from-[#121953] to-[#0B0C14] p-6 rounded-xl border border-[#6C9BE030] shadow-lg"
+                className="bg-[#232429] p-6 rounded-xl border border-[#2f333a] shadow-lg"
               >
-                <h3 className="text-[#6C9BE0] text-sm">Revenue Recovered</h3>
+                <h3 className="text-[#f4f4f4] text-sm">Revenue Recovered</h3>
                 <p className="text-3xl font-bold text-white mt-2">{formatCurrency(client.revenueRecovered)}</p>
                 <div className="flex items-center mt-4">
                   <div className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs flex items-center">
@@ -491,9 +502,9 @@ const TenantDetailsModal = () => {
 
               <motion.div 
                 variants={itemVariants}
-                className="bg-gradient-to-br from-[#121953] to-[#0B0C14] p-6 rounded-xl border border-[#6C9BE030] shadow-lg"
+                className="bg-[#232429] p-6 rounded-xl border border-[#2f333a] shadow-lg"
               >
-                <h3 className="text-[#6C9BE0] text-sm">Success Rate</h3>
+                <h3 className="text-[#f4f4f4] text-sm">Success Rate</h3>
                 <p className="text-3xl font-bold text-white mt-2">{client.metrics.successRate}%</p>
                 <div className="flex items-center mt-4">
                   <div className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs flex items-center">
@@ -510,7 +521,7 @@ const TenantDetailsModal = () => {
           
 
             {/* Recent Alerts */}
-            <motion.div variants={itemVariants} className="bg-gradient-to-br from-[#121953] to-[#0B0C14] p-6 rounded-xl border border-[#6C9BE030]">
+            <motion.div variants={itemVariants} className="bg-[#232429] p-6 rounded-xl border border-[#2f333a]">
               <h3 className="text-lg font-semibold text-white mb-4">Recent Alerts</h3>
               <div className="space-y-3">
                 {mockAlerts.map(alert => (
@@ -541,7 +552,7 @@ const TenantDetailsModal = () => {
               animate="show" 
               className="space-y-6"
             >
-              <motion.div variants={itemVariants} className="bg-gradient-to-br from-[#121953] to-[#0B0C14] p-6 rounded-xl border border-[#6C9BE030]">
+              <motion.div variants={itemVariants} className="bg-[#232429] p-6 rounded-xl border border-[#2f333a]">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-semibold text-white">Tenants</h3>
                   <button 
@@ -559,7 +570,7 @@ const TenantDetailsModal = () => {
                   {client.subClients?.map((subClient) => (
                     <div 
                       key={subClient.id}
-                      className="bg-[#ffffff08] p-4 rounded-lg hover:bg-[#ffffff10] transition cursor-pointer"
+                      className="bg-[#ffffff08] p-4 rounded-lg hover:bg-[#2a2f38] transition cursor-pointer"
                       onClick={() => openTenantDetails(subClient)}
                     >
                       <div className="flex items-center justify-between">
@@ -603,8 +614,8 @@ const TenantDetailsModal = () => {
                 </div>
                 
                 {(!client.subClients || client.subClients.length === 0) && (
-                  <div className="text-center py-12 border border-dashed border-[#6C9BE050] rounded-lg">
-                    <svg className="w-16 h-16 mx-auto text-[#6C9BE0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="text-center py-12 border border-dashed border-[#f4f4f450] rounded-lg">
+                    <svg className="w-16 h-16 mx-auto text-[#f4f4f4]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                     <p className="mt-4 text-lg text-white">No Tenants Yet</p>
@@ -625,7 +636,7 @@ case 'users':
       animate="show" 
       className="space-y-6"
     >
-      <motion.div variants={itemVariants} className="bg-gradient-to-br from-[#121953] to-[#0B0C14] p-6 rounded-xl border border-[#6C9BE030]">
+      <motion.div variants={itemVariants} className="bg-[#232429] p-6 rounded-xl border border-[#2f333a]">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold text-white">Users</h3>
           <div className="flex gap-3">
@@ -664,8 +675,8 @@ case 'users':
         {!usersLoading && (
           <div className="space-y-4">
             {filteredUsers.length === 0 && (
-              <div className="text-center py-12 border border-dashed border-[#6C9BE050] rounded-lg">
-                <svg className="w-16 h-16 mx-auto text-[#6C9BE0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="text-center py-12 border border-dashed border-[#f4f4f450] rounded-lg">
+                <svg className="w-16 h-16 mx-auto text-[#f4f4f4]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
                 <p className="mt-4 text-lg text-white">
@@ -835,12 +846,12 @@ case 'users':
             animate="show" 
             className="space-y-6"
           >
-            <motion.div variants={itemVariants} className="bg-gradient-to-br from-[#121953] to-[#0B0C14] p-6 rounded-xl border border-[#6C9BE030]">
+            <motion.div variants={itemVariants} className="bg-[#232429] p-6 rounded-xl border border-[#2f333a]">
               <h3 className="text-lg font-semibold text-white mb-4">Claims Dashboard</h3>
-              <p className="text-[#6C9BE0]">Detailed claims data and analytics would be displayed here.</p>
+              <p className="text-[#f4f4f4]">Detailed claims data and analytics would be displayed here.</p>
               {/* This would be replaced with actual claims data and visualizations */}
-              <div className="mt-8 text-center py-20 border border-dashed border-[#6C9BE050] rounded-lg">
-                <svg className="w-16 h-16 mx-auto text-[#6C9BE0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="mt-8 text-center py-20 border border-dashed border-[#f4f4f450] rounded-lg">
+                <svg className="w-16 h-16 mx-auto text-[#f4f4f4]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <p className="mt-4 text-lg text-white">Claims Analytics</p>
@@ -858,11 +869,11 @@ case 'users':
             animate="show" 
             className="space-y-6"
           >
-            <motion.div variants={itemVariants} className="bg-gradient-to-br from-[#121953] to-[#0B0C14] p-6 rounded-xl border border-[#6C9BE030]">
+            <motion.div variants={itemVariants} className="bg-[#232429] p-6 rounded-xl border border-[#2f333a]">
               <h3 className="text-lg font-semibold text-white mb-4">Client Settings</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <h4 className="text-[#6C9BE0] font-medium">General Information</h4>
+                  <h4 className="text-[#f4f4f4] font-medium">General Information</h4>
                   
                   <div className="space-y-2">
                     <div className="bg-[#ffffff08] p-4 rounded-lg">
@@ -870,23 +881,12 @@ case 'users':
                       <p className="text-white">{client.name}</p>
                     </div>
                     
-                    <div className="bg-[#ffffff08] p-4 rounded-lg">
-                      <p className="text-gray-400 text-xs">Tier</p>
-                      <p className="text-white">{client.tier}</p>
-                    </div>
                     
-                    <div className="bg-[#ffffff08] p-4 rounded-lg">
-                      <p className="text-gray-400 text-xs">Status</p>
-                      <div className="flex items-center mt-1">
-                        <span className={`inline-block w-3 h-3 rounded-full ${getStatusColor(client.status)} mr-2`}></span>
-                        <span className="text-white">{client.status}</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
                 
                 <div className="space-y-4">
-                  <h4 className="text-[#6C9BE0] font-medium">Billing Information</h4>
+                  <h4 className="text-[#f4f4f4] font-medium">Billing Information</h4>
                   
                   <div className="space-y-2">
                     <div className="bg-[#ffffff08] p-4 rounded-lg">
@@ -908,7 +908,7 @@ case 'users':
               </div>
               
               <div className="mt-8">
-                <h4 className="text-[#6C9BE0] font-medium mb-4">Notification Settings</h4>
+                <h4 className="text-[#f4f4f4] font-medium mb-4">Notification Settings</h4>
                 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-4 bg-[#ffffff08] rounded-lg">
@@ -950,7 +950,7 @@ case 'users':
                 <button className="px-4 py-2 bg-[#ffffff10] text-white rounded-lg hover:bg-[#ffffff20] transition">
                   Reset Defaults
                 </button>
-                <button className="px-4 py-2 bg-[#3b3f46] text-white rounded-lg hover:bg-gray-700 transition">
+                <button className="px-4 py-2 bg-[#ffffff10] text-white rounded-lg hover:bg-[#ffffff20] transition">
                   Save Changes
                 </button>
               </div>
@@ -966,7 +966,7 @@ case 'users':
             animate="show" 
             className="space-y-6"
           >
-            <motion.div variants={itemVariants} className="bg-gradient-to-br from-[#121953] to-[#0B0C14] p-6 rounded-xl border border-[#6C9BE030]">
+            <motion.div variants={itemVariants} className="bg-[#232429] p-6 rounded-xl border border-[#2f333a]">
               <h3 className="text-lg font-semibold text-white mb-4">AI Agents Dashboard</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -994,7 +994,7 @@ case 'users':
                   </div>
                   
                   <div className="mt-4 flex justify-between">
-                    <span className="text-[#6C9BE0] text-sm">1,256 denials processed</span>
+                    <span className="text-[#f4f4f4] text-sm">1,256 denials processed</span>
                     <span className="text-white text-sm">85% efficient</span>
                   </div>
                 </div>
@@ -1023,7 +1023,7 @@ case 'users':
                   </div>
                   
                   <div className="mt-4 flex justify-between">
-                    <span className="text-[#6C9BE0] text-sm">785 write-offs reclaimed</span>
+                    <span className="text-[#f4f4f4] text-sm">785 write-offs reclaimed</span>
                     <span className="text-white text-sm">92% efficient</span>
                   </div>
                 </div>
@@ -1052,19 +1052,19 @@ case 'users':
                   </div>
                   
                   <div className="mt-4 flex justify-between">
-                    <span className="text-[#6C9BE0] text-sm">505 claims optimized</span>
+                    <span className="text-[#f4f4f4] text-sm">505 claims optimized</span>
                     <span className="text-white text-sm">78% efficient</span>
                   </div>
                 </div>
               </div>
               
               <div className="mt-8">
-                <h4 className="text-[#6C9BE0] font-medium mb-4">AI Agent Performance</h4>
+                <h4 className="text-[#f4f4f4] font-medium mb-4">AI Agent Performance</h4>
                 <div className="bg-[#ffffff08] p-6 rounded-lg">
                   {/* AI Performance charts would go here */}
                   <div className="h-64 flex items-center justify-center">
                     <div className="text-center">
-                      <svg className="w-16 h-16 mx-auto text-[#6C9BE0]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-16 h-16 mx-auto text-[#f4f4f4]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                       <p className="mt-4 text-lg text-white">AI Performance Analytics</p>
@@ -1158,6 +1158,7 @@ const handleTenantSubmit = async (formData) => {
 const TenantModal = () => {
   // Create a local state to manage the form values
   const [formState, setFormState] = useState({...newTenant});
+  const [isTenantTypeOpen, setIsTenantTypeOpen] = useState(false);
   
   const handleLocalInputChange = (e) => {
     const { name, value } = e.target;
@@ -1166,6 +1167,14 @@ const TenantModal = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleTenantTypeSelect = (value) => {
+    setFormState(prev => ({
+      ...prev,
+      type: value
+    }));
+    setIsTenantTypeOpen(false);
   };
 
   // Submit form directly with form state data
@@ -1187,7 +1196,7 @@ const TenantModal = () => {
       onClick={handleClose}
     >
       <div 
-        className="bg-gradient-to-br from-[#121953] to-[#0B0C14] rounded-xl w-full max-w-2xl overflow-hidden border border-[#6C9BE050] shadow-2xl"
+        className="bg-[#232429] rounded-xl w-full max-w-2xl overflow-hidden border border-[#2f333a] shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center border-b border-[#ffffff20] p-6">
@@ -1206,7 +1215,7 @@ const TenantModal = () => {
         <form onSubmit={handleFormSubmit} className="p-6 max-h-[70vh] overflow-y-auto">
           {/* Facility Name (non-editable) */}
           <div className="mb-6">
-            <label className="block text-[#6C9BE0] mb-2 text-sm">Facility Name</label>
+            <label className="block text-[#f4f4f4] mb-2 text-sm">Facility Name</label>
             <div className="w-full p-2.5 bg-[#ffffff08] rounded-lg text-white border border-[#ffffff15] font-medium">
               {client.name}
             </div>
@@ -1215,7 +1224,7 @@ const TenantModal = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Tenant Name */}
             <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Tenant Name <span className="text-red-400">*</span></label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Tenant Name <span className="text-red-400">*</span></label>
               <input 
                 type="text" 
                 name="name" 
@@ -1228,28 +1237,53 @@ const TenantModal = () => {
             
             {/* Tenant Type */}
             <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Tenant Type <span className="text-red-400">*</span></label>
-              <select 
-                name="type" 
-                value={formState.type}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Tenant Type <span className="text-red-400">*</span></label>
+              <div
+                className="relative"
+                tabIndex={0}
+                onBlur={() => setIsTenantTypeOpen(false)}
               >
-                <option value="" disabled>Select Tenant Type</option>
-                <option value="Hospital">Hospital</option>
-                <option value="Clinic">Clinic</option>
-                <option value="Specialty Center">Specialty Center</option>
-                <option value="Rehabilitation Center">Rehabilitation Center</option>
-                <option value="Long-term Care">Long-term Care</option>
-                <option value="Ambulatory Surgery Center">Ambulatory Surgery Center</option>
-                <option value="Other">Other</option>
-              </select>
+                <button
+                  type="button"
+                  onClick={() => setIsTenantTypeOpen(prev => !prev)}
+                  className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none flex items-center justify-between"
+                >
+                  <span className={formState.type ? '' : 'text-gray-400'}>
+                    {formState.type || 'Select Tenant Type'}
+                  </span>
+                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                {isTenantTypeOpen && (
+                  <div className="absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg">
+                    {[
+                      'Hospital',
+                      'Clinic',
+                      'Specialty Center',
+                      'Rehabilitation Center',
+                      'Long-term Care',
+                      'Ambulatory Surgery Center',
+                      'Other'
+                    ].map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleTenantTypeSelect(option)}
+                        className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             
             {/* Address */}
             <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Street Address <span className="text-red-400">*</span></label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Street Address <span className="text-red-400">*</span></label>
               <input 
                 type="text" 
                 name="address" 
@@ -1262,7 +1296,7 @@ const TenantModal = () => {
             
             {/* City, State, Zip */}
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">City <span className="text-red-400">*</span></label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">City <span className="text-red-400">*</span></label>
               <input 
                 type="text" 
                 name="city" 
@@ -1275,7 +1309,7 @@ const TenantModal = () => {
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[#6C9BE0] mb-2 text-sm">State <span className="text-red-400">*</span></label>
+                <label className="block text-[#f4f4f4] mb-2 text-sm">State <span className="text-red-400">*</span></label>
                 <input 
                   type="text" 
                   name="state" 
@@ -1287,7 +1321,7 @@ const TenantModal = () => {
               </div>
               
               <div>
-                <label className="block text-[#6C9BE0] mb-2 text-sm">ZIP <span className="text-red-400">*</span></label>
+                <label className="block text-[#f4f4f4] mb-2 text-sm">ZIP <span className="text-red-400">*</span></label>
                 <input 
                   type="text" 
                   name="zip" 
@@ -1301,7 +1335,7 @@ const TenantModal = () => {
             
             {/* Contact Info */}
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Contact Name <span className="text-red-400">*</span></label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Contact Name <span className="text-red-400">*</span></label>
               <input 
                 type="text" 
                 name="contactName" 
@@ -1313,7 +1347,7 @@ const TenantModal = () => {
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Contact Email <span className="text-red-400">*</span></label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Contact Email <span className="text-red-400">*</span></label>
               <input 
                 type="email" 
                 name="contactEmail" 
@@ -1325,7 +1359,7 @@ const TenantModal = () => {
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Contact Phone <span className="text-red-400">*</span></label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Contact Phone <span className="text-red-400">*</span></label>
               <input 
                 type="tel" 
                 name="contactPhone" 
@@ -1337,7 +1371,7 @@ const TenantModal = () => {
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Status</label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Status</label>
               <select 
                 name="status" 
                 value={formState.status}
@@ -1373,9 +1407,9 @@ const TenantModal = () => {
 };
   // Main render
   return (
-    <div className="min-h-screen bg-[#0B0C14] text-white"
+    <div className="min-h-screen bg-[#1e1f24] text-white"
       style={{
-        backgroundImage: "url('/bg-optimized.png')",
+        // backgroundImage: "url('/bg-optimized.png')",
         backgroundPosition: "center top",
         backgroundRepeat: "no-repeat"
       }}>
@@ -1395,7 +1429,7 @@ const TenantModal = () => {
           
           <div className="ml-auto relative">
             <button 
-              className="flex items-center space-x-2 text-gray-300 hover:text-white transition p-2 rounded-lg hover:bg-[#ffffff10]"
+              className="flex items-center space-x-2 text-gray-300 hover:text-white transition p-2 rounded-lg bg-[#4a5565] hover:bg-[#ffffff10]"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1405,7 +1439,7 @@ const TenantModal = () => {
             </button>
             
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 py-2 bg-[#1a1f35] rounded-lg shadow-xl z-10 border border-[#6C9BE030]">
+              <div className="absolute right-0 mt-2 w-48 py-2 bg-[#2a2b30] rounded-lg shadow-xl z-10 border border-[#2f333a]">
                 <button className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#ffffff15]">
                   Edit Client
                 </button>
@@ -1428,7 +1462,7 @@ const TenantModal = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-24">
             <div className="w-12 h-12 border-4 border-gray-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-[#6C9BE0]">Loading client dashboard...</p>
+            <p className="text-[#f4f4f4]">Loading client dashboard...</p>
           </div>
         </div>
       ) : !client ? (
@@ -1438,7 +1472,7 @@ const TenantModal = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <h3 className="mt-4 text-xl font-medium">Client Not Found</h3>
-            <p className="mt-2 text-[#6C9BE0]">We couldn't find the client you're looking for.</p>
+            <p className="mt-2 text-[#f4f4f4]">We couldn't find the client you're looking for.</p>
             <button 
               onClick={() => navigate('/client-management')}
               className="mt-6 px-4 py-2 bg-[#3b3f46] text-white rounded-lg hover:bg-gray-700 transition"
@@ -1451,24 +1485,16 @@ const TenantModal = () => {
         <>
           {/* Client info panel */}
           <div className="container mx-auto px-4 py-6">
-            <div className="bg-gradient-to-br from-[#121953] to-[#0B0C14] rounded-xl border border-[#6C9BE030] p-6">
+            <div className="bg-[#232429] rounded-xl border border-[#2f333a] p-6">
               <div className="flex flex-col md:flex-row items-start md:items-center">
-                <div className="w-20 h-20 bg-[#0B0C14] rounded-lg flex items-center justify-center p-3 mr-6 mb-4 md:mb-0">
+                <div className="w-20 h-20 bg-[#1e1f24] rounded-lg flex items-center justify-center p-3 mr-6 mb-4 md:mb-0">
                   <img src={client.logo} alt={client.name} className="max-w-full max-h-full" />
                 </div>
                 
                 <div className="flex-1">
                   <h2 className="text-3xl font-bold">{client.name}</h2>
                   <div className="flex flex-wrap items-center gap-4 mt-2">
-                    <div className="flex items-center">
-                      <span className={`inline-block w-3 h-3 rounded-full ${getStatusColor(client.status)} mr-2`}></span>
-                      <span className="text-[#6C9BE0]">{client.status}</span>
-                    </div>
-                    <div className="text-[#6C9BE0]">
-                      <span className="text-gray-400 mr-2">Tier:</span> 
-                      {client.tier}
-                    </div>
-                    <div className="text-[#6C9BE0]">
+                    <div className="text-[#f4f4f4]">
                       <span className="text-gray-400 mr-2">Last Activity:</span>
                       {formatDate(client.lastActivity)}
                     </div>

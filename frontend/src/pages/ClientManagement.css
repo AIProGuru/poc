@@ -1,7 +1,7 @@
 /* Client Management Specific Styles */
 .client-management-container {
   min-height: 100vh;
-  background-color: #0B0C14;
+  background-color: #1e1f24;
 }
 
 .client-management.theme-light {
@@ -109,6 +109,25 @@ tr.client-row {
 
 tr.client-row:hover {
   background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Force grayscale select dropdowns for Client Management */
+.client-management select,
+.client-management select option {
+  background-color: #1f232a;
+  color: #e5e7eb;
+}
+
+.client-management select:focus,
+.client-management select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.45);
+}
+
+.client-management.theme-light select,
+.client-management.theme-light select option {
+  background-color: #ffffff;
+  color: #0f172a;
 }
 
 /* Responsive adjustments */

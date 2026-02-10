@@ -31,6 +31,7 @@ const ClientManagement = () => {
     facilityTaxID: '',
     facilityNPI: '',
   });
+  const [isFacilityTypeOpen, setIsFacilityTypeOpen] = useState(false);
 
   const resetNewClientRow = () => {
     setNewClient({
@@ -54,6 +55,14 @@ const ClientManagement = () => {
       ...newClient,
       [name]: value
     });
+  };
+
+  const handleFacilityTypeSelect = (value) => {
+    setNewClient((prev) => ({
+      ...prev,
+      facilityType: value
+    }));
+    setIsFacilityTypeOpen(false);
   };
 
 
@@ -167,6 +176,7 @@ const ClientManagement = () => {
         (client.name || '').toLowerCase().includes(term) ||
         (client.tenantName || '').toLowerCase().includes(term) ||
         (client.facilityName || '').toLowerCase().includes(term) ||
+        (client.facility || '').toLowerCase().includes(term) ||
         (client.facilityType || '').toLowerCase().includes(term) ||
         (client.facilityAddress || '').toLowerCase().includes(term) ||
         (client.facilityTaxID || '').toLowerCase().includes(term) ||
@@ -206,71 +216,68 @@ const ClientManagement = () => {
   const rowInputClass = `w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none ${
     isDark ? 'bg-[#ffffff10] text-white border-[#ffffff20]' : 'bg-white text-slate-900 border-slate-200'
   }`;
+  const sortArrow = (key) => {
+    if (sortConfig.key !== key) return null;
+    return <span className="ml-1">{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>;
+  };
 
   const renderTable = () => (
     <div className="overflow-x-auto">
-      <table className="min-w-[1400px] w-full bg-transparent">
+      <table className="min-w-[1800px] w-full bg-transparent">
+        <colgroup>
+          <col className="w-[140px]" />
+          <col className="w-[140px]" />
+          <col className="w-[160px]" />
+          <col className="w-[260px]" />
+          <col className="w-[320px]" />
+          <col className="w-[130px]" />
+          <col className="w-[120px]" />
+          <col className="w-[220px]" />
+          <col className="w-[280px]" />
+          <col className="w-[220px]" />
+          <col className="w-[110px]" />
+        </colgroup>
         <thead>
           <tr className="text-[#9ca3af] border-b border-[#ffffff20]">
             <th className="px-3 py-3 text-left" onClick={() => handleSort('name')}>
               Client
-              {sortConfig.key === 'name' && (
-                <span className="ml-1">{sortConfig.direction === 'ascending' ? '^' : 'v'}</span>
-              )}
+              {sortArrow('name')}
             </th>
             <th className="px-3 py-3 text-left" onClick={() => handleSort('tenantName')}>
               Tenant
-              {sortConfig.key === 'tenantName' && (
-                <span className="ml-1">{sortConfig.direction === 'ascending' ? '^' : 'v'}</span>
-              )}
+              {sortArrow('tenantName')}
             </th>
             <th className="px-3 py-3 text-left" onClick={() => handleSort('facilityName')}>
               Facility
-              {sortConfig.key === 'facilityName' && (
-                <span className="ml-1">{sortConfig.direction === 'ascending' ? '^' : 'v'}</span>
-              )}
+              {sortArrow('facilityName')}
             </th>
             <th className="px-3 py-3 text-left" onClick={() => handleSort('facilityType')}>
               Facility Type
-              {sortConfig.key === 'facilityType' && (
-                <span className="ml-1">{sortConfig.direction === 'ascending' ? '^' : 'v'}</span>
-              )}
+              {sortArrow('facilityType')}
             </th>
             <th className="px-3 py-3 text-left" onClick={() => handleSort('facilityAddress')}>
               Facility Address
-              {sortConfig.key === 'facilityAddress' && (
-                <span className="ml-1">{sortConfig.direction === 'ascending' ? '^' : 'v'}</span>
-              )}
+              {sortArrow('facilityAddress')}
             </th>
             <th className="px-3 py-3 text-left" onClick={() => handleSort('facilityTaxID')}>
               Tax ID
-              {sortConfig.key === 'facilityTaxID' && (
-                <span className="ml-1">{sortConfig.direction === 'ascending' ? '^' : 'v'}</span>
-              )}
+              {sortArrow('facilityTaxID')}
             </th>
             <th className="px-3 py-3 text-left" onClick={() => handleSort('facilityNPI')}>
               NPI
-              {sortConfig.key === 'facilityNPI' && (
-                <span className="ml-1">{sortConfig.direction === 'ascending' ? '^' : 'v'}</span>
-              )}
+              {sortArrow('facilityNPI')}
             </th>
             <th className="px-3 py-3 text-left" onClick={() => handleSort('contact')}>
               Contact
-              {sortConfig.key === 'contact' && (
-                <span className="ml-1">{sortConfig.direction === 'ascending' ? '^' : 'v'}</span>
-              )}
+              {sortArrow('contact')}
             </th>
             <th className="px-3 py-3 text-left" onClick={() => handleSort('email')}>
               Email
-              {sortConfig.key === 'email' && (
-                <span className="ml-1">{sortConfig.direction === 'ascending' ? '^' : 'v'}</span>
-              )}
+              {sortArrow('email')}
             </th>
             <th className="px-3 py-3 text-left" onClick={() => handleSort('phone')}>
               Phone
-              {sortConfig.key === 'phone' && (
-                <span className="ml-1">{sortConfig.direction === 'ascending' ? '^' : 'v'}</span>
-              )}
+              {sortArrow('phone')}
             </th>
             <th className="px-3 py-3 text-center">Select</th>
           </tr>
@@ -311,21 +318,47 @@ const ClientManagement = () => {
               />
             </td>
             <td className="px-3 py-3">
-              <select
-                name="facilityType"
-                value={newClient.facilityType}
-                onChange={handleNewClientInputChange}
-                className={rowInputClass}
+              <div
+                className="relative"
+                tabIndex={0}
+                onBlur={() => setIsFacilityTypeOpen(false)}
               >
-                <option value="">Select type</option>
-                <option value="Hospital">Hospital</option>
-                <option value="Clinic">Clinic</option>
-                <option value="Specialty Center">Specialty Center</option>
-                <option value="Rehabilitation Center">Rehabilitation Center</option>
-                <option value="Long-term Care">Long-term Care</option>
-                <option value="Ambulatory Surgery Center">Ambulatory Surgery Center</option>
-                <option value="Other">Other</option>
-              </select>
+                <button
+                  type="button"
+                  onClick={() => setIsFacilityTypeOpen((prev) => !prev)}
+                  className={`${rowInputClass} flex items-center justify-between`}
+                >
+                  <span className={newClient.facilityType ? '' : 'text-gray-400'}>
+                    {newClient.facilityType || 'Select type'}
+                  </span>
+                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                {isFacilityTypeOpen && (
+                  <div className={`absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border ${isDark ? 'bg-[#1f232a] border-[#ffffff20]' : 'bg-white border-slate-200'} shadow-lg`}>
+                    {[
+                      'Hospital',
+                      'Clinic',
+                      'Specialty Center',
+                      'Rehabilitation Center',
+                      'Long-term Care',
+                      'Ambulatory Surgery Center',
+                      'Other'
+                    ].map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleFacilityTypeSelect(option)}
+                        className={`w-full text-left px-3 py-2 text-sm whitespace-normal ${isDark ? 'text-gray-200 hover:bg-[#2a2f38]' : 'text-slate-900 hover:bg-slate-100'}`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </td>
             <td className="px-3 py-3">
               <input
@@ -440,7 +473,7 @@ const ClientManagement = () => {
 
   // Main component render
   return (
-    <div className={`client-management min-h-screen overflow-x-hidden ${isDark ? 'theme-dark bg-[#14161b] text-white' : 'theme-light bg-slate-50 text-slate-900'}`}>
+    <div className={`client-management min-h-screen overflow-x-hidden ${isDark ? 'theme-dark bg-[#1e1f24] text-white' : 'theme-light bg-slate-50 text-slate-900'}`}>
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
