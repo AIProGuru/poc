@@ -111,7 +111,7 @@ def get_client_users(client_id):
         if not client_name:
             return jsonify([]), 200
 
-        query = db.collection("users").where("client", "array-contains", client_name).stream()
+        query = db.collection("users").where("client", "array_contains", client_name).stream()
         users = []
         for doc in query:
             data = doc.to_dict() or {}
