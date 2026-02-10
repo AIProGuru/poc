@@ -47,6 +47,8 @@ def add_client():
         )
 
         result = payload.copy()
+        result.pop("createdAt", None)
+        result.pop("lastUpdated", None)
         result["id"] = doc_ref.id
         return jsonify(result), 201
     except Exception as exc:  # pragma: no cover - simple pass-through

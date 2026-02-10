@@ -5,10 +5,12 @@ import './ClientManagement.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useApiEndpoint } from '../ApiEndpointContext';
+import { SERVER_URL } from '../utils/config';
 
 const ClientManagement = () => {
   const navigate = useNavigate();
   const apiUrl = useApiEndpoint();
+  const resolvedApiUrl = apiUrl || `${SERVER_URL}/api`;
   const theme = useSelector((state) => state.app.theme);
   const isDark = theme === 'dark';
 
@@ -64,12 +66,8 @@ const ClientManagement = () => {
       // Show loading state
       setLoading(true);
       
-      if (!apiUrl) {
-        throw new Error('API endpoint not configured.');
-      }
-
       const res = await axios.post(
-        `${apiUrl}/clients`,
+        `${resolvedApiUrl}/clients`,
         { ...newClient },
         { withCredentials: true }
       );
@@ -98,7 +96,7 @@ const ClientManagement = () => {
     try {
       if (!apiUrl) return;
       setLoading(true);
-      const res = await axios.get(`${apiUrl}/clients`, { withCredentials: true });
+      const res = await axios.get(`${resolvedApiUrl}/clients`, { withCredentials: true });
       setClients(res.data || []);
       console.log('Clients fetched successfully:', res.data);
     } catch (error) {
