@@ -9,8 +9,8 @@ import { SERVER_URL } from '../utils/config';
 
 const ClientManagement = () => {
   const navigate = useNavigate();
-  const apiUrl = useApiEndpoint();
-  const resolvedApiUrl = apiUrl || `${SERVER_URL}/api`;
+  const platformApiUrl = `${SERVER_URL}/api`;
+  const resolvedApiUrl = platformApiUrl;
   const theme = useSelector((state) => state.app.theme);
   const isDark = theme === 'dark';
 
@@ -536,5 +536,3 @@ const ClientManagement = () => {
 };
 
 export default ClientManagement;
-
-
