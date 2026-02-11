@@ -519,7 +519,7 @@ const ReboundDetailView = () => {
       : `${showBorder ? 'border border-gray-200' : 'border-0'} bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]`
       }`;
     const borderStyle = showBorder ? (isDark ? 'border-[#1f2433]' : 'border-gray-200') : 'border-transparent';
-    const headerClasses = `w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b-0 ${borderStyle} ${isDark ? 'hover:bg-[#a8a8a8]' : 'hover:bg-gray-50'} transition`;
+    const headerClasses = `w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b-0 ${borderStyle} ${isDark ? 'hover:bg-[#353639]' : 'hover:bg-gray-50'} transition`;
     const dividerClass = isDark ? 'bg-[#CDCDCD]' : 'bg-gray-200';
     const titleClasses = `text-sm font-semibold text-left ${isDark ? 'text-[#F4F4F4]' : 'text-gray-800'}`;
 
@@ -1051,7 +1051,7 @@ const ReboundDetailView = () => {
                           });
                         }}
                         className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-6 text-left transition w-full ${isDark
-                          ? 'bg-[#27282d] hover:bg-[#a8a8a8]'
+                          ? 'bg-[#27282d] hover:bg-[#353639]'
                           : 'bg-white hover:bg-gray-50'
                           }`}
                       >
@@ -1556,7 +1556,7 @@ const ReboundDetailView = () => {
                     type="button"
                     onClick={onSubmitTriage}
                     disabled={triageSaving}
-                    className="px-6 py-3 text-sm font-medium text-[#F4F4F4] rounded-lg transition-all duration-200 bg-[#1f3025] hover:bg-[#a8a8a8] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="px-6 py-3 text-sm font-medium text-[#F4F4F4] rounded-lg transition-all duration-200 bg-[#1f3025] hover:bg-[#353639] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {triageSaving ? "Saving..." : "Save Actions"}
                   </button>

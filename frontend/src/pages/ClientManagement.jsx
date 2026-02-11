@@ -477,7 +477,7 @@ const ClientManagement = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Client Management</h1>
+            <h1 className="cm-title mb-2">Client Management</h1>
             <p className={isDark ? "text-[#9ca3af]" : "text-slate-500"}>
               Manage client facilities, tax IDs, NPIs, and contacts in a spreadsheet-style view.
             </p>
