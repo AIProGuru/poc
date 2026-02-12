@@ -5,10 +5,7 @@ import { motion } from 'framer-motion';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Filler } from 'chart.js';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import './ClientManagement.css';
-import { db } from '../FirebaseConfig';
-import { doc, getDoc ,updateDoc } from 'firebase/firestore/lite';
 import axios from 'axios';
-import { useApiEndpoint } from '../ApiEndpointContext';
 import { SERVER_URL } from '../utils/config';
 
 
@@ -39,8 +36,7 @@ const ClientDashboard = () => {
 
   const { clientId } = useParams();
   const navigate = useNavigate();
-  const apiUrl = useApiEndpoint();
-  const resolvedApiUrl = apiUrl || `${SERVER_URL}/api`;
+  const resolvedApiUrl = `${SERVER_URL}/api`;
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('client-management');
@@ -48,6 +44,7 @@ const ClientDashboard = () => {
   const [selectedMetric, setSelectedMetric] = useState('denials');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isTenantModalOpen, setIsTenantModalOpen] = useState(false);
+  const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
   
   // Add these state variables at the main component level
   const [users, setUsers] = useState([]);
@@ -133,17 +130,37 @@ const ClientDashboard = () => {
     console.log(`Edit user:`, user);
   };
   
+  const CLIENT_TYPE_OPTIONS = [
+    'Service Provider',
+    'Hospital System',
+    'Ambulatory Provider'
+  ];
+  const FACILITY_TYPE_OPTIONS = [
+    'Hospital',
+    'Clinic',
+    'Specialty Center',
+    'Rehabilitation Center',
+    'Long-term Care',
+    'Ambulatory Surgery Center',
+    'Other'
+  ];
+
   const [newTenant, setNewTenant] = useState({
     name: '',
-    type: '',
+    clientType: '',
     address: '',
-    city: '',
-    state: '',
-    zip: '',
-    contactName: '',
-    contactEmail: '',
-    contactPhone: '',
+    contact: '',
+    email: '',
     status: 'Active'
+  });
+  const [newFacility, setNewFacility] = useState({
+    name: '',
+    facilityType: '',
+    address: '',
+    taxId: '',
+    npi: '',
+    contact: '',
+    email: ''
   });
 
 
@@ -206,7 +223,7 @@ const TenantDetailsModal = () => {
             <div>
               <h2 className="text-xl font-semibold text-white">{selectedTenant.name}</h2>
               <div className="flex items-center mt-1">
-                <span className="text-sm text-[#f4f4f4] mr-2">{selectedTenant.type}</span>
+                <span className="text-sm text-[#f4f4f4] mr-2">{selectedTenant.clientType}</span>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
                   selectedTenant.status === 'Active' 
                     ? 'bg-green-500/20 text-green-400' 
@@ -239,25 +256,21 @@ const TenantDetailsModal = () => {
                 <div className="space-y-3 text-sm">
                   <div className="flex">
                     <span className="text-gray-400 w-24">Contact:</span> 
-                    <span className="text-white">{selectedTenant.contactName}</span>
+                    <span className="text-white">{selectedTenant.contact}</span>
                   </div>
                   <div className="flex">
                     <span className="text-gray-400 w-24">Email:</span> 
-                    <span className="text-white">{selectedTenant.contactEmail}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="text-gray-400 w-24">Phone:</span> 
-                    <span className="text-white">{selectedTenant.contactPhone}</span>
+                    <span className="text-white">{selectedTenant.email}</span>
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Facility Type */}
+            {/* Client Type */}
             <div>
-              <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Facility Type</h3>
+              <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Client Type</h3>
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
-                <p className="text-white">{selectedTenant.type}</p>
+                <p className="text-white">{selectedTenant.clientType}</p>
                 <div className="mt-3 flex items-center">
                   <span className={`inline-block w-3 h-3 rounded-full ${
                     selectedTenant.status === 'Active' ? 'bg-green-500' : 
@@ -272,9 +285,61 @@ const TenantDetailsModal = () => {
             <div className="md:col-span-2">
               <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Location</h3>
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
-                <p className="text-white">
-                  {selectedTenant.address}, {selectedTenant.city}, {selectedTenant.state} {selectedTenant.zip}
-                </p>
+                <p className="text-white">{selectedTenant.address}</p>
+              </div>
+            </div>
+
+            {/* Facilities */}
+            <div className="md:col-span-2">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[#f4f4f4] text-sm font-medium">Facilities</h3>
+                <button
+                  type="button"
+                  onClick={() => setIsFacilityModalOpen(true)}
+                  className="px-3 py-1.5 bg-[#3b3f46] text-white text-xs font-medium rounded-md hover:bg-gray-700 transition"
+                >
+                  Add Facility
+                </button>
+              </div>
+              <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
+                {(selectedTenant.facilities || []).length === 0 ? (
+                  <p className="text-sm text-gray-400">No facilities added yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {(selectedTenant.facilities || []).map((facility) => (
+                      <div key={facility.id} className="border border-[#ffffff10] rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-white font-medium">{facility.name}</p>
+                            <p className="text-xs text-gray-400">{facility.facilityType || 'Facility Type'}</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <p className="text-gray-400">Address</p>
+                            <p className="text-white">{facility.address || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">Contact</p>
+                            <p className="text-white">{facility.contact || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">Email</p>
+                            <p className="text-white">{facility.email || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">Tax ID</p>
+                            <p className="text-white">{facility.taxId || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">NPI</p>
+                            <p className="text-white">{facility.npi || '-'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             
@@ -578,7 +643,7 @@ const TenantDetailsModal = () => {
                           <div className="flex items-center flex-wrap gap-2">
                             <h4 className="text-white font-medium">{subClient.name}</h4>
                             <span className="px-2 py-1 text-xs rounded-full bg-[#ffffff15] text-gray-300">
-                              {subClient.type}
+                              {subClient.clientType}
                             </span>
                             <span className={`px-2 py-1 text-xs rounded-full ${
                               subClient.status === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
@@ -1089,65 +1154,102 @@ const handleTenantSubmit = async (formData) => {
     
     // Create new tenant object with facility information using the form data directly
     const tenantToAdd = {
-      ...formData, // Use formData directly instead of newTenant
-      facilityName: client.name,
-      facilityId: client.id,
-      id: `tenant-${Date.now()}`, // Generate unique ID for the tenant
+      ...formData,
+      clientId: client.id,
+      clientName: client.name,
       denialsCaptured: 0,
-      revenueRecovered: 0,
-      createdAt: new Date().toISOString()
+      revenueRecovered: 0
     };
-    
-    // Create a reference to the client document
-    const clientDocRef = doc(db, 'clients', client.id);
-    
-    // Get the current client data
-    const clientDoc = await getDoc(clientDocRef);
-    
-    if (clientDoc.exists()) {
-      // Create a copy of the client's data
-      const clientData = clientDoc.data();
-      
-      // Initialize subClients array if it doesn't exist
-      const subClients = clientData.subClients || [];
-      
-      // Add the new tenant to the subClients array
-      const updatedSubClients = [...subClients, tenantToAdd];
-      
-      // Update the document in Firestore
-      await updateDoc(clientDocRef, {
-        subClients: updatedSubClients
-      });
-      
-      // Update local state
-      setClient(prev => ({
-        ...prev,
-        subClients: updatedSubClients
-      }));
-      
-      // Reset form and close modal
-      setNewTenant({
-        name: '',
-        type: '',
-        address: '',
-        city: '',
-        state: '',
-        zip: '',
-        contactName: '',
-        contactEmail: '',
-        contactPhone: '',
-        status: 'Active'
-      });
-      
-      setIsTenantModalOpen(false);
-      
-      // Show success message
-      alert(`Tenant ${tenantToAdd.name} added successfully!`);
-    } else {
-      throw new Error("Client document not found");
-    }
+
+    const res = await axios.post(
+      `${resolvedApiUrl}/clients/${client.id}/tenants`,
+      tenantToAdd,
+      { withCredentials: true }
+    );
+
+    const createdTenant = res.data || {
+      ...tenantToAdd,
+      id: `tenant-${Date.now()}`,
+      facilities: []
+    };
+
+    setClient(prev => ({
+      ...prev,
+      subClients: [...(prev?.subClients || []), createdTenant]
+    }));
+
+    setNewTenant({
+      name: '',
+      clientType: '',
+      address: '',
+      contact: '',
+      email: '',
+      status: 'Active'
+    });
+
+    setIsTenantModalOpen(false);
+
+    alert(`Tenant ${createdTenant.name} added successfully!`);
   } catch (error) {
     console.error("Error adding tenant:", error);
+    alert(`Error: ${error.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleFacilitySubmit = async (formData) => {
+  if (!selectedTenant || !client) return;
+  try {
+    setLoading(true);
+    const facilityToAdd = {
+      ...formData,
+      tenantId: selectedTenant.id
+    };
+
+    const res = await axios.post(
+      `${resolvedApiUrl}/clients/${client.id}/tenants/${selectedTenant.id}/facilities`,
+      facilityToAdd,
+      { withCredentials: true }
+    );
+
+    const createdFacility = res.data || {
+      ...facilityToAdd,
+      id: `facility-${Date.now()}`
+    };
+
+    const updatedSubClients = (client.subClients || []).map((subClient) => {
+      if (subClient.id !== selectedTenant.id) return subClient;
+      const facilities = subClient.facilities || [];
+      return {
+        ...subClient,
+        facilities: [...facilities, createdFacility]
+      };
+    });
+
+    setClient(prev => ({
+      ...prev,
+      subClients: updatedSubClients
+    }));
+
+    const updatedTenant = updatedSubClients.find((subClient) => subClient.id === selectedTenant.id);
+    if (updatedTenant) {
+      setSelectedTenant(updatedTenant);
+    }
+
+    setNewFacility({
+      name: '',
+      facilityType: '',
+      address: '',
+      taxId: '',
+      npi: '',
+      contact: '',
+      email: ''
+    });
+    setIsFacilityModalOpen(false);
+    alert(`Facility ${createdFacility.name} added successfully!`);
+  } catch (error) {
+    console.error("Error adding facility:", error);
     alert(`Error: ${error.message}`);
   } finally {
     setLoading(false);
@@ -1172,7 +1274,7 @@ const TenantModal = () => {
   const handleTenantTypeSelect = (value) => {
     setFormState(prev => ({
       ...prev,
-      type: value
+      clientType: value
     }));
     setIsTenantTypeOpen(false);
   };
@@ -1213,9 +1315,9 @@ const TenantModal = () => {
         </div>
         
         <form onSubmit={handleFormSubmit} className="p-6 max-h-[70vh] overflow-y-auto">
-          {/* Facility Name (non-editable) */}
+          {/* Client Name (non-editable) */}
           <div className="mb-6">
-            <label className="block text-[#f4f4f4] mb-2 text-sm">Facility Name</label>
+            <label className="block text-[#f4f4f4] mb-2 text-sm">Client</label>
             <div className="w-full p-2.5 bg-[#ffffff08] rounded-lg text-white border border-[#ffffff15] font-medium">
               {client.name}
             </div>
@@ -1235,9 +1337,9 @@ const TenantModal = () => {
               />
             </div>
             
-            {/* Tenant Type */}
+            {/* Client Type */}
             <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Tenant Type <span className="text-red-400">*</span></label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Client Type <span className="text-red-400">*</span></label>
               <div
                 className="relative"
                 tabIndex={0}
@@ -1248,8 +1350,8 @@ const TenantModal = () => {
                   onClick={() => setIsTenantTypeOpen(prev => !prev)}
                   className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none flex items-center justify-between"
                 >
-                  <span className={formState.type ? '' : 'text-gray-400'}>
-                    {formState.type || 'Select Tenant Type'}
+                  <span className={formState.clientType ? '' : 'text-gray-400'}>
+                    {formState.clientType || 'Select Client Type'}
                   </span>
                   <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
                     <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -1257,15 +1359,7 @@ const TenantModal = () => {
                 </button>
                 {isTenantTypeOpen && (
                   <div className="absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg">
-                    {[
-                      'Hospital',
-                      'Clinic',
-                      'Specialty Center',
-                      'Rehabilitation Center',
-                      'Long-term Care',
-                      'Ambulatory Surgery Center',
-                      'Other'
-                    ].map((option) => (
+                    {CLIENT_TYPE_OPTIONS.map((option) => (
                       <button
                         key={option}
                         type="button"
@@ -1283,7 +1377,7 @@ const TenantModal = () => {
             
             {/* Address */}
             <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Street Address <span className="text-red-400">*</span></label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Address <span className="text-red-400">*</span></label>
               <input 
                 type="text" 
                 name="address" 
@@ -1294,52 +1388,13 @@ const TenantModal = () => {
               />
             </div>
             
-            {/* City, State, Zip */}
-            <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">City <span className="text-red-400">*</span></label>
-              <input 
-                type="text" 
-                name="city" 
-                value={formState.city}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[#f4f4f4] mb-2 text-sm">State <span className="text-red-400">*</span></label>
-                <input 
-                  type="text" 
-                  name="state" 
-                  value={formState.state}
-                  onChange={handleLocalInputChange}
-                  className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-[#f4f4f4] mb-2 text-sm">ZIP <span className="text-red-400">*</span></label>
-                <input 
-                  type="text" 
-                  name="zip" 
-                  value={formState.zip}
-                  onChange={handleLocalInputChange}
-                  className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                  required
-                />
-              </div>
-            </div>
-            
             {/* Contact Info */}
             <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Contact Name <span className="text-red-400">*</span></label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Contact <span className="text-red-400">*</span></label>
               <input 
                 type="text" 
-                name="contactName" 
-                value={formState.contactName}
+                name="contact" 
+                value={formState.contact}
                 onChange={handleLocalInputChange}
                 className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                 required
@@ -1347,41 +1402,15 @@ const TenantModal = () => {
             </div>
             
             <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Contact Email <span className="text-red-400">*</span></label>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Email <span className="text-red-400">*</span></label>
               <input 
                 type="email" 
-                name="contactEmail" 
-                value={formState.contactEmail}
+                name="email" 
+                value={formState.email}
                 onChange={handleLocalInputChange}
                 className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
                 required
               />
-            </div>
-            
-            <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Contact Phone <span className="text-red-400">*</span></label>
-              <input 
-                type="tel" 
-                name="contactPhone" 
-                value={formState.contactPhone}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Status</label>
-              <select 
-                name="status" 
-                value={formState.status}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-              >
-                <option value="Active">Active</option>
-                <option value="Pending">Pending</option>
-                <option value="On Hold">On Hold</option>
-              </select>
             </div>
           </div>
           
@@ -1398,6 +1427,199 @@ const TenantModal = () => {
               className="px-5 py-2.5 bg-[#3b3f46] hover:bg-gray-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-gray-500/30"
             >
               Add Tenant
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const FacilityModal = () => {
+  if (!selectedTenant) return null;
+  const [formState, setFormState] = useState({...newFacility});
+  const [isFacilityTypeOpen, setIsFacilityTypeOpen] = useState(false);
+
+  const handleLocalInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormState(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFacilityTypeSelect = (value) => {
+    setFormState(prev => ({
+      ...prev,
+      facilityType: value
+    }));
+    setIsFacilityTypeOpen(false);
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleFacilitySubmit(formState);
+  };
+
+  const handleClose = () => {
+    setIsFacilityModalOpen(false);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70 p-4"
+      onClick={handleClose}
+    >
+      <div
+        className="bg-[#232429] rounded-xl w-full max-w-2xl overflow-hidden border border-[#2f333a] shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center border-b border-[#ffffff20] p-6">
+          <h2 className="text-xl font-semibold text-white">Add Facility</h2>
+          <button
+            onClick={handleClose}
+            className="text-gray-400 hover:text-white transition-colors"
+            type="button"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleFormSubmit} className="p-6 max-h-[70vh] overflow-y-auto">
+          <div className="mb-6">
+            <label className="block text-[#f4f4f4] mb-2 text-sm">Tenant</label>
+            <div className="w-full p-2.5 bg-[#ffffff08] rounded-lg text-white border border-[#ffffff15] font-medium">
+              {selectedTenant.name}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Facility Name <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                name="name"
+                value={formState.name}
+                onChange={handleLocalInputChange}
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Facility Type <span className="text-red-400">*</span></label>
+              <div
+                className="relative"
+                tabIndex={0}
+                onBlur={() => setIsFacilityTypeOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => setIsFacilityTypeOpen(prev => !prev)}
+                  className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none flex items-center justify-between"
+                >
+                  <span className={formState.facilityType ? '' : 'text-gray-400'}>
+                    {formState.facilityType || 'Select Facility Type'}
+                  </span>
+                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                {isFacilityTypeOpen && (
+                  <div className="absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg">
+                    {FACILITY_TYPE_OPTIONS.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleFacilityTypeSelect(option)}
+                        className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Facility Address <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                name="address"
+                value={formState.address}
+                onChange={handleLocalInputChange}
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Tax ID <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                name="taxId"
+                value={formState.taxId}
+                onChange={handleLocalInputChange}
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">NPI <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                name="npi"
+                value={formState.npi}
+                onChange={handleLocalInputChange}
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Contact <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                name="contact"
+                value={formState.contact}
+                onChange={handleLocalInputChange}
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#f4f4f4] mb-2 text-sm">Email <span className="text-red-400">*</span></label>
+              <input
+                type="email"
+                name="email"
+                value={formState.email}
+                onChange={handleLocalInputChange}
+                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-8 space-x-4">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-5 py-2.5 bg-[#ffffff10] hover:bg-[#ffffff20] text-white rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-[#3b3f46] hover:bg-gray-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-gray-500/30"
+            >
+              Add Facility
             </button>
           </div>
         </form>
@@ -1572,6 +1794,7 @@ const TenantModal = () => {
 
           {/* Tenant Modal */}
           {isTenantModalOpen && <TenantModal />}
+          {isFacilityModalOpen && <FacilityModal />}
         </>
       )}
     </div>

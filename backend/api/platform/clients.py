@@ -96,6 +96,80 @@ def get_client(client_id):
         return jsonify({"error": "Failed to fetch client", "detail": str(exc)}), 500
 
 
+@clients_api.route("/clients/<client_id>/tenants", methods=["POST", "OPTIONS"])
+def add_tenant(client_id):
+    """
+    Add a tenant under a client (stored in subClients array).
+    """
+    try:
+        payload = request.get_json(silent=True) or {}
+        payload.pop("id", None)
+        payload["createdAt"] = firestore.SERVER_TIMESTAMP
+
+        doc_ref = db.collection("clients").document(client_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            return jsonify({"error": "Client not found"}), 404
+
+        data = doc.to_dict() or {}
+        sub_clients = data.get("subClients") or []
+        tenant_id = f"tenant-{int(datetime.utcnow().timestamp() * 1000)}"
+        tenant = payload.copy()
+        tenant["id"] = tenant_id
+        tenant.setdefault("facilities", [])
+        tenant.setdefault("denialsCaptured", 0)
+        tenant.setdefault("revenueRecovered", 0)
+
+        sub_clients.append(tenant)
+        doc_ref.update({"subClients": sub_clients, "lastUpdated": firestore.SERVER_TIMESTAMP})
+
+        result = _serialize_value(tenant)
+        return jsonify(result), 201
+    except Exception as exc:  # pragma: no cover - simple pass-through
+        return jsonify({"error": "Failed to add tenant", "detail": str(exc)}), 500
+
+
+@clients_api.route("/clients/<client_id>/tenants/<tenant_id>/facilities", methods=["POST", "OPTIONS"])
+def add_facility(client_id, tenant_id):
+    """
+    Add a facility under a tenant (nested in subClients[].facilities).
+    """
+    try:
+        payload = request.get_json(silent=True) or {}
+        payload.pop("id", None)
+        payload["createdAt"] = firestore.SERVER_TIMESTAMP
+
+        doc_ref = db.collection("clients").document(client_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            return jsonify({"error": "Client not found"}), 404
+
+        data = doc.to_dict() or {}
+        sub_clients = data.get("subClients") or []
+        facility_id = f"facility-{int(datetime.utcnow().timestamp() * 1000)}"
+        facility = payload.copy()
+        facility["id"] = facility_id
+
+        updated = False
+        for sub_client in sub_clients:
+            if sub_client.get("id") == tenant_id:
+                facilities = sub_client.get("facilities") or []
+                facilities.append(facility)
+                sub_client["facilities"] = facilities
+                updated = True
+                break
+
+        if not updated:
+            return jsonify({"error": "Tenant not found"}), 404
+
+        doc_ref.update({"subClients": sub_clients, "lastUpdated": firestore.SERVER_TIMESTAMP})
+
+        result = _serialize_value(facility)
+        return jsonify(result), 201
+    except Exception as exc:  # pragma: no cover - simple pass-through
+        return jsonify({"error": "Failed to add facility", "detail": str(exc)}), 500
+
+
 @clients_api.route("/clients/<client_id>/users", methods=["GET"])
 def get_client_users(client_id):
     """
