@@ -105,8 +105,8 @@ def add_tenant(client_id):
         if request.method == "OPTIONS":
             return ("", 204)
         payload = request.get_json(silent=True) or {}
+        created_at = datetime.utcnow()
         payload.pop("id", None)
-        payload["createdAt"] = firestore.SERVER_TIMESTAMP
 
         doc_ref = db.collection("clients").document(client_id)
         doc = doc_ref.get()
