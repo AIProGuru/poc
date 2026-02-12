@@ -26,7 +26,8 @@ const initialState = {
   remark: '',
   procedure: '',
   pos: '',
-  theme: 'dark'
+  theme: 'dark',
+  selectedClaimIds: []
 };
 
 const appReducer = createSlice({
@@ -68,6 +69,7 @@ const appReducer = createSlice({
     },
     setCurrentPage: (state, action) => {
       state.currentPage = action.payload;
+      state.selectedClaimIds = [];
     },
     setTotalPage: (state, action) => {
       state.totalPage = action.payload;
@@ -132,6 +134,12 @@ const appReducer = createSlice({
     setTheme: (state, action) => {
       state.theme = action.payload;
     },
+    setSelectedClaimIds: (state, action) => {
+      state.selectedClaimIds = action.payload;
+    },
+    clearSelectedClaimIds: (state) => {
+      state.selectedClaimIds = [];
+    },
     setTabDefaults: (state, action) => {
       const { tabIndex, extraFilter, selectedTags } = action.payload || {};
       state.tabIndex = tabIndex ?? state.tabIndex;
@@ -144,6 +152,7 @@ const appReducer = createSlice({
       state.pos = '';
       state.procedure = '';
       state.extraFilter = extraFilter || {};
+      state.selectedClaimIds = [];
       state.tableLoading = true;
       state.part1Loading = true;
       state.part2Loading = true;
@@ -184,6 +193,8 @@ export const {
   setProcedure,
   setPOS,
   setTheme,
+  setSelectedClaimIds,
+  clearSelectedClaimIds,
   setTabDefaults
 } = appReducer.actions;
 

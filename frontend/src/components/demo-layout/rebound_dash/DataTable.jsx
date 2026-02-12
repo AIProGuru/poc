@@ -18,7 +18,7 @@ import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
 import { samplifyDouble, samplifyInteger, samplifyString } from "../../../utils/config";
 
 import DataTableFilter from "./DataTableFilter";
-import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, setPart1Loading, setPart2Loading, setTableLoading, setExtraFilter } from "../../../redux/reducers/app.reducer";
+import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, setPart1Loading, setPart2Loading, setTableLoading, setExtraFilter, setSelectedClaimIds } from "../../../redux/reducers/app.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { toast } from "react-toastify";
 import DataTableTags from "./DataTableTags";
@@ -57,13 +57,13 @@ const DataTable = (props) => {
   const tabIndex = useSelector((state) => state.app.tabIndex)
   const tableLoading = useSelector((state) => state.app.tableLoading)
   const type = useSelector((state) => state.app.type)
-  const [checkValues, setCheckValues] = useState([])
   const [downloading, setDownloading] = useState(false);
   const code = useSelector((state) => state.app.code)
   const remark = useSelector((state) => state.app.remark)
   const procedure = useSelector((state) => state.app.procedure)
   const pos = useSelector((state) => state.app.pos)
   const extra = useSelector((state) => state.app.extraFilter);
+  const selectedClaimIds = useSelector((state) => state.app.selectedClaimIds);
   const accessExtra = useMemo(
     () => buildAccessExtra(extra, access, role),
     [extra, access, role]
@@ -164,16 +164,23 @@ const DataTable = (props) => {
     navigate(`${type === 0 ? '/rebound' : '/pilotcustomer'}/detail/${btoa(JSON.stringify(token))}`);
   }
 
-  useEffect(() => {
-    setCheckValues([...(Array(pageSize).fill(false))]);
-  }, [pageSize])
-
-  const visibleRows = tableData.length;
-  const checkedCount = checkValues.slice(0, visibleRows).filter(Boolean).length;
-  const allChecked = visibleRows > 0 && checkedCount === visibleRows;
-  const someChecked = checkedCount > 0 && checkedCount < visibleRows;
+  const getClaimKey = (row) => row?.ClaimNo || row?.ClaimID || row?.Claim || row?.id || '';
+  const selectedSet = useMemo(() => new Set(selectedClaimIds), [selectedClaimIds]);
+  const pageClaimIds = useMemo(
+    () => tableData.map((row) => getClaimKey(row)).filter(Boolean),
+    [tableData]
+  );
+  const checkedCount = pageClaimIds.filter((id) => selectedSet.has(id)).length;
+  const allChecked = pageClaimIds.length > 0 && checkedCount === pageClaimIds.length;
+  const someChecked = checkedCount > 0 && checkedCount < pageClaimIds.length;
   const toggleAllRows = (checked) => {
-    setCheckValues([...(Array(pageSize).fill(checked))]);
+    const nextSelected = new Set(selectedSet);
+    if (checked) {
+      pageClaimIds.forEach((id) => nextSelected.add(id));
+    } else {
+      pageClaimIds.forEach((id) => nextSelected.delete(id));
+    }
+    dispatch(setSelectedClaimIds([...nextSelected]));
   };
 
   useEffect(() => {
@@ -688,11 +695,17 @@ const DataTable = (props) => {
                       <TableCell style={{ ...bodyCellStyle, minWidth: "56px" }}>
                         <Checkbox
                           size="small"
-                          checked={!!checkValues[index]}
+                          checked={selectedSet.has(getClaimKey(row))}
                           onChange={(event) => {
-                            const nextValues = [...checkValues];
-                            nextValues[index] = event.target.checked;
-                            setCheckValues(nextValues);
+                            const claimId = getClaimKey(row);
+                            if (!claimId) return;
+                            const nextSelected = new Set(selectedSet);
+                            if (event.target.checked) {
+                              nextSelected.add(claimId);
+                            } else {
+                              nextSelected.delete(claimId);
+                            }
+                            dispatch(setSelectedClaimIds([...nextSelected]));
                           }}
                           sx={{
                             color: isDarkMode ? 'rgba(255,255,255,0.45)' : '#9CA3AF',
