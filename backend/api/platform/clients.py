@@ -102,6 +102,8 @@ def add_tenant(client_id):
     Add a tenant under a client (stored in subClients array).
     """
     try:
+        if request.method == "OPTIONS":
+            return ("", 204)
         payload = request.get_json(silent=True) or {}
         payload.pop("id", None)
         payload["createdAt"] = firestore.SERVER_TIMESTAMP
@@ -135,6 +137,8 @@ def add_facility(client_id, tenant_id):
     Add a facility under a tenant (nested in subClients[].facilities).
     """
     try:
+        if request.method == "OPTIONS":
+            return ("", 204)
         payload = request.get_json(silent=True) or {}
         payload.pop("id", None)
         payload["createdAt"] = firestore.SERVER_TIMESTAMP
