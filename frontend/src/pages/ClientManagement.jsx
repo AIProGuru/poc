@@ -154,6 +154,21 @@ const ClientManagement = () => {
     navigate(`/client/${clientId}`);
   };
 
+  const handleDeleteClient = async (clientId, clientName) => {
+    const confirmed = window.confirm(`Delete client "${clientName}"? This cannot be undone.`);
+    if (!confirmed) return;
+    try {
+      setLoading(true);
+      await axios.delete(`${resolvedApiUrl}/clients/${clientId}`, { withCredentials: true });
+      setClients((prev) => prev.filter((client) => client.id !== clientId));
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter and sort clients
   const filteredClients = clients
     .filter(client => {
@@ -234,7 +249,7 @@ const ClientManagement = () => {
               Email
               {sortArrow('email')}
             </th>
-            <th className="px-3 py-3 text-center">Select</th>
+            <th className="px-3 py-3 text-center">Actions</th>
           </tr>
         </thead>
         <motion.tbody variants={containerVariants} initial="hidden" animate="show">
@@ -348,13 +363,22 @@ const ClientManagement = () => {
               <td className="px-3 py-4">{client.contact || '-'}</td>
               <td className="px-3 py-4">{client.email || '-'}</td>
               <td className="px-3 py-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => handleSelectClient(client.id)}
-                  className="px-3 py-1.5 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
-                >
-                  Select
-                </button>
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectClient(client.id)}
+                    className="px-3 py-1.5 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
+                  >
+                    Select
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteClient(client.id, client.name || 'Client')}
+                    className="px-3 py-1.5 bg-red-500/80 hover:bg-red-500 text-white text-xs font-medium rounded-md transition-all"
+                  >
+                    Delete
+                  </button>
+                </div>
               </td>
             </motion.tr>
           ))}

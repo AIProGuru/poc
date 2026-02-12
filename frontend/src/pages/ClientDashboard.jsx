@@ -1671,8 +1671,24 @@ const FacilityModal = () => {
                 <button className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#ffffff15]">
                   Export Reports
                 </button>
-                <button className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#ffffff15]">
-                  Archive Client
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#ffffff15]"
+                  onClick={async () => {
+                    const confirmed = window.confirm(`Delete client "${client?.name || 'Client'}"? This cannot be undone.`);
+                    if (!confirmed) return;
+                    try {
+                      setLoading(true);
+                      await axios.delete(`${resolvedApiUrl}/clients/${client.id}`, { withCredentials: true });
+                      navigate('/clientmanagement', { replace: true });
+                    } catch (error) {
+                      console.error("Error deleting client:", error);
+                      alert(`Error: ${error.message}`);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  Delete Client
                 </button>
               </div>
             )}

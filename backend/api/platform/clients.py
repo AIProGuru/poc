@@ -96,6 +96,29 @@ def get_client(client_id):
         return jsonify({"error": "Failed to fetch client", "detail": str(exc)}), 500
 
 
+@clients_api.route("/clients/<client_id>", methods=["DELETE"])
+def delete_client(client_id):
+    """
+    Delete a client and any related lookup entries.
+    """
+    try:
+        doc_ref = db.collection("clients").document(client_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            return jsonify({"error": "Client not found"}), 404
+
+        # Remove lookup entries for this client
+        lookup_query = db.collection("client_lookup").where("clientId", "==", client_id).stream()
+        lookup_docs = [d for d in lookup_query]
+        for lookup_doc in lookup_docs:
+            lookup_doc.reference.delete()
+
+        doc_ref.delete()
+        return jsonify({"status": "deleted", "id": client_id}), 200
+    except Exception as exc:  # pragma: no cover - simple pass-through
+        return jsonify({"error": "Failed to delete client", "detail": str(exc)}), 500
+
+
 @clients_api.route("/clients/<client_id>/tenants", methods=["POST", "OPTIONS"])
 def add_tenant(client_id):
     """
