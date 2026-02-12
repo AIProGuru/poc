@@ -53,7 +53,7 @@ def add_client():
     try:
         payload = request.get_json(silent=True) or {}
         payload.pop("id", None)
-        payload["createdAt"] = firestore.SERVER_TIMESTAMP
+        created_at = datetime.utcnow()
         payload["lastUpdated"] = firestore.SERVER_TIMESTAMP
 
         doc_ref = db.collection("clients").document()
@@ -118,6 +118,7 @@ def add_tenant(client_id):
         tenant_id = f"tenant-{int(datetime.utcnow().timestamp() * 1000)}"
         tenant = payload.copy()
         tenant["id"] = tenant_id
+        tenant["createdAt"] = created_at
         tenant.setdefault("facilities", [])
         tenant.setdefault("denialsCaptured", 0)
         tenant.setdefault("revenueRecovered", 0)
@@ -141,7 +142,7 @@ def add_facility(client_id, tenant_id):
             return ("", 204)
         payload = request.get_json(silent=True) or {}
         payload.pop("id", None)
-        payload["createdAt"] = firestore.SERVER_TIMESTAMP
+        created_at = datetime.utcnow()
 
         doc_ref = db.collection("clients").document(client_id)
         doc = doc_ref.get()
@@ -153,6 +154,7 @@ def add_facility(client_id, tenant_id):
         facility_id = f"facility-{int(datetime.utcnow().timestamp() * 1000)}"
         facility = payload.copy()
         facility["id"] = facility_id
+        facility["createdAt"] = created_at
 
         updated = False
         for sub_client in sub_clients:
