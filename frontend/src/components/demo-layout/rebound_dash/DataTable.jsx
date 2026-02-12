@@ -10,6 +10,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Table from "@mui/material/Table";
+import Checkbox from "@mui/material/Checkbox";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -57,7 +58,6 @@ const DataTable = (props) => {
   const tableLoading = useSelector((state) => state.app.tableLoading)
   const type = useSelector((state) => state.app.type)
   const [checkValues, setCheckValues] = useState([])
-  const [all, setAll] = useState(false)
   const [downloading, setDownloading] = useState(false);
   const code = useSelector((state) => state.app.code)
   const remark = useSelector((state) => state.app.remark)
@@ -168,9 +168,13 @@ const DataTable = (props) => {
     setCheckValues([...(Array(pageSize).fill(false))]);
   }, [pageSize])
 
-  useEffect(() => {
-    setCheckValues([...(Array(pageSize).fill(all))]);
-  }, [all])
+  const visibleRows = tableData.length;
+  const checkedCount = checkValues.slice(0, visibleRows).filter(Boolean).length;
+  const allChecked = visibleRows > 0 && checkedCount === visibleRows;
+  const someChecked = checkedCount > 0 && checkedCount < visibleRows;
+  const toggleAllRows = (checked) => {
+    setCheckValues([...(Array(pageSize).fill(checked))]);
+  };
 
   useEffect(() => {
 
@@ -536,6 +540,24 @@ const DataTable = (props) => {
               >
                 <TableHead>
                   <TableRow>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "56px" }}>
+                      <Checkbox
+                        size="small"
+                        checked={allChecked}
+                        indeterminate={someChecked}
+                        onChange={(event) => toggleAllRows(event.target.checked)}
+                        sx={{
+                          color: isDarkMode ? 'rgba(255,255,255,0.45)' : '#9CA3AF',
+                          '&.Mui-checked': {
+                            color: isDarkMode ? '#BFC5D8' : '#6B7280',
+                          },
+                          '&.MuiCheckbox-indeterminate': {
+                            color: isDarkMode ? '#BFC5D8' : '#6B7280',
+                          },
+                        }}
+                        inputProps={{ "aria-label": "Select all rows" }}
+                      />
+                    </TableCell>
                     <TableCell style={{ ...headerCellStyle, minWidth: "120px" }} onClick={() => setOrder("Priority")} className="cursor-pointer">
                       <div className="flex items-center gap-2">
                         Priority
@@ -650,8 +672,8 @@ const DataTable = (props) => {
                   </TableRow>
                 </TableHead>
                 <TableBody className="relative">
-                  {tableLoading && <TableRow className="flex justify-center items-center h-[100px]"><TableCell colSpan={12}><div className="flex justify-center items-center">Loading data...</div></TableCell></TableRow>}
-                  {!tableLoading && tableData.length === 0 && <TableRow className="flex justify-center items-center h-[100px]"><TableCell className="w-full" colSpan={12}><div className="flex justify-center items-center">No record</div></TableCell></TableRow>}
+                  {tableLoading && <TableRow className="flex justify-center items-center h-[100px]"><TableCell colSpan={21}><div className="flex justify-center items-center">Loading data...</div></TableCell></TableRow>}
+                  {!tableLoading && tableData.length === 0 && <TableRow className="flex justify-center items-center h-[100px]"><TableCell className="w-full" colSpan={21}><div className="flex justify-center items-center">No record</div></TableCell></TableRow>}
                   {
                     !tableLoading && tableData.length !== 0 && tableData.map((row, index) => <TableRow
                       key={index}
@@ -663,6 +685,27 @@ const DataTable = (props) => {
                         }
                       }}
                     >
+                      <TableCell style={{ ...bodyCellStyle, minWidth: "56px" }}>
+                        <Checkbox
+                          size="small"
+                          checked={!!checkValues[index]}
+                          onChange={(event) => {
+                            const nextValues = [...checkValues];
+                            nextValues[index] = event.target.checked;
+                            setCheckValues(nextValues);
+                          }}
+                          sx={{
+                            color: isDarkMode ? 'rgba(255,255,255,0.45)' : '#9CA3AF',
+                            '&.Mui-checked': {
+                              color: isDarkMode ? '#BFC5D8' : '#6B7280',
+                            },
+                            '&.MuiCheckbox-indeterminate': {
+                              color: isDarkMode ? '#BFC5D8' : '#6B7280',
+                            },
+                          }}
+                          inputProps={{ "aria-label": `Select row ${index + 1}` }}
+                        />
+                      </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "120px" }}>
                         {row.Priority || ''}
                       </TableCell>
