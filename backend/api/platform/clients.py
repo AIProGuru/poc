@@ -119,6 +119,34 @@ def delete_client(client_id):
         return jsonify({"error": "Failed to delete client", "detail": str(exc)}), 500
 
 
+@clients_api.route("/clients/<client_id>", methods=["PATCH"])
+def update_client(client_id):
+    """
+    Update a client (partial).
+    """
+    try:
+        payload = request.get_json(silent=True) or {}
+        payload.pop("id", None)
+
+        if not payload:
+            return jsonify({"error": "No updates provided"}), 400
+
+        doc_ref = db.collection("clients").document(client_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            return jsonify({"error": "Client not found"}), 404
+
+        payload["lastUpdated"] = firestore.SERVER_TIMESTAMP
+        doc_ref.update(payload)
+
+        updated = doc_ref.get().to_dict() or {}
+        updated = _serialize_value(updated)
+        updated["id"] = client_id
+        return jsonify(updated), 200
+    except Exception as exc:  # pragma: no cover - simple pass-through
+        return jsonify({"error": "Failed to update client", "detail": str(exc)}), 500
+
+
 @clients_api.route("/clients/<client_id>/tenants", methods=["POST", "OPTIONS"])
 def add_tenant(client_id):
     """

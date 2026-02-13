@@ -1647,7 +1647,7 @@ const FacilityModal = () => {
               <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-          <h1 className="text-2xl font-bold">Client Dashboard</h1>
+          <h1 className="text-2xl font-bold">Client Management</h1>
           
           <div className="ml-auto relative">
             <button 
@@ -1731,12 +1731,6 @@ const FacilityModal = () => {
                 
                 <div className="flex-1">
                   <h2 className="text-3xl font-bold">{client.name}</h2>
-                  <div className="flex flex-wrap items-center gap-4 mt-2">
-                    <div className="text-[#f4f4f4]">
-                      <span className="text-gray-400 mr-2">Last Activity:</span>
-                      {formatDate(client.lastActivity)}
-                    </div>
-                  </div>
                 </div>
                 
                 <div className="mt-6 md:mt-0">

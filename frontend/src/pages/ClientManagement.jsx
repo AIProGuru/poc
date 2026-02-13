@@ -19,23 +19,25 @@ const ClientManagement = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
   const [newClient, setNewClient] = useState({
     name: '',
-    logo: './default_logo.png',
+    logo: '/logo_sm.svg',
     clientType: '',
     address: '',
     contact: '',
     email: '',
   });
   const [isClientTypeOpen, setIsClientTypeOpen] = useState(false);
+  const [logoUploadingId, setLogoUploadingId] = useState(null);
   const CLIENT_TYPE_OPTIONS = [
     'Service Provider',
     'Hospital System',
     'Ambulatory Provider'
   ];
+  const MAX_LOGO_BYTES = 1024 * 1024 * 2;
 
   const resetNewClientRow = () => {
     setNewClient({
       name: '',
-      logo: './default_logo.png',
+      logo: '/logo_sm.svg',
       clientType: '',
       address: '',
       contact: '',
@@ -59,6 +61,54 @@ const ClientManagement = () => {
     setIsClientTypeOpen(false);
   };
 
+  const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+
+  const handleLogoFileSelect = async (file, clientId) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file.');
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      alert('Logo must be 2MB or smaller.');
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      if (clientId === 'new') {
+        setNewClient((prev) => ({
+          ...prev,
+          logo: dataUrl
+        }));
+        return;
+      }
+
+      setLogoUploadingId(clientId);
+      setClients((prev) =>
+        prev.map((client) =>
+          client.id === clientId ? { ...client, logo: dataUrl } : client
+        )
+      );
+
+      await axios.patch(
+        `${resolvedApiUrl}/clients/${clientId}`,
+        { logo: dataUrl },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Error uploading client logo:", error);
+      alert(`Error uploading logo: ${error.message}`);
+      fetch_clients();
+    } finally {
+      setLogoUploadingId(null);
+    }
+  };
 
 
   // Function to submit the new client form
@@ -258,14 +308,35 @@ const ClientManagement = () => {
             variants={itemVariants}
           >
             <td className="px-3 py-3">
-              <input
-                type="text"
-                name="name"
-                value={newClient.name}
-                onChange={handleNewClientInputChange}
-                className={rowInputClass}
-                placeholder="Client"
-              />
+              <div className="flex items-center gap-3">
+                <label
+                  className="relative flex h-10 w-10 items-center justify-center rounded-md border border-[#ffffff20] bg-[#ffffff08] overflow-hidden cursor-pointer"
+                  title="Upload client logo"
+                >
+                  <img
+                    src={newClient.logo || '/default_logo.png'}
+                    alt="Client logo"
+                    className="h-full w-full object-contain"
+                  />
+                  <span className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-xs text-white">
+                    Upload
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => handleLogoFileSelect(e.target.files?.[0], 'new')}
+                  />
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={newClient.name}
+                  onChange={handleNewClientInputChange}
+                  className={rowInputClass}
+                  placeholder="Client"
+                />
+              </div>
             </td>
             <td className="px-3 py-3">
               <div
@@ -357,7 +428,30 @@ const ClientManagement = () => {
               className="border-b border-[#ffffff10] text-[#D9D9D9CC] hover:bg-[#ffffff08] transition-colors"
               variants={itemVariants}
             >
-              <td className="px-3 py-4 text-white">{client.name || '-'}</td>
+              <td className="px-3 py-4 text-white">
+                <div className="flex items-center gap-3">
+                  <label
+                    className="relative flex h-10 w-10 items-center justify-center rounded-md border border-[#ffffff20] bg-[#ffffff08] overflow-hidden cursor-pointer"
+                    title="Upload client logo"
+                  >
+                    <img
+                      src={client.logo || '/default_logo.png'}
+                      alt={client.name || 'Client logo'}
+                      className="h-full w-full object-contain"
+                    />
+                    <span className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white">
+                      {logoUploadingId === client.id ? 'Saving...' : 'Upload'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => handleLogoFileSelect(e.target.files?.[0], client.id)}
+                    />
+                  </label>
+                  <span>{client.name || '-'}</span>
+                </div>
+              </td>
               <td className="px-3 py-4">{client.clientType || '-'}</td>
               <td className="px-3 py-4">{client.address || '-'}</td>
               <td className="px-3 py-4">{client.contact || '-'}</td>
@@ -393,7 +487,7 @@ const ClientManagement = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
-            <h1 className="cm-title mb-2">Client Management</h1>
+            <h1 className="mb-2 text-2xl font-bold">Client Management</h1>
             <p className={isDark ? "text-[#9ca3af]" : "text-slate-500"}>
               Add clients, then manage tenants and facilities from each client dashboard.
             </p>
