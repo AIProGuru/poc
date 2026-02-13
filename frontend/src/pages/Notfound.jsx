@@ -25,7 +25,7 @@ export default function Notfound() {
       <Container>
       <div className='my-14 flex flex-col text-[#6C9BE0] justify-center items-center'>
      <img src='/404.png' height={312} width={837} className=' '></img>
-      <p className="text-[64px] font-poppins font-bold text-white text-center mt-4">Oops! Page Not Found
+      <p className="text-[64px] font-inter font-bold text-white text-center mt-4">Oops! Page Not Found
       </p>
       <p>
       Here’s how we can help you get back on track:

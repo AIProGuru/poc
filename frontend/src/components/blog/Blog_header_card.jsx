@@ -37,7 +37,7 @@ John Menton`,
           {/* Quote Section */}
           <div className="flex flex-col md:flex-row flex justify-between">
             <div className=" sm:max-w-[500px]  text-center sm:text-left md:w-1/2 w-full">
-              <h2 className="lg:text-[42px] lg:leading-[44px] font-poppins font-bold mb-10 text-[42px] leading-[46px] w-full text-[#6C9BE0]">
+              <h2 className="lg:text-[42px] lg:leading-[44px] font-inter font-bold mb-10 text-[42px] leading-[46px] w-full text-[#6C9BE0]">
               AI is just one piece of healthcare's RCM puzzle
               </h2>
               <p className="text-[20px] mr-0  sm:mr-16 w-full text-[#6C9BE0] leading-[30.8px] ">

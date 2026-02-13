@@ -9,10 +9,10 @@ export default function Discovermob({title, description}) {
       <div className="relative mb-10 sm:mb-32 sm:mt-16 bg-gradient-to-r from-[#3849D8B2] to-[#1219537D] h-auto sm:h-[250px] rounded-2xl p-10 overflow-hidden flex flex-col justify-center sm:flex-row items-center sm:items-start max-w-[90%]">
         {/* Left Content */}
         <div className="flex-1">
-          <h1 className={`text-white z-30 text-[38px] leading-[38px] font-bold font-poppins w-[70%] mb-4 ${title?'w-[90%]':'w-[60%]'}`}>
+          <h1 className={`text-white z-30 text-[38px] leading-[38px] font-bold font-inter w-[70%] mb-4 ${title?'w-[90%]':'w-[60%]'}`}>
            {title? <><span>{title}</span></> :<span>Discover what our AI Denial Agents can do for you</span>}
           </h1>
-          <p className="text-[#C6D4FF] text-[22px] leading-[30px] w-[90%] font-poppins mb-6">
+          <p className="text-[#C6D4FF] text-[22px] leading-[30px] w-[90%] font-inter mb-6">
           {title && !description? <></> :<span>Recover Revenue, Reduce Denials, Real Results</span>}  
           </p>
         </div>

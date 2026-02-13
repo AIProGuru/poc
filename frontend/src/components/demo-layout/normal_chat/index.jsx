@@ -217,7 +217,7 @@ const NormalChat = () => {
         </TEToast>
       </div>
       <div className="flex justify-between items-center gap-[30%]">
-        <p className="font-poppins text-[32px] text-[rgb(4,52,217)] font-semibold text-center">
+        <p className="font-inter text-[32px] text-[rgb(4,52,217)] font-semibold text-center">
           ChatBot
         </p>
         {menuState && (
@@ -265,7 +265,7 @@ const NormalChat = () => {
               )}
               <div
                 data-tooltip-target={`tooltip-${index}`}
-                className={`cursor-pointer block rounded-lg p-6 max-w-[30%] font-poppins font-semibold ${row.sender === "ChatGPT"
+                className={`cursor-pointer block rounded-lg p-6 max-w-[30%] font-inter font-semibold ${row.sender === "ChatGPT"
                   ? "bg-gray-800 text-white"
                   : "bg-yellow-700 text-white"
                   }`}

@@ -32,7 +32,7 @@ export default function Collaboration() {
         <div className=" flex flex-col ml-16  sm:flex-row items-start sm:items-start space-y-6 sm:space-y-0 sm:space-x-8 transition-transform duration-500">
           {/* Quote Section */}
           <div className="  text-center sm:text-left">
-            <h2 className="text-4xl mr-[-200px] font-poppins  font-bold mb-10">
+            <h2 className="text-4xl mr-[-200px] font-inter  font-bold mb-10">
               Stories of Our Collaborations
             </h2>
             <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center mb-5">

@@ -87,7 +87,7 @@ export default function Integrations() {
               </button>
               <div className="flex flex-col mb-32 justify-center  items-center pt-10 gap-8">
                 <div className=' flex justify-center flex-col'>
-                  <h2 className="text-[#0F172A] text-center text-4xl font-poppins font-bold mb-6">{detailData.title}</h2>
+                  <h2 className="text-[#0F172A] text-center text-4xl font-inter font-bold mb-6">{detailData.title}</h2>
                   {detailData.content.map((para, index) => (
                     <p key={index} className="text-[#475569]  mb-4 leading-7">{para}</p>
                   ))}
@@ -98,21 +98,21 @@ export default function Integrations() {
           </>
         ) : (
           <div className="flex flex-col mt-10 justify-center items-center pt-24 gap-8">
-            <p className="font-poppins  max-w-[55%] text-center text-[#3b3f46]  text-[20px] leading-[28px]">
+            <p className="font-inter  max-w-[55%] text-center text-[#3b3f46]  text-[20px] leading-[28px]">
               "WE ARE INTEGRATION AGNOSTIC"
             </p>
-            <p className="font-poppins max-w-[80%] sm:max-w-[90%] text-center text-[#0F172A] font-bold text-[42px] sm:text-[56px] leading-[46px] sm:leading-[56px]">
+            <p className="font-inter max-w-[80%] sm:max-w-[90%] text-center text-[#0F172A] font-bold text-[42px] sm:text-[56px] leading-[46px] sm:leading-[56px]">
               <span className=' hidden sm:block'>Seamless Integration with EHR</span> <span className=' hidden sm:block'>& Practice Management</span>
               <span className='block sm:hidden'>Seamless Integration with EHR & Practice Management</span>
             </p>
-            <p className="font-poppins max-w-[80%] sm:max-w-[65%] z-10 text-center  text-[#475569] text-[20px] leading-[28px]">
+            <p className="font-inter max-w-[80%] sm:max-w-[65%] z-10 text-center  text-[#475569] text-[20px] leading-[28px]">
               AI Denial Agents are compatible with major EHR and practice management platforms to optimize workflows without disruption.
             </p>
             <div className="relative">
 
             </div>
             <div className="z-10 flex flex-col items-start mt-2 mx-5 lg:mx-64 sm:mx-10 justify-center">
-              <h2 className="text-[#0F172A] text-[32px] md:text-[48px] md:leading-[54px] lg:text-[56px] lg:leading-[60px] font-poppins px-0 sm:px-6 font-bold mb-6"> Compatible with:</h2>
+              <h2 className="text-[#0F172A] text-[32px] md:text-[48px] md:leading-[54px] lg:text-[56px] lg:leading-[60px] font-inter px-0 sm:px-6 font-bold mb-6"> Compatible with:</h2>
               <div className=" hidden sm:grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {data.map((item, index) => (
                   <div key={index} className="flex flex-col sm:flex-row items-center p-6 rounded-lg bg-white border border-[#E2E8F0] rounded-xl">
@@ -128,7 +128,7 @@ export default function Integrations() {
                       className="bg-[#3b3f46] text-white px-4 py-2 rounded-md hover:bg-gray-700 transition mt-4 sm:mt-0 sm:ml-4"
                     >
                       <div className='flex justify-center items-center'>
-                        <span className='font-poppins text-[12px] pr-2 font-bold'>Detail</span>
+                        <span className='font-inter text-[12px] pr-2 font-bold'>Detail</span>
                         <span>
                           <svg width="22" height="23" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect x="0.5" y="1.12158" width="21" height="21" rx="4.5" stroke="#EEF6FF" />
@@ -165,7 +165,7 @@ export default function Integrations() {
                         className="bg-[#3b3f46] mt-5 text-white px-6 py-3 rounded-md hover:bg-gray-700 transition "
                       >
                         <div className='flex justify-center items-center'>
-                          <span className='font-poppins text-[12px] pr-2 font-bold'>Detail</span>
+                          <span className='font-inter text-[12px] pr-2 font-bold'>Detail</span>
                           <span>
 
                             <svg width="22" height="23" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">

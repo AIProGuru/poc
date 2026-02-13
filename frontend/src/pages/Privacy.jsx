@@ -49,7 +49,7 @@ const Privacy = () => {
         <div className="w-[100%] flex flex-col items-center pt-[20vh]">
           <div className="flex flex-col items-center w-full px-[10vw]">
             <span className="text-[#3b3f46] text-[20px] text-center">PROTECTING YOUR INFORMATION WITH CONFIDENCE</span>
-            <span className=" text-[42px] leading-[46px] mt-5 sm:text-[64px]  font-bold font-poppins text-center text-[#0F172A]">Data Privacy & Security</span>
+            <span className=" text-[42px] leading-[46px] mt-5 sm:text-[64px]  font-bold font-inter text-center text-[#0F172A]">Data Privacy & Security</span>
             <span className="text-[#475569] z-10 font-normal text-[22px] w-full sm:w-[866px] leading-[30.8px] text-center mt-4">
               Ensuring the highest standards of data protection and compliance to safeguard your organization and patients.
             </span>
@@ -63,10 +63,10 @@ const Privacy = () => {
         <div className=" mt-[30px] sm:mt-[40px] z-10   mb-0 sm:mb-32 flex flex-col items-center justify-centers">
           {" "}
           <div className="w-[90%] sm:w-[70%] flex justify-center items-center flex-col">
-            <p className="text-[38px] leading-[38px] mt-0 md:mt-[260px] lh:mt-0 md:text-[54px] lg:text-[64px] lg:leading-[66px] sm:leading-[54px] font-bold w-[100%] text-center text-[#0F172A] font-poppins">
+            <p className="text-[38px] leading-[38px] mt-0 md:mt-[260px] lh:mt-0 md:text-[54px] lg:text-[64px] lg:leading-[66px] sm:leading-[54px] font-bold w-[100%] text-center text-[#0F172A] font-inter">
               Committed to Excellence in Healthcare Data Security
             </p>
-            <p className="font-poppins text-[#475569] w-[90%] max-w-[1014px] text-center text-[22px]  mt-5">
+            <p className="font-inter text-[#475569] w-[90%] max-w-[1014px] text-center text-[22px]  mt-5">
               Description: Helio RCM, we understand that data privacy is paramount in healthcare. Our platform is built to meet the highest standards of data protection and regulatory compliance, ensuring that your organization’s information—and your patients’ sensitive data—remain secure and confidential.
             </p>
             <img src="/data_compliance.png" className="mt-10 hidden sm:block" />
@@ -79,7 +79,7 @@ const Privacy = () => {
           {data.map((item, index) => (
             <div key={index} className="flex flex-col justify-center items-center text-center mb-8">
               <img src={item.img} alt={item.title} className="mt-4 h-[100px]" />
-              <h1 className="text-[20px] text-[#0F172A] font-poppins font-bold ">{item.title}</h1>
+              <h1 className="text-[20px] text-[#0F172A] font-inter font-bold ">{item.title}</h1>
               <p className="text-[#475569] text-[20px] mt-2 ">{item.description}</p>
             </div>
           ))}

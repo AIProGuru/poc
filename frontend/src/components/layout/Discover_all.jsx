@@ -6,10 +6,10 @@ export default function Discover_all({ title, desc, link, button }) {
     <div className="max-w-[1165px] relative sm:mt-16 bg-gradient-to-r from-[#3849D8B2] to-[#1219537D] w-full rounded-2xl md:p-10 px-[24px] py-[32px] overflow-visible flex flex-col justify-between sm:flex-row items-center gap-8">
       {/* Left Content */}
       <div className="md:w-[60%] w-full z-10">
-        <h1 className="text-[#EBEDF0] md:text-[54px] md:leading-[54px] text-[38px] leading-[38px] font-bold font-poppins mb-4 w-[70%] sm:w-[100%] z-10">
+        <h1 className="text-[#EBEDF0] md:text-[54px] md:leading-[54px] text-[38px] leading-[38px] font-bold font-inter mb-4 w-[70%] sm:w-[100%] z-10">
           {title}
         </h1>
-        <p className="text-[#C6D4FF] text-[22px] font-poppins mb-6 leading-[30.8px] z-10">
+        <p className="text-[#C6D4FF] text-[22px] font-inter mb-6 leading-[30.8px] z-10">
           {desc.split(" ").map((word, index) =>
             word === "Helio RCM" ? (
               <React.Fragment key={index}>

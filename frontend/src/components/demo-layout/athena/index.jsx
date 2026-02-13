@@ -94,7 +94,7 @@ const Athena = () => {
           />
           </div>
           <p
-            className="rounded-lg px-10 py-3 bg-gray-700 text-white font-poppins text-[20px] cursor-pointer"
+            className="rounded-lg px-10 py-3 bg-gray-700 text-white font-inter text-[20px] cursor-pointer"
             onClick={AthenaReq}
           >
             Send

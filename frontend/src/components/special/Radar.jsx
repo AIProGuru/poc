@@ -76,7 +76,7 @@ const RadarComp = () => {
       >
         <canvas ref={canvasRef} width="480" height="480"></canvas> {/* Reduced canvas size by an additional 20% */}
         <div className="radar-text mt-[-20px]"><Odometer value={value} /></div> {/* Center text */}
-        <div className="radar-text mt-10 sm:mt-12 font-poppins">Processed Denials</div> {/* Center text */}
+        <div className="radar-text mt-10 sm:mt-12 font-inter">Processed Denials</div> {/* Center text */}
       </div>
     </div>
   );

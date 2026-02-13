@@ -8,8 +8,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        poppins: ["Poppins", "sans-serif"],
+        poppins: ["Inter", "sans-serif"],
         inter: ["Inter", "sans-serif"],
+        nunito: ["Inter", "sans-serif"],
         montserrat: ["Montserrat", "sans-serif"],
         roboto: ["Roboto", "sans-serif"],
         // Add more custom font families as needed

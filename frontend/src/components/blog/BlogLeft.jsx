@@ -13,7 +13,7 @@ const BlogLeft = ({ title , description , author , time ,id,image }) => {
           />
         </div>
         <div className="max-w-[567px] md:w-1/2 w-full  flex flex-col justify-start gap-4">
-          <h1 className="md:text-[40px] md:leading-[48px] text-[32px] leading-[36px] font-[700] text-white font-poppins">
+          <h1 className="md:text-[40px] md:leading-[48px] text-[32px] leading-[36px] font-[700] text-white font-inter">
             {title}
           </h1>
 

@@ -4,16 +4,16 @@ const Workflow = () => {
   return (
     <>
       <div className="gap-6 flex flex-col pt-24">
-        <p className="text-[rgb(4,75,217)] text-5xl font-poppins font-semibold text-[30px]">
+        <p className="text-[rgb(4,75,217)] text-5xl font-inter font-semibold text-[30px]">
           Introducing rcmGPT<sup>TM</sup>
         </p>
-        <p className="text-[rgb(4,75,217)] text-2xl font-poppins font-semibold text-[30px]">
+        <p className="text-[rgb(4,75,217)] text-2xl font-inter font-semibold text-[30px]">
           Redefining Claims Recovery – Swifter, More Affordable, and with
           Peerless Accuracy
         </p>
       </div>
       <div className="hidden xl:flex flex-col">
-        <p className="font-poppins font-normal pt-10">
+        <p className="font-inter font-normal pt-10">
         Helio RCM Denial management process
         </p>
         <div className="flex justify-between">
@@ -46,7 +46,7 @@ const Workflow = () => {
         </div>
         <div className="flex items-center pt-4">
           <div className="pr-10">
-            <p className="font-poppins text-center">
+            <p className="font-inter text-center">
               <span className="text-[rgb(4,75,217)] font-semibold">
                 Autonomously selects denied claims
               </span>{" "}
@@ -55,7 +55,7 @@ const Workflow = () => {
           </div>
           <div className="flex-1 h-px bg-gray-300 mx-4"></div>
           <div className="pl-20 pr-20">
-            <p className="font-poppins text-center">
+            <p className="font-inter text-center">
               <span className="text-[rgb(4,75,217)] font-semibold">
                 Autonomously identifies denial
               </span>{" "}
@@ -65,7 +65,7 @@ const Workflow = () => {
           </div>
           <div className="flex-1 h-px bg-gray-300 mx-4"></div>
           <div className="pl-20">
-            <p className="font-poppins text-center">
+            <p className="font-inter text-center">
               <span className="text-[rgb(4,75,217)] font-semibold">
                 Autonomously resubmits and appeals
               </span>{" "}
@@ -101,7 +101,7 @@ const Workflow = () => {
         </div>
       </div>
       <div className="flex flex-col gap-y-12 pt-12 xl:hidden">
-        <p className="font-poppins font-semibold">
+        <p className="font-inter font-semibold">
         Helio RCM Denial management process
         </p>
         <div className="flex flex-col gap-y-3">
@@ -120,7 +120,7 @@ const Workflow = () => {
       </div>
       <div className="pb-12 pt-12">
         <div className="w-full h-px bg-gray-300 mb-4"></div>
-        <p className="text-[rgb(4,75,217)] font-poppins font-semibold text-center">
+        <p className="text-[rgb(4,75,217)] font-inter font-semibold text-center">
           (0) ZERO FTE TOUCHES
         </p>
       </div>

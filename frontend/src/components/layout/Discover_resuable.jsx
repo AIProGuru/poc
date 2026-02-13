@@ -6,10 +6,10 @@ export default function Discover_reusable({title,desc}) {
     <div className="relative mb-10 sm:mb-32 sm:mt-16 bg-gradient-to-r from-[#3849D8B2] to-[#1219537D] h-auto sm:h-[250px] w-full sm:w-[60%] rounded-2xl p-10 overflow-visible flex flex-col justify-center sm:flex-row items-center sm:items-start">
       {/* Left Content */}
       <div className="flex-1">
-        <h1 className="text-[#EBEDF0] text-4xl font-bold font-poppins w-[80%] mb-4">
+        <h1 className="text-[#EBEDF0] text-4xl font-bold font-inter w-[80%] mb-4">
         {title}
         </h1>
-        <p className="text-[#C6D4FF] text-[12px] w-[70%] font-poppins mb-6">
+        <p className="text-[#C6D4FF] text-[12px] w-[70%] font-inter mb-6">
 {desc}        </p>
       </div>
       <div className="getstarted mx-2 z-50 mt-4 sm:mt-0">

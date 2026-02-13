@@ -11,7 +11,7 @@ const Odometer = ({ value }) => {
   return (
     <section className="odometer">
       <div className="container">
-        <div id="number-ticker" className="number-ticker font-poppins font-bold mb-0 sm:mb-[-40px]">
+        <div id="number-ticker" className="number-ticker font-inter font-bold mb-0 sm:mb-[-40px]">
           {digits.map((digit, index) => (
             <div key={index} id={`digit-place${index}`} className="digit">
               {[...Array(10).keys(), 0].map((num) => (

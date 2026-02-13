@@ -6,7 +6,7 @@ export default function Discover_collab() {
     <div className="relative mb-10 sm:mb-32 sm:mt-16 bg-gradient-to-r from-[#3849D8B2] to-[#1219537D] w-full sm:w-[1042px] rounded-2xl p-10 overflow-visible flex flex-col justify-center sm:flex-row items-center sm:items-start">
       {/* Left Content */}
       <div className="flex-1">
-        <h1 className="text-[#EBEDF0] text-[36px] sm:text-[54px] leading-[40px] sm:leading-[54px] font-bold font-poppins w-[90%] mb-4">
+        <h1 className="text-[#EBEDF0] text-[36px] sm:text-[54px] leading-[40px] sm:leading-[54px] font-bold font-inter w-[90%] mb-4">
           We seamlessly integrate with your systems to maximize efficiency
         </h1>
       </div>

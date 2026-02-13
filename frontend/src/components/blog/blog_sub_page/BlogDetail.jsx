@@ -258,7 +258,7 @@ John Menton`,
       <Header />
       <div className="flex flex-col sm:flex-row gap-x-5 mx-10 sm:mx-32 my-12 sm:my-36">
         <button
-          className="sm:hidden fixed top-40 right-0 text-white  rounded-full font-poppins font-[700] mb-4 z-50"
+          className="sm:hidden fixed top-40 right-0 text-white  rounded-full font-inter font-[700] mb-4 z-50"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
           <span>
@@ -297,7 +297,7 @@ John Menton`,
         <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 transform ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-300 sm:hidden`}>
           <div className="bg-[#0B0C14] w-64 h-full p-4 absolute right-0">
             <button
-              className="absolute top-4 right-4 text-white font-poppins font-[700] z-50"
+              className="absolute top-4 right-4 text-white font-inter font-[700] z-50"
               onClick={() => setIsSidebarOpen(false)}
             >
               <span>
@@ -309,7 +309,7 @@ John Menton`,
 
               </span>
             </button>
-            <h2 className="text-white font-poppins font-[700]  mb-4">Table of Contents</h2>
+            <h2 className="text-white font-inter font-[700]  mb-4">Table of Contents</h2>
             <ul className="text-[#6C9BE0] text-[16px] sm:text-[20px] max-w-full sm:max-w-[200px]">
               {headings.map((item, index) => (
                 <li key={index} className="my-2">
@@ -321,7 +321,7 @@ John Menton`,
         </div>
         <div className="w-full sm:w-4/5">
           <div className='flex flex-col sm:flex-row justify-between mb-5'>
-            <h1 className="text-[#EBEDF0] text-[32px] sm:text-[54px] max-w-full sm:max-w-[60%] font-[700] leading-[36px] sm:leading-[58px] mt-24 sm:mt-2 font-poppins">{blog.title}</h1>
+            <h1 className="text-[#EBEDF0] text-[32px] sm:text-[54px] max-w-full sm:max-w-[60%] font-[700] leading-[36px] sm:leading-[58px] mt-24 sm:mt-2 font-inter">{blog.title}</h1>
             <div className='flex flex-col sm:flex-row items-center sm:mr-5 sm:mt-10'>
               {/* <img src='/demo_blog_img.png' className='w-[54px] h-[54px] sm:mr-5' alt="Author" /> */}
               <div className='text-center mt-10 sm:text-right'>
@@ -346,14 +346,14 @@ John Menton`,
                 return <p key={index} id={`heading-${index}`} className="my-4">{item.p}</p>;
               }
               if (item.h) {
-                return <h2 key={index} id={`heading-${index}`} className="my-4 text-white font-poppins font-[700]">{item.h}</h2>;
+                return <h2 key={index} id={`heading-${index}`} className="my-4 text-white font-inter font-[700]">{item.h}</h2>;
               }
               return null;
             })}
           </div>
         </div>
         <div className="hidden sm:block w-full sm:w-1/5 pl-4 mt-8 sm:mt-0">
-          <h2 className="text-white font-poppins font-[700] mb-4">Table of Contents</h2>
+          <h2 className="text-white font-inter font-[700] mb-4">Table of Contents</h2>
           <ul className="text-[#6C9BE0] text-[16px] sm:text-[20px] max-w-full sm:max-w-[200px]">
             {headings.map((item, index) => (
               <li key={index} className="my-2">

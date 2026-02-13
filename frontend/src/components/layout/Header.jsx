@@ -388,7 +388,7 @@ export default function Header(props) {
             {isAuthenticated ? (
               <>
                 <span
-                  className="text-sm text-center h-[50px] font-poppins px-8 py-3 rounded-lg leading-6 w-fit"
+                  className="text-sm text-center h-[50px] font-inter px-8 py-3 rounded-lg leading-6 w-fit"
                   style={{
                     whiteSpace: "nowrap",
                     overflow: "hidden",
@@ -399,7 +399,7 @@ export default function Header(props) {
                 </span>
                 <button
                   onClick={logout}
-                  className="text-sm text-center h-[50px] cursor-pointer font-poppins bg-gradient-to-r from-[#06060CCC] to-[#1219538F] px-8 py-3 rounded-lg leading-6 text-white w-[120px]"
+                  className="text-sm text-center h-[50px] cursor-pointer font-inter bg-gradient-to-r from-[#06060CCC] to-[#1219538F] px-8 py-3 rounded-lg leading-6 text-white w-[120px]"
                 >
                   Log out
                 </button>
@@ -408,13 +408,13 @@ export default function Header(props) {
               <>
                 <Link
                   to="/signup"
-                  className="text-sm text-center h-[50px] cursor-pointer font-poppins bg-[#3b3f46] px-6 py-3 rounded-lg leading-6 text-white w-[160px]"
+                  className="text-sm text-center h-[50px] cursor-pointer font-inter bg-[#3b3f46] px-6 py-3 rounded-lg leading-6 text-white w-[160px]"
                 >
                   Start Free Trial
                 </Link>
                 <Link
                   to="/signin"
-                  className="text-sm text-center h-[50px] cursor-pointer font-poppins bg-gradient-to-r from-[#06060CCC] to-[#1219538F] px-6 py-3 rounded-lg leading-6 text-white w-[100px]"
+                  className="text-sm text-center h-[50px] cursor-pointer font-inter bg-gradient-to-r from-[#06060CCC] to-[#1219538F] px-6 py-3 rounded-lg leading-6 text-white w-[100px]"
                 >
                   Log in
                 </Link>
@@ -832,7 +832,7 @@ export default function Header(props) {
                   className="cursor-pointer flex items-center justify-between"
                 >
                   <span
-                    className={`block text-[20px] font-semibold leading-7 font-poppins ${
+                    className={`block text-[20px] font-semibold leading-7 font-inter ${
                       serveMob ? "text-[#002FFF]" : "text-neutral-800"
                     }`}
                   >
@@ -938,7 +938,7 @@ export default function Header(props) {
                   className="cursor-pointer flex items-center justify-between"
                 >
                   <span
-                    className={`block text-[20px] font-semibold leading-7 font-poppins ${
+                    className={`block text-[20px] font-semibold leading-7 font-inter ${
                       ResourcesMob ? "text-[#002FFF]" : "text-neutral-800"
                     }`}
                   >
@@ -1011,7 +1011,7 @@ export default function Header(props) {
                   className="cursor-pointer flex items-center justify-between"
                 >
                   <span
-                    className={`block text-[20px] font-semibold leading-7 font-poppins ${
+                    className={`block text-[20px] font-semibold leading-7 font-inter ${
                       CompanyMob ? "text-[#002FFF]" : "text-neutral-800"
                     }`}
                   >
@@ -1112,27 +1112,27 @@ export default function Header(props) {
                 <div className="gap-y-10 md:hidden">
                   {!isAuthenticated && (
                     <Link to="/signin">
-                      <div className="text-sm w-full h-[50px] cursor-pointer text-center mt-16 font-bold font-poppins bg-gradient-to-r from-[#06060CCC] to-[#1219538F] px-8 py-3 rounded-lg leading-6 text-white">
+                      <div className="text-sm w-full h-[50px] cursor-pointer text-center mt-16 font-bold font-inter bg-gradient-to-r from-[#06060CCC] to-[#1219538F] px-8 py-3 rounded-lg leading-6 text-white">
                         <span className="">Log in</span>
                       </div>
                     </Link>
                   )}
                   {!isAuthenticated && (
                     <Link to="/signup">
-                      <div className="text-sm text-center h-[50px] cursor-pointer font-bold font-poppins mt-5 bg-[#3b3f46] px-8 py-3 rounded-lg leading-6 text-white">
+                      <div className="text-sm text-center h-[50px] cursor-pointer font-bold font-inter mt-5 bg-[#3b3f46] px-8 py-3 rounded-lg leading-6 text-white">
                         <span className="">Start Free Trial</span>
                       </div>
                     </Link>
                   )}
                   {isAuthenticated && (
-                    <div className="text-[24px] w-full h-[50px] text-left mt-16 font-bold font-poppins py-3 rounded-lg leading-6 mb-5">
+                    <div className="text-[24px] w-full h-[50px] text-left mt-16 font-bold font-inter py-3 rounded-lg leading-6 mb-5">
                       <span className="">Hi {firstname}</span>
                     </div>
                   )}
                   {isAuthenticated && (
                     <Link to="#">
                       <button onClick={logout}>
-                        <span className="text-sm text-center h-[50px] cursor-pointer font-bold font-poppins mt-5 bg-[#3b3f46] px-8 py-3 rounded-lg leading-6 text-white">
+                        <span className="text-sm text-center h-[50px] cursor-pointer font-bold font-inter mt-5 bg-[#3b3f46] px-8 py-3 rounded-lg leading-6 text-white">
                           Log out
                         </span>
                       </button>

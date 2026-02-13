@@ -6,7 +6,7 @@ const BlogRight = ({ title, description , time , author ,id ,image }) => {
     <div>
       <div className="flex w-full h-full md:flex-row flex-col items-center justify-between gap-4">
         <div className="max-w-[567px] md:w-1/2 w-full  flex flex-col justify-start gap-4">
-          <h1 className="md:text-[40px] md:leading-[48px] text-[32px] leading-[36px] font-[700] text-white font-poppins">
+          <h1 className="md:text-[40px] md:leading-[48px] text-[32px] leading-[36px] font-[700] text-white font-inter">
             {title}
           </h1>
           <p className="text-[22px] leading-[30.8px] font-[400] mt-4 text-[#8BA3D1]">

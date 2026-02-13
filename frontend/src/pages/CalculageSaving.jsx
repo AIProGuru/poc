@@ -128,7 +128,7 @@ function CalculateSavingsPage() {
 
   return (
     <div
-      className="font-poppins flex flex-col gap-4 justify-between pt-14 items-center min-h-full pb-0"
+      className="font-inter flex flex-col gap-4 justify-between pt-14 items-center min-h-full pb-0"
       style={{
         background:
           "linear-gradient(135deg, rgba(9,11,24,1) 0%, rgba(33,41,107,1) 53%, rgba(33,40,105,1) 63%, rgba(26,28,58,1) 100%)",

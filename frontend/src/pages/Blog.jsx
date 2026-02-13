@@ -119,7 +119,7 @@ John Menton`,
           <BlogHeader />
         </div>
         <div className="container flex flex-col justify-center w-full mx-auto">
-          <h1 className="text-[#EBEDF0] md:text-[54px] text-[38px] font-[700] font-poppins">
+          <h1 className="text-[#EBEDF0] md:text-[54px] text-[38px] font-[700] font-inter">
             All News
           </h1>
 
@@ -302,7 +302,7 @@ John Menton`,
                 <button
                   key={section}
                   className={`px-4 py-2 rounded-lg ${selectedSection === section
-                      ? "underline font-poppins text-white"
+                      ? "underline font-inter text-white"
                       : " text-[#8BA3D1]"
                     }`}
                   onClick={() => setSelectedSection(section)}
@@ -511,7 +511,7 @@ John Menton`,
         <div className="mt-10 flex justify-start"></div>
 
         <div className="flex flex-col sm:ml-32 mt-32">
-          <p className="font-poppins mb-10 text-white md:text-[54px] md:leading-[54px] text-[38px] leading-[38px] font-[700] px-4">
+          <p className="font-inter mb-10 text-white md:text-[54px] md:leading-[54px] text-[38px] leading-[38px] font-[700] px-4">
             Related news
           </p>
           <div className="flex overflow-x-auto space-x-4 p-4 scrollbar-hide">

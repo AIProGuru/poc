@@ -9,7 +9,7 @@ const Feature = () => {
         <Workflow />
       </Container>
       <div className="bg-gray-600 flex flex-col gap-10 p-10">
-        <p className="pl-[25%] text-white font-poppins font-semibold text-[48px]">
+        <p className="pl-[25%] text-white font-inter font-semibold text-[48px]">
           Platform Overview
         </p>
         <div className="flex justify-center">

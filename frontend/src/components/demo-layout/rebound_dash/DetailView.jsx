@@ -162,13 +162,13 @@ const DetailView = (props) => {
       </div>
       <div className="flex gap-4">
         <button
-          className="bg-gray-600 text-white font-poppins font-semibold rounded-full px-4 py-1"
+          className="bg-gray-600 text-white font-inter font-semibold rounded-full px-4 py-1"
           onClick={() => setExpandOrCollapses(true)}
         >
           Expand All
         </button>
         <button
-          className="bg-gray-600 text-white font-poppins font-semibold rounded-full px-4 py-1"
+          className="bg-gray-600 text-white font-inter font-semibold rounded-full px-4 py-1"
           onClick={() => setExpandOrCollapses(false)}
         >
           Collapse All

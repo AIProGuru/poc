@@ -680,7 +680,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     }`;
 
   return (
-    <div className={shellClasses} style={{ fontFamily: 'Nunito, sans-serif' }}>
+    <div className={shellClasses} style={{ fontFamily: 'Inter, sans-serif' }}>
       <div className={panelClasses}>
         <div className={`mt-2 ${isAddView ? `pb-3 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}` : ''}`}>
           <h1 className="font-inter font-semibold text-2xl leading-none tracking-normal text-[#F4F4F4]">
@@ -802,7 +802,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
               className={`flex flex-col rounded-3xl border ${theme === 'dark' ? 'border-[#1F2231] bg-[#111525]' : 'border-slate-200 bg-white'} p-2`}
             >
               <div className="w-full overflow-x-auto rounded-2xl" style={{ maxHeight: '500px' }}>
-                <table className="min-w-full  font-nunito">
+                <table className="min-w-full  font-inter">
                   <thead className=" sticky top-0 z-10">
                     <tr>
                       <th scope="col" className={` ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[50px]`}>

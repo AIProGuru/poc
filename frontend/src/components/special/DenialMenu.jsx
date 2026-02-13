@@ -65,7 +65,7 @@ const DenialMenu = () => {
     <div className="text-white flex flex-col items-center p-6">
       {/* Header */}
       <h1
-        className="text-[54px] leading-[58px] font-bold font-poppins mb-6 text-[#D9D9D9CC]"
+        className="text-[54px] leading-[58px] font-bold font-inter mb-6 text-[#D9D9D9CC]"
         style={{
           "WebkitTextStroke": "0.5px white",
         }}
@@ -265,7 +265,7 @@ const DenialMenu = () => {
       {/* Popular Searches */}
       <div className="mb-6">
         <h2
-          className="text-[40px] font-poppins mt-10 leading-[48px] font-semibold mb-4 text-[#D9D9D9CC]"
+          className="text-[40px] font-inter mt-10 leading-[48px] font-semibold mb-4 text-[#D9D9D9CC]"
           style={{
             "WebkitTextStroke": "0.5px white",
           }}
