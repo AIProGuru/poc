@@ -19,7 +19,7 @@ const ClientManagement = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
   const [newClient, setNewClient] = useState({
     name: '',
-    logo: '/logo_sm.svg',
+    logo: '',
     clientType: '',
     address: '',
     contact: '',
@@ -37,7 +37,7 @@ const ClientManagement = () => {
   const resetNewClientRow = () => {
     setNewClient({
       name: '',
-      logo: '/logo_sm.svg',
+      logo: '',
       clientType: '',
       address: '',
       contact: '',
@@ -108,6 +108,42 @@ const ClientManagement = () => {
     } finally {
       setLogoUploadingId(null);
     }
+  };
+
+  const clearClientLogo = async (clientId) => {
+    if (clientId === 'new') {
+      setNewClient((prev) => ({ ...prev, logo: '' }));
+      return;
+    }
+    try {
+      setLogoUploadingId(clientId);
+      setClients((prev) =>
+        prev.map((client) =>
+          client.id === clientId ? { ...client, logo: '' } : client
+        )
+      );
+      await axios.patch(
+        `${resolvedApiUrl}/clients/${clientId}`,
+        { logo: '' },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Error removing client logo:", error);
+      alert(`Error removing logo: ${error.message}`);
+      fetch_clients();
+    } finally {
+      setLogoUploadingId(null);
+    }
+  };
+
+  const getLogoFallbackText = (name) => {
+    if (!name) return 'CL';
+    return name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'CL';
   };
 
 
@@ -309,25 +345,43 @@ const ClientManagement = () => {
           >
             <td className="px-3 py-3">
               <div className="flex items-center gap-3">
-                <label
-                  className="relative flex h-10 w-10 items-center justify-center rounded-md border border-[#ffffff20] bg-[#ffffff08] overflow-hidden cursor-pointer"
-                  title="Upload client logo"
-                >
-                  <img
-                    src={newClient.logo || '/default_logo.png'}
-                    alt="Client logo"
-                    className="h-full w-full object-contain"
-                  />
-                  <span className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-xs text-white">
-                    Upload
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={(e) => handleLogoFileSelect(e.target.files?.[0], 'new')}
-                  />
-                </label>
+                <div className="relative h-10 w-10">
+                  <label
+                    className="relative flex h-10 w-10 items-center justify-center rounded-md border border-[#ffffff20] bg-[#ffffff08] overflow-hidden cursor-pointer"
+                    title="Upload client logo"
+                  >
+                    {newClient.logo ? (
+                      <img
+                        src={newClient.logo}
+                        alt=""
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs font-semibold text-gray-300">
+                        {getLogoFallbackText(newClient.name)}
+                      </span>
+                    )}
+                    <span className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-xs text-white">
+                      Upload
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => handleLogoFileSelect(e.target.files?.[0], 'new')}
+                    />
+                  </label>
+                  {newClient.logo && (
+                    <button
+                      type="button"
+                      onClick={() => clearClientLogo('new')}
+                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-[#ffffff20] text-white text-xs flex items-center justify-center hover:bg-[#ffffff35]"
+                      title="Remove logo"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
                 <input
                   type="text"
                   name="name"
@@ -430,25 +484,43 @@ const ClientManagement = () => {
             >
               <td className="px-3 py-4 text-white">
                 <div className="flex items-center gap-3">
-                  <label
-                    className="relative flex h-10 w-10 items-center justify-center rounded-md border border-[#ffffff20] bg-[#ffffff08] overflow-hidden cursor-pointer"
-                    title="Upload client logo"
-                  >
-                    <img
-                      src={client.logo || '/default_logo.png'}
-                      alt={client.name || 'Client logo'}
-                      className="h-full w-full object-contain"
-                    />
-                    <span className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white">
-                      {logoUploadingId === client.id ? 'Saving...' : 'Upload'}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      onChange={(e) => handleLogoFileSelect(e.target.files?.[0], client.id)}
-                    />
-                  </label>
+                  <div className="relative h-10 w-10">
+                    <label
+                      className="relative flex h-10 w-10 items-center justify-center rounded-md border border-[#ffffff20] bg-[#ffffff08] overflow-hidden cursor-pointer"
+                      title="Upload client logo"
+                    >
+                      {client.logo ? (
+                        <img
+                          src={client.logo}
+                          alt=""
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-xs font-semibold text-gray-300">
+                          {getLogoFallbackText(client.name)}
+                        </span>
+                      )}
+                      <span className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white">
+                        {logoUploadingId === client.id ? 'Saving...' : 'Upload'}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={(e) => handleLogoFileSelect(e.target.files?.[0], client.id)}
+                      />
+                    </label>
+                    {client.logo && (
+                      <button
+                        type="button"
+                        onClick={() => clearClientLogo(client.id)}
+                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-[#ffffff20] text-white text-xs flex items-center justify-center hover:bg-[#ffffff35]"
+                        title="Remove logo"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                   <span>{client.name || '-'}</span>
                 </div>
               </td>

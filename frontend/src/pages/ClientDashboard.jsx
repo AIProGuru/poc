@@ -651,28 +651,33 @@ const TenantDetailsModal = () => {
                               {subClient.status}
                             </span>
                           </div>
-                          <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm text-gray-400">Denials Captured</p>
-                              <p className="text-white">{subClient.denialsCaptured?.toLocaleString() || '0'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-400">Revenue Recovered</p>
-                              <p className="text-white">{formatCurrency(subClient.revenueRecovered || 0)}</p>
-                            </div>
+                          <div className="mt-2 text-sm text-gray-400">
+                            {subClient.address || 'No address on file'}
                           </div>
                         </div>
-                        <button 
-                          className="p-2 hover:bg-[#ffffff15] rounded-lg transition"
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent parent onClick from firing
-                            openTenantDetails(subClient);
-                          }}
-                        >
-                          <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openTenantDetails(subClient);
+                            }}
+                          >
+                            SELECT
+                          </button>
+                          <button 
+                            className="p-2 hover:bg-[#ffffff15] rounded-lg transition"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent parent onClick from firing
+                              openTenantDetails(subClient);
+                            }}
+                          >
+                            <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1156,9 +1161,7 @@ const handleTenantSubmit = async (formData) => {
     const tenantToAdd = {
       ...formData,
       clientId: client.id,
-      clientName: client.name,
-      denialsCaptured: 0,
-      revenueRecovered: 0
+      clientName: client.name
     };
 
     const res = await axios.post(
@@ -1261,6 +1264,7 @@ const TenantModal = () => {
   // Create a local state to manage the form values
   const [formState, setFormState] = useState({...newTenant});
   const [isTenantTypeOpen, setIsTenantTypeOpen] = useState(false);
+  const rowInputClass = "w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]";
   
   const handleLocalInputChange = (e) => {
     const { name, value } = e.target;
@@ -1288,6 +1292,17 @@ const TenantModal = () => {
     handleTenantSubmit(formState);
   };
 
+  const handleClear = () => {
+    setFormState({
+      name: '',
+      clientType: '',
+      address: '',
+      contact: '',
+      email: '',
+      status: 'Active'
+    });
+  };
+
   const handleClose = () => {
     setIsTenantModalOpen(false);
   };
@@ -1298,7 +1313,7 @@ const TenantModal = () => {
       onClick={handleClose}
     >
       <div 
-        className="bg-[#232429] rounded-xl w-full max-w-2xl overflow-hidden border border-[#2f333a] shadow-2xl"
+        className="bg-[#232429] rounded-xl w-full max-w-5xl overflow-hidden border border-[#2f333a] shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center border-b border-[#ffffff20] p-6">
@@ -1315,119 +1330,127 @@ const TenantModal = () => {
         </div>
         
         <form onSubmit={handleFormSubmit} className="p-6 max-h-[70vh] overflow-y-auto">
-          {/* Client Name (non-editable) */}
-          <div className="mb-6">
-            <label className="block text-[#f4f4f4] mb-2 text-sm">Client</label>
-            <div className="w-full p-2.5 bg-[#ffffff08] rounded-lg text-white border border-[#ffffff15] font-medium">
-              {client.name}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Tenant Name */}
-            <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Tenant Name <span className="text-red-400">*</span></label>
-              <input 
-                type="text" 
-                name="name" 
-                value={formState.name}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-            
-            {/* Client Type */}
-            <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Client Type <span className="text-red-400">*</span></label>
-              <div
-                className="relative"
-                tabIndex={0}
-                onBlur={() => setIsTenantTypeOpen(false)}
-              >
-                <button
-                  type="button"
-                  onClick={() => setIsTenantTypeOpen(prev => !prev)}
-                  className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none flex items-center justify-between"
-                >
-                  <span className={formState.clientType ? '' : 'text-gray-400'}>
-                    {formState.clientType || 'Select Client Type'}
-                  </span>
-                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
-                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                {isTenantTypeOpen && (
-                  <div className="absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg">
-                    {CLIENT_TYPE_OPTIONS.map((option) => (
+          <div className="overflow-x-auto">
+            <table className="min-w-[1100px] w-full bg-transparent">
+              <colgroup>
+                <col className="w-[220px]" />
+                <col className="w-[240px]" />
+                <col className="w-[320px]" />
+                <col className="w-[220px]" />
+                <col className="w-[280px]" />
+                <col className="w-[160px]" />
+              </colgroup>
+              <thead>
+                <tr className="text-[#9ca3af] border-b border-[#ffffff20]">
+                  <th className="px-3 py-3 text-left">Tenant</th>
+                  <th className="px-3 py-3 text-left">Tenant Type</th>
+                  <th className="px-3 py-3 text-left">Address</th>
+                  <th className="px-3 py-3 text-left">Contact</th>
+                  <th className="px-3 py-3 text-left">Email</th>
+                  <th className="px-3 py-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-[#ffffff20] text-[#D9D9D9CC] bg-[#ffffff05]">
+                  <td className="px-3 py-3">
+                    <input
+                      type="text"
+                      name="name"
+                      value={formState.name}
+                      onChange={handleLocalInputChange}
+                      className={rowInputClass}
+                      placeholder="Tenant"
+                      required
+                    />
+                  </td>
+                  <td className="px-3 py-3">
+                    <div
+                      className="relative"
+                      tabIndex={0}
+                      onBlur={() => setIsTenantTypeOpen(false)}
+                    >
                       <button
-                        key={option}
                         type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => handleTenantTypeSelect(option)}
-                        className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
+                        onClick={() => setIsTenantTypeOpen((prev) => !prev)}
+                        className={`${rowInputClass} flex items-center justify-between`}
                       >
-                        {option}
+                        <span className={formState.clientType ? '' : 'text-gray-400'}>
+                          {formState.clientType || 'Select tenant type'}
+                        </span>
+                        <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Address */}
-            <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Address <span className="text-red-400">*</span></label>
-              <input 
-                type="text" 
-                name="address" 
-                value={formState.address}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-            
-            {/* Contact Info */}
-            <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Contact <span className="text-red-400">*</span></label>
-              <input 
-                type="text" 
-                name="contact" 
-                value={formState.contact}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Email <span className="text-red-400">*</span></label>
-              <input 
-                type="email" 
-                name="email" 
-                value={formState.email}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="flex justify-end mt-8 space-x-4">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-5 py-2.5 bg-[#ffffff10] hover:bg-[#ffffff20] text-white rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2.5 bg-[#3b3f46] hover:bg-gray-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-gray-500/30"
-            >
-              Add Tenant
-            </button>
+                      {isTenantTypeOpen && (
+                        <div className="absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg">
+                          {CLIENT_TYPE_OPTIONS.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => handleTenantTypeSelect(option)}
+                              className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3">
+                    <input
+                      type="text"
+                      name="address"
+                      value={formState.address}
+                      onChange={handleLocalInputChange}
+                      className={rowInputClass}
+                      placeholder="Address"
+                      required
+                    />
+                  </td>
+                  <td className="px-3 py-3">
+                    <input
+                      type="text"
+                      name="contact"
+                      value={formState.contact}
+                      onChange={handleLocalInputChange}
+                      className={rowInputClass}
+                      placeholder="Contact"
+                      required
+                    />
+                  </td>
+                  <td className="px-3 py-3">
+                    <input
+                      type="email"
+                      name="email"
+                      value={formState.email}
+                      onChange={handleLocalInputChange}
+                      className={rowInputClass}
+                      placeholder="Email"
+                      required
+                    />
+                  </td>
+                  <td className="px-3 py-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        type="submit"
+                        className="px-3 py-2 bg-[#3b3f46] hover:bg-gray-700 text-white text-xs font-medium rounded-md transition-all"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleClear}
+                        className="px-3 py-2 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </form>
       </div>
@@ -1725,8 +1748,19 @@ const FacilityModal = () => {
           <div className="container mx-auto px-4 py-6">
             <div className="bg-[#232429] rounded-xl border border-[#2f333a] p-6">
               <div className="flex flex-col md:flex-row items-start md:items-center">
-                <div className="w-20 h-20 bg-[#1e1f24] rounded-lg flex items-center justify-center p-3 mr-6 mb-4 md:mb-0">
-                  <img src={client.logo} alt={client.name} className="max-w-full max-h-full" />
+                <div className="w-20 h-20 bg-[#1e1f24] rounded-lg flex items-center justify-center p-3 mr-6 mb-4 md:mb-0 overflow-hidden border border-[#ffffff20]">
+                  {client.logo ? (
+                    <img src={client.logo} alt="" className="max-w-full max-h-full object-contain" />
+                  ) : (
+                    <span className="text-4xl font-semibold text-gray-300">
+                      {(client.name || 'CL')
+                        .trim()
+                        .split(/\s+/)
+                        .slice(0, 2)
+                        .map((part) => part[0]?.toUpperCase())
+                        .join('') || 'CL'}
+                    </span>
+                  )}
                 </div>
                 
                 <div className="flex-1">
@@ -1781,18 +1815,6 @@ const FacilityModal = () => {
       Tenant Management
     </button>
 
-    <button 
-      className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'users' ? 'text-white bg-[#ffffff15] border-b-2 border-gray-500' : 'text-gray-400 hover:text-white'}`} 
-      onClick={() => handleTabChange('users')}
-    >
-      Users
-    </button>
-              <button 
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === 'settings' ? 'text-white bg-[#ffffff15] border-b-2 border-gray-500' : 'text-gray-400 hover:text-white'}`} 
-                onClick={() => handleTabChange('settings')}
-              >
-                Settings
-              </button>
              
             </div>
           </div>
