@@ -211,6 +211,17 @@ const TenantDetailsModal = () => {
     email: '',
     status: 'Active'
   });
+  const [editingFacilityId, setEditingFacilityId] = useState(null);
+  const [facilityEditForm, setFacilityEditForm] = useState({
+    name: '',
+    facilityType: '',
+    address: '',
+    taxId: '',
+    npi: '',
+    contact: '',
+    email: ''
+  });
+  const editInputClass = "w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]";
   const STATUS_OPTIONS = ['Active', 'Pending', 'On Hold'];
 
   useEffect(() => {
@@ -223,8 +234,44 @@ const TenantDetailsModal = () => {
         email: selectedTenant.email || '',
         status: selectedTenant.status || 'Active'
       });
+      setEditingFacilityId(null);
+      setFacilityEditForm({
+        name: '',
+        facilityType: '',
+        address: '',
+        taxId: '',
+        npi: '',
+        contact: '',
+        email: ''
+      });
     }
   }, [selectedTenant]);
+
+  const beginFacilityEdit = (facility) => {
+    setEditingFacilityId(facility.id);
+    setFacilityEditForm({
+      name: facility.name || '',
+      facilityType: facility.facilityType || '',
+      address: facility.address || '',
+      taxId: facility.taxId || '',
+      npi: facility.npi || '',
+      contact: facility.contact || '',
+      email: facility.email || ''
+    });
+  };
+
+  const cancelFacilityEdit = () => {
+    setEditingFacilityId(null);
+    setFacilityEditForm({
+      name: '',
+      facilityType: '',
+      address: '',
+      taxId: '',
+      npi: '',
+      contact: '',
+      email: ''
+    });
+  };
 
 
   if (!selectedTenant) return null;
@@ -368,10 +415,12 @@ const TenantDetailsModal = () => {
                       <select
                         value={editTenantForm.status}
                         onChange={(e) => setEditTenantForm(prev => ({ ...prev, status: e.target.value }))}
-                        className="p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]"
+                        className="p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#1f232a] text-white border-[#ffffff20] hover:border-gray-400"
                       >
                         {STATUS_OPTIONS.map((status) => (
-                          <option key={status} value={status}>{status}</option>
+                          <option key={status} value={status} className="bg-[#1f232a] text-white">
+                            {status}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -451,30 +500,137 @@ const TenantDetailsModal = () => {
                           <div key={facility.id} className="border border-[#ffffff10] rounded-lg p-4">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-white font-medium">{facility.name}</p>
-                                <p className="text-xs text-gray-400">{facility.facilityType || 'Facility Type'}</p>
+                                {isEditingTenant && editingFacilityId === facility.id ? (
+                                  <>
+                                    <input
+                                      type="text"
+                                      value={facilityEditForm.name}
+                                      onChange={(e) => setFacilityEditForm(prev => ({ ...prev, name: e.target.value }))}
+                                      className={editInputClass}
+                                    />
+                                    <div className="mt-2">
+                                      <select
+                                        value={facilityEditForm.facilityType}
+                                        onChange={(e) => setFacilityEditForm(prev => ({ ...prev, facilityType: e.target.value }))}
+                                        className={`${editInputClass} bg-[#1f232a] text-white`}
+                                      >
+                                        <option value="" className="bg-[#1f232a] text-white">Select Facility Type</option>
+                                        {FACILITY_TYPE_OPTIONS.map((option) => (
+                                          <option key={option} value={option} className="bg-[#1f232a] text-white">
+                                            {option}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p className="text-white font-medium">{facility.name}</p>
+                                    <p className="text-xs text-gray-400">{facility.facilityType || 'Facility Type'}</p>
+                                  </>
+                                )}
                               </div>
+                              {isEditingTenant && (
+                                <div className="flex items-center gap-2">
+                                  {editingFacilityId === facility.id ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          const updated = await handleFacilityUpdate(facility.id, facilityEditForm);
+                                          if (updated) {
+                                            cancelFacilityEdit();
+                                          }
+                                        }}
+                                        className="px-3 py-1.5 bg-[#3b3f46] text-white text-xs font-medium rounded-md hover:bg-gray-700 transition"
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={cancelFacilityEdit}
+                                        className="px-3 py-1.5 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => beginFacilityEdit(facility)}
+                                      className="px-3 py-1.5 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition"
+                                    >
+                                      Edit
+                                    </button>
+                                  )}
+                                </div>
+                              )}
                             </div>
                             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                               <div>
                                 <p className="text-gray-400">Address</p>
-                                <p className="text-white">{facility.address || '-'}</p>
+                                {isEditingTenant && editingFacilityId === facility.id ? (
+                                  <input
+                                    type="text"
+                                    value={facilityEditForm.address}
+                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, address: e.target.value }))}
+                                    className={editInputClass}
+                                  />
+                                ) : (
+                                  <p className="text-white">{facility.address || '-'}</p>
+                                )}
                               </div>
                               <div>
                                 <p className="text-gray-400">Contact</p>
-                                <p className="text-white">{facility.contact || '-'}</p>
+                                {isEditingTenant && editingFacilityId === facility.id ? (
+                                  <input
+                                    type="text"
+                                    value={facilityEditForm.contact}
+                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, contact: e.target.value }))}
+                                    className={editInputClass}
+                                  />
+                                ) : (
+                                  <p className="text-white">{facility.contact || '-'}</p>
+                                )}
                               </div>
                               <div>
                                 <p className="text-gray-400">Email</p>
-                                <p className="text-white">{facility.email || '-'}</p>
+                                {isEditingTenant && editingFacilityId === facility.id ? (
+                                  <input
+                                    type="email"
+                                    value={facilityEditForm.email}
+                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, email: e.target.value }))}
+                                    className={editInputClass}
+                                  />
+                                ) : (
+                                  <p className="text-white">{facility.email || '-'}</p>
+                                )}
                               </div>
                               <div>
                                 <p className="text-gray-400">Tax ID</p>
-                                <p className="text-white">{facility.taxId || '-'}</p>
+                                {isEditingTenant && editingFacilityId === facility.id ? (
+                                  <input
+                                    type="text"
+                                    value={facilityEditForm.taxId}
+                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, taxId: e.target.value }))}
+                                    className={editInputClass}
+                                  />
+                                ) : (
+                                  <p className="text-white">{facility.taxId || '-'}</p>
+                                )}
                               </div>
                               <div>
                                 <p className="text-gray-400">NPI</p>
-                                <p className="text-white">{facility.npi || '-'}</p>
+                                {isEditingTenant && editingFacilityId === facility.id ? (
+                                  <input
+                                    type="text"
+                                    value={facilityEditForm.npi}
+                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, npi: e.target.value }))}
+                                    className={editInputClass}
+                                  />
+                                ) : (
+                                  <p className="text-white">{facility.npi || '-'}</p>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1372,6 +1528,57 @@ const handleTenantUpdate = async (formData) => {
     return true;
   } catch (error) {
     console.error("Error updating tenant:", error);
+    alert(`Error: ${error.message}`);
+    return false;
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleFacilityUpdate = async (facilityId, formData) => {
+  if (!selectedTenant || !client) return false;
+  try {
+    setLoading(true);
+    const payload = {
+      name: formData.name,
+      facilityType: formData.facilityType,
+      address: formData.address,
+      taxId: formData.taxId,
+      npi: formData.npi,
+      contact: formData.contact,
+      email: formData.email
+    };
+
+    const res = await axios.patch(
+      `${resolvedApiUrl}/clients/${client.id}/tenants/${selectedTenant.id}/facilities/${facilityId}`,
+      payload,
+      { withCredentials: true }
+    );
+
+    const updatedFacility = res.data || { ...payload, id: facilityId };
+
+    const updatedSubClients = (client.subClients || []).map((subClient) => {
+      if (subClient.id !== selectedTenant.id) return subClient;
+      const facilities = (subClient.facilities || []).map((facility) =>
+        facility.id === facilityId ? { ...facility, ...updatedFacility } : facility
+      );
+      return { ...subClient, facilities };
+    });
+
+    setClient(prev => ({
+      ...prev,
+      subClients: updatedSubClients
+    }));
+
+    const updatedTenant = updatedSubClients.find((subClient) => subClient.id === selectedTenant.id);
+    if (updatedTenant) {
+      setSelectedTenant(updatedTenant);
+    }
+
+    alert(`Facility ${updatedFacility.name} updated successfully!`);
+    return true;
+  } catch (error) {
+    console.error("Error updating facility:", error);
     alert(`Error: ${error.message}`);
     return false;
   } finally {
