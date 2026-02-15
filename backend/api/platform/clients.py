@@ -227,6 +227,48 @@ def add_facility(client_id, tenant_id):
         return jsonify({"error": "Failed to add facility", "detail": str(exc)}), 500
 
 
+@clients_api.route("/clients/<client_id>/tenants/<tenant_id>", methods=["PATCH", "OPTIONS"])
+def update_tenant(client_id, tenant_id):
+    """
+    Update a tenant under a client (stored in subClients array).
+    """
+    try:
+        if request.method == "OPTIONS":
+            return ("", 204)
+        payload = request.get_json(silent=True) or {}
+        payload.pop("id", None)
+        payload.pop("createdAt", None)
+
+        if not payload:
+            return jsonify({"error": "No updates provided"}), 400
+
+        doc_ref = db.collection("clients").document(client_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            return jsonify({"error": "Client not found"}), 404
+
+        data = doc.to_dict() or {}
+        sub_clients = data.get("subClients") or []
+
+        updated_tenant = None
+        for sub_client in sub_clients:
+            if sub_client.get("id") == tenant_id:
+                for key, value in payload.items():
+                    sub_client[key] = value
+                updated_tenant = sub_client
+                break
+
+        if updated_tenant is None:
+            return jsonify({"error": "Tenant not found"}), 404
+
+        doc_ref.update({"subClients": sub_clients, "lastUpdated": firestore.SERVER_TIMESTAMP})
+
+        result = _serialize_value(updated_tenant)
+        return jsonify(result), 200
+    except Exception as exc:  # pragma: no cover - simple pass-through
+        return jsonify({"error": "Failed to update tenant", "detail": str(exc)}), 500
+
+
 @clients_api.route("/clients/<client_id>/users", methods=["GET"])
 def get_client_users(client_id):
     """

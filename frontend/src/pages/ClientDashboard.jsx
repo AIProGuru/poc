@@ -200,6 +200,31 @@ const TenantDetailsModal = () => {
   const handleClose = () => {
     setIsTenantDetailsOpen(false);
   };
+  const [facilityTab, setFacilityTab] = useState('facilities');
+  const [isEditingTenant, setIsEditingTenant] = useState(false);
+  const [isEditTenantTypeOpen, setIsEditTenantTypeOpen] = useState(false);
+  const [editTenantForm, setEditTenantForm] = useState({
+    name: '',
+    clientType: '',
+    address: '',
+    contact: '',
+    email: '',
+    status: 'Active'
+  });
+  const STATUS_OPTIONS = ['Active', 'Pending', 'On Hold'];
+
+  useEffect(() => {
+    if (selectedTenant) {
+      setEditTenantForm({
+        name: selectedTenant.name || '',
+        clientType: selectedTenant.clientType || '',
+        address: selectedTenant.address || '',
+        contact: selectedTenant.contact || '',
+        email: selectedTenant.email || '',
+        status: selectedTenant.status || 'Active'
+      });
+    }
+  }, [selectedTenant]);
 
 
   if (!selectedTenant) return null;
@@ -221,7 +246,17 @@ const TenantDetailsModal = () => {
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">{selectedTenant.name}</h2>
+              {isEditingTenant ? (
+                <input
+                  type="text"
+                  name="name"
+                  value={editTenantForm.name}
+                  onChange={(e) => setEditTenantForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full p-2 text-lg font-semibold rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]"
+                />
+              ) : (
+                <h2 className="text-xl font-semibold text-white">{selectedTenant.name}</h2>
+              )}
               <div className="flex items-center mt-1">
                 <span className="text-sm text-[#f4f4f4] mr-2">{selectedTenant.clientType}</span>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
@@ -256,11 +291,31 @@ const TenantDetailsModal = () => {
                 <div className="space-y-3 text-sm">
                   <div className="flex">
                     <span className="text-gray-400 w-24">Contact:</span> 
-                    <span className="text-white">{selectedTenant.contact}</span>
+                    {isEditingTenant ? (
+                      <input
+                        type="text"
+                        name="contact"
+                        value={editTenantForm.contact}
+                        onChange={(e) => setEditTenantForm(prev => ({ ...prev, contact: e.target.value }))}
+                        className="w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]"
+                      />
+                    ) : (
+                      <span className="text-white">{selectedTenant.contact}</span>
+                    )}
                   </div>
                   <div className="flex">
                     <span className="text-gray-400 w-24">Email:</span> 
-                    <span className="text-white">{selectedTenant.email}</span>
+                    {isEditingTenant ? (
+                      <input
+                        type="email"
+                        name="email"
+                        value={editTenantForm.email}
+                        onChange={(e) => setEditTenantForm(prev => ({ ...prev, email: e.target.value }))}
+                        className="w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]"
+                      />
+                    ) : (
+                      <span className="text-white">{selectedTenant.email}</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -270,14 +325,69 @@ const TenantDetailsModal = () => {
             <div>
               <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Client Type</h3>
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
-                <p className="text-white">{selectedTenant.clientType}</p>
-                <div className="mt-3 flex items-center">
-                  <span className={`inline-block w-3 h-3 rounded-full ${
-                    selectedTenant.status === 'Active' ? 'bg-green-500' : 
-                    selectedTenant.status === 'Pending' ? 'bg-yellow-500' : 'bg-red-500'
-                  } mr-2`}></span>
-                  <span className="text-gray-300">{selectedTenant.status}</span>
-                </div>
+                {isEditingTenant ? (
+                  <>
+                    <div
+                      className="relative"
+                      tabIndex={0}
+                      onBlur={() => setIsEditTenantTypeOpen(false)}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setIsEditTenantTypeOpen((prev) => !prev)}
+                        className="w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20] flex items-center justify-between"
+                      >
+                        <span className={editTenantForm.clientType ? '' : 'text-gray-400'}>
+                          {editTenantForm.clientType || 'Select tenant type'}
+                        </span>
+                        <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                      {isEditTenantTypeOpen && (
+                        <div className="absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg">
+                          {CLIENT_TYPE_OPTIONS.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                setEditTenantForm(prev => ({ ...prev, clientType: option }));
+                                setIsEditTenantTypeOpen(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      <span className="text-gray-400 text-sm">Status:</span>
+                      <select
+                        value={editTenantForm.status}
+                        onChange={(e) => setEditTenantForm(prev => ({ ...prev, status: e.target.value }))}
+                        className="p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]"
+                      >
+                        {STATUS_OPTIONS.map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-white">{selectedTenant.clientType}</p>
+                    <div className="mt-3 flex items-center">
+                      <span className={`inline-block w-3 h-3 rounded-full ${
+                        selectedTenant.status === 'Active' ? 'bg-green-500' : 
+                        selectedTenant.status === 'Pending' ? 'bg-yellow-500' : 'bg-red-500'
+                      } mr-2`}></span>
+                      <span className="text-gray-300">{selectedTenant.status}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             
@@ -285,14 +395,43 @@ const TenantDetailsModal = () => {
             <div className="md:col-span-2">
               <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Location</h3>
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
-                <p className="text-white">{selectedTenant.address}</p>
+                {isEditingTenant ? (
+                  <input
+                    type="text"
+                    name="address"
+                    value={editTenantForm.address}
+                    onChange={(e) => setEditTenantForm(prev => ({ ...prev, address: e.target.value }))}
+                    className="w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]"
+                  />
+                ) : (
+                  <p className="text-white">{selectedTenant.address}</p>
+                )}
               </div>
             </div>
 
             {/* Facilities */}
             <div className="md:col-span-2">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[#f4f4f4] text-sm font-medium">Facilities</h3>
+                <div className="flex items-center gap-2">
+                  {[
+                    { id: 'facilities', label: 'Facilities' },
+                    { id: 'payer-plan', label: 'Payer Plan' },
+                    { id: 'transaction-codes', label: 'Transaction Codes' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setFacilityTab(tab.id)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
+                        facilityTab === tab.id
+                          ? 'bg-[#ffffff15] text-white border border-[#ffffff30]'
+                          : 'bg-[#1f232a] text-gray-300 hover:text-white hover:bg-[#2a2f38] border border-[#ffffff10]'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
                 <button
                   type="button"
                   onClick={() => setIsFacilityModalOpen(true)}
@@ -302,90 +441,57 @@ const TenantDetailsModal = () => {
                 </button>
               </div>
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
-                {(selectedTenant.facilities || []).length === 0 ? (
-                  <p className="text-sm text-gray-400">No facilities added yet.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {(selectedTenant.facilities || []).map((facility) => (
-                      <div key={facility.id} className="border border-[#ffffff10] rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-white font-medium">{facility.name}</p>
-                            <p className="text-xs text-gray-400">{facility.facilityType || 'Facility Type'}</p>
+                {facilityTab === 'facilities' && (
+                  <>
+                    {(selectedTenant.facilities || []).length === 0 ? (
+                      <p className="text-sm text-gray-400">No facilities added yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {(selectedTenant.facilities || []).map((facility) => (
+                          <div key={facility.id} className="border border-[#ffffff10] rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-white font-medium">{facility.name}</p>
+                                <p className="text-xs text-gray-400">{facility.facilityType || 'Facility Type'}</p>
+                              </div>
+                            </div>
+                            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <p className="text-gray-400">Address</p>
+                                <p className="text-white">{facility.address || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400">Contact</p>
+                                <p className="text-white">{facility.contact || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400">Email</p>
+                                <p className="text-white">{facility.email || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400">Tax ID</p>
+                                <p className="text-white">{facility.taxId || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400">NPI</p>
+                                <p className="text-white">{facility.npi || '-'}</p>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <p className="text-gray-400">Address</p>
-                            <p className="text-white">{facility.address || '-'}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400">Contact</p>
-                            <p className="text-white">{facility.contact || '-'}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400">Email</p>
-                            <p className="text-white">{facility.email || '-'}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400">Tax ID</p>
-                            <p className="text-white">{facility.taxId || '-'}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400">NPI</p>
-                            <p className="text-white">{facility.npi || '-'}</p>
-                          </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
+                )}
+                {facilityTab === 'payer-plan' && (
+                  <p className="text-sm text-gray-400">No payer plans added yet.</p>
+                )}
+                {facilityTab === 'transaction-codes' && (
+                  <p className="text-sm text-gray-400">No transaction codes added yet.</p>
                 )}
               </div>
             </div>
             
-            {/* Recent Activity */}
-            <div className="md:col-span-2">
-              <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Recent Activity</h3>
-              <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
-                <div className="space-y-4">
-                  <div className="flex items-start">
-                    <div className="min-w-[40px] h-10 flex items-center justify-center bg-gray-500/20 rounded-full mr-3">
-                      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-white text-sm">48 claims processed successfully</p>
-                      <p className="text-xs text-gray-400 mt-1">Today at 2:30 PM</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <div className="min-w-[40px] h-10 flex items-center justify-center bg-yellow-500/20 rounded-full mr-3">
-                      <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-white text-sm">12 denials requiring attention</p>
-                      <p className="text-xs text-gray-400 mt-1">Yesterday at 4:15 PM</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <div className="min-w-[40px] h-10 flex items-center justify-center bg-green-500/20 rounded-full mr-3">
-                      <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-white text-sm">$24,350 in revenue recovered</p>
-                      <p className="text-xs text-gray-400 mt-1">Last week</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
         
@@ -394,21 +500,52 @@ const TenantDetailsModal = () => {
             <span className="text-sm text-gray-400">Tenant ID: #{selectedTenant.id}</span>
           </div>
           <div className="flex gap-3">
-            <button 
-              className="px-4 py-2 bg-[#ffffff10] text-white text-sm rounded-lg hover:bg-[#ffffff20] transition"
-              onClick={handleClose}
-            >
-              Close
-            </button>
-            <button 
-              className="px-4 py-2 bg-[#3b3f46] text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition shadow-lg hover:shadow-gray-500/30"
-              onClick={() => {
-                // Add tenant editing functionality here
-                handleClose();
-              }}
-            >
-              Edit Tenant
-            </button>
+            {isEditingTenant ? (
+              <>
+                <button
+                  className="px-4 py-2 bg-[#ffffff10] text-white text-sm rounded-lg hover:bg-[#ffffff20] transition"
+                  onClick={() => {
+                    setIsEditingTenant(false);
+                    setEditTenantForm({
+                      name: selectedTenant.name || '',
+                      clientType: selectedTenant.clientType || '',
+                      address: selectedTenant.address || '',
+                      contact: selectedTenant.contact || '',
+                      email: selectedTenant.email || '',
+                      status: selectedTenant.status || 'Active'
+                    });
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-[#3b3f46] text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition shadow-lg hover:shadow-gray-500/30"
+                  onClick={async () => {
+                    const updated = await handleTenantUpdate(editTenantForm);
+                    if (updated) {
+                      setIsEditingTenant(false);
+                    }
+                  }}
+                >
+                  Save Changes
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  className="px-4 py-2 bg-[#ffffff10] text-white text-sm rounded-lg hover:bg-[#ffffff20] transition"
+                  onClick={handleClose}
+                >
+                  Close
+                </button>
+                <button 
+                  className="px-4 py-2 bg-[#3b3f46] text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition shadow-lg hover:shadow-gray-500/30"
+                  onClick={() => setIsEditingTenant(true)}
+                >
+                  Edit Tenant
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -1201,6 +1338,47 @@ const handleTenantSubmit = async (formData) => {
   }
 };
 
+const handleTenantUpdate = async (formData) => {
+  if (!selectedTenant || !client) return;
+  try {
+    setLoading(true);
+    const payload = {
+      name: formData.name,
+      clientType: formData.clientType,
+      address: formData.address,
+      contact: formData.contact,
+      email: formData.email,
+      status: formData.status
+    };
+
+    const res = await axios.patch(
+      `${resolvedApiUrl}/clients/${client.id}/tenants/${selectedTenant.id}`,
+      payload,
+      { withCredentials: true }
+    );
+
+    const updatedTenant = res.data || { ...selectedTenant, ...payload };
+
+    const updatedSubClients = (client.subClients || []).map((subClient) =>
+      subClient.id === selectedTenant.id ? { ...subClient, ...updatedTenant } : subClient
+    );
+
+    setClient(prev => ({
+      ...prev,
+      subClients: updatedSubClients
+    }));
+    setSelectedTenant({ ...selectedTenant, ...updatedTenant });
+    alert(`Tenant ${updatedTenant.name} updated successfully!`);
+    return true;
+  } catch (error) {
+    console.error("Error updating tenant:", error);
+    alert(`Error: ${error.message}`);
+    return false;
+  } finally {
+    setLoading(false);
+  }
+};
+
 const handleFacilitySubmit = async (formData) => {
   if (!selectedTenant || !client) return;
   try {
@@ -1462,6 +1640,7 @@ const FacilityModal = () => {
   if (!selectedTenant) return null;
   const [formState, setFormState] = useState({...newFacility});
   const [isFacilityTypeOpen, setIsFacilityTypeOpen] = useState(false);
+  const rowInputClass = "w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]";
 
   const handleLocalInputChange = (e) => {
     const { name, value } = e.target;
@@ -1485,6 +1664,18 @@ const FacilityModal = () => {
     handleFacilitySubmit(formState);
   };
 
+  const handleClear = () => {
+    setFormState({
+      name: '',
+      facilityType: '',
+      address: '',
+      taxId: '',
+      npi: '',
+      contact: '',
+      email: ''
+    });
+  };
+
   const handleClose = () => {
     setIsFacilityModalOpen(false);
   };
@@ -1495,7 +1686,7 @@ const FacilityModal = () => {
       onClick={handleClose}
     >
       <div
-        className="bg-[#232429] rounded-xl w-full max-w-2xl overflow-hidden border border-[#2f333a] shadow-2xl"
+        className="bg-[#232429] rounded-xl w-full max-w-6xl overflow-hidden border border-[#2f333a] shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center border-b border-[#ffffff20] p-6">
@@ -1512,138 +1703,163 @@ const FacilityModal = () => {
         </div>
 
         <form onSubmit={handleFormSubmit} className="p-6 max-h-[70vh] overflow-y-auto">
-          <div className="mb-6">
-            <label className="block text-[#f4f4f4] mb-2 text-sm">Tenant</label>
-            <div className="w-full p-2.5 bg-[#ffffff08] rounded-lg text-white border border-[#ffffff15] font-medium">
-              {selectedTenant.name}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Facility Name <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                name="name"
-                value={formState.name}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-
-            <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Facility Type <span className="text-red-400">*</span></label>
-              <div
-                className="relative"
-                tabIndex={0}
-                onBlur={() => setIsFacilityTypeOpen(false)}
-              >
-                <button
-                  type="button"
-                  onClick={() => setIsFacilityTypeOpen(prev => !prev)}
-                  className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none flex items-center justify-between"
-                >
-                  <span className={formState.facilityType ? '' : 'text-gray-400'}>
-                    {formState.facilityType || 'Select Facility Type'}
-                  </span>
-                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
-                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                {isFacilityTypeOpen && (
-                  <div className="absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg">
-                    {FACILITY_TYPE_OPTIONS.map((option) => (
+          <div className="overflow-x-auto">
+            <table className="min-w-[1300px] w-full bg-transparent">
+              <colgroup>
+                <col className="w-[220px]" />
+                <col className="w-[220px]" />
+                <col className="w-[240px]" />
+                <col className="w-[300px]" />
+                <col className="w-[200px]" />
+                <col className="w-[180px]" />
+                <col className="w-[220px]" />
+                <col className="w-[260px]" />
+                <col className="w-[160px]" />
+              </colgroup>
+              <thead>
+                <tr className="text-[#9ca3af] border-b border-[#ffffff20]">
+                  <th className="px-3 py-3 text-left">Tenant</th>
+                  <th className="px-3 py-3 text-left">Facility</th>
+                  <th className="px-3 py-3 text-left">Facility Type</th>
+                  <th className="px-3 py-3 text-left">Address</th>
+                  <th className="px-3 py-3 text-left">Tax ID</th>
+                  <th className="px-3 py-3 text-left">NPI</th>
+                  <th className="px-3 py-3 text-left">Contact</th>
+                  <th className="px-3 py-3 text-left">Email</th>
+                  <th className="px-3 py-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-[#ffffff20] text-[#D9D9D9CC] bg-[#ffffff05]">
+                  <td className="px-3 py-3">
+                    <input
+                      type="text"
+                      value={selectedTenant.name}
+                      readOnly
+                      className={`${rowInputClass} bg-[#ffffff08] cursor-not-allowed`}
+                    />
+                  </td>
+                  <td className="px-3 py-3">
+                    <input
+                      type="text"
+                      name="name"
+                      value={formState.name}
+                      onChange={handleLocalInputChange}
+                      className={rowInputClass}
+                      placeholder="Facility"
+                      required
+                    />
+                  </td>
+                  <td className="px-3 py-3">
+                    <div
+                      className="relative"
+                      tabIndex={0}
+                      onBlur={() => setIsFacilityTypeOpen(false)}
+                    >
                       <button
-                        key={option}
                         type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => handleFacilityTypeSelect(option)}
-                        className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
+                        onClick={() => setIsFacilityTypeOpen(prev => !prev)}
+                        className={`${rowInputClass} flex items-center justify-between`}
                       >
-                        {option}
+                        <span className={formState.facilityType ? '' : 'text-gray-400'}>
+                          {formState.facilityType || 'Select Facility Type'}
+                        </span>
+                        <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                          <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="col-span-1 md:col-span-2">
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Facility Address <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                name="address"
-                value={formState.address}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Tax ID <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                name="taxId"
-                value={formState.taxId}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">NPI <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                name="npi"
-                value={formState.npi}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Contact <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                name="contact"
-                value={formState.contact}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-[#f4f4f4] mb-2 text-sm">Email <span className="text-red-400">*</span></label>
-              <input
-                type="email"
-                name="email"
-                value={formState.email}
-                onChange={handleLocalInputChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end mt-8 space-x-4">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-5 py-2.5 bg-[#ffffff10] hover:bg-[#ffffff20] text-white rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2.5 bg-[#3b3f46] hover:bg-gray-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-gray-500/30"
-            >
-              Add Facility
-            </button>
+                      {isFacilityTypeOpen && (
+                        <div className="absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg">
+                          {FACILITY_TYPE_OPTIONS.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => handleFacilityTypeSelect(option)}
+                              className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3">
+                    <input
+                      type="text"
+                      name="address"
+                      value={formState.address}
+                      onChange={handleLocalInputChange}
+                      className={rowInputClass}
+                      placeholder="Address"
+                      required
+                    />
+                  </td>
+                  <td className="px-3 py-3">
+                    <input
+                      type="text"
+                      name="taxId"
+                      value={formState.taxId}
+                      onChange={handleLocalInputChange}
+                      className={rowInputClass}
+                      placeholder="Tax ID"
+                      required
+                    />
+                  </td>
+                  <td className="px-3 py-3">
+                    <input
+                      type="text"
+                      name="npi"
+                      value={formState.npi}
+                      onChange={handleLocalInputChange}
+                      className={rowInputClass}
+                      placeholder="NPI"
+                      required
+                    />
+                  </td>
+                  <td className="px-3 py-3">
+                    <input
+                      type="text"
+                      name="contact"
+                      value={formState.contact}
+                      onChange={handleLocalInputChange}
+                      className={rowInputClass}
+                      placeholder="Contact"
+                      required
+                    />
+                  </td>
+                  <td className="px-3 py-3">
+                    <input
+                      type="email"
+                      name="email"
+                      value={formState.email}
+                      onChange={handleLocalInputChange}
+                      className={rowInputClass}
+                      placeholder="Email"
+                      required
+                    />
+                  </td>
+                  <td className="px-3 py-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        type="submit"
+                        className="px-3 py-2 bg-[#3b3f46] hover:bg-gray-700 text-white text-xs font-medium rounded-md transition-all"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleClear}
+                        className="px-3 py-2 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </form>
       </div>
