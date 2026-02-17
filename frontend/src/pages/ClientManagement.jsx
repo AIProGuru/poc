@@ -5,6 +5,7 @@ import './ClientManagement.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { SERVER_URL } from '../utils/config';
+import Header from '../components/demo-layout/Header';
 
 const ClientManagement = () => {
   const navigate = useNavigate();
@@ -111,6 +112,8 @@ const ClientManagement = () => {
   };
 
   const clearClientLogo = async (clientId) => {
+    const confirmed = window.confirm('Remove this company logo?');
+    if (!confirmed) return;
     if (clientId === 'new') {
       setNewClient((prev) => ({ ...prev, logo: '' }));
       return;
@@ -556,6 +559,7 @@ const ClientManagement = () => {
   // Main component render
   return (
     <div className={`client-management min-h-screen overflow-x-hidden ${isDark ? 'theme-dark bg-[#1e1f24] text-white' : 'theme-light bg-slate-50 text-slate-900'}`}>
+      <Header />
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
