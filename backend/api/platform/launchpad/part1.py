@@ -306,7 +306,9 @@ def get_rebound_data_part1_all_grouped():
                 )}
             """
             if allowed_set:
-                allowed_list = ", ".join([f"'{str(item).replace(\"'\", \"''\")}'" for item in allowed_set])
+                allowed_list = ", ".join(
+                    ["'{}'".format(str(item).replace("'", "''")) for item in allowed_set]
+                )
                 allow_delinquent = delinquent_label in allowed_set
                 if allow_delinquent:
                     generatedSQL += f"""
