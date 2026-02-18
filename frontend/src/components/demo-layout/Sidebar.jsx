@@ -539,93 +539,73 @@ const Sidebar = () => {
       "patient-responsibility:bal-due": 2,
       "payment-posting:contractual-adj": 1,
     };
-    const badgeTargets = new Set();
-    // Always fetch top-level badges so counts are visible on load.
-    navItems.forEach((item) => {
-      if (navTagFilters[item.id]) {
-        badgeTargets.add(item.id);
-      }
-    });
-    // Only fetch child badges when their parent is expanded or active.
-    navItems.forEach((item) => {
-      const isExpanded =
-        expandedNav.has(item.id) ||
-        selectedNav === item.id ||
-        (selectedNav && selectedNav.startsWith(`${item.id}:`));
-      if (!isExpanded) return;
-      if (Array.isArray(item.children)) {
-        item.children.forEach((child) => {
-          if (navTagFilters[child.id]) {
-            badgeTargets.add(child.id);
-          }
-        });
-      }
-    });
-    const requests = [];
-    const addRequest = (navId, parentTab) => {
-      const tagOverride = navTagFilters[navId];
-      if (!tagOverride || tagOverride.length === 0) return;
-      if (fetchedBadgeIdsRef.current.has(navId)) return;
-      fetchedBadgeIdsRef.current.add(navId);
+
+    const navTagKeys = Object.keys(navTagFilters);
+    if (navTagKeys.length === 0) return;
+    const tabSet = new Set();
+    navTagKeys.forEach((navId) => {
+      const fallbackTab = navItems.find((item) => item.id === navId)?.tab;
       const tabIndex =
         tabOverrideMap[navId] ??
-        (typeof parentTab === "number" ? parentTab : 6);
-      const extra = navExtraFilters[navId] || {};
-      requests.push(
-        axios
-          .post(`${apiUrl}/part1_all`, {
-            tabIndex,
-            keyword: "",
-            selectedTags: tagOverride,
-            startDate: null,
-            endDate: null,
-            code: "",
-            remark: "",
-            procedure: "",
-            pos: "",
-            extra: { ...extra, ...accessExtra },
-          })
-          .then((res) => ({
-            navId,
-            count: res.data?.Count ?? res.data?.count ?? 0,
-          }))
-          .catch(() => {
-            fetchedBadgeIdsRef.current.delete(navId);
-            return null;
-          })
-      );
-    };
-
-    badgeTargets.forEach((navId) => {
-      const parentTab = navItems.find((item) => item.id === navId)?.tab;
-      addRequest(navId, parentTab);
+        (typeof fallbackTab === "number" ? fallbackTab : 6);
+      tabSet.add(tabIndex);
     });
+    const tabIndexes = Array.from(tabSet);
+    let cancelled = false;
 
-    if (requests.length === 0) return;
-    Promise.all(requests).then((results) => {
-      const next = {};
-      results
-        .filter(Boolean)
-        .forEach(({ navId, count }) => {
-          next[navId] = Number(count) || 0;
+    axios
+      .post(`${apiUrl}/part1_all_grouped`, {
+        tabIndexes,
+        keyword: "",
+        startDate: null,
+        endDate: null,
+        code: "",
+        remark: "",
+        procedure: "",
+        pos: "",
+        extra: accessExtra,
+      })
+      .then((res) => {
+        if (cancelled) return;
+        const grouped = res.data?.grouped || {};
+        const cache = {};
+        const getMapForTab = (tab) => {
+          if (cache[tab]) return cache[tab];
+          const rows = grouped[String(tab)] || [];
+          const map = {};
+          rows.forEach((row) => {
+            const key = row?.Category;
+            if (!key) return;
+            map[key] = (map[key] || 0) + (Number(row.Count) || 0);
+          });
+          cache[tab] = map;
+          return map;
+        };
+        const sumTags = (tagList, tab) => {
+          const map = getMapForTab(tab);
+          return tagList.reduce((sum, tag) => sum + (map[tag] || 0), 0);
+        };
+        const next = {};
+        navTagKeys.forEach((navId) => {
+          const fallbackTab = navItems.find((item) => item.id === navId)?.tab;
+          const tabIndex =
+            tabOverrideMap[navId] ??
+            (typeof fallbackTab === "number" ? fallbackTab : 6);
+          const tagList = navTagFilters[navId] || [];
+          next[navId] = sumTags(tagList, tabIndex);
         });
-      const paymentPostingChildren = [
-        "payment-posting:contractual-adj",
-        "payment-posting:payment",
-        "payment-posting:writeoff",
-        "payment-posting:refund",
-      ];
-      if (paymentPostingChildren.some((id) => Object.prototype.hasOwnProperty.call(next, id))) {
-        next["payment-posting"] = paymentPostingChildren.reduce(
-          (total, id) => total + (next[id] || 0),
-          0
-        );
-      }
-      if (Object.keys(next).length > 0) {
-        setNavBadges((prev) => ({ ...prev, ...next }));
-      }
-    });
-  }, [apiUrl, tags.length, accessExtra, navItems, navExtraFilters, navTagFilters, canSeeWorklists, expandedNav, selectedNav]);
+        if (Object.keys(next).length > 0) {
+          setNavBadges((prev) => ({ ...prev, ...next }));
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiUrl, tags.length, accessExtra, navItems, navTagFilters, canSeeWorklists]);
 
   useEffect(() => {
     const handleResize = () => {

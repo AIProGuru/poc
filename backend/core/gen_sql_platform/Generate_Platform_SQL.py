@@ -24,11 +24,12 @@ def generate_sql(
     pos,
     extra={},
     sort = "",
+    apply_tag_filters = True,
 ):
     include_all_categories = extra.get("IncludeAllCategories", False)
     allowed_categories = extra.get("AllowedCategories") or []
     allowed_set = set([str(item).strip() for item in allowed_categories if item])
-    apply_tag_filters = not (include_all_categories and tab_index == TabIndex.MAIN)
+    apply_tag_filters = apply_tag_filters and not (include_all_categories and tab_index == TabIndex.MAIN)
     tags = ""
     flag = False
     filteredTags = []
@@ -74,27 +75,30 @@ def generate_sql(
         from CUSTOM_ALL
         where CUSTOM_ALL.ClaimNo LIKE '{keyword}%' AND 
     """
-    if include_all_categories and tab_index == TabIndex.MAIN:
+    if not apply_tag_filters:
         query += "1=1"
     else:
-        if tags == "":
-            if flag == True:
-                query += f"""
-                    (CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = '')
-                """
-            else:
-                query += f"""
-                    CUSTOM_ALL.Category='A'
-                """
+        if include_all_categories and tab_index == TabIndex.MAIN:
+            query += "1=1"
         else:
-            if flag == True:
-                query += f"""
-                    (CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = '' OR CUSTOM_ALL.Category IN ({tags}))
-                """
+            if tags == "":
+                if flag == True:
+                    query += f"""
+                        (CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = '')
+                    """
+                else:
+                    query += f"""
+                        CUSTOM_ALL.Category='A'
+                    """
             else:
-                query += f"""
-                    CUSTOM_ALL.Category IN ({tags})
-                """
+                if flag == True:
+                    query += f"""
+                        (CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = '' OR CUSTOM_ALL.Category IN ({tags}))
+                    """
+                else:
+                    query += f"""
+                        CUSTOM_ALL.Category IN ({tags})
+                    """
     if pos != "":
         query += f"and CUSTOM_ALL.PlaceOfService='{pos}' "
     if remark != "":
