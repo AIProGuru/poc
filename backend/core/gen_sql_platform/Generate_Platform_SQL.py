@@ -76,7 +76,7 @@ def generate_sql(
         where CUSTOM_ALL.ClaimNo LIKE '{keyword}%' AND 
     """
     if not apply_tag_filters:
-        query += "1=1"
+        query += "1=1 "
     else:
         if include_all_categories and tab_index == TabIndex.MAIN:
             query += "1=1"
