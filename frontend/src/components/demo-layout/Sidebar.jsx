@@ -1,7 +1,6 @@
-import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
-import axios from "axios";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   setAppTitle,
   setTheme,
@@ -19,34 +18,19 @@ import {
   setEndDate,
 } from "../../redux/reducers/app.reducer";
 import { setSelectedTags } from "../../redux/reducers/tag.reducer";
-import { useApiEndpoint } from "../../ApiEndpointContext";
 import { canAccessWorklists } from "../../utils/roles";
-import { buildAccessExtra } from "../../utils/accessFilters";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
   const type = useSelector((state) => state.app.type);
   const theme = useSelector((state) => state.app.theme);
   const role = useSelector((state) => state.auth.role);
-  const accessModules = useSelector((state) => state.auth.modules);
   const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
-  const accessPayer = useSelector((state) => state.auth.payer);
-  const accessValue = useSelector((state) => state.auth.value);
-  const access = useMemo(
-    () => ({
-      modules: accessModules,
-      denialCategory: accessDenialCategory,
-      payer: accessPayer,
-      value: accessValue,
-    }),
-    [accessModules, accessDenialCategory, accessPayer, accessValue]
-  );
   const counts = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   const models = useSelector((state) => state.app.models) || [];
-  const apiUrl = useApiEndpoint();
+  const navGrouped = useSelector((state) => state.app.navGrouped) || {};
   const [navBadges, setNavBadges] = useState({});
   const isPrivilegedRole = ["admin", "super-admin", "manager", "internal-admin"].includes(role);
   const placeholderNavs = [
@@ -244,9 +228,6 @@ const Sidebar = () => {
     }),
     []
   );
-  const accessExtra = useMemo(() => buildAccessExtra({}, access, role), [access, role]);
-  const badgeSignatureRef = useRef("");
-  const fetchedBadgeIdsRef = useRef(new Set());
   const canSeeWorklists = canAccessWorklists(role);
 
   const formatCount = (value) => {
@@ -519,113 +500,46 @@ const Sidebar = () => {
   );
 
   useEffect(() => {
-    if (!apiUrl || !tags || tags.length === 0) return;
     if (!canSeeWorklists) {
       setNavBadges({});
-      fetchedBadgeIdsRef.current = new Set();
       return;
-    }
-    const signature = JSON.stringify({
-      tagsCount: tags.length,
-      accessExtra,
-    });
-    if (badgeSignatureRef.current !== signature) {
-      badgeSignatureRef.current = signature;
-      fetchedBadgeIdsRef.current = new Set();
-      setNavBadges({});
     }
     const tabOverrideMap = {
       "patient-responsibility": 2,
       "patient-responsibility:bal-due": 2,
       "payment-posting:contractual-adj": 1,
     };
-    const badgeTargets = new Set();
-    // Always fetch top-level badges so counts are visible on load.
-    navItems.forEach((item) => {
-      if (navTagFilters[item.id]) {
-        badgeTargets.add(item.id);
-      }
-    });
-    // Only fetch child badges when their parent is expanded or active.
-    navItems.forEach((item) => {
-      const isExpanded =
-        expandedNav.has(item.id) ||
-        selectedNav === item.id ||
-        (selectedNav && selectedNav.startsWith(`${item.id}:`));
-      if (!isExpanded) return;
-      if (Array.isArray(item.children)) {
-        item.children.forEach((child) => {
-          if (navTagFilters[child.id]) {
-            badgeTargets.add(child.id);
-          }
-        });
-      }
-    });
-    const requests = [];
-    const addRequest = (navId, parentTab) => {
-      const tagOverride = navTagFilters[navId];
-      if (!tagOverride || tagOverride.length === 0) return;
-      if (fetchedBadgeIdsRef.current.has(navId)) return;
-      fetchedBadgeIdsRef.current.add(navId);
+
+    const navTagKeys = Object.keys(navTagFilters);
+    if (navTagKeys.length === 0) return;
+    const cache = {};
+    const getMapForTab = (tab) => {
+      if (cache[tab]) return cache[tab];
+      const rows = navGrouped[String(tab)] || [];
+      const map = {};
+      rows.forEach((row) => {
+        const key = row?.Category;
+        if (!key) return;
+        map[key] = (map[key] || 0) + (Number(row.Count) || 0);
+      });
+      cache[tab] = map;
+      return map;
+    };
+    const sumTags = (tagList, tab) => {
+      const map = getMapForTab(tab);
+      return tagList.reduce((sum, tag) => sum + (map[tag] || 0), 0);
+    };
+    const next = {};
+    navTagKeys.forEach((navId) => {
+      const fallbackTab = navItems.find((item) => item.id === navId)?.tab;
       const tabIndex =
         tabOverrideMap[navId] ??
-        (typeof parentTab === "number" ? parentTab : 6);
-      const extra = navExtraFilters[navId] || {};
-      requests.push(
-        axios
-          .post(`${apiUrl}/part1_all`, {
-            tabIndex,
-            keyword: "",
-            selectedTags: tagOverride,
-            startDate: null,
-            endDate: null,
-            code: "",
-            remark: "",
-            procedure: "",
-            pos: "",
-            extra: { ...extra, ...accessExtra },
-          })
-          .then((res) => ({
-            navId,
-            count: res.data?.Count ?? res.data?.count ?? 0,
-          }))
-          .catch(() => {
-            fetchedBadgeIdsRef.current.delete(navId);
-            return null;
-          })
-      );
-    };
-
-    badgeTargets.forEach((navId) => {
-      const parentTab = navItems.find((item) => item.id === navId)?.tab;
-      addRequest(navId, parentTab);
+        (typeof fallbackTab === "number" ? fallbackTab : 6);
+      const tagList = navTagFilters[navId] || [];
+      next[navId] = sumTags(tagList, tabIndex);
     });
-
-    if (requests.length === 0) return;
-    Promise.all(requests).then((results) => {
-      const next = {};
-      results
-        .filter(Boolean)
-        .forEach(({ navId, count }) => {
-          next[navId] = Number(count) || 0;
-        });
-      const paymentPostingChildren = [
-        "payment-posting:contractual-adj",
-        "payment-posting:payment",
-        "payment-posting:writeoff",
-        "payment-posting:refund",
-      ];
-      if (paymentPostingChildren.some((id) => Object.prototype.hasOwnProperty.call(next, id))) {
-        next["payment-posting"] = paymentPostingChildren.reduce(
-          (total, id) => total + (next[id] || 0),
-          0
-        );
-      }
-      if (Object.keys(next).length > 0) {
-        setNavBadges((prev) => ({ ...prev, ...next }));
-      }
-    });
-  }, [apiUrl, tags.length, accessExtra, navItems, navExtraFilters, navTagFilters, canSeeWorklists, expandedNav, selectedNav]);
+    setNavBadges(next);
+  }, [navGrouped, navItems, navTagFilters, canSeeWorklists]);
 
   useEffect(() => {
     const handleResize = () => {

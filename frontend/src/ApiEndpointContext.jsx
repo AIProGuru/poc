@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SERVER_URL } from './utils/config';
 import axios from 'axios';
@@ -11,16 +11,22 @@ import {
   setCountLoading,
   setStatisticsLoading,
   setPayerLoading,
+  setRecoveryLoading,
   setTabIndex,
-  setExtraFilter,
+  setModels,
+  setNavGrouped,
   increaseLoading,
   decreaseLoading,
 } from './redux/reducers/app.reducer';
 
 import {
   setTags,
-  setSelectedTags,
+  setAllPayers,
 } from './redux/reducers/tag.reducer';
+
+import { setCount, setRecovery } from './redux/reducers/count.reducer';
+import { setCategoryLabel, setCategoryValue } from './redux/reducers/statistics.reducer';
+import { buildAccessExtra } from './utils/accessFilters';
 
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -31,6 +37,25 @@ export const ApiEndpointProvider = ({ children }) => {
   const location = useLocation();
   const dispatch = useDispatch();
   const appType = useSelector((state) => state.app.type);
+  const authReady = useSelector((state) => state.auth.authReady);
+  const role = useSelector((state) => state.auth.role);
+  const accessModules = useSelector((state) => state.auth.modules);
+  const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
+  const accessPayer = useSelector((state) => state.auth.payer);
+  const accessValue = useSelector((state) => state.auth.value);
+  const access = useMemo(
+    () => ({
+      modules: accessModules,
+      denialCategory: accessDenialCategory,
+      payer: accessPayer,
+      value: accessValue,
+    }),
+    [accessModules, accessDenialCategory, accessPayer, accessValue]
+  );
+  const accessExtra = useMemo(
+    () => buildAccessExtra({}, access, role),
+    [access, role]
+  );
   const [apiUrl, setApiUrl] = useState('');
 
   useEffect(() => {
@@ -81,29 +106,90 @@ export const ApiEndpointProvider = ({ children }) => {
   }, [location.pathname, appType, dispatch]);
 
   useEffect(() => {
-    if (!apiUrl) return;
-    dispatch(setPart1Loading(true))
-    dispatch(setPart2Loading(true))
-    dispatch(setTableLoading(true))
-    dispatch(setCountLoading(true))
-    dispatch(setStatisticsLoading(true))
-    dispatch(setPayerLoading(true))
+    if (!apiUrl || !authReady) return;
+    dispatch(setPart1Loading(true));
+    dispatch(setPart2Loading(true));
+    dispatch(setTableLoading(true));
+    dispatch(setTagLoading(true));
+    dispatch(setCountLoading(true));
+    dispatch(setStatisticsLoading(true));
+    dispatch(setPayerLoading(true));
+    dispatch(setRecoveryLoading(true));
     dispatch(setTabIndex(0));
 
+    const navBadgeTabIndexes = [6, 2, 1, 4];
+    dispatch(increaseLoading());
+    axios
+      .post(`${apiUrl}/platform_bootstrap`, {
+        tabIndexes: navBadgeTabIndexes,
+        keyword: "",
+        startDate: null,
+        endDate: null,
+        code: "",
+        remark: "",
+        procedure: "",
+        pos: "",
+        extra: accessExtra,
+      })
+      .then((res) => {
+        const data = res?.data || {};
+        dispatch(setTags(data.tags || []));
+        dispatch(setAllPayers(data.payers || []));
+        dispatch(setNavGrouped(data.grouped || {}));
 
-    dispatch(increaseLoading())
-    axios.get(`${apiUrl}/get_all_tags`).then((res) => {
-      dispatch(setTags(res.data));
-      // Default to showing all categories on initial load.
-      dispatch(setSelectedTags([]));
-      dispatch(setExtraFilter({ IncludeAllCategories: true }));
-      dispatch(decreaseLoading())
-      dispatch(setTagLoading(false));
-    }).catch(err => {
-      dispatch(decreaseLoading())
-      dispatch(setTagLoading(false));
-    });
-  }, [apiUrl])
+        const counts = data.counts || {};
+        dispatch(
+          setCount([
+            { count: counts.cnt1, amount: counts.amount1 },
+            { count: counts.cnt2, amount: counts.amount2 },
+            { count: counts.cnt3, amount: counts.amount3 },
+            { count: counts.cnt4, amount: counts.amount4 },
+            { count: 0, amount: 0 },
+            { count: counts.cnt6, amount: 0 },
+            { count: counts.cnt7, amount: 0 },
+          ])
+        );
+
+        const stats = data.statistics || [];
+        dispatch(setCategoryLabel(stats.map((row) => row.label)));
+        dispatch(setCategoryValue(stats.map((row) => row.value)));
+
+        dispatch(setRecovery(data.recovery || []));
+
+        const mapModels = (rows) =>
+          (rows || []).map((row) => ({
+            ...row,
+            Group: (() => {
+              switch (row.Category) {
+                case 'Contractual Adj':
+                  return 'Non-Recoverable';
+                case 'Patient Resp':
+                  return 'Patient Resp';
+                case null:
+                  return 'Delinquent';
+                default:
+                  return 'Recoverable';
+              }
+            })(),
+          }));
+        dispatch(setModels(mapModels(data.models || [])));
+
+        dispatch(decreaseLoading());
+        dispatch(setTagLoading(false));
+        dispatch(setCountLoading(false));
+        dispatch(setStatisticsLoading(false));
+        dispatch(setPayerLoading(false));
+        dispatch(setRecoveryLoading(false));
+      })
+      .catch(() => {
+        dispatch(decreaseLoading());
+        dispatch(setTagLoading(false));
+        dispatch(setCountLoading(false));
+        dispatch(setStatisticsLoading(false));
+        dispatch(setPayerLoading(false));
+        dispatch(setRecoveryLoading(false));
+      });
+  }, [apiUrl, accessExtra, authReady, dispatch])
 
   return (
     <ApiEndpointContext.Provider value={apiUrl}>

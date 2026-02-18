@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple
 import time
 import logging
 from datetime import date, datetime
+import os
 from db import get_connection, close_connection
 from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL
 
@@ -160,3 +161,184 @@ def get_rebound_data_part1_all():
         close_connection(cursor, conn)
         _end = time.time()
         logger.info(f"/rebound_data_part1_all took {_end - _start:.2f} seconds")
+
+
+@rebound_api_part1.route("/part1_all_grouped", methods=["POST"])
+@medevolve_api_part1.route("/part1_all_grouped", methods=["POST"])
+@pilotcustomer_api_part1.route("/part1_all_grouped", methods=["POST"])
+def get_rebound_data_part1_all_grouped():
+    """
+    This endpoint fetches platform data part 1 grouped by category.
+    ---
+    tags:
+      - Platform Data
+    parameters:
+      - in: body
+        name: body
+        description: JSON payload
+        required: true
+        schema:
+          type: object
+          properties:
+            tabIndex:
+              type: integer
+              example: 6
+            tabIndexes:
+              type: array
+              items:
+                type: integer
+              example: [6,2,1]
+            keyword:
+              type: string
+              example: ""
+            startDate:
+              type: string
+              format: date
+              example: null
+            endDate:
+              type: string
+              format: date
+              example: null
+            code:
+              type: string
+              example: ""
+            remark:
+              type: string
+              example: ""
+            procedure:
+              type: string
+              example: ""
+            pos:
+              type: string
+              example: ""
+            extra:
+              type: object
+              example: {}
+    responses:
+      200:
+        description: Successful response
+        schema:
+          type: object
+          properties:
+            grouped:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    Category:
+                      type: string
+                    Count:
+                      type: integer
+                    Charge:
+                      type: number
+                    AllowedAmt:
+                      type: number
+                    DeniedAmt:
+                      type: number
+                    Days:
+                      type: number
+      500:
+        description: Internal server error
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+    """
+    _start = time.time()
+    conn = None
+    cursor = None
+    try:
+        if not request.is_json:
+            return jsonify({"error": "Unsupported Media Type: Content-Type must be application/json"}), 415
+
+        conn, cursor, db_name = get_connection(request.base_url)
+
+        payload = request.json or {}
+        tab_index = payload.get("tabIndex", 6)
+        tab_indexes = payload.get("tabIndexes")
+        keyword = payload.get("keyword", "")
+        startDate = payload.get("startDate")
+        endDate = payload.get("endDate")
+        code = payload.get("code", "")
+        remark = payload.get("remark", "")
+        procedure = payload.get("procedure", "")
+        pos = payload.get("pos", "")
+        extra = payload.get("extra", {})
+
+        if isinstance(tab_indexes, list) and len(tab_indexes) > 0:
+            target_tabs = list(dict.fromkeys(tab_indexes))
+        else:
+            target_tabs = [tab_index]
+
+        delinquent_label = os.getenv("DELIQUENT") or "Delinquent"
+        delinquent_safe = delinquent_label.replace("'", "''")
+        allowed_categories = extra.get("AllowedCategories") or []
+        allowed_set = [str(item).strip() for item in allowed_categories if item]
+
+        grouped_payload = {}
+        for tab in target_tabs:
+            generatedSQL = f"""select
+                CASE
+                    WHEN CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = '' THEN '{delinquent_safe}'
+                    ELSE CUSTOM_ALL.Category
+                END AS Category,
+                count(CUSTOM_ALL.ID) AS Count,
+                SUM(CUSTOM_ALL.Amount) AS Charge,
+                SUM(CUSTOM_ALL.AllowedAmt) AS AllowedAmt,
+                SUM(CUSTOM_ALL.DeniedAmt) AS DeniedAmt,
+                AVG(datediff(current_date(), CUSTOM_ALL.ServiceDate)) Days
+                {newGenerateSQL(
+                    tab,
+                    keyword,
+                    [],
+                    startDate,
+                    endDate,
+                    code,
+                    remark,
+                    procedure,
+                    pos,
+                    extra,
+                    "",
+                    False
+                )}
+            """
+            if allowed_set:
+                allowed_list = ", ".join(
+                    ["'{}'".format(str(item).replace("'", "''")) for item in allowed_set]
+                )
+                allow_delinquent = delinquent_label in allowed_set
+                if allow_delinquent:
+                    generatedSQL += f"""
+                        AND (
+                            CUSTOM_ALL.Category IN ({allowed_list})
+                            OR CUSTOM_ALL.Category IS NULL
+                            OR TRIM(CUSTOM_ALL.Category) = ''
+                        )
+                    """
+                else:
+                    generatedSQL += f"""
+                        AND CUSTOM_ALL.Category IN ({allowed_list})
+                    """
+            generatedSQL += " GROUP BY Category"
+
+            cursor.execute(generatedSQL)
+            rows = cursor.fetchall() or []
+            grouped_payload[str(tab)] = rows
+
+        result = {
+            "grouped": grouped_payload,
+            "Call_from": request.blueprint,
+            "Database": db_name,
+        }
+        logger.info(f"Called from: {request.blueprint}, Database: {db_name}")
+        return jsonify(result), 200
+    except Exception as e:
+        logger.error(f"[ERROR]: {e}")
+        return jsonify({"error": "Internal server Error"}), 500
+    finally:
+        close_connection(cursor, conn)
+        _end = time.time()
+        logger.info(f"/rebound_data_part1_all_grouped took {_end - _start:.2f} seconds")
