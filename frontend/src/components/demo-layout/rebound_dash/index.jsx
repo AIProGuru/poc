@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useRef, useContext, useMemo, useCallback } from "react";
-import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import DataTable from "./DataTable";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { setCount, setPart1Count, setPart2Count, setRecovery } from "../../../redux/reducers/count.reducer";
+import { setPart1Count, setPart2Count } from "../../../redux/reducers/count.reducer";
 import {
   setCurrentPage,
   setEndDate,
@@ -13,23 +12,15 @@ import {
   setStartDate,
   setTabIndex,
   setTableLoading,
-  increaseLoading,
-  decreaseLoading,
-  setTagLoading,
-  setCountLoading,
-  setStatisticsLoading,
-  setPayerLoading,
   setCode,
   setRemark,
   setPOS,
   setProcedure,
   setExtraFilter,
-  setRecoveryLoading,
   setTabDefaults,
 } from "../../../redux/reducers/app.reducer";
-import { setSelectedTags, setTags, setAllPayers } from "../../../redux/reducers/tag.reducer";
-import { setTableData, setTheme, setModels } from '../../../redux/reducers/app.reducer';
-import { setCategoryLabel, setCategoryValue } from '../../../redux/reducers/statistics.reducer';
+import { setSelectedTags } from "../../../redux/reducers/tag.reducer";
+import { setTableData, setTheme } from '../../../redux/reducers/app.reducer';
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import ArIntel from "./ArIntel";
 import UserManagement from "./UserManagement";
@@ -102,14 +93,11 @@ const ReboundDash = () => {
   const count = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   let tabIndex = useSelector((state) => state.app.tabIndex);
-  const tagLoading = useSelector((state) => state.app.tagLoading);
-  const countLoading = useSelector((state) => state.app.countLoading);
-  const statisticsLoading = useSelector((state) => state.app.statisticsLoading);
-  const payerLoading = useSelector((state) => state.app.payerLoading);
-  const recoveryLoading = useSelector((state) => state.app.recoveryLoading);
   const firstname = useSelector((state) => state.auth.firstname);
   const lastname = useSelector((state) => state.auth.lastname);
   const keyword = useSelector((state) => state.app.keyword);
+  const extraFilter = useSelector((state) => state.app.extraFilter);
+  const didInitDefaultsRef = useRef(false);
 
   // console.log('apiUrl', apiUrl);
 
@@ -200,67 +188,6 @@ const ReboundDash = () => {
     () => buildAccessExtra({}, access, role),
     [access, role]
   );
-  const accessSignature = useMemo(
-    () => JSON.stringify(accessExtra),
-    [accessExtra]
-  );
-  const aiFetchModeRef = useRef("post");
-
-  useEffect(() => {
-    if (!apiUrl) return;
-    let cancelled = false;
-
-    const mapModels = (rows) =>
-      rows.map((row) => ({
-        ...row,
-        Group: (() => {
-          switch (row.Category) {
-            case 'Contractual Adj':
-              return 'Non-Recoverable';
-            case 'Patient Resp':
-              return 'Patient Resp';
-            case null:
-              return 'Delinquent';
-            default:
-              return 'Recoverable';
-          }
-        })(),
-      }));
-
-    const fetchModels = async () => {
-      try {
-        dispatch(setModels([]));
-        let res;
-        if (aiFetchModeRef.current === "get") {
-          res = await axios.get(`${apiUrl}/get_artificial_intelligence`);
-        } else {
-          res = await axios.post(`${apiUrl}/get_artificial_intelligence`, { extra: accessExtra });
-        }
-        if (!cancelled) {
-          dispatch(setModels(mapModels(res.data)));
-        }
-      } catch (error) {
-        if (error?.response?.status === 405 && aiFetchModeRef.current !== "get") {
-          aiFetchModeRef.current = "get";
-          try {
-            const res = await axios.get(`${apiUrl}/get_artificial_intelligence`);
-            if (!cancelled) {
-              dispatch(setModels(mapModels(res.data)));
-            }
-          } catch (fallbackError) {
-            console.error('Failed to load AI models', fallbackError);
-          }
-          return;
-        }
-        console.error('Failed to load AI models', error);
-      }
-    };
-
-    fetchModels();
-    return () => {
-      cancelled = true;
-    };
-  }, [apiUrl, dispatch, accessSignature]);
 
   const navItems = useMemo(() => [
     { id: 'home', label: 'Home', badge: null, icon: 'home', tab: 0 },
@@ -689,101 +616,17 @@ const ReboundDash = () => {
         dispatch(setPart2Count([]));
       }
     }
+    if (!rawToken && tags.length > 0 && !didInitDefaultsRef.current) {
+      const hasExtra = extraFilter && Object.keys(extraFilter).length > 0;
+      if (!hasExtra) {
+        dispatch(setSelectedTags([]));
+        dispatch(setExtraFilter({ IncludeAllCategories: true }));
+        dispatch(setTableLoading(true));
+      }
+      didInitDefaultsRef.current = true;
+    }
 
-    if (tagLoading) {
-      dispatch(increaseLoading())
-      axios.get(`${apiUrl}/get_all_tags`).then((res) => {
-        const allTags = res.data;
-        dispatch(setTags(allTags));
-
-        if (!rawToken) {
-          dispatch(setSelectedTags([]));
-          dispatch(setExtraFilter({ IncludeAllCategories: true }));
-          dispatch(setTableLoading(true));
-        } else {
-          dispatch(setSelectedTags(allTags));
-        }
-
-        dispatch(decreaseLoading())
-        dispatch(setTagLoading(false));
-      }).catch(err => {
-        dispatch(setTagLoading(false));
-      });
-    }
-    if (countLoading) {
-      dispatch(increaseLoading())
-      dispatch(setCountLoading(true))
-      axios.get(`${apiUrl}/get_counts`).then((res) => {
-        dispatch(setCount([
-          {
-            count: res.data.cnt1,
-            amount: res.data.amount1
-          },
-          {
-            count: res.data.cnt2,
-            amount: res.data.amount2
-          },
-          {
-            count: res.data.cnt3,
-            amount: res.data.amount3
-          },
-          {
-            count: res.data.cnt4,
-            amount: res.data.amount4
-          },
-          {
-            count: 0,
-            amount: 0
-          },
-          {
-            count: res.data.cnt6,
-            amount: 0
-          },
-          {
-            count: res.data.cnt7,
-            amount: 0
-          }
-        ]));
-        dispatch(decreaseLoading())
-        dispatch(setCountLoading(false));
-      }).catch(err => {
-        dispatch(setCountLoading(false));
-      });
-    }
-    if (statisticsLoading) {
-      dispatch(increaseLoading())
-      axios.get(`${apiUrl}/statistics`).then(res => {
-        const label = res.data.map((row, index) => row.label)
-        const value = res.data.map((row, index) => row.value)
-        dispatch(setCategoryLabel(label))
-        dispatch(setCategoryValue(value))
-        dispatch(decreaseLoading())
-        dispatch(setStatisticsLoading(false))
-      }).catch(err => {
-        dispatch(setStatisticsLoading(false))
-      })
-    }
-    if (payerLoading) {
-      dispatch(increaseLoading())
-      axios.get(`${apiUrl}/get_all_payers`).then(res => {
-        dispatch(setAllPayers(res.data));
-        dispatch(decreaseLoading())
-        dispatch(setPayerLoading(false))
-      }).catch(err => {
-        dispatch(setPayerLoading(false))
-      })
-    }
-    if (recoveryLoading) {
-      dispatch(increaseLoading())
-      axios.get(`${apiUrl}/recovery`).then(res => {
-        dispatch(setRecovery(res.data));
-        dispatch(decreaseLoading())
-        dispatch(setRecoveryLoading(false))
-      }).catch(err => {
-        dispatch(setRecoveryLoading(false))
-      })
-    }
-  }, [apiUrl, rawToken])
+  }, [apiUrl, rawToken, tags.length, extraFilter, dispatch])
 
   const changeTab = (index) => {
     let tagsToApply = [];
