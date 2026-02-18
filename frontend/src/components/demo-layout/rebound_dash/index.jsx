@@ -89,6 +89,7 @@ const ReboundDash = () => {
   const showPlaceholder = placeholderNavs.includes(selectedNav);
   const showHomeView = appTitle === 'Home';
   const showDashboardView = appTitle === 'Dashboard';
+  const [selectedAgent, setSelectedAgent] = useState(null);
   const showSettingsView = appTitle === 'Settings';
   const count = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
@@ -798,7 +799,11 @@ const ReboundDash = () => {
               {showHomeView ? (
                 <HomeScreen isDark={isDark} />
               ) : showDashboardView ? (
-                <DashboardScreen isDark={isDark} />
+                <DashboardScreen
+                  isDark={isDark}
+                  selectedAgent={selectedAgent}
+                  onSelectAgent={setSelectedAgent}
+                />
               ) : showSettingsView ? (
                 <SettingsScreen isDark={isDark} />
               ) : showAiModels ? (
