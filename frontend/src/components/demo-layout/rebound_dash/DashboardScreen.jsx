@@ -71,12 +71,12 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
 
   return (
     <div
-      className={`rounded-2xl border p-6 ${surface}`}
+      className={`rounded-2xl border p-4 sm:p-6 ${surface}`}
       style={{ fontFamily: '"Space Grotesk", "IBM Plex Sans", ui-sans-serif, system-ui' }}
     >
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="mt-1 text-2xl font-semibold">Client Dashboard</h2>
+          <h2 className="mt-1 text-xl sm:text-2xl font-semibold">Client Dashboard</h2>
         </div>
         <div className={`text-xs ${subtle}`}>
           {selectedAgent ? `Filtered: ${selectedAgent}` : "All agents"}
@@ -121,7 +121,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
 
           <div className={`rounded-xl border p-4 ${panel}`}>
             <div className="text-sm font-semibold">Remaining, AR balance, averages</div>
-            <div className={`mt-4 grid grid-cols-[1.5fr_0.9fr_0.9fr_0.9fr_0.6fr] text-[11px] uppercase tracking-[0.12em] ${subtle}`}>
+            <div className={`mt-4 hidden sm:grid sm:grid-cols-[1.5fr_0.9fr_0.9fr_0.9fr_0.6fr] text-[11px] uppercase tracking-[0.12em] ${subtle}`}>
               <div>Category</div>
               <div className="text-right">Remaining</div>
               <div className="text-right">AR Balance</div>
@@ -133,16 +133,37 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
               <div className={`py-6 text-sm ${muted}`}>No category data for this agent.</div>
             ) : (
               categoryRows.map((row) => (
-                <div key={row[0]} className={`grid grid-cols-[1.5fr_0.9fr_0.9fr_0.9fr_0.6fr] py-2 text-sm ${muted}`}>
-                  {row.map((cell, i) => (
-                    <div
-                      key={`${row[0]}-${i}`}
-                      className={i === 0 ? "text-gray-200 truncate pr-2" : "text-right tabular-nums"}
-                      title={i === 0 ? row[0] : undefined}
-                    >
-                      {cell}
+                <div key={row[0]} className={`py-3 text-sm ${muted}`}>
+                  <div className="sm:hidden space-y-1 rounded-lg border border-[#2b2f37] bg-black/20 p-3">
+                    <div className="text-gray-200 font-semibold truncate" title={row[0]}>{row[0]}</div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className={subtle}>Remaining</span>
+                      <span className="tabular-nums">{row[1]}</span>
                     </div>
-                  ))}
+                    <div className="flex items-center justify-between text-xs">
+                      <span className={subtle}>AR Balance</span>
+                      <span className="tabular-nums">{row[2]}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className={subtle}>Avg AR Balance</span>
+                      <span className="tabular-nums">{row[3]}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className={subtle}>Avg Age</span>
+                      <span className="tabular-nums">{row[4]}</span>
+                    </div>
+                  </div>
+                  <div className="hidden sm:grid sm:grid-cols-[1.5fr_0.9fr_0.9fr_0.9fr_0.6fr]">
+                    {row.map((cell, i) => (
+                      <div
+                        key={`${row[0]}-${i}`}
+                        className={i === 0 ? "text-gray-200 truncate pr-2" : "text-right tabular-nums"}
+                        title={i === 0 ? row[0] : undefined}
+                      >
+                        {cell}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))
             )}
@@ -163,7 +184,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
           <div className={`rounded-xl border p-4 ${panel}`}>
             <div className="text-sm font-semibold">Recovery $ Month to Date (MTD)</div>
             <div className="mt-4 h-32 rounded-lg border border-[#2b2f37] bg-black/30 p-4">
-              <div className="flex items-end justify-between gap-2">
+              <div className="flex items-end justify-between gap-1 sm:gap-2">
                 {recoveryBars.map((h, idx) => (
                   <div key={idx} className="flex w-full flex-col items-center">
                     <div className="w-full rounded-md bg-[#858b95]" style={{ height: `${h}px` }} />
@@ -185,7 +206,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
 
           <div className={`rounded-xl border p-4 ${panel}`}>
             <div className="text-sm font-semibold">Remaining Actions</div>
-            <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {remainingActions.length === 0 ? (
                 <div className={`text-sm ${muted}`}>No actions available.</div>
               ) : (
