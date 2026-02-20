@@ -634,167 +634,160 @@ const Sidebar = () => {
         />
       )}
       <aside
-        className={`flex flex-col h-screen border-r px-2 md:px-3 py-6 top-0 left-0 ${
-          mobileExpanded ? "w-[308px]" : "w-[72px]"
-        } md:w-[308px] ${
-          isMobileView ? (mobileExpanded ? "fixed z-50" : "sticky") : "sticky"
-        } ${
-          isDark
+        className={`flex flex-col h-screen border-r px-2 md:px-3 py-6 top-0 left-0 ${mobileExpanded ? "w-[308px]" : "w-[72px]"
+          } md:w-[308px] ${isMobileView ? (mobileExpanded ? "fixed z-50" : "sticky") : "sticky"
+          } ${isDark
             ? "bg-[#1F2024] border-r-[#3f4045] text-white"
             : "bg-white border-slate-200 text-slate-900"
-        }`}
+          }`}
       >
-      <div
-        className={`flex items-center justify-center gap-3 pb-6 ${
-          isDark ? "bg-[#1F2024]" : "bg-white"
-        } sticky top-0 z-10`}
-      >
-        <img
-          src="/logo_sm.svg"
-          alt="Helio RCM logo"
-          className={`h-12 w-12 ${mobileExpanded ? "hidden md:hidden" : "md:hidden"}`}
-          loading="lazy"
-        />
-        <img
-          src="/helio-logo.svg"
-          alt="Helio RCM logo"
-          className={`${mobileExpanded ? "block" : "hidden"} h-16 w-auto md:block`}
-          loading="lazy"
-        />
-      </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto sidebar-scrollbar pr-1">
-        {navItems.map((item) => {
-          const hasChildren = Array.isArray(item.children) && item.children.length > 0;
-          const childActive = hasChildren && activeId.startsWith(`${item.id}:`);
-          const isActive = activeId === item.id || childActive;
-          const isExpanded = expandedNav.has(item.id) || childActive;
-          const childSum = hasChildren
-            ? item.children.reduce((sum, child) => sum + (navBadges[child.id] ?? 0), 0)
-            : 0;
-          const parentBadge = navBadges[item.id];
-          const computedBadge =
-            typeof parentBadge === "number" && parentBadge > 0
-              ? parentBadge
-              : childSum > 0
-                ? childSum
-                : item.badge;
-          const navStateClass = isActive
-            ? isDark
-              ? "bg-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
-              : "bg-slate-900 text-white shadow-lg"
-            : isDark
-            ? "text-[#F4F4F4]/50 hover:bg-white/5"
-            : "text-slate-500 hover:bg-slate-100";
-          const iconWrapperClass = isActive
-            ? isDark
-              ? "border-white/20 bg-white/10"
-              : "border-slate-700 bg-slate-800"
-            : isDark
-            ? "border-white/5 bg-white/5"
-            : "border-slate-200 bg-white";
-          const badgeClass = isActive
-            ? isDark
-              ? "bg-white/20 text-white"
-              : "bg-white text-slate-900"
-            : isDark
-            ? "bg-[#1F2231] text-[#F4F4F4]/50"
-            : "bg-slate-200 text-slate-700";
-          return (
-            <div key={item.id}>
-              <div className={`w-full flex items-center rounded-2xl px-2 py-2 transition-colors ${navStateClass}`}>
-                <button
-                  type="button"
-                  aria-label={item.title}
-                  className={`flex-1 flex items-center justify-center gap-2 text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 ${
-                    mobileExpanded ? "justify-between" : "md:justify-between"
-                  }`}
-                  onClick={() => handleClick(item)}
-                >
-                  <span className="flex items-center gap-3 min-w-0">
-                    <span
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center border ${iconWrapperClass}`}
-                    >
-                      {renderIcon(item.icon, isActive)}
-                    </span>
-                    <span
-                      className={`${mobileExpanded ? "inline" : "hidden"} md:inline text-sm font-medium truncate max-w-[100px]`}
-                      title={item.title}
-                    >
-                      {item.title}
-                    </span>
-                  </span>
-                  {computedBadge !== null && computedBadge !== undefined && (
-                    <span
-                      className={`${mobileExpanded ? "inline-flex" : "hidden"} md:inline-flex text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}
-                    >
-                      {formatCount(computedBadge)}
-                    </span>
-                  )}
-                </button>
-                {hasChildren && (
+        <div
+          className={`flex items-center justify-center gap-3 pb-6 ${isDark ? "bg-[#1F2024]" : "bg-white"
+            } sticky top-0 z-10`}
+        >
+          <img
+            src="/logo_sm.svg"
+            alt="Helio RCM logo"
+            className={`h-12 w-12 ${mobileExpanded ? "hidden md:hidden" : "md:hidden"}`}
+            loading="lazy"
+          />
+          <img
+            src="/helio-logo.svg"
+            alt="Helio RCM logo"
+            className={`${mobileExpanded ? "block" : "hidden"} h-16 w-auto md:block`}
+            loading="lazy"
+          />
+        </div>
+        <nav className="flex-1 space-y-1 overflow-y-auto sidebar-scrollbar pr-1">
+          {navItems.map((item) => {
+            const hasChildren = Array.isArray(item.children) && item.children.length > 0;
+            const childActive = hasChildren && activeId.startsWith(`${item.id}:`);
+            const isActive = activeId === item.id || childActive;
+            const isExpanded = expandedNav.has(item.id) || childActive;
+            const childSum = hasChildren
+              ? item.children.reduce((sum, child) => sum + (navBadges[child.id] ?? 0), 0)
+              : 0;
+            const parentBadge = navBadges[item.id];
+            const computedBadge =
+              typeof parentBadge === "number" && parentBadge > 0
+                ? parentBadge
+                : childSum > 0
+                  ? childSum
+                  : item.badge;
+            const navStateClass = isActive
+              ? isDark
+                ? "bg-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+                : "bg-slate-900 text-white shadow-lg"
+              : isDark
+                ? "text-[rgba(244,244,244,0.5)] hover:bg-white/5"
+                : "text-slate-500 hover:bg-slate-100";
+            const iconWrapperClass = isActive
+              ? isDark
+                ? "border-white/20 bg-white/10"
+                : "border-slate-700 bg-slate-800"
+              : isDark
+                ? "border-white/5 bg-white/5"
+                : "border-slate-200 bg-white";
+            const badgeClass = isActive
+              ? isDark
+                ? "bg-white/20 text-white"
+                : "bg-white text-slate-900"
+              : isDark
+                ? "bg-[#1F2231] text-[rgba(244,244,244,0.5)]"
+                : "bg-slate-200 text-slate-700";
+            return (
+              <div key={item.id}>
+                <div className={`w-full flex items-center rounded-2xl px-2 py-2 transition-colors ${navStateClass}`}>
                   <button
                     type="button"
-                    className={`${mobileExpanded ? "flex" : "hidden"} md:flex p-1 rounded-full ml-2 ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleExpand(item.id);
+                    aria-label={item.title}
+                    className={`flex-1 flex items-center justify-center gap-2 text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 ${mobileExpanded ? "justify-between" : "md:justify-between"
+                      }`}
+                    onClick={() => handleClick(item)}
+                  >
+                    <span className="flex items-center gap-3 min-w-0">
+                      <span
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center border ${iconWrapperClass}`}
+                      >
+                        {renderIcon(item.icon, isActive)}
+                      </span>
+                      <span
+                        className={`${mobileExpanded ? "inline" : "hidden"} md:inline text-sm font-medium truncate max-w-[100px]`}
+                        title={item.title}
+                      >
+                        {item.title}
+                      </span>
+                    </span>
+                    {computedBadge !== null && computedBadge !== undefined && (
+                      <span
+                        className={`${mobileExpanded ? "inline-flex" : "hidden"} md:inline-flex text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}
+                      >
+                        {formatCount(computedBadge)}
+                      </span>
+                    )}
+                  </button>
+                  {hasChildren && (
+                    <button
+                      type="button"
+                      className={`${mobileExpanded ? "flex" : "hidden"} md:flex p-1 rounded-full ml-2 ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleExpand(item.id);
+                      }}
+                    >
+                      <svg
+                        className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        viewBox="0 0 20 20"
+                        fill="none"
+                      >
+                        <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                {hasChildren && (
+                  <div
+                    className={`${mobileExpanded ? "block" : "hidden"} md:block ml-14 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'mt-1 mb-2 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'}`}
+                    style={{
+                      maxHeight: isExpanded ? `${(item.children?.length || 1) * 44}px` : 0,
                     }}
                   >
-                    <svg
-                      className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                      viewBox="0 0 20 20"
-                      fill="none"
-                    >
-                      <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
+                    {item.children.map((child) => {
+                      const childIsActive = activeId === child.id;
+                      const childBadge =
+                        navBadges[child.id] ??
+                        child.badge ??
+                        (navBadges[item.id] ?? 0);
+                      return (
+                        <button
+                          type="button"
+                          key={child.id}
+                          className={`w-full flex items-center justify-between text-left text-xs font-medium px-3 py-2 rounded-xl transition-colors ${childIsActive
+                              ? (isDark ? 'bg-white/10 text-white' : 'bg-slate-900 text-white')
+                              : (isDark ? 'text-[rgba(244,244,244,0.5)] hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100')
+                            }`}
+                          onClick={() => handleChildClick(item, child)}
+                        >
+                          <span className="truncate" title={child.title}>{child.title}</span>
+                          <span
+                            className={`ml-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${childIsActive
+                                ? (isDark ? 'bg-white/20 text-white' : 'bg-white text-slate-900')
+                                : (isDark ? 'bg-[#1F2231] text-[rgba(244,244,244,0.5)]' : 'bg-slate-200 text-slate-700')
+                              }`}
+                          >
+                            {formatCount(childBadge)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-              {hasChildren && (
-                <div
-                  className={`${mobileExpanded ? "block" : "hidden"} md:block ml-14 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'mt-1 mb-2 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'}`}
-                  style={{
-                    maxHeight: isExpanded ? `${(item.children?.length || 1) * 44}px` : 0,
-                  }}
-                >
-                  {item.children.map((child) => {
-                    const childIsActive = activeId === child.id;
-                    const childBadge =
-                      navBadges[child.id] ??
-                      child.badge ??
-                      (navBadges[item.id] ?? 0);
-                    return (
-                      <button
-                        type="button"
-                        key={child.id}
-                        className={`w-full flex items-center justify-between text-left text-xs font-medium px-3 py-2 rounded-xl transition-colors ${
-                          childIsActive
-                            ? (isDark ? 'bg-white/10 text-white' : 'bg-slate-900 text-white')
-                            : (isDark ? 'text-[#F4F4F4]/50 hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100')
-                        }`}
-                        onClick={() => handleChildClick(item, child)}
-                      >
-                        <span className="truncate" title={child.title}>{child.title}</span>
-                        <span
-                          className={`ml-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
-                            childIsActive
-                              ? (isDark ? 'bg-white/20 text-white' : 'bg-white text-slate-900')
-                              : (isDark ? 'bg-[#1F2231] text-[#F4F4F4]/50' : 'bg-slate-200 text-slate-700')
-                          }`}
-                        >
-                          {formatCount(childBadge)}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
-      {/* <div className="mt-6 flex items-center justify-between px-3">
+            );
+          })}
+        </nav>
+        {/* <div className="mt-6 flex items-center justify-between px-3">
         <span className="text-sm font-semibold">Theme</span>
         <label className="relative inline-flex items-center cursor-pointer">
           <input
@@ -806,7 +799,7 @@ const Sidebar = () => {
           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-600"></div>
         </label>
       </div> */}
-    </aside>
+      </aside>
     </>
   );
 };
