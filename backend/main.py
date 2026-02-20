@@ -81,6 +81,11 @@ from api.platform.launchpad.platform_bootstrap import (
 )
 from api.platform.rcmgpt.generate_appeal import rebound_api_generate_appeal, medevolve_api_generate_appeal
 from api.platform.clients import clients_api
+from api.platform.claim_status.optum_claim_status import (
+    rebound_api_claim_status,
+    medevolve_api_claim_status,
+    pilotcustomer_api_claim_status,
+)
 
 from api.platform.demo.demo import demo_api
 
@@ -180,6 +185,9 @@ def create_app():
     app.register_blueprint(rebound_api_generate_appeal)
     app.register_blueprint(medevolve_api_generate_appeal)
     app.register_blueprint(clients_api)
+    app.register_blueprint(rebound_api_claim_status)
+    app.register_blueprint(medevolve_api_claim_status)
+    app.register_blueprint(pilotcustomer_api_claim_status)
 
 
 

@@ -44,6 +44,10 @@ const ReboundDetailView = () => {
   const [renderIndex, setRenderIndex] = useState(0)
   const [claimNo, setClaimNo] = useState('')
   const [thumb, setThumb] = useState(0);
+  const [optumRequest, setOptumRequest] = useState(null);
+  const [optumResponse, setOptumResponse] = useState(null);
+  const [optumLoading, setOptumLoading] = useState(false);
+  const [optumError, setOptumError] = useState("");
   const [triageActions, setTriageActions] = useState([]);
   const [triageOtherText, setTriageOtherText] = useState("");
   const [triageNotes, setTriageNotes] = useState("");
@@ -511,6 +515,114 @@ const ReboundDetailView = () => {
     return [];
   };
 
+  const normalizeDateInput = (value) => {
+    if (!value) return "";
+    const parsed = new Date(Date.parse(value));
+    if (Number.isNaN(parsed.getTime())) return "";
+    return parsed.toISOString().slice(0, 10);
+  };
+
+  const splitName = (value) => {
+    const raw = `${value || ""}`.trim();
+    if (!raw) return { firstName: "", lastName: "" };
+    if (raw.includes(",")) {
+      const [last, first] = raw.split(",").map((part) => part.trim());
+      return { firstName: first || "", lastName: last || "" };
+    }
+    const parts = raw.split(" ").filter(Boolean);
+    if (parts.length === 1) {
+      return { firstName: parts[0], lastName: "" };
+    }
+    return {
+      firstName: parts.slice(0, parts.length - 1).join(" "),
+      lastName: parts[parts.length - 1],
+    };
+  };
+
+  const buildOptumRequestFromClaim = (claim) => {
+    const claimData = claim?.Claim?.Data || {};
+    const serviceLine = (claim?.Claim?.ServiceLine || [])[0] || {};
+    const serviceDate =
+      normalizeDateInput(serviceLine?.ServiceDate) ||
+      normalizeDateInput(claimData?.ServiceDate);
+    const patientName = claimData?.PatientName || claimData?.Patient || "";
+    const nameParts = splitName(patientName);
+    const procedureModifiers = extractModifiers(serviceLine?.Modifier);
+    return {
+      controlNumber: `${claimData?.ClaimNo || claim?.ClaimNo || "277"}-${Date.now()}`,
+      tradingPartnerName: claimData?.PayerName || "",
+      tradingPartnerServiceId: claimData?.PayerID || "",
+      providers: [
+        {
+          providerType: "Billing",
+          organizationName: claimData?.BillProvName || "",
+          npi: claimData?.ProvNPI || "",
+          taxId: claimData?.ProvTaxID || "",
+        },
+      ],
+      subscriber: {
+        memberId: claimData?.PatientID || "",
+        firstName: nameParts.firstName,
+        lastName: nameParts.lastName,
+      },
+      encounter: {
+        beginningDateOfService: serviceDate,
+        endDateOfService: serviceDate,
+        trackingNumber: claimData?.ClaimNo || claim?.ClaimNo || "",
+        tradingPartnerClaimNumber: claimData?.ClaimNo || claim?.ClaimNo || "",
+        patientAccountNumber: claimData?.ClaimNo || claim?.ClaimNo || "",
+        submittedAmount: claimData?.Amount || "",
+      },
+      serviceLineInformation: {
+        productOrServiceIDQualifier: "HC",
+        procedureCode: serviceLine?.Code || "",
+        procedureModifiers,
+        lineItemChargeAmount: serviceLine?.Charges || "",
+        unitsOfServiceCount: serviceLine?.Units || "",
+        serviceLineDate: serviceDate,
+      },
+    };
+  };
+
+  const updateProviderField = (field, value) => {
+    setOptumRequest((prev) => {
+      const next = { ...(prev || {}), providers: [...((prev && prev.providers) || [])] };
+      next.providers[0] = { ...(next.providers[0] || {}), [field]: value };
+      return next;
+    });
+  };
+
+  const updateSubscriberField = (field, value) => {
+    setOptumRequest((prev) => ({
+      ...(prev || {}),
+      subscriber: { ...((prev && prev.subscriber) || {}), [field]: value },
+    }));
+  };
+
+  const updateEncounterField = (field, value) => {
+    setOptumRequest((prev) => ({
+      ...(prev || {}),
+      encounter: { ...((prev && prev.encounter) || {}), [field]: value },
+    }));
+  };
+
+  const updateServiceLineField = (field, value) => {
+    setOptumRequest((prev) => ({
+      ...(prev || {}),
+      serviceLineInformation: { ...((prev && prev.serviceLineInformation) || {}), [field]: value },
+    }));
+  };
+
+  const getInsightStatusLabel = (value) => {
+    if (!value) return "";
+    const text = `${value}`.toLowerCase();
+    if (text.includes("accept")) return "Accepted";
+    if (text.includes("pending")) return "Pending";
+    if (text.includes("final") || text.includes("paid")) return "Finalized/Paid";
+    if (text.includes("denied") || text.includes("reject")) return "Denied/Rejected";
+    return "Pending";
+  };
+
   const SectionCard = ({ title, children, startCollapsed = true, collapsible = true, showBorder = true }) => {
     const [collapsed, setCollapsed] = useState(startCollapsed);
 
@@ -625,6 +737,38 @@ const ReboundDetailView = () => {
       setThumb(res.data.rate);
     })
   }, [claimNo, apiUrl])
+
+  useEffect(() => {
+    if (!currentClaim) return;
+    setOptumRequest(buildOptumRequestFromClaim(currentClaim));
+    setOptumResponse(null);
+    setOptumError("");
+  }, [currentClaim]);
+
+  const handleRequest277 = () => {
+    if (!optumRequest) return;
+    setOptumLoading(true);
+    setOptumError("");
+    axios
+      .post(`${apiUrl}/claim-status/optum`, optumRequest)
+      .then((res) => {
+        const payload = res?.data?.response || res?.data || {};
+        setOptumResponse(payload);
+        toast.success("277 response received.");
+      })
+      .catch((err) => {
+        const detail =
+          err?.response?.data?.detail ||
+          err?.response?.data?.error ||
+          err?.message ||
+          "Failed to request 277.";
+        setOptumError(detail);
+        toast.error("Failed to request 277.");
+      })
+      .finally(() => {
+        setOptumLoading(false);
+      });
+  };
 
   const [openNotesHistoryModal, setOpenNotesHistoryModal] = useState(false)
 
@@ -825,6 +969,176 @@ const ReboundDetailView = () => {
                 ));
               })()}
               </ul>
+              {((routeTitle || appTitle || "").toLowerCase().includes("pend 277")) && (
+                <div className={`mt-6 rounded-2xl border p-5 ${isDark ? 'border-[#30354a] bg-[#1b1f29]' : 'border-gray-200 bg-slate-50'}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className={`text-sm font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Claim Status (277)</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Send a 276 request to Optum and view the 277 response.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRequest277}
+                      disabled={optumLoading}
+                      className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${optumLoading
+                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                        : isDark
+                          ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                          : 'bg-slate-900 text-white hover:bg-slate-800'
+                        }`}
+                    >
+                      {optumLoading ? 'Requesting...' : 'Request 277'}
+                    </button>
+                  </div>
+                  {optumRequest && (
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Control Number</span>
+                        <input
+                          value={optumRequest.controlNumber || ""}
+                          onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), controlNumber: e.target.value }))}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Trading Partner Service ID</span>
+                        <input
+                          value={optumRequest.tradingPartnerServiceId || ""}
+                          onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), tradingPartnerServiceId: e.target.value }))}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 md:col-span-2">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Trading Partner Name</span>
+                        <input
+                          value={optumRequest.tradingPartnerName || ""}
+                          onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), tradingPartnerName: e.target.value }))}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Provider Type</span>
+                        <input
+                          value={(optumRequest.providers && optumRequest.providers[0]?.providerType) || ""}
+                          onChange={(e) => updateProviderField("providerType", e.target.value)}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Provider NPI</span>
+                        <input
+                          value={(optumRequest.providers && optumRequest.providers[0]?.npi) || ""}
+                          onChange={(e) => updateProviderField("npi", e.target.value)}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Provider Tax ID</span>
+                        <input
+                          value={(optumRequest.providers && optumRequest.providers[0]?.taxId) || ""}
+                          onChange={(e) => updateProviderField("taxId", e.target.value)}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Subscriber Member ID</span>
+                        <input
+                          value={optumRequest.subscriber?.memberId || ""}
+                          onChange={(e) => updateSubscriberField("memberId", e.target.value)}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Subscriber First Name</span>
+                        <input
+                          value={optumRequest.subscriber?.firstName || ""}
+                          onChange={(e) => updateSubscriberField("firstName", e.target.value)}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Subscriber Last Name</span>
+                        <input
+                          value={optumRequest.subscriber?.lastName || ""}
+                          onChange={(e) => updateSubscriberField("lastName", e.target.value)}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Date of Service</span>
+                        <input
+                          type="date"
+                          value={optumRequest.encounter?.beginningDateOfService || ""}
+                          onChange={(e) => {
+                            updateEncounterField("beginningDateOfService", e.target.value);
+                            updateEncounterField("endDateOfService", e.target.value);
+                            updateServiceLineField("serviceLineDate", e.target.value);
+                          }}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Submitted Amount</span>
+                        <input
+                          value={optumRequest.encounter?.submittedAmount || ""}
+                          onChange={(e) => updateEncounterField("submittedAmount", e.target.value)}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Procedure Code</span>
+                        <input
+                          value={optumRequest.serviceLineInformation?.procedureCode || ""}
+                          onChange={(e) => updateServiceLineField("procedureCode", e.target.value)}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Procedure Modifiers (comma-separated)</span>
+                        <input
+                          value={(optumRequest.serviceLineInformation?.procedureModifiers || []).join(", ")}
+                          onChange={(e) => updateServiceLineField(
+                            "procedureModifiers",
+                            e.target.value.split(",").map((item) => item.trim()).filter(Boolean)
+                          )}
+                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </label>
+                    </div>
+                  )}
+                  {optumError && (
+                    <div className={`mt-4 text-sm ${isDark ? 'text-red-300' : 'text-red-600'}`}>
+                      {optumError}
+                    </div>
+                  )}
+                  {optumResponse && (
+                    <div className={`mt-4 rounded-xl border p-4 ${isDark ? 'border-[#30354a] bg-[#10131b]' : 'border-gray-200 bg-white'}`}>
+                      <p className={`text-sm font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Latest 277 Response</p>
+                      <div className={`mt-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Control Number: {optumResponse.controlNumber || "N/A"}
+                      </div>
+                      {(optumResponse.claims || []).map((claim, idx) => {
+                        const status = claim?.claimStatus || {};
+                        const statusValue = status.statusCategoryCodeValue || status.statusCodeValue || "";
+                        const insightLabel = getInsightStatusLabel(statusValue);
+                        return (
+                          <div key={`optum-claim-${idx}`} className="mt-3 text-sm">
+                            <div className={`font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                              Status: {insightLabel || "Pending"}
+                            </div>
+                            <div className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {statusValue || "No status description available."}
+                            </div>
+                            <div className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              Effective Date: {status.effectiveDate || "N/A"}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

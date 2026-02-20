@@ -33,6 +33,7 @@ const DataTable = (props) => {
   const dispatch = useDispatch();
   const tableScrollRef = useRef(null);
   const role = useSelector((state) => state.auth.role);
+  const username = useSelector((state) => state.auth.username);
   const accessModules = useSelector((state) => state.auth.modules);
   const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
   const accessPayer = useSelector((state) => state.auth.payer);
@@ -69,6 +70,9 @@ const DataTable = (props) => {
     [extra, access, role]
   );
   const appTitle = useSelector((state) => state.app.title);
+  const [bulk277Loading, setBulk277Loading] = useState(false);
+  const [bulk277Progress, setBulk277Progress] = useState({ total: 0, done: 0, failed: 0 });
+  const [bulk277Errors, setBulk277Errors] = useState([]);
   const [order, _setOrder] = useState("ClaimNo");
   const theme = useSelector((state) => state.app.theme);
   const isDarkMode = theme === 'dark';
@@ -80,6 +84,80 @@ const DataTable = (props) => {
   };
   const formatCurrencyRounded = (value) => `$${samplifyInteger(Number(value) || 0)}`;
   const formatCurrencyExact = (value) => `$${samplifyDouble(Number(value) || 0)}`;
+  const normalizeDateInput = (value) => {
+    if (!value) return "";
+    const parsed = new Date(Date.parse(value));
+    if (Number.isNaN(parsed.getTime())) return "";
+    return parsed.toISOString().slice(0, 10);
+  };
+  const splitName = (value) => {
+    const raw = `${value || ""}`.trim();
+    if (!raw) return { firstName: "", lastName: "" };
+    if (raw.includes(",")) {
+      const [last, first] = raw.split(",").map((part) => part.trim());
+      return { firstName: first || "", lastName: last || "" };
+    }
+    const parts = raw.split(" ").filter(Boolean);
+    if (parts.length === 1) {
+      return { firstName: parts[0], lastName: "" };
+    }
+    return {
+      firstName: parts.slice(0, parts.length - 1).join(" "),
+      lastName: parts[parts.length - 1],
+    };
+  };
+  const extractModifiers = (mod) => {
+    if (Array.isArray(mod)) return mod.filter((item) => item).slice(0, 3);
+    if (typeof mod === "string") return mod.split(",").map((item) => item.trim()).filter(Boolean).slice(0, 3);
+    if (mod && typeof mod === "object") {
+      return [mod.Mod1, mod.Mod2, mod.Mod3].filter((item) => item);
+    }
+    return [];
+  };
+  const buildOptumRequestFromClaim = (claim) => {
+    const claimData = claim?.Claim?.Data || {};
+    const serviceLine = (claim?.Claim?.ServiceLine || [])[0] || {};
+    const serviceDate =
+      normalizeDateInput(serviceLine?.ServiceDate) ||
+      normalizeDateInput(claimData?.ServiceDate);
+    const patientName = claimData?.PatientName || claimData?.Patient || "";
+    const nameParts = splitName(patientName);
+    const procedureModifiers = extractModifiers(serviceLine?.Modifier);
+    return {
+      controlNumber: `${claimData?.ClaimNo || claim?.ClaimNo || "277"}-${Date.now()}`,
+      tradingPartnerName: claimData?.PayerName || "",
+      tradingPartnerServiceId: claimData?.PayerID || "",
+      providers: [
+        {
+          providerType: "Billing",
+          organizationName: claimData?.BillProvName || "",
+          npi: claimData?.ProvNPI || "",
+          taxId: claimData?.ProvTaxID || "",
+        },
+      ],
+      subscriber: {
+        memberId: claimData?.PatientID || "",
+        firstName: nameParts.firstName,
+        lastName: nameParts.lastName,
+      },
+      encounter: {
+        beginningDateOfService: serviceDate,
+        endDateOfService: serviceDate,
+        trackingNumber: claimData?.ClaimNo || claim?.ClaimNo || "",
+        tradingPartnerClaimNumber: claimData?.ClaimNo || claim?.ClaimNo || "",
+        patientAccountNumber: claimData?.ClaimNo || claim?.ClaimNo || "",
+        submittedAmount: claimData?.Amount || "",
+      },
+      serviceLineInformation: {
+        productOrServiceIDQualifier: "HC",
+        procedureCode: serviceLine?.Code || "",
+        procedureModifiers,
+        lineItemChargeAmount: serviceLine?.Charges || "",
+        unitsOfServiceCount: serviceLine?.Units || "",
+        serviceLineDate: serviceDate,
+      },
+    };
+  };
   const getAdjustment45Value = (row) => {
     if (!row) return 0;
     const candidates = [
@@ -181,6 +259,56 @@ const DataTable = (props) => {
       pageClaimIds.forEach((id) => nextSelected.delete(id));
     }
     dispatch(setSelectedClaimIds([...nextSelected]));
+  };
+
+  const showBulk277 = (appTitle || "").toLowerCase().includes("pend 277");
+  const selectedIds = useMemo(
+    () => (selectedClaimIds || []).filter((id) => id && `${id}`.trim() !== ""),
+    [selectedClaimIds]
+  );
+
+  const handleBulk277 = async () => {
+    if (bulk277Loading) return;
+    if (!apiUrl) return;
+    if (selectedIds.length === 0) {
+      toast.info("Select at least one claim first.");
+      return;
+    }
+    setBulk277Loading(true);
+    setBulk277Errors([]);
+    setBulk277Progress({ total: selectedIds.length, done: 0, failed: 0 });
+    let done = 0;
+    let failed = 0;
+    const errors = [];
+    for (const claimNo of selectedIds) {
+      try {
+        const claimRes = await axios.get(
+          `${apiUrl}/get_claim?id=${encodeURIComponent(claimNo)}&username=${encodeURIComponent(username || "")}`
+        );
+        const payload = buildOptumRequestFromClaim(claimRes.data);
+        await axios.post(`${apiUrl}/claim-status/optum`, payload);
+      } catch (err) {
+        failed += 1;
+        errors.push({
+          claimNo,
+          detail:
+            err?.response?.data?.detail ||
+            err?.response?.data?.error ||
+            err?.message ||
+            "Request failed",
+        });
+      } finally {
+        done += 1;
+        setBulk277Progress({ total: selectedIds.length, done, failed });
+      }
+    }
+    setBulk277Errors(errors);
+    setBulk277Loading(false);
+    if (failed > 0) {
+      toast.error(`277 requests completed with ${failed} failure(s).`);
+    } else {
+      toast.success("All 277 requests completed.");
+    }
   };
 
   useEffect(() => {
@@ -471,6 +599,48 @@ const DataTable = (props) => {
           ))}
         </div>
       </div>
+      {showBulk277 && (
+        <div className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? 'border-[#2d3348] bg-[#1b1f29] text-white' : 'bg-white border-gray-200 text-slate-900'}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">Bulk 277 Request</p>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Selected claims: {selectedIds.length}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleBulk277}
+              disabled={bulk277Loading || selectedIds.length === 0}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${bulk277Loading || selectedIds.length === 0
+                ? 'bg-gray-400 text-white cursor-not-allowed'
+                : isDarkMode
+                  ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                  : 'bg-slate-900 text-white hover:bg-slate-800'
+                }`}
+            >
+              {bulk277Loading ? "Requesting..." : "Request 277 for Selected"}
+            </button>
+          </div>
+          {(bulk277Progress.total > 0) && (
+            <div className={`mt-3 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              Progress: {bulk277Progress.done}/{bulk277Progress.total} (Failed: {bulk277Progress.failed})
+            </div>
+          )}
+          {bulk277Errors.length > 0 && (
+            <div className={`mt-3 text-xs ${isDarkMode ? 'text-red-300' : 'text-red-600'}`}>
+              {bulk277Errors.slice(0, 5).map((err, idx) => (
+                <div key={`bulk-277-err-${idx}`}>
+                  {err.claimNo}: {err.detail}
+                </div>
+              ))}
+              {bulk277Errors.length > 5 && (
+                <div>+{bulk277Errors.length - 5} more errors</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       <div className={`rounded-[32px] border ${isDarkMode ? 'bg-[#27282D] border-[#1F2231] text-white' : 'bg-white border-[#E4E7EF] text-[#0f172a]'} p-6 flex flex-col h-full`}>
         <div className={`mb-3 text-sm font-semibold ${isDarkMode ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
           {appTitle || 'Home'}
