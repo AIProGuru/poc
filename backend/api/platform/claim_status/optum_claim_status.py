@@ -612,3 +612,72 @@ def claim_status_optum():
         return jsonify({"error": "Failed to process claim status", "detail": str(exc)}), 500
     finally:
         close_connection(cursor, conn)
+
+
+@rebound_api_claim_status.route("/claim-status/optum/bulk", methods=["POST"])
+@medevolve_api_claim_status.route("/claim-status/optum/bulk", methods=["POST"])
+@pilotcustomer_api_claim_status.route("/claim-status/optum/bulk", methods=["POST"])
+def claim_status_optum_bulk():
+    if not request.is_json:
+        return (
+            jsonify({"error": "Unsupported Media Type: Content-Type must be application/json"}),
+            415,
+        )
+
+    payload = request.get_json(silent=True) or {}
+    requests_payload = payload.get("requests") or []
+    if not isinstance(requests_payload, list) or len(requests_payload) == 0:
+        return jsonify({"error": "requests must be a non-empty array"}), 400
+
+    conn = None
+    cursor = None
+    results = []
+    success_count = 0
+    failure_count = 0
+
+    try:
+        conn, cursor, _ = get_connection(request.base_url)
+
+        for idx, req_payload in enumerate(requests_payload):
+            try:
+                request_id = _insert_request(cursor, req_payload)
+                response = _call_optum_claim_status(req_payload)
+                response_id = _insert_response(cursor, request_id, response)
+                conn.commit()
+                results.append(
+                    {
+                        "index": idx,
+                        "requestId": request_id,
+                        "responseId": response_id,
+                        "status": "ok",
+                    }
+                )
+                success_count += 1
+            except Exception as item_exc:
+                failure_count += 1
+                conn.rollback()
+                results.append(
+                    {
+                        "index": idx,
+                        "status": "error",
+                        "error": str(item_exc),
+                    }
+                )
+
+        return (
+            jsonify(
+                {
+                    "results": results,
+                    "successCount": success_count,
+                    "failureCount": failure_count,
+                }
+            ),
+            200,
+        )
+    except Exception as exc:
+        logger.error("Bulk claim status error: %s", exc)
+        if conn:
+            conn.rollback()
+        return jsonify({"error": "Failed to process bulk claim status", "detail": str(exc)}), 500
+    finally:
+        close_connection(cursor, conn)

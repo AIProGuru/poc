@@ -280,34 +280,64 @@ const DataTable = (props) => {
     let done = 0;
     let failed = 0;
     const errors = [];
-    for (const claimNo of selectedIds) {
-      try {
-        const claimRes = await axios.get(
-          `${apiUrl}/get_claim?id=${encodeURIComponent(claimNo)}&username=${encodeURIComponent(username || "")}`
-        );
-        const payload = buildOptumRequestFromClaim(claimRes.data);
-        await axios.post(`${apiUrl}/claim-status/optum`, payload);
-      } catch (err) {
-        failed += 1;
-        errors.push({
-          claimNo,
-          detail:
-            err?.response?.data?.detail ||
-            err?.response?.data?.error ||
-            err?.message ||
-            "Request failed",
-        });
-      } finally {
-        done += 1;
-        setBulk277Progress({ total: selectedIds.length, done, failed });
+    try {
+      const payloads = [];
+      for (const claimNo of selectedIds) {
+        try {
+          const claimRes = await axios.get(
+            `${apiUrl}/get_claim?id=${encodeURIComponent(claimNo)}&username=${encodeURIComponent(username || "")}`
+          );
+          payloads.push(buildOptumRequestFromClaim(claimRes.data));
+          done += 1;
+          setBulk277Progress({ total: selectedIds.length, done, failed });
+        } catch (err) {
+          failed += 1;
+          errors.push({
+            claimNo,
+            detail:
+              err?.response?.data?.detail ||
+              err?.response?.data?.error ||
+              err?.message ||
+              "Failed to load claim data",
+          });
+          done += 1;
+          setBulk277Progress({ total: selectedIds.length, done, failed });
+        }
       }
-    }
-    setBulk277Errors(errors);
-    setBulk277Loading(false);
-    if (failed > 0) {
-      toast.error(`277 requests completed with ${failed} failure(s).`);
-    } else {
-      toast.success("All 277 requests completed.");
+
+      if (payloads.length === 0) {
+        setBulk277Errors(errors);
+        setBulk277Loading(false);
+        toast.error("No valid claims to request.");
+        return;
+      }
+
+      const bulkRes = await axios.post(`${apiUrl}/claim-status/optum/bulk`, {
+        requests: payloads,
+      });
+      const resultErrors = (bulkRes.data?.results || [])
+        .filter((item) => item.status !== "ok")
+        .map((item) => ({
+          claimNo: selectedIds[item.index] || `#${item.index + 1}`,
+          detail: item.error || "Request failed",
+        }));
+      const allErrors = [...errors, ...resultErrors];
+      setBulk277Errors(allErrors);
+      if (allErrors.length > 0) {
+        toast.error(`277 requests completed with ${allErrors.length} failure(s).`);
+      } else {
+        toast.success("All 277 requests completed.");
+      }
+    } catch (err) {
+      const detail =
+        err?.response?.data?.detail ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Bulk request failed";
+      setBulk277Errors([{ claimNo: "bulk", detail }]);
+      toast.error("Bulk request failed.");
+    } finally {
+      setBulk277Loading(false);
     }
   };
 
