@@ -166,7 +166,8 @@ def get_rebound_data_all():
         sort = map_sort_field(request.json.get("sort", ""))
         
         include_all_categories = extra.get("IncludeAllCategories") and tab_index == 0
-        if not include_all_categories and not selectedTags:
+        is_pend_flow = bool(extra.get("Pend277") or extra.get("Pend835"))
+        if not include_all_categories and not selectedTags and not is_pend_flow:
             return jsonify({"maxPage": 0, "data": []}), 200
         
         # Generate SQL query to count the total number of records
@@ -283,7 +284,8 @@ def get_rebound_data_summary():
         pos = request.json.get("pos", "")
 
         include_all_categories = extra.get("IncludeAllCategories") and tab_index == 0
-        if not include_all_categories and not selectedTags:
+        is_pend_flow = bool(extra.get("Pend277") or extra.get("Pend835"))
+        if not include_all_categories and not selectedTags and not is_pend_flow:
             return jsonify(
                 {
                     "count": 0,
