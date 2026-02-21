@@ -28,7 +28,8 @@ const initialState = {
   pos: '',
   theme: 'dark',
   selectedClaimIds: [],
-  navGrouped: {}
+  navGrouped: {},
+  navPendCounts: {}
 };
 
 const appReducer = createSlice({
@@ -141,6 +142,9 @@ const appReducer = createSlice({
     setNavGrouped: (state, action) => {
       state.navGrouped = action.payload || {};
     },
+    setNavPendCounts: (state, action) => {
+      state.navPendCounts = action.payload || {};
+    },
     clearSelectedClaimIds: (state) => {
       state.selectedClaimIds = [];
     },
@@ -199,6 +203,7 @@ export const {
   setTheme,
   setSelectedClaimIds,
   setNavGrouped,
+  setNavPendCounts,
   clearSelectedClaimIds,
   setTabDefaults
 } = appReducer.actions;

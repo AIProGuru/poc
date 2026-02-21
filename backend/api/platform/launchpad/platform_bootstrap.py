@@ -394,6 +394,51 @@ def platform_bootstrap():
             rows = cursor.fetchall() or []
             grouped_payload[str(tab)] = rows
 
+        # Pend 277 / Pend 835 counts (claim status badges)
+        pend_counts = {"pend277": 0, "pend835": 0}
+        try:
+            pend277_extra = {**extra, "Pend277": True, "IncludeAllCategories": True}
+            pend835_extra = {**extra, "Pend835": True, "IncludeAllCategories": True}
+            pend277_sql = f"""select
+                count(ID) AS cnt
+                {newGenerateSQL(
+                    6,
+                    keyword,
+                    [],
+                    startDate,
+                    endDate,
+                    code,
+                    remark,
+                    procedure,
+                    pos,
+                    pend277_extra,
+                    ""
+                )}"""
+            cursor.execute(pend277_sql)
+            row = cursor.fetchone() or {}
+            pend_counts["pend277"] = row.get("cnt") or 0
+
+            pend835_sql = f"""select
+                count(ID) AS cnt
+                {newGenerateSQL(
+                    6,
+                    keyword,
+                    [],
+                    startDate,
+                    endDate,
+                    code,
+                    remark,
+                    procedure,
+                    pos,
+                    pend835_extra,
+                    ""
+                )}"""
+            cursor.execute(pend835_sql)
+            row = cursor.fetchone() or {}
+            pend_counts["pend835"] = row.get("cnt") or 0
+        except Exception as pend_error:
+            logger.warning(f"Failed to compute pend counts: {pend_error}")
+
         result = {
             "tags": tags,
             "counts": counts,
@@ -402,6 +447,7 @@ def platform_bootstrap():
             "recovery": recovery,
             "models": models,
             "grouped": grouped_payload,
+            "pendCounts": pend_counts,
             "Call_from": request.blueprint,
             "Database": db_name,
         }

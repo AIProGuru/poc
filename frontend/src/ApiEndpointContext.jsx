@@ -15,6 +15,7 @@ import {
   setTabIndex,
   setModels,
   setNavGrouped,
+  setNavPendCounts,
   increaseLoading,
   decreaseLoading,
 } from './redux/reducers/app.reducer';
@@ -136,6 +137,7 @@ export const ApiEndpointProvider = ({ children }) => {
         dispatch(setTags(data.tags || []));
         dispatch(setAllPayers(data.payers || []));
         dispatch(setNavGrouped(data.grouped || {}));
+        dispatch(setNavPendCounts(data.pendCounts || {}));
 
         const counts = data.counts || {};
         dispatch(

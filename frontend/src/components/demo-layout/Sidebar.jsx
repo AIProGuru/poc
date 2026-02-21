@@ -31,6 +31,7 @@ const Sidebar = () => {
   const tags = useSelector((state) => state.tags.allTags);
   const models = useSelector((state) => state.app.models) || [];
   const navGrouped = useSelector((state) => state.app.navGrouped) || {};
+  const navPendCounts = useSelector((state) => state.app.navPendCounts) || {};
   const [navBadges, setNavBadges] = useState({});
   const isPrivilegedRole = ["admin", "super-admin", "manager", "internal-admin"].includes(role);
   const placeholderNavs = [
@@ -540,8 +541,15 @@ const Sidebar = () => {
       const tagList = navTagFilters[navId] || [];
       next[navId] = sumTags(tagList, tabIndex);
     });
+    const pend277 = Number(navPendCounts?.pend277 || 0);
+    const pend835 = Number(navPendCounts?.pend835 || 0);
+    if (pend277 || pend835) {
+      next["claim-status:pend-277"] = pend277;
+      next["claim-status:pend-835"] = pend835;
+      next["claim-status"] = pend277 + pend835;
+    }
     setNavBadges(next);
-  }, [navGrouped, navItems, navTagFilters, canSeeWorklists]);
+  }, [navGrouped, navItems, navTagFilters, canSeeWorklists, navPendCounts]);
 
   useEffect(() => {
     const handleResize = () => {
