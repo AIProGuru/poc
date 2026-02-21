@@ -29,7 +29,10 @@ def generate_sql(
     include_all_categories = extra.get("IncludeAllCategories", False)
     allowed_categories = extra.get("AllowedCategories") or []
     allowed_set = set([str(item).strip() for item in allowed_categories if item])
-    apply_tag_filters = apply_tag_filters and not (include_all_categories and tab_index == TabIndex.MAIN)
+    if extra.get("Pend277") or extra.get("Pend835"):
+        apply_tag_filters = False
+    else:
+        apply_tag_filters = apply_tag_filters and not (include_all_categories and tab_index == TabIndex.MAIN)
     tags = ""
     flag = False
     filteredTags = []
@@ -186,6 +189,26 @@ def generate_sql(
             query += f" AND ({' OR '.join(conditions)})"
     if extra.get("Missing835"):
         query += "AND CUSTOM_ALL.id_835 IS NULL "
+    if extra.get("Pend277"):
+        query += """
+            AND CUSTOM_ALL.id_835 IS NULL
+            AND NOT EXISTS (
+                SELECT 1
+                FROM optum_claim_status_request_encounter e
+                JOIN optum_claim_status_response r ON r.request_id = e.request_id
+                WHERE e.trading_partner_claim_number = CUSTOM_ALL.ClaimNo
+            )
+        """
+    if extra.get("Pend835"):
+        query += """
+            AND CUSTOM_ALL.id_835 IS NULL
+            AND EXISTS (
+                SELECT 1
+                FROM optum_claim_status_request_encounter e
+                JOIN optum_claim_status_response r ON r.request_id = e.request_id
+                WHERE e.trading_partner_claim_number = CUSTOM_ALL.ClaimNo
+            )
+        """
     exclude_ai_models = extra.get("ExcludeAiModels")
     if exclude_ai_models:
         conditions = []

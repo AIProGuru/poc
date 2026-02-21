@@ -181,6 +181,8 @@ const Sidebar = () => {
   const navExtraFilters = useMemo(
     () => ({
       "payment-variance": { IncludeAllCategories: true },
+      "claim-status:pend-277": { IncludeAllCategories: true, Pend277: true },
+      "claim-status:pend-835": { IncludeAllCategories: true, Pend835: true },
     }),
     []
   );
@@ -188,8 +190,8 @@ const Sidebar = () => {
   const navTagFilters = useMemo(
     () => ({
       "claim-status": ["Pend 277", "Delinquent"],
-      "claim-status:pend-277": ["Pend 277"],
-      "claim-status:pend-835": ["Delinquent"],
+      "claim-status:pend-277": [],
+      "claim-status:pend-835": [],
       "denials": [
         "Authorization",
         "Billing",

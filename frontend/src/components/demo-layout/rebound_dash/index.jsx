@@ -273,11 +273,14 @@ const ReboundDash = () => {
       ? [{ id: 'user-management', label: 'User Management', badge: null, icon: 'users' }]
       : []),
   ], [denialCount, patientResponsibilityCount, role]);
-  const navExtraFilters = useMemo(() => ({}), []);
+  const navExtraFilters = useMemo(() => ({
+    'claim-status:pend-277': { IncludeAllCategories: true, Pend277: true },
+    'claim-status:pend-835': { IncludeAllCategories: true, Pend835: true },
+  }), []);
   const navTagFilters = useMemo(() => ({
     'claim-status': ['Pend 277', 'Delinquent'],
-    'claim-status:pend-277': ['Pend 277'],
-    'claim-status:pend-835': ['Delinquent'],
+    'claim-status:pend-277': [],
+    'claim-status:pend-835': [],
     'denials': [
       'Authorization',
       'Billing',
