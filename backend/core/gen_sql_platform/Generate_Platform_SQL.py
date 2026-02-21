@@ -188,10 +188,10 @@ def generate_sql(
         if len(conditions) > 0:
             query += f" AND ({' OR '.join(conditions)})"
     if extra.get("Missing835"):
-        query += "AND CUSTOM_ALL.id_835 IS NULL "
+        query += "AND (CUSTOM_ALL.id_835 IS NULL OR CUSTOM_ALL.id_835=0) "
     if extra.get("Pend277"):
         query += """
-            AND CUSTOM_ALL.id_835 IS NULL
+            AND (CUSTOM_ALL.id_835 IS NULL OR CUSTOM_ALL.id_835=0)
             AND NOT EXISTS (
                 SELECT 1
                 FROM optum_claim_status_request_encounter e
@@ -201,7 +201,7 @@ def generate_sql(
         """
     if extra.get("Pend835"):
         query += """
-            AND CUSTOM_ALL.id_835 IS NULL
+            AND (CUSTOM_ALL.id_835 IS NULL OR CUSTOM_ALL.id_835=0)
             AND EXISTS (
                 SELECT 1
                 FROM optum_claim_status_request_encounter e
