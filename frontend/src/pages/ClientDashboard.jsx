@@ -968,6 +968,20 @@ const TenantDetailsModal = () => {
     show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100 } }
   };
 
+  const rowInputClass = "w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]";
+
+  const getListText = (items) => {
+    if (!items || items.length === 0) return '-';
+    const names = items
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        if (!item || typeof item !== 'object') return '';
+        return item.name || item.label || item.code || item.id || '';
+      })
+      .filter(Boolean);
+    return names.length > 0 ? names.join(', ') : '-';
+  };
+
 
 
   // Add function to handle tenant form submit
@@ -1077,88 +1091,181 @@ const TenantDetailsModal = () => {
               <motion.div variants={itemVariants} className="bg-[#232429] p-6 rounded-xl border border-[#2f333a]">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-semibold text-white">Tenants</h3>
-                  <button 
-                    onClick={() => setIsTenantModalOpen(true)}
-                    className="px-4 py-2 bg-[#3b3f46] text-white rounded-lg hover:bg-gray-700 transition flex items-center"
-                  >
-                    <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Add Tenants
-                  </button>
                 </div>
-        
-                <div className="space-y-4">
-                  {client.subClients?.map((subClient) => (
-                    <div 
-                      key={subClient.id}
-                      className="bg-[#ffffff08] p-4 rounded-lg hover:bg-[#2a2f38] transition cursor-pointer"
-                      onClick={() => openTenantDetails(subClient)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center flex-wrap gap-2">
-                            <h4 className="text-white font-medium">{subClient.name}</h4>
-                            <span className="px-2 py-1 text-xs rounded-full bg-[#ffffff15] text-gray-300">
-                              {subClient.clientType}
-                            </span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              subClient.status === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                            }`}>
-                              {subClient.status}
-                            </span>
+                <div className="overflow-x-auto">
+                  <table className="min-w-[1400px] w-full bg-transparent">
+                    <colgroup>
+                      <col className="w-[220px]" />
+                      <col className="w-[200px]" />
+                      <col className="w-[140px]" />
+                      <col className="w-[200px]" />
+                      <col className="w-[220px]" />
+                      <col className="w-[260px]" />
+                      <col className="w-[220px]" />
+                      <col className="w-[220px]" />
+                      <col className="w-[220px]" />
+                      <col className="w-[200px]" />
+                    </colgroup>
+                    <thead>
+                      <tr className="text-[#9ca3af] border-b border-[#ffffff20]">
+                        <th className="px-3 py-3 text-left">Tenant</th>
+                        <th className="px-3 py-3 text-left">Tenant Type</th>
+                        <th className="px-3 py-3 text-left">Status</th>
+                        <th className="px-3 py-3 text-left">Contact</th>
+                        <th className="px-3 py-3 text-left">Email</th>
+                        <th className="px-3 py-3 text-left">Address</th>
+                        <th className="px-3 py-3 text-left">Facilities</th>
+                        <th className="px-3 py-3 text-left">Payer Plans</th>
+                        <th className="px-3 py-3 text-left">Transaction Codes</th>
+                        <th className="px-3 py-3 text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-[#ffffff20] text-[#D9D9D9CC] bg-[#ffffff05]">
+                        <td className="px-3 py-3">
+                          <input
+                            type="text"
+                            name="name"
+                            value={newTenant.name}
+                            onChange={(e) => setNewTenant(prev => ({ ...prev, name: e.target.value }))}
+                            className={rowInputClass}
+                            placeholder="Tenant"
+                            required
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <select
+                            name="clientType"
+                            value={newTenant.clientType}
+                            onChange={(e) => setNewTenant(prev => ({ ...prev, clientType: e.target.value }))}
+                            className={`${rowInputClass} bg-[#1f232a] text-white`}
+                            required
+                          >
+                            <option value="" className="bg-[#1f232a] text-white">Select tenant type</option>
+                            {CLIENT_TYPE_OPTIONS.map((option) => (
+                              <option key={option} value={option} className="bg-[#1f232a] text-white">
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-3 py-3">
+                          <select
+                            name="status"
+                            value={newTenant.status}
+                            onChange={(e) => setNewTenant(prev => ({ ...prev, status: e.target.value }))}
+                            className={`${rowInputClass} bg-[#1f232a] text-white`}
+                          >
+                            {['Active', 'Pending', 'On Hold'].map((option) => (
+                              <option key={option} value={option} className="bg-[#1f232a] text-white">
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="text"
+                            name="contact"
+                            value={newTenant.contact}
+                            onChange={(e) => setNewTenant(prev => ({ ...prev, contact: e.target.value }))}
+                            className={rowInputClass}
+                            placeholder="Contact"
+                            required
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="email"
+                            name="email"
+                            value={newTenant.email}
+                            onChange={(e) => setNewTenant(prev => ({ ...prev, email: e.target.value }))}
+                            className={rowInputClass}
+                            placeholder="Email"
+                            required
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <input
+                            type="text"
+                            name="address"
+                            value={newTenant.address}
+                            onChange={(e) => setNewTenant(prev => ({ ...prev, address: e.target.value }))}
+                            className={rowInputClass}
+                            placeholder="Address"
+                            required
+                          />
+                        </td>
+                        <td className="px-3 py-3 text-gray-500">—</td>
+                        <td className="px-3 py-3 text-gray-500">—</td>
+                        <td className="px-3 py-3 text-gray-500">—</td>
+                        <td className="px-3 py-3 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleTenantSubmit(newTenant)}
+                              className="px-3 py-2 bg-[#3b3f46] hover:bg-gray-700 text-white text-xs font-medium rounded-md transition-all"
+                            >
+                              Add
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNewTenant({
+                                name: '',
+                                clientType: '',
+                                address: '',
+                                contact: '',
+                                email: '',
+                                status: 'Active'
+                              })}
+                              className="px-3 py-2 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
+                            >
+                              Clear
+                            </button>
                           </div>
-                          <div className="mt-2 text-sm text-gray-400">
-                            {subClient.address || 'No address on file'}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            className="px-3 py-1.5 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openTenantDetails(subClient);
-                            }}
-                          >
-                            SELECT
-                          </button>
-                          <button
-                            type="button"
-                            className="px-3 py-1.5 bg-[#3b3f46] hover:bg-gray-700 text-white text-xs font-medium rounded-md transition-all"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openTenantDetails(subClient, { edit: true });
-                            }}
-                          >
-                            EDIT
-                          </button>
-                          <button 
-                            className="p-2 hover:bg-[#ffffff15] rounded-lg transition"
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent parent onClick from firing
-                              openTenantDetails(subClient);
-                            }}
-                          >
-                            <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                        </td>
+                      </tr>
+                      {(client.subClients || []).length === 0 && (
+                        <tr>
+                          <td colSpan={10} className="px-3 py-6 text-sm text-gray-400">
+                            No Tenants Yet. Add tenants to manage multiple facilities under this client.
+                          </td>
+                        </tr>
+                      )}
+                      {(client.subClients || []).map((subClient) => (
+                        <tr key={subClient.id} className="border-b border-[#ffffff10] text-sm">
+                          <td className="px-3 py-3 text-white">{subClient.name || '-'}</td>
+                          <td className="px-3 py-3 text-white">{subClient.clientType || '-'}</td>
+                          <td className="px-3 py-3 text-white">{subClient.status || '-'}</td>
+                          <td className="px-3 py-3 text-white">{subClient.contact || '-'}</td>
+                          <td className="px-3 py-3 text-white">{subClient.email || '-'}</td>
+                          <td className="px-3 py-3 text-white">{subClient.address || '-'}</td>
+                          <td className="px-3 py-3 text-white">{getListText(subClient.facilities)}</td>
+                          <td className="px-3 py-3 text-white">{getListText(subClient.payerPlans || subClient.payerPlan || subClient.payers)}</td>
+                          <td className="px-3 py-3 text-white">{getListText(subClient.transactionCodes || subClient.transactionCode || subClient.transactionCodeList)}</td>
+                          <td className="px-3 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                className="px-3 py-2 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
+                                onClick={() => openTenantDetails(subClient)}
+                              >
+                                Select
+                              </button>
+                              <button
+                                type="button"
+                                className="px-3 py-2 bg-[#3b3f46] hover:bg-gray-700 text-white text-xs font-medium rounded-md transition-all"
+                                onClick={() => openTenantDetails(subClient, { edit: true })}
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                
-                {(!client.subClients || client.subClients.length === 0) && (
-                  <div className="text-center py-12 border border-dashed border-[#f4f4f450] rounded-lg">
-                    <svg className="w-16 h-16 mx-auto text-[#f4f4f4]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <p className="mt-4 text-lg text-white">No Tenants Yet</p>
-                    <p className="mt-2 text-gray-400">Add Tenants to manage multiple facilities under this client.</p>
-                  </div>
-                )}
               </motion.div>
             </motion.div>
           );
@@ -1655,8 +1762,6 @@ const handleTenantSubmit = async (formData) => {
       email: '',
       status: 'Active'
     });
-
-    setIsTenantModalOpen(false);
 
     alert(`Tenant ${createdTenant.name} added successfully!`);
   } catch (error) {
@@ -2181,7 +2286,6 @@ const TenantModal = () => {
           </div>
 
           {/* Tenant Modal */}
-          {isTenantModalOpen && <TenantModal />}
         </>
       )}
     </div>

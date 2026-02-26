@@ -220,6 +220,26 @@ const DataTable = (props) => {
       ''
     );
   };
+  const getPatientAccountNumber = (row) => {
+    return (
+      row.PatientAccountNumber ||
+      row.PatientAccountNo ||
+      row.PatientAccount ||
+      row.PatientAcct ||
+      row.AccountNumber ||
+      row.AccountNo ||
+      row.ClaimNo ||
+      row.ClaimID ||
+      ''
+    );
+  };
+  const scrubPhi = (value) => {
+    if (value === undefined || value === null) return '';
+    const raw = `${value}`.trim();
+    if (!raw) return '';
+    const last4 = raw.slice(-4);
+    return `****-${last4}`;
+  };
   const headerCellStyle = {
     background: tableBackground,
     color: isDarkMode ? '#F4F4F4' : '#1A1D2B',
@@ -495,7 +515,27 @@ const DataTable = (props) => {
 
     // Define the CSV headers based on the table headers
     const tableHeaders = [
-      'Priority', 'Facility Name', 'Provider Tax ID', 'Claim ID', 'Payer ID', 'Payer Name', 'Payer Seq', 'Patient Name', 'Service Date', 'Place of Service', 'Charges', 'Allowed Amt', 'Payer Payments', 'Patient Resp', 'Balance', 'Category', 'CARC', 'RARC', 'Primary Dx', 'Primary Service'
+      'Priority',
+      'Facility Name',
+      'Provider Tax ID',
+      'Claim ID',
+      'Payer ID',
+      'Payer Name',
+      'Payer Seq',
+      'Patient Name',
+      'Patient Account # (Masked)',
+      'Service Date',
+      'Place of Service',
+      'Charges',
+      'Allowed Amt',
+      'Payer Payments',
+      'Patient Resp',
+      'Balance',
+      'Category',
+      'CARC',
+      'RARC',
+      'Primary Dx',
+      'Primary Service'
     ];
     let csv_data = [tableHeaders.join(',')];
 
@@ -521,6 +561,7 @@ const DataTable = (props) => {
         row.PayerName || '',
         row.PayerSeq === 'P' ? "Primary" : (row.PayerSeq === 'S' ? 'Secondary' : (row.PayerSeq || '')),
         row.PatientName || row.Patient || '',
+        scrubPhi(getPatientAccountNumber(row)),
         formatDateSafe(row.ServiceDate),
         row.PlaceOfService || '',
         charges ? `$${charges}` : '$0',
@@ -633,7 +674,7 @@ const DataTable = (props) => {
         <div className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? 'border-[#2d3348] bg-[#1b1f29] text-white' : 'bg-white border-gray-200 text-slate-900'}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold">Bulk 277 Request</p>
+              <p className="text-sm font-semibold">Bulk Action</p>
               <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Selected claims: {selectedIds.length}
               </p>
@@ -649,7 +690,7 @@ const DataTable = (props) => {
                   : 'bg-slate-900 text-white hover:bg-slate-800'
                 }`}
             >
-              {bulk277Loading ? "Requesting..." : "Request 277 for Selected"}
+              {bulk277Loading ? "Requesting..." : "Request 277"}
             </button>
           </div>
           {(bulk277Progress.total > 0) && (
@@ -810,6 +851,9 @@ const DataTable = (props) => {
                         {renderSortIcon('PatientName')}
                       </div>
                     </TableCell>
+                    <TableCell style={{ ...headerCellStyle, minWidth: "170px" }}>
+                      Patient Account #
+                    </TableCell>
                     <TableCell style={{ ...headerCellStyle, minWidth: "140px" }} onClick={() => setOrder("ServiceDate")} className="cursor-pointer">
                       <div className="flex items-center gap-2">
                         Service Date
@@ -879,8 +923,8 @@ const DataTable = (props) => {
                   </TableRow>
                 </TableHead>
                 <TableBody className="relative">
-                  {tableLoading && <TableRow className="flex justify-center items-center h-[100px]"><TableCell colSpan={21}><div className="flex justify-center items-center">Loading data...</div></TableCell></TableRow>}
-                  {!tableLoading && tableData.length === 0 && <TableRow className="flex justify-center items-center h-[100px]"><TableCell className="w-full" colSpan={21}><div className="flex justify-center items-center">No record</div></TableCell></TableRow>}
+                  {tableLoading && <TableRow className="flex justify-center items-center h-[100px]"><TableCell colSpan={22}><div className="flex justify-center items-center">Loading data...</div></TableCell></TableRow>}
+                  {!tableLoading && tableData.length === 0 && <TableRow className="flex justify-center items-center h-[100px]"><TableCell className="w-full" colSpan={22}><div className="flex justify-center items-center">No record</div></TableCell></TableRow>}
                   {
                     !tableLoading && tableData.length !== 0 && tableData.map((row, index) => <TableRow
                       key={index}
@@ -942,6 +986,9 @@ const DataTable = (props) => {
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
                         {row.PatientName || row.Patient || ''}
+                      </TableCell>
+                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                        {scrubPhi(getPatientAccountNumber(row))}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                         {formatDateSafe(row.ServiceDate)}

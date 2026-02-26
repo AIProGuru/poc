@@ -12,6 +12,9 @@ const ClientManagement = () => {
   const platformApiUrl = `${SERVER_URL}/api`;
   const resolvedApiUrl = platformApiUrl;
   const theme = useSelector((state) => state.app.theme);
+  const appType = useSelector((state) => state.auth.appType);
+  const appTypeFallback = useSelector((state) => state.app.type);
+  const tenant = useSelector((state) => state.auth.tenant);
   const isDark = theme === 'dark';
 
   const [clients, setClients] = useState([]);
@@ -26,6 +29,30 @@ const ClientManagement = () => {
     contact: '',
     email: '',
   });
+
+  const resolveHomePath = (userData = {}) => {
+    const rawTenant = `${userData.tenant || userData.product || userData.basePath || ""}`.toLowerCase();
+    if (rawTenant === "rebound" || rawTenant === "pilotcustomer" || rawTenant === "demo") {
+      return `/${rawTenant}`;
+    }
+    const rawType = userData.appType ?? userData.type;
+    if (rawType === 0) return "/rebound";
+    if (rawType === 1) return "/pilotcustomer";
+    if (rawType === 2) return "/demo";
+    return "";
+  };
+
+  const handleHomeNavigation = () => {
+    const path = resolveHomePath({ tenant, appType });
+    if (path) {
+      navigate(path);
+      return;
+    }
+    const fallbackPath = resolveHomePath({ appType: appTypeFallback });
+    if (fallbackPath) {
+      navigate(fallbackPath);
+    }
+  };
   const [isClientTypeOpen, setIsClientTypeOpen] = useState(false);
   const [logoUploadingId, setLogoUploadingId] = useState(null);
   const CLIENT_TYPE_OPTIONS = [
@@ -561,7 +588,18 @@ const ClientManagement = () => {
     <div className={`client-management min-h-screen overflow-x-hidden ${isDark ? 'theme-dark bg-[#1e1f24] text-white' : 'theme-light bg-slate-50 text-slate-900'}`}>
       <Header />
       <div className="container mx-auto px-4 py-12">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <div className="flex items-start gap-4 mb-8">
+          <button
+            type="button"
+            onClick={handleHomeNavigation}
+            className="p-2 bg-[#ffffff10] rounded-lg hover:bg-[#ffffff20] transition mt-1"
+            aria-label="Back to Home"
+            title="Back to Home"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
           <div>
             <h1 className="mb-2 text-2xl font-bold">Client Management</h1>
             <p className={isDark ? "text-[#9ca3af]" : "text-slate-500"}>

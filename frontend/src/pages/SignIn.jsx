@@ -14,6 +14,8 @@ import {
   setFirstname,
   setLastname,
   setPermission,
+  setTenant,
+  setAppType,
 } from "../redux/reducers/auth.reducer";
 
 export default function SignIn() {
@@ -55,6 +57,8 @@ export default function SignIn() {
         dispatch(setFirstname(userDoc.data().firstname));
         dispatch(setLastname(userDoc.data().lastname));
         dispatch(setRole(userDoc.data().role));
+        dispatch(setTenant(userDoc.data().tenant ?? userDoc.data().product ?? userDoc.data().basePath ?? ""));
+        dispatch(setAppType(userDoc.data().appType ?? userDoc.data().type ?? null));
         dispatch(setPermission(""));
         dispatch(setUsername(userDoc.data().firstname ?? ""));
         navigate(resolveLandingPath(userDoc.data()));

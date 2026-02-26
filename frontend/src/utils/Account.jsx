@@ -13,6 +13,8 @@ import {
   setEmail,
   setRole,
   setPermission,
+  setTenant,
+  setAppType,
   setModules,
   setDenialCategory,
   setPayer,

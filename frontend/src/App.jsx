@@ -13,6 +13,8 @@ import {
   setLastname,
   setPermission,
   setEmail,
+  setTenant,
+  setAppType,
   setModules,
   setDenialCategory,
   setPayer,
@@ -23,7 +25,7 @@ import {
   setShowGPT,
 } from "./redux/reducers/gpt.reducer";
 import { AccountContext } from "./utils/Account";
-import { increaseLoading, decreaseLoading, setTagLoading } from "./redux/reducers/app.reducer";
+import { increaseLoading, decreaseLoading, setTagLoading, setType } from "./redux/reducers/app.reducer";
 import ChatBot from "./components/demo-layout/rebound_dash/ChatBot";
 import ChatBotButton from "./components/demo-layout/rebound_dash/ChatBotButton";
 import { ToastContainer } from "react-toastify";
@@ -116,6 +118,14 @@ function App() {
         dispatch(setLastname(session.userData.lastname ?? ""));
         dispatch(setEmail(session.userData.email ?? ""));
         dispatch(setRole(session.userData.role ?? ""))
+        dispatch(setTenant(session.userData.tenant ?? session.userData.product ?? session.userData.basePath ?? ""))
+        dispatch(setAppType(session.userData.appType ?? session.userData.type ?? null))
+        {
+          const resolvedType = session.userData.appType ?? session.userData.type;
+          if (Number.isFinite(resolvedType)) {
+            dispatch(setType(resolvedType));
+          }
+        }
         dispatch(setPermission(""))
         dispatch(decreaseLoading())
       })
@@ -146,6 +156,9 @@ function App() {
         dispatch(setEmail(''));
         dispatch(setRole(''));
         dispatch(setPermission(''));
+        dispatch(setTenant(''));
+        dispatch(setAppType(null));
+        dispatch(setType(0));
         dispatch(setModules([]));
         dispatch(setDenialCategory([]));
         dispatch(setPayer([]));
@@ -166,6 +179,14 @@ function App() {
         dispatch(setLastname(userData.lastname ?? ""));
         dispatch(setEmail(userData.email ?? ""));
         dispatch(setRole(userData.role ?? ""));
+        dispatch(setTenant(userData.tenant ?? userData.product ?? userData.basePath ?? ""));
+        dispatch(setAppType(userData.appType ?? userData.type ?? null));
+        {
+          const resolvedType = userData.appType ?? userData.type;
+          if (Number.isFinite(resolvedType)) {
+            dispatch(setType(resolvedType));
+          }
+        }
         dispatch(setModules(userData.client ?? []));
         dispatch(setDenialCategory(userData.denialCategory ?? []));
         dispatch(setPayer(userData.payer ?? []));
