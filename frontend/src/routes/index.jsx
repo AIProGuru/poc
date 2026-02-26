@@ -33,6 +33,7 @@ import PracticeManagement from "../pages/PracticeManagement";
 import BillingAgencies from "../pages/BillingAgencies";
 import ClientManagement from "../pages/ClientManagement";
 import ClientDashboard from "../pages/ClientDashboard";
+import TenantDetails from "../pages/TenantDetails";
 import Edit_client from "../pages/Client/Edit_client";
 import demoRoutes from "./demo";
 import AccountSettings from "../pages/AccountSettings";
@@ -108,6 +109,10 @@ const routesConfig = [
   {
     path: "/client/:clientId",
     element: <PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={ClientDashboard} />,
+  },
+  {
+    path: "/client/:clientId/tenant/:tenantId",
+    element: <PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={TenantDetails} />,
   },
   {
     path: "/client/:id/edit",

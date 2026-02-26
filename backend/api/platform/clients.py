@@ -278,6 +278,51 @@ def update_facility(client_id, tenant_id, facility_id):
         return jsonify({"error": "Failed to update facility", "detail": str(exc)}), 500
 
 
+@clients_api.route("/clients/<client_id>/tenants/<tenant_id>/facilities/<facility_id>", methods=["DELETE", "OPTIONS"])
+def delete_facility(client_id, tenant_id, facility_id):
+    """
+    Delete a facility under a tenant (nested in subClients[].facilities).
+    """
+    try:
+        if request.method == "OPTIONS":
+            return ("", 204)
+
+        doc_ref = db.collection("clients").document(client_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            return jsonify({"error": "Client not found"}), 404
+
+        data = doc.to_dict() or {}
+        sub_clients = data.get("subClients") or []
+
+        deleted_facility = None
+        updated = False
+        for sub_client in sub_clients:
+            if sub_client.get("id") != tenant_id:
+                continue
+            facilities = sub_client.get("facilities") or []
+            remaining = []
+            for facility in facilities:
+                if facility.get("id") == facility_id:
+                    deleted_facility = facility
+                    updated = True
+                else:
+                    remaining.append(facility)
+            if updated:
+                sub_client["facilities"] = remaining
+                break
+
+        if not updated:
+            return jsonify({"error": "Facility not found"}), 404
+
+        doc_ref.update({"subClients": sub_clients, "lastUpdated": firestore.SERVER_TIMESTAMP})
+
+        result = _serialize_value(deleted_facility or {"id": facility_id})
+        return jsonify(result), 200
+    except Exception as exc:  # pragma: no cover - simple pass-through
+        return jsonify({"error": "Failed to delete facility", "detail": str(exc)}), 500
+
+
 @clients_api.route("/clients/<client_id>/tenants/<tenant_id>", methods=["PATCH", "OPTIONS"])
 def update_tenant(client_id, tenant_id):
     """

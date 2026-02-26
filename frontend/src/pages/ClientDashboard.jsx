@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getRoleLabel, normalizeRole } from '../utils/roles';
 import { motion } from 'framer-motion';
@@ -44,7 +44,9 @@ const ClientDashboard = () => {
   const [selectedMetric, setSelectedMetric] = useState('denials');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isTenantModalOpen, setIsTenantModalOpen] = useState(false);
-  const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
+  const [selectedTenant, setSelectedTenant] = useState(null);
+  const [isTenantDetailsOpen, setIsTenantDetailsOpen] = useState(false);
+  const [tenantDetailsStartInEdit, setTenantDetailsStartInEdit] = useState(false);
   
   // Add these state variables at the main component level
   const [users, setUsers] = useState([]);
@@ -153,15 +155,6 @@ const ClientDashboard = () => {
     email: '',
     status: 'Active'
   });
-  const [newFacility, setNewFacility] = useState({
-    name: '',
-    facilityType: '',
-    address: '',
-    taxId: '',
-    npi: '',
-    contact: '',
-    email: ''
-  });
 
 
 useEffect(() => {
@@ -185,14 +178,11 @@ useEffect(() => {
   fetchClientData();
 }, [clientId, navigate]);
 
-// Add this new state to track the selected tenant
-const [selectedTenant, setSelectedTenant] = useState(null);
-const [isTenantDetailsOpen, setIsTenantDetailsOpen] = useState(false);
-
 // Add this function to handle opening tenant details
-const openTenantDetails = (tenant) => {
-  setSelectedTenant(tenant);
-  setIsTenantDetailsOpen(true);
+const openTenantDetails = (tenant, options = {}) => {
+  navigate(`/client/${clientId}/tenant/${tenant.id}`, {
+    state: { edit: Boolean(options.edit) }
+  });
 };
 
 // Add this component at the end of your file, right before the final return
@@ -201,7 +191,7 @@ const TenantDetailsModal = () => {
     setIsTenantDetailsOpen(false);
   };
   const [facilityTab, setFacilityTab] = useState('facilities');
-  const [isEditingTenant, setIsEditingTenant] = useState(false);
+  const [isEditingTenant, setIsEditingTenant] = useState(tenantDetailsStartInEdit);
   const [isEditTenantTypeOpen, setIsEditTenantTypeOpen] = useState(false);
   const [editTenantForm, setEditTenantForm] = useState({
     name: '',
@@ -221,11 +211,25 @@ const TenantDetailsModal = () => {
     contact: '',
     email: ''
   });
+  const [newFacility, setNewFacility] = useState({
+    name: '',
+    facilityType: '',
+    address: '',
+    taxId: '',
+    npi: '',
+    contact: '',
+    email: ''
+  });
+  const prevTenantIdRef = useRef(null);
   const editInputClass = "w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]";
+  const rowInputClass = editInputClass;
   const STATUS_OPTIONS = ['Active', 'Pending', 'On Hold'];
 
   useEffect(() => {
-    if (selectedTenant) {
+    if (!selectedTenant) return;
+    const tenantId = selectedTenant.id;
+
+    if (prevTenantIdRef.current !== tenantId) {
       setEditTenantForm({
         name: selectedTenant.name || '',
         clientType: selectedTenant.clientType || '',
@@ -244,8 +248,24 @@ const TenantDetailsModal = () => {
         contact: '',
         email: ''
       });
+      prevTenantIdRef.current = tenantId;
     }
-  }, [selectedTenant]);
+
+    setIsEditingTenant(tenantDetailsStartInEdit);
+  }, [selectedTenant?.id, tenantDetailsStartInEdit]);
+
+  useEffect(() => {
+    if (!selectedTenant) return;
+    setNewFacility({
+      name: '',
+      facilityType: '',
+      address: '',
+      taxId: '',
+      npi: '',
+      contact: '',
+      email: ''
+    });
+  }, [selectedTenant?.id]);
 
   const beginFacilityEdit = (facility) => {
     setEditingFacilityId(facility.id);
@@ -273,17 +293,317 @@ const TenantDetailsModal = () => {
     });
   };
 
+  const handleNewFacilityChange = (e) => {
+    const { name, value } = e.target;
+    setNewFacility(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleNewFacilityClear = () => {
+    setNewFacility({
+      name: '',
+      facilityType: '',
+      address: '',
+      taxId: '',
+      npi: '',
+      contact: '',
+      email: ''
+    });
+  };
+
+  const handleNewFacilitySubmit = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await handleFacilitySubmit(newFacility);
+    setNewFacility({
+      name: '',
+      facilityType: '',
+      address: '',
+      taxId: '',
+      npi: '',
+      contact: '',
+      email: ''
+    });
+  };
+
+  const FacilityTable = () => (
+    <form onSubmit={handleNewFacilitySubmit} className="overflow-x-auto">
+      <table className="min-w-[1100px] w-full bg-transparent">
+        <colgroup>
+          <col className="w-[220px]" />
+          <col className="w-[220px]" />
+          <col className="w-[260px]" />
+          <col className="w-[180px]" />
+          <col className="w-[140px]" />
+          <col className="w-[200px]" />
+          <col className="w-[240px]" />
+          <col className="w-[160px]" />
+        </colgroup>
+        <thead>
+          <tr className="text-[#9ca3af] border-b border-[#ffffff20]">
+            <th className="px-3 py-3 text-left">Facility</th>
+            <th className="px-3 py-3 text-left">Facility Type</th>
+            <th className="px-3 py-3 text-left">Address</th>
+            <th className="px-3 py-3 text-left">Tax ID</th>
+            <th className="px-3 py-3 text-left">NPI</th>
+            <th className="px-3 py-3 text-left">Contact</th>
+            <th className="px-3 py-3 text-left">Email</th>
+            <th className="px-3 py-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="border-b border-[#ffffff20] text-[#D9D9D9CC] bg-[#ffffff05]">
+            <td className="px-3 py-3">
+              <input
+                type="text"
+                name="name"
+                value={newFacility.name}
+                onChange={handleNewFacilityChange}
+                className={rowInputClass}
+                placeholder="Facility"
+                required
+              />
+            </td>
+            <td className="px-3 py-3">
+              <select
+                name="facilityType"
+                value={newFacility.facilityType}
+                onChange={handleNewFacilityChange}
+                className={`${rowInputClass} bg-[#1f232a] text-white`}
+                required
+              >
+                <option value="" className="bg-[#1f232a] text-white">Select Facility Type</option>
+                {FACILITY_TYPE_OPTIONS.map((option) => (
+                  <option key={option} value={option} className="bg-[#1f232a] text-white">
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </td>
+            <td className="px-3 py-3">
+              <input
+                type="text"
+                name="address"
+                value={newFacility.address}
+                onChange={handleNewFacilityChange}
+                className={rowInputClass}
+                placeholder="Address"
+                required
+              />
+            </td>
+            <td className="px-3 py-3">
+              <input
+                type="text"
+                name="taxId"
+                value={newFacility.taxId}
+                onChange={handleNewFacilityChange}
+                className={rowInputClass}
+                placeholder="Tax ID"
+                required
+              />
+            </td>
+            <td className="px-3 py-3">
+              <input
+                type="text"
+                name="npi"
+                value={newFacility.npi}
+                onChange={handleNewFacilityChange}
+                className={rowInputClass}
+                placeholder="NPI"
+                required
+              />
+            </td>
+            <td className="px-3 py-3">
+              <input
+                type="text"
+                name="contact"
+                value={newFacility.contact}
+                onChange={handleNewFacilityChange}
+                className={rowInputClass}
+                placeholder="Contact"
+                required
+              />
+            </td>
+            <td className="px-3 py-3">
+              <input
+                type="email"
+                name="email"
+                value={newFacility.email}
+                onChange={handleNewFacilityChange}
+                className={rowInputClass}
+                placeholder="Email"
+                required
+              />
+            </td>
+            <td className="px-3 py-3 text-center">
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="submit"
+                  className="px-3 py-2 bg-[#3b3f46] hover:bg-gray-700 text-white text-xs font-medium rounded-md transition-all"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNewFacilityClear}
+                  className="px-3 py-2 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
+                >
+                  Clear
+                </button>
+              </div>
+            </td>
+          </tr>
+          {(selectedTenant.facilities || []).length === 0 && (
+            <tr>
+              <td colSpan={8} className="px-3 py-6 text-sm text-gray-400">
+                No facilities added yet.
+              </td>
+            </tr>
+          )}
+          {(selectedTenant.facilities || []).map((facility) => (
+            <tr key={facility.id} className="border-b border-[#ffffff10] text-sm">
+              <td className="px-3 py-3">
+                {editingFacilityId === facility.id ? (
+                  <input
+                    type="text"
+                    value={facilityEditForm.name}
+                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, name: e.target.value }))}
+                    className={rowInputClass}
+                  />
+                ) : (
+                  <span className="text-white">{facility.name || '-'}</span>
+                )}
+              </td>
+              <td className="px-3 py-3">
+                {editingFacilityId === facility.id ? (
+                  <select
+                    value={facilityEditForm.facilityType}
+                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, facilityType: e.target.value }))}
+                    className={`${rowInputClass} bg-[#1f232a] text-white`}
+                  >
+                    <option value="" className="bg-[#1f232a] text-white">Select Facility Type</option>
+                    {FACILITY_TYPE_OPTIONS.map((option) => (
+                      <option key={option} value={option} className="bg-[#1f232a] text-white">
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="text-white">{facility.facilityType || '-'}</span>
+                )}
+              </td>
+              <td className="px-3 py-3">
+                {editingFacilityId === facility.id ? (
+                  <input
+                    type="text"
+                    value={facilityEditForm.address}
+                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, address: e.target.value }))}
+                    className={rowInputClass}
+                  />
+                ) : (
+                  <span className="text-white">{facility.address || '-'}</span>
+                )}
+              </td>
+              <td className="px-3 py-3">
+                {editingFacilityId === facility.id ? (
+                  <input
+                    type="text"
+                    value={facilityEditForm.taxId}
+                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, taxId: e.target.value }))}
+                    className={rowInputClass}
+                  />
+                ) : (
+                  <span className="text-white">{facility.taxId || '-'}</span>
+                )}
+              </td>
+              <td className="px-3 py-3">
+                {editingFacilityId === facility.id ? (
+                  <input
+                    type="text"
+                    value={facilityEditForm.npi}
+                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, npi: e.target.value }))}
+                    className={rowInputClass}
+                  />
+                ) : (
+                  <span className="text-white">{facility.npi || '-'}</span>
+                )}
+              </td>
+              <td className="px-3 py-3">
+                {editingFacilityId === facility.id ? (
+                  <input
+                    type="text"
+                    value={facilityEditForm.contact}
+                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, contact: e.target.value }))}
+                    className={rowInputClass}
+                  />
+                ) : (
+                  <span className="text-white">{facility.contact || '-'}</span>
+                )}
+              </td>
+              <td className="px-3 py-3">
+                {editingFacilityId === facility.id ? (
+                  <input
+                    type="email"
+                    value={facilityEditForm.email}
+                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, email: e.target.value }))}
+                    className={rowInputClass}
+                  />
+                ) : (
+                  <span className="text-white">{facility.email || '-'}</span>
+                )}
+              </td>
+              <td className="px-3 py-3 text-center">
+                {editingFacilityId === facility.id ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const updated = await handleFacilityUpdate(facility.id, facilityEditForm);
+                        if (updated) {
+                          cancelFacilityEdit();
+                        }
+                      }}
+                      className="px-3 py-2 bg-[#3b3f46] text-white text-xs font-medium rounded-md hover:bg-gray-700 transition"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelFacilityEdit}
+                      className="px-3 py-2 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => beginFacilityEdit(facility)}
+                    className="px-3 py-2 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition"
+                  >
+                    Edit
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </form>
+  );
 
   if (!selectedTenant) return null;
 
   return (
-    <div 
-      className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70 p-4"
-      onClick={handleClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black bg-opacity-70"
+        onClick={handleClose}
+      />
       <div 
-        className="bg-[#232429] rounded-xl w-full max-w-4xl overflow-hidden border border-[#2f333a] shadow-2xl"
-        onClick={e => e.stopPropagation()}
+        className="relative bg-[#232429] rounded-xl w-full max-w-4xl overflow-hidden border border-[#2f333a] shadow-2xl"
       >
         <div className="flex justify-between items-center border-b border-[#ffffff20] p-6">
           <div className="flex items-center">
@@ -481,162 +801,12 @@ const TenantDetailsModal = () => {
                     </button>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsFacilityModalOpen(true)}
-                  className="px-3 py-1.5 bg-[#3b3f46] text-white text-xs font-medium rounded-md hover:bg-gray-700 transition"
-                >
-                  Add Facility
-                </button>
+                <div />
               </div>
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
                 {facilityTab === 'facilities' && (
                   <>
-                    {(selectedTenant.facilities || []).length === 0 ? (
-                      <p className="text-sm text-gray-400">No facilities added yet.</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {(selectedTenant.facilities || []).map((facility) => (
-                          <div key={facility.id} className="border border-[#ffffff10] rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                {isEditingTenant && editingFacilityId === facility.id ? (
-                                  <>
-                                    <input
-                                      type="text"
-                                      value={facilityEditForm.name}
-                                      onChange={(e) => setFacilityEditForm(prev => ({ ...prev, name: e.target.value }))}
-                                      className={editInputClass}
-                                    />
-                                    <div className="mt-2">
-                                      <select
-                                        value={facilityEditForm.facilityType}
-                                        onChange={(e) => setFacilityEditForm(prev => ({ ...prev, facilityType: e.target.value }))}
-                                        className={`${editInputClass} bg-[#1f232a] text-white`}
-                                      >
-                                        <option value="" className="bg-[#1f232a] text-white">Select Facility Type</option>
-                                        {FACILITY_TYPE_OPTIONS.map((option) => (
-                                          <option key={option} value={option} className="bg-[#1f232a] text-white">
-                                            {option}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                  </>
-                                ) : (
-                                  <>
-                                    <p className="text-white font-medium">{facility.name}</p>
-                                    <p className="text-xs text-gray-400">{facility.facilityType || 'Facility Type'}</p>
-                                  </>
-                                )}
-                              </div>
-                              {isEditingTenant && (
-                                <div className="flex items-center gap-2">
-                                  {editingFacilityId === facility.id ? (
-                                    <>
-                                      <button
-                                        type="button"
-                                        onClick={async () => {
-                                          const updated = await handleFacilityUpdate(facility.id, facilityEditForm);
-                                          if (updated) {
-                                            cancelFacilityEdit();
-                                          }
-                                        }}
-                                        className="px-3 py-1.5 bg-[#3b3f46] text-white text-xs font-medium rounded-md hover:bg-gray-700 transition"
-                                      >
-                                        Save
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={cancelFacilityEdit}
-                                        className="px-3 py-1.5 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => beginFacilityEdit(facility)}
-                                      className="px-3 py-1.5 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition"
-                                    >
-                                      Edit
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                              <div>
-                                <p className="text-gray-400">Address</p>
-                                {isEditingTenant && editingFacilityId === facility.id ? (
-                                  <input
-                                    type="text"
-                                    value={facilityEditForm.address}
-                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, address: e.target.value }))}
-                                    className={editInputClass}
-                                  />
-                                ) : (
-                                  <p className="text-white">{facility.address || '-'}</p>
-                                )}
-                              </div>
-                              <div>
-                                <p className="text-gray-400">Contact</p>
-                                {isEditingTenant && editingFacilityId === facility.id ? (
-                                  <input
-                                    type="text"
-                                    value={facilityEditForm.contact}
-                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, contact: e.target.value }))}
-                                    className={editInputClass}
-                                  />
-                                ) : (
-                                  <p className="text-white">{facility.contact || '-'}</p>
-                                )}
-                              </div>
-                              <div>
-                                <p className="text-gray-400">Email</p>
-                                {isEditingTenant && editingFacilityId === facility.id ? (
-                                  <input
-                                    type="email"
-                                    value={facilityEditForm.email}
-                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, email: e.target.value }))}
-                                    className={editInputClass}
-                                  />
-                                ) : (
-                                  <p className="text-white">{facility.email || '-'}</p>
-                                )}
-                              </div>
-                              <div>
-                                <p className="text-gray-400">Tax ID</p>
-                                {isEditingTenant && editingFacilityId === facility.id ? (
-                                  <input
-                                    type="text"
-                                    value={facilityEditForm.taxId}
-                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, taxId: e.target.value }))}
-                                    className={editInputClass}
-                                  />
-                                ) : (
-                                  <p className="text-white">{facility.taxId || '-'}</p>
-                                )}
-                              </div>
-                              <div>
-                                <p className="text-gray-400">NPI</p>
-                                {isEditingTenant && editingFacilityId === facility.id ? (
-                                  <input
-                                    type="text"
-                                    value={facilityEditForm.npi}
-                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, npi: e.target.value }))}
-                                    className={editInputClass}
-                                  />
-                                ) : (
-                                  <p className="text-white">{facility.npi || '-'}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <FacilityTable />
                   </>
                 )}
                 {facilityTab === 'payer-plan' && (
@@ -693,12 +863,6 @@ const TenantDetailsModal = () => {
                   onClick={handleClose}
                 >
                   Close
-                </button>
-                <button 
-                  className="px-4 py-2 bg-[#3b3f46] text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition shadow-lg hover:shadow-gray-500/30"
-                  onClick={() => setIsEditingTenant(true)}
-                >
-                  Edit Tenant
                 </button>
               </>
             )}
@@ -959,6 +1123,16 @@ const TenantDetailsModal = () => {
                           >
                             SELECT
                           </button>
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 bg-[#3b3f46] hover:bg-gray-700 text-white text-xs font-medium rounded-md transition-all"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openTenantDetails(subClient, { edit: true });
+                            }}
+                          >
+                            EDIT
+                          </button>
                           <button 
                             className="p-2 hover:bg-[#ffffff15] rounded-lg transition"
                             onClick={(e) => {
@@ -986,7 +1160,6 @@ const TenantDetailsModal = () => {
                   </div>
                 )}
               </motion.div>
-              {isTenantDetailsOpen && <TenantDetailsModal />}
             </motion.div>
           );
 
@@ -1625,16 +1798,6 @@ const handleFacilitySubmit = async (formData) => {
       setSelectedTenant(updatedTenant);
     }
 
-    setNewFacility({
-      name: '',
-      facilityType: '',
-      address: '',
-      taxId: '',
-      npi: '',
-      contact: '',
-      email: ''
-    });
-    setIsFacilityModalOpen(false);
     alert(`Facility ${createdFacility.name} added successfully!`);
   } catch (error) {
     console.error("Error adding facility:", error);
@@ -1843,236 +2006,6 @@ const TenantModal = () => {
   );
 };
 
-const FacilityModal = () => {
-  if (!selectedTenant) return null;
-  const [formState, setFormState] = useState({...newFacility});
-  const [isFacilityTypeOpen, setIsFacilityTypeOpen] = useState(false);
-  const rowInputClass = "w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]";
-
-  const handleLocalInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormState(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleFacilityTypeSelect = (value) => {
-    setFormState(prev => ({
-      ...prev,
-      facilityType: value
-    }));
-    setIsFacilityTypeOpen(false);
-  };
-
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleFacilitySubmit(formState);
-  };
-
-  const handleClear = () => {
-    setFormState({
-      name: '',
-      facilityType: '',
-      address: '',
-      taxId: '',
-      npi: '',
-      contact: '',
-      email: ''
-    });
-  };
-
-  const handleClose = () => {
-    setIsFacilityModalOpen(false);
-  };
-
-  return (
-    <div
-      className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70 p-4"
-      onClick={handleClose}
-    >
-      <div
-        className="bg-[#232429] rounded-xl w-full max-w-6xl overflow-hidden border border-[#2f333a] shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center border-b border-[#ffffff20] p-6">
-          <h2 className="text-xl font-semibold text-white">Add Facility</h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-white transition-colors"
-            type="button"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-
-        <form onSubmit={handleFormSubmit} className="p-6 max-h-[70vh] overflow-y-auto">
-          <div className="overflow-x-auto">
-            <table className="min-w-[1300px] w-full bg-transparent">
-              <colgroup>
-                <col className="w-[220px]" />
-                <col className="w-[220px]" />
-                <col className="w-[240px]" />
-                <col className="w-[300px]" />
-                <col className="w-[200px]" />
-                <col className="w-[180px]" />
-                <col className="w-[220px]" />
-                <col className="w-[260px]" />
-                <col className="w-[160px]" />
-              </colgroup>
-              <thead>
-                <tr className="text-[#9ca3af] border-b border-[#ffffff20]">
-                  <th className="px-3 py-3 text-left">Tenant</th>
-                  <th className="px-3 py-3 text-left">Facility</th>
-                  <th className="px-3 py-3 text-left">Facility Type</th>
-                  <th className="px-3 py-3 text-left">Address</th>
-                  <th className="px-3 py-3 text-left">Tax ID</th>
-                  <th className="px-3 py-3 text-left">NPI</th>
-                  <th className="px-3 py-3 text-left">Contact</th>
-                  <th className="px-3 py-3 text-left">Email</th>
-                  <th className="px-3 py-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-[#ffffff20] text-[#D9D9D9CC] bg-[#ffffff05]">
-                  <td className="px-3 py-3">
-                    <input
-                      type="text"
-                      value={selectedTenant.name}
-                      readOnly
-                      className={`${rowInputClass} bg-[#ffffff08] cursor-not-allowed`}
-                    />
-                  </td>
-                  <td className="px-3 py-3">
-                    <input
-                      type="text"
-                      name="name"
-                      value={formState.name}
-                      onChange={handleLocalInputChange}
-                      className={rowInputClass}
-                      placeholder="Facility"
-                      required
-                    />
-                  </td>
-                  <td className="px-3 py-3">
-                    <div
-                      className="relative"
-                      tabIndex={0}
-                      onBlur={() => setIsFacilityTypeOpen(false)}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setIsFacilityTypeOpen(prev => !prev)}
-                        className={`${rowInputClass} flex items-center justify-between`}
-                      >
-                        <span className={formState.facilityType ? '' : 'text-gray-400'}>
-                          {formState.facilityType || 'Select Facility Type'}
-                        </span>
-                        <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
-                          <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                      {isFacilityTypeOpen && (
-                        <div className="absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg">
-                          {FACILITY_TYPE_OPTIONS.map((option) => (
-                            <button
-                              key={option}
-                              type="button"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => handleFacilityTypeSelect(option)}
-                              className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
-                            >
-                              {option}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-3 py-3">
-                    <input
-                      type="text"
-                      name="address"
-                      value={formState.address}
-                      onChange={handleLocalInputChange}
-                      className={rowInputClass}
-                      placeholder="Address"
-                      required
-                    />
-                  </td>
-                  <td className="px-3 py-3">
-                    <input
-                      type="text"
-                      name="taxId"
-                      value={formState.taxId}
-                      onChange={handleLocalInputChange}
-                      className={rowInputClass}
-                      placeholder="Tax ID"
-                      required
-                    />
-                  </td>
-                  <td className="px-3 py-3">
-                    <input
-                      type="text"
-                      name="npi"
-                      value={formState.npi}
-                      onChange={handleLocalInputChange}
-                      className={rowInputClass}
-                      placeholder="NPI"
-                      required
-                    />
-                  </td>
-                  <td className="px-3 py-3">
-                    <input
-                      type="text"
-                      name="contact"
-                      value={formState.contact}
-                      onChange={handleLocalInputChange}
-                      className={rowInputClass}
-                      placeholder="Contact"
-                      required
-                    />
-                  </td>
-                  <td className="px-3 py-3">
-                    <input
-                      type="email"
-                      name="email"
-                      value={formState.email}
-                      onChange={handleLocalInputChange}
-                      className={rowInputClass}
-                      placeholder="Email"
-                      required
-                    />
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        type="submit"
-                        className="px-3 py-2 bg-[#3b3f46] hover:bg-gray-700 text-white text-xs font-medium rounded-md transition-all"
-                      >
-                        Add
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleClear}
-                        className="px-3 py-2 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
   // Main render
   return (
     <div className="min-h-screen bg-[#1e1f24] text-white"
@@ -2249,7 +2182,6 @@ const FacilityModal = () => {
 
           {/* Tenant Modal */}
           {isTenantModalOpen && <TenantModal />}
-          {isFacilityModalOpen && <FacilityModal />}
         </>
       )}
     </div>
