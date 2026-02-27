@@ -792,6 +792,8 @@ const ReboundDetailView = () => {
     { id: 2, date: '2023-10-12', notes: 'Second note', writer: 'Jane Smith' },
     // Add more data as needed
   ];
+  const isPend277 = ((routeTitle || appTitle || "").toLowerCase().includes("pend 277"));
+  const showOptumDetails = false;
 
   return (
     <>
@@ -969,7 +971,7 @@ const ReboundDetailView = () => {
                 ));
               })()}
               </ul>
-              {((routeTitle || appTitle || "").toLowerCase().includes("pend 277")) && (
+              {isPend277 && showOptumDetails && (
                 <div className={`mt-6 rounded-2xl border p-5 ${isDark ? 'border-[#30354a] bg-[#1b1f29]' : 'border-gray-200 bg-slate-50'}`}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -1721,7 +1723,24 @@ const ReboundDetailView = () => {
                 }`}
             >
               <div className="flex flex-col gap-3">
-                <p className="text-lg font-semibold">Triage</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-lg font-semibold">Triage</p>
+                  {isPend277 && (
+                    <button
+                      type="button"
+                      onClick={handleRequest277}
+                      disabled={optumLoading || !optumRequest}
+                      className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${optumLoading || !optumRequest
+                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                        : isDark
+                          ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                          : 'bg-slate-900 text-white hover:bg-slate-800'
+                        }`}
+                    >
+                      {optumLoading ? 'Requesting 277...' : 'Request 277'}
+                    </button>
+                  )}
+                </div>
                 <div className={`p-4 border-t ${isDark ? 'bg-[#27282D] border-[#CDCDCD]' : 'bg-gray-50 border-gray-200'}`}>
                   <div className="flex flex-col gap-3">
                     {triageActions.map((action, idx) => {

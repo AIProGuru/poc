@@ -670,7 +670,7 @@ const DataTable = (props) => {
           ))}
         </div>
       </div>
-      {showBulk277 && (
+      {showBulk277 && !((appTitle || "").toLowerCase().includes("pend 277")) && (
         <div className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? 'border-[#2d3348] bg-[#1b1f29] text-white' : 'bg-white border-gray-200 text-slate-900'}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

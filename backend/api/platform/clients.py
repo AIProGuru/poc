@@ -1,392 +1,552 @@
-from flask import Blueprint, jsonify, request
-from core.firebase.firebase_init import db
-from firebase_admin import firestore
-from datetime import datetime
-try:
-    from google.cloud.firestore_v1 import DocumentReference, GeoPoint
-except Exception:  # pragma: no cover - optional import for type checks
-    DocumentReference = None
-    GeoPoint = None
+from flask import Blueprint, request, jsonify
+from typing import Dict, List, Optional, Tuple
+import json
+import time
+import logging
+from datetime import date, datetime
+from db import get_connection, close_connection
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def _serialize_value(value):
-    if isinstance(value, datetime):
-        return value.isoformat()
-    if DocumentReference is not None and isinstance(value, DocumentReference):
-        return value.path
-    if GeoPoint is not None and isinstance(value, GeoPoint):
-        return {"latitude": value.latitude, "longitude": value.longitude}
-    if isinstance(value, bytes):
-        return value.decode("utf-8", errors="replace")
-    if isinstance(value, dict):
-        return {key: _serialize_value(val) for key, val in value.items()}
-    if isinstance(value, list):
-        return [_serialize_value(item) for item in value]
-    return value
+# Define Blueprints for different APIs
+rebound_api_get_claim = Blueprint('rebound_api_get_claim', __name__, url_prefix='/api/v1/rebound')
+rebound_api_get_claim.api_name = 'rebound_api_get_claim'
 
-clients_api = Blueprint("clients_api", __name__, url_prefix="/api")
+medevolve_api_get_claim = Blueprint('medevolve_api_get_claim', __name__, url_prefix='/api/v1/medevolve')
+medevolve_api_get_claim.api_name = 'medevolve_api_get_claim'
+pilotcustomer_api_get_claim = Blueprint('pilotcustomer_api_get_claim', __name__, url_prefix='/api/v1/pilotcustomer')
+pilotcustomer_api_get_claim.api_name = 'pilotcustomer_api_get_claim'
 
-
-@clients_api.route("/clients", methods=["GET"])
-def get_clients():
+@rebound_api_get_claim.route("/get_claim", methods=["GET"])
+@medevolve_api_get_claim.route("/get_claim", methods=["GET"])
+@pilotcustomer_api_get_claim.route("/get_claim", methods=["GET"])
+def get_rebound_claim():
     """
-    Return the list of clients from Firestore using server-side credentials.
+    This endpoint fetches claim details based on the claim number.
+    ---
+    tags:
+      - Claim Details
+    parameters:
+      - in: query
+        name: id
+        type: string
+        required: true
+        description: Claim number
+      - in: query
+        name: username
+        type: string
+        required: true
+        description: Username
+    responses:
+      200:
+        description: Successful response
+        schema:
+          type: object
+          properties:
+            Claim:
+              type: object
+              properties:
+                Data:
+                  type: object
+                Related:
+                  type: array
+                  items:
+                    type: object
+                Diagnosis:
+                  type: array
+                  items:
+                    type: object
+                ServiceLine:
+                  type: array
+                  items:
+                    type: object
+            Remit:
+              type: array
+              items:
+                type: object
+            RelatedEncounters:
+              type: array
+              items:
+                type: object
+            Document:
+              type: object
+            Appeal:
+              type: array
+              items:
+                type: string
+            up:
+              type: integer
+            down:
+              type: integer
+            rate:
+              type: integer
+            Comment:
+              type: object
+      500:
+        description: Internal server error
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
     """
+    _start = time.time()
+    conn = None
+    cursor = None
     try:
-        docs = db.collection("clients").stream()
-        clients = []
-        for doc in docs:
-            data = doc.to_dict() or {}
-            data = _serialize_value(data)
-            data["id"] = doc.id
-            clients.append(data)
-        return jsonify(clients), 200
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to fetch clients", "detail": str(exc)}), 500
+        conn, cursor, db_name = get_connection(request.base_url)
+        claim_no = request.args.get("id")
+        username = request.args.get("username")
+        ret = {"Claim": {}, "Remit": {}, "RelatedEncounters": []}
+        q = f"""
+            SELECT
+                CUSTOM_ALL.id,
+                CUSTOM_ALL.id_835,
+                CUSTOM_ALL.ClaimNo,
+                CUSTOM_ALL.ServiceDate,
+                CUSTOM_ALL.PrimaryGroup,
+                CUSTOM_ALL.PrimaryCode,
+                CUSTOM_ALL.Category,
+                CUSTOM_ALL.Amount,
+                CUSTOM_ALL.AllowedAmt,
+                CUSTOM_ALL.PaidAmt,
+                CUSTOM_ALL.DeniedAmt,
+                CUSTOM_PAID_AMOUNT.ChargeAmount,
+                CUSTOM_PAID_AMOUNT.PaidAmount,
+                CUSTOM_PAID_AMOUNT.PatientResp,
+                CUSTOM_PAID_AMOUNT.DeniedAmount,
+                CUSTOM_ALL.PriorAuthorization,
+                CUSTOM_ALL.PlaceOfService,
+                CUSTOM_ALL.PayerName,
+                CUSTOM_ALL.PatientID,
+                CUSTOM_ALL.PayerSeq,
+                CUSTOM_ALL.PayerID,
+                CUSTOM_ALL.PayerAddress,
+                CUSTOM_ALL.ProvNPI,
+                CUSTOM_ALL.ProvTaxID,
+                COALESCE(CUSTOM_ALL.BillProvName, '') AS BillProvName,
+                CUSTOM_ALL.BIllProvAddress,
+                CUSTOM_ALL.BillTaxonomy,
+                CUSTOM_ALL.RendTaxonomy,
+                CUSTOM_ALL.PrimaryDX,
+                CUSTOM_ALL.Automation,
+                CUSTOM_ALL.Frequency
+            FROM CUSTOM_ALL
+            LEFT JOIN matching_for_table ON matching_for_table.ClaimNo=CUSTOM_ALL.ClaimNo
+            LEFT JOIN CUSTOM_PAID_AMOUNT ON CUSTOM_PAID_AMOUNT.ID=matching_for_table.id_835
+            WHERE CUSTOM_ALL.ClaimNo='{claim_no}'
+        """
+        cursor.execute(q)
+        ret["Claim"]["Data"] = cursor.fetchone()
 
+        
+        id = ret["Claim"]["Data"]["id"]
+        id_835 = ret["Claim"]["Data"]["id_835"]
 
-@clients_api.route("/clients", methods=["POST"])
-def add_client():
-    """
-    Add a client facility entry using server-side credentials.
-    """
-    try:
-        payload = request.get_json(silent=True) or {}
-        payload.pop("id", None)
-        created_at = datetime.utcnow()
-        payload["lastUpdated"] = firestore.SERVER_TIMESTAMP
+        claim_no_splits = ret["Claim"]["Data"]["ClaimNo"].split('-')
 
-        doc_ref = db.collection("clients").document()
-        doc_ref.set(payload)
+        q = f"""
+            SELECT
+                CUSTOM_EDI_Claims_CLONE.ClaimNo
+            FROM CUSTOM_EDI_Claims_CLONE
+            WHERE CUSTOM_EDI_Claims_CLONE.ClaimNoFirst='{claim_no_splits[0]}'
+                AND CUSTOM_EDI_Claims_CLONE.Amount={ret["Claim"]["Data"]["Amount"]}
+                AND CUSTOM_EDI_Claims_CLONE.PrincipalDiagnosis='{ret["Claim"]["Data"]["PrimaryDX"]}'
+                AND CUSTOM_EDI_Claims_CLONE.ServiceDate='{ret["Claim"]["Data"]["ServiceDate"]}'
+        """
+        cursor.execute(q)
+        ret["Claim"]["Related"] = cursor.fetchall()
 
-        db.collection("client_lookup").add(
-            {
-                "clientId": doc_ref.id,
-                "name": payload.get("name", ""),
-                "facilityName": payload.get("facilityName", ""),
-                "tenantName": payload.get("tenantName", ""),
-                "createdAt": firestore.SERVER_TIMESTAMP,
-            }
-        )
+        # Remark Codes
+        ret['Claim']['Data']['Remark'] = []
+        if id_835 != None:
+            q = f"SELECT RemarkCode FROM CUSTOM_PAID_SERVICE_REMARK WHERE id_837={id} AND id_835={id_835}"
+            cursor.execute(q)
+            data = cursor.fetchall()
+            ret['Claim']['Data']['Remark'] = [item['RemarkCode'] for item in data]
 
-        result = payload.copy()
-        result.pop("createdAt", None)
-        result.pop("lastUpdated", None)
-        result["id"] = doc_ref.id
-        return jsonify(result), 201
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to add client", "detail": str(exc)}), 500
+        q = f"""
+            SELECT
+                CUSTOM_ICD.Code,
+                CUSTOM_ICD.Description
+            FROM Diagnosis
+            LEFT JOIN CUSTOM_ICD ON CUSTOM_ICD.Code=Diagnosis.Diagnosis
+            WHERE ClaimNo='{claim_no}';
+        """
+        cursor.execute(q)
+        ret['Claim']['Diagnosis'] = cursor.fetchall()
 
+        q = f"""
+            SELECT
+                CUSTOM_SERVICE.Code,
+                CUSTOM_SERVICE.Modifier,
+                CUSTOM_SERVICE.Code,
+                cpt.Description,
+                CUSTOM_SERVICE.ServiceDate,
+                CUSTOM_SERVICE.Charges,
+                CUSTOM_SERVICE.Units,
+                CUSTOM_SERVICE.RendProvNPI,
+                CUSTOM_SERVICE.RendTaxonomy
+            FROM CUSTOM_SERVICE
+            LEFT JOIN cpt ON cpt.Code=CUSTOM_SERVICE.Code
+            WHERE ClaimNo='{claim_no}' AND (cpt.Type='CPT' OR cpt.Type='HCPCS')
+        """
+        cursor.execute(q)
+        ret['Claim']['ServiceLine'] = cursor.fetchall()
 
-@clients_api.route("/clients/<client_id>", methods=["GET"])
-def get_client(client_id):
-    """
-    Return a single client by ID.
-    """
-    try:
-        doc_ref = db.collection("clients").document(client_id)
-        doc = doc_ref.get()
-        if not doc.exists:
-            return jsonify({"error": "Client not found"}), 404
-        data = doc.to_dict() or {}
-        data = _serialize_value(data)
-        data["id"] = doc.id
-        return jsonify(data), 200
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to fetch client", "detail": str(exc)}), 500
+        q = f"SELECT * FROM actions WHERE ClaimNo='{claim_no}' ORDER BY id DESC"
+        cursor.execute(q)
+        row = cursor.fetchall()
+        if row != None:
+            ret['Action'] = row
+        else:
+            ret['Action'] = [{
+                "action_date": '',
+                "action": '',
+                "claim_status": '',
+                "notes": ''
+            }]
 
+        ret['Remit'] = []
+        q = f"""
+            SELECT
+                CUSTOM_PAID.CheckDate,
+                CUSTOM_PAID.CheckNumber,
+                CUSTOM_PAID.CheckAmount,
+                CUSTOM_PAID.PayerID,
+                CUSTOM_PAID.PayerName,
+                CUSTOM_PAID.ProviderName,
+                CUSTOM_PAID.ProviderAddress,
+                CUSTOM_PAID.NPI,
+                CUSTOM_PAID.ServiceDate,
+                CUSTOM_PAID.ProcessingStatus,
+                CUSTOM_PAID.PayerClaimNumber,
+                CUSTOM_PAID.ClaimID,
+                CUSTOM_PAID.ChargeAmount,
+                CUSTOM_PAID.PaidAmount,
+                CUSTOM_PAID.DeniedAmount,
+                CUSTOM_PAID.PatientResp,
+                matching_837_835.id_835
+            FROM CUSTOM_PAID
+            LEFT JOIN matching_837_835 ON matching_837_835.id_835=CUSTOM_PAID.ID
+            WHERE matching_837_835.ClaimNo='{claim_no}'
+            ORDER BY CUSTOM_PAID.CheckDate DESC, matching_837_835.id_835 DESC
+        """
+        cursor.execute(q)
+        results = cursor.fetchall()
+        overturn = 0
+        action_date_value = None
+        if len(ret.get('Action', [])) != 0:
+            action_date = ret['Action'][0].get('action_date')
+            if action_date:
+                try:
+                    action_date_value = datetime.strptime(action_date, '%m/%d/%Y').date()
+                except ValueError:
+                    action_date_value = None
 
-@clients_api.route("/clients/<client_id>", methods=["DELETE"])
-def delete_client(client_id):
-    """
-    Delete a client and any related lookup entries.
-    """
-    try:
-        doc_ref = db.collection("clients").document(client_id)
-        doc = doc_ref.get()
-        if not doc.exists:
-            return jsonify({"error": "Client not found"}), 404
+        for row in results:
+            ret['Remit'].append(row)
+            ret['Remit'][-1]['ServiceLine'] = []
+            if row['id_835'] != None:
+                q = f"""
+                    SELECT
+                        EDI_PaidClaimLines.ID,
+                        EDI_PaidClaimLines.ServiceDate,
+                        EDI_PaidClaimLines.ProcedureCode,
+                        EDI_PaidClaimLines.UnitsPaid,
+                        EDI_PaidClaimLines.ChargedAmount,
+                        EDI_PaidClaimLines.AllowedAmount,
+                        EDI_PaidClaimLines.PaidAmount,
+                        EDI_PaidClaimLines.RemarkCodes,
+                        cpt.Description
+                    FROM EDI_PaidClaimLines
+                    LEFT JOIN cpt ON cpt.Code=EDI_PaidClaimLines.ProcedureCode
+                    WHERE EDI_PaidClaimLines.ClaimID={row['id_835']} AND (cpt.Type='CPT' OR cpt.Type='HCPCS')
+                """
+                cursor.execute(q)
+                rows = cursor.fetchall()
+                allowed_after_action = 0
+                if action_date_value:
+                    check_date = row['CheckDate']
+                    if isinstance(check_date, datetime):
+                        check_date = check_date.date()
+                    if check_date > action_date_value:
+                        allowed_after_action = sum(
+                            float(r.get('AllowedAmount') or 0) for r in rows
+                        )
+                        overturn += allowed_after_action
+                for r in rows:
+                    ret['Remit'][-1]['ServiceLine'].append(r)
+                    q = f"""
+                        SELECT
+                            EDI_PaidClaimLineAdj.AdjustmentGroup,
+                            EDI_PaidClaimLineAdj.AdjustmentReason,
+                            EDI_PaidClaimLineAdj.AdjustmentAmount,
+                            carc.Description
+                        FROM EDI_PaidClaimLineAdj
+                        LEFT JOIN carc ON carc.Code=EDI_PaidClaimLineAdj.AdjustmentReason
+                        WHERE LineID={r['ID']}
+                    """
+                    cursor.execute(q)
+                    ret["Remit"][-1]['ServiceLine'][-1]['Codes'] = cursor.fetchall()
 
-        # Remove lookup entries for this client
-        lookup_query = db.collection("client_lookup").where("clientId", "==", client_id).stream()
-        lookup_docs = [d for d in lookup_query]
-        for lookup_doc in lookup_docs:
-            lookup_doc.reference.delete()
+                # Debug print statement to check if the code block is reached
+                print(f"Fetching modifiers for ID_835={row['id_835']}")
 
-        doc_ref.delete()
-        return jsonify({"status": "deleted", "id": client_id}), 200
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to delete client", "detail": str(exc)}), 500
+                # Fetching modifiers from CUSTOM_PAID_SERVICE
+                # q = f"SELECT * FROM CUSTOM_PAID_SERVICE WHERE ID_835={row['id_835']}"
+                # print(f"Executing query: {q}")  # Debug print statement to show the query
+                # cursor.execute(q)
+                # modifier_data = cursor.fetchall()
+                # print(f"Modifier data for ID_835={row['id_835']}: {modifier_data}")  # Debug print statement to show the results
+                # ret['Remit'][-1]['ModifierData'] = modifier_data
+                q = f"SELECT id_835,id,ProcedureCode,ProcedureModifier1,ProcedureModifier2,ProcedureModifier3,ProcedureModifier4 FROM CUSTOM_PAID_SERVICE WHERE ID_835={row['id_835']}"
+                cursor.execute(q)
+                modifier_data = cursor.fetchall()
+                # print(f"Modifier data for ID_835={row['id_835']}: {modifier_data}")  # Debug print statement
 
+                    # Merging ModifierData into ServiceLine
+                for service_line in ret['Remit'][-1]['ServiceLine']:
+                    service_line['Modifiers'] = [
+                        modifier for modifier in modifier_data if modifier['id'] == service_line['ID']
+                    ]
+        
+        ret['Claim']['Data']['Overturn'] = overturn
+        q = f"""
+            SELECT
+                CUSTOM_ALL.ClaimNo,
+                CUSTOM_ALL.ServiceDate,
+                CUSTOM_ALL.TransactionDate,
+                CUSTOM_ALL.TransactionType,
+                CUSTOM_ALL.PayerID,
+                CUSTOM_ALL.PayerName,
+                CUSTOM_ALL.PayerSeq,
+                CUSTOM_ALL.Frequency,
+                CUSTOM_ALL.PatientID,
+                CUSTOM_ALL.PatientName
+            FROM CUSTOM_ALL
+            WHERE CUSTOM_ALL.ClaimNo LIKE '{claim_no.split('-')[0]}-%'
+            ORDER BY CUSTOM_ALL.TransactionDate DESC
+        """
+        cursor.execute(q)
+        ret['RelatedEncounters'] = cursor.fetchall()
 
-@clients_api.route("/clients/<client_id>", methods=["PATCH"])
-def update_client(client_id):
-    """
-    Update a client (partial).
-    """
-    try:
-        payload = request.get_json(silent=True) or {}
-        payload.pop("id", None)
+        ret["Document"] = {
+            "Category": "",
+            "DenialCode": "",
+            "Comments": "",
+            "Evidence1": "",
+            "Evidence2": "",
+            "Resubmittion": "",
+        }
+        q = f"SELECT * FROM documents WHERE id='{claim_no}'"
+        cursor.execute(q)
+        ret['Document'] = cursor.fetchone()
 
-        if not payload:
-            return jsonify({"error": "No updates provided"}), 400
+        ret['Appeal'] = ["", "", "", "", "", "", ""]
+        flag = False
 
-        doc_ref = db.collection("clients").document(client_id)
-        doc = doc_ref.get()
-        if not doc.exists:
-            return jsonify({"error": "Client not found"}), 404
-
-        payload["lastUpdated"] = firestore.SERVER_TIMESTAMP
-        doc_ref.update(payload)
-
-        updated = doc_ref.get().to_dict() or {}
-        updated = _serialize_value(updated)
-        updated["id"] = client_id
-        return jsonify(updated), 200
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to update client", "detail": str(exc)}), 500
-
-
-@clients_api.route("/clients/<client_id>/tenants", methods=["POST", "OPTIONS"])
-def add_tenant(client_id):
-    """
-    Add a tenant under a client (stored in subClients array).
-    """
-    try:
-        if request.method == "OPTIONS":
-            return ("", 204)
-        payload = request.get_json(silent=True) or {}
-        created_at = datetime.utcnow()
-        payload.pop("id", None)
-
-        doc_ref = db.collection("clients").document(client_id)
-        doc = doc_ref.get()
-        if not doc.exists:
-            return jsonify({"error": "Client not found"}), 404
-
-        data = doc.to_dict() or {}
-        sub_clients = data.get("subClients") or []
-        tenant_id = f"tenant-{int(datetime.utcnow().timestamp() * 1000)}"
-        tenant = payload.copy()
-        tenant["id"] = tenant_id
-        tenant["createdAt"] = created_at
-        tenant.setdefault("facilities", [])
-        tenant.setdefault("denialsCaptured", 0)
-        tenant.setdefault("revenueRecovered", 0)
-
-        sub_clients.append(tenant)
-        doc_ref.update({"subClients": sub_clients, "lastUpdated": firestore.SERVER_TIMESTAMP})
-
-        result = _serialize_value(tenant)
-        return jsonify(result), 201
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to add tenant", "detail": str(exc)}), 500
-
-
-@clients_api.route("/clients/<client_id>/tenants/<tenant_id>/facilities", methods=["POST", "OPTIONS"])
-def add_facility(client_id, tenant_id):
-    """
-    Add a facility under a tenant (nested in subClients[].facilities).
-    """
-    try:
-        if request.method == "OPTIONS":
-            return ("", 204)
-        payload = request.get_json(silent=True) or {}
-        payload.pop("id", None)
-        created_at = datetime.utcnow()
-
-        doc_ref = db.collection("clients").document(client_id)
-        doc = doc_ref.get()
-        if not doc.exists:
-            return jsonify({"error": "Client not found"}), 404
-
-        data = doc.to_dict() or {}
-        sub_clients = data.get("subClients") or []
-        facility_id = f"facility-{int(datetime.utcnow().timestamp() * 1000)}"
-        facility = payload.copy()
-        facility["id"] = facility_id
-        facility["createdAt"] = created_at
-
-        updated = False
-        for sub_client in sub_clients:
-            if sub_client.get("id") == tenant_id:
-                facilities = sub_client.get("facilities") or []
-                facilities.append(facility)
-                sub_client["facilities"] = facilities
-                updated = True
-                break
-
-        if not updated:
-            return jsonify({"error": "Tenant not found"}), 404
-
-        doc_ref.update({"subClients": sub_clients, "lastUpdated": firestore.SERVER_TIMESTAMP})
-
-        result = _serialize_value(facility)
-        return jsonify(result), 201
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to add facility", "detail": str(exc)}), 500
-
-
-@clients_api.route("/clients/<client_id>/tenants/<tenant_id>/facilities/<facility_id>", methods=["PATCH", "OPTIONS"])
-def update_facility(client_id, tenant_id, facility_id):
-    """
-    Update a facility under a tenant (nested in subClients[].facilities).
-    """
-    try:
-        if request.method == "OPTIONS":
-            return ("", 204)
-        payload = request.get_json(silent=True) or {}
-        payload.pop("id", None)
-        payload.pop("createdAt", None)
-
-        if not payload:
-            return jsonify({"error": "No updates provided"}), 400
-
-        doc_ref = db.collection("clients").document(client_id)
-        doc = doc_ref.get()
-        if not doc.exists:
-            return jsonify({"error": "Client not found"}), 404
-
-        data = doc.to_dict() or {}
-        sub_clients = data.get("subClients") or []
-
-        updated_facility = None
-        updated = False
-        for sub_client in sub_clients:
-            if sub_client.get("id") != tenant_id:
-                continue
-            facilities = sub_client.get("facilities") or []
-            for facility in facilities:
-                if facility.get("id") == facility_id:
-                    for key, value in payload.items():
-                        facility[key] = value
-                    updated_facility = facility
-                    updated = True
+        if len(ret['Remit']) > 0:
+            for service in ret['Remit'][0]['ServiceLine']:
+                if service['RemarkCodes'] == 'HE:N255':
+                    flag = True
+                    q = f"SELECT * FROM n255 WHERE Code='{ret['Claim']['Data']['RendTaxonomy']}'"
+                    cursor.execute(q)
+                    row = cursor.fetchone()
+                    if row != None:
+                        ret["Appeal"][2] = row["rationale"]
+                        ret["Appeal"][4] = f"Billing Provider Taxonomy is missing."
+                        ret["Appeal"][
+                            5
+                        ] = f"Resubmit the claim with Billing Taxonomy code '{row['BillingTaxonomy']}'."
                     break
-            if updated:
-                sub_client["facilities"] = facilities
-                break
-
-        if not updated:
-            return jsonify({"error": "Facility not found"}), 404
-
-        doc_ref.update({"subClients": sub_clients, "lastUpdated": firestore.SERVER_TIMESTAMP})
-
-        result = _serialize_value(updated_facility)
-        return jsonify(result), 200
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to update facility", "detail": str(exc)}), 500
-
-
-@clients_api.route("/clients/<client_id>/tenants/<tenant_id>/facilities/<facility_id>", methods=["DELETE", "OPTIONS"])
-def delete_facility(client_id, tenant_id, facility_id):
-    """
-    Delete a facility under a tenant (nested in subClients[].facilities).
-    """
-    try:
-        if request.method == "OPTIONS":
-            return ("", 204)
-
-        doc_ref = db.collection("clients").document(client_id)
-        doc = doc_ref.get()
-        if not doc.exists:
-            return jsonify({"error": "Client not found"}), 404
-
-        data = doc.to_dict() or {}
-        sub_clients = data.get("subClients") or []
-
-        deleted_facility = None
-        updated = False
-        for sub_client in sub_clients:
-            if sub_client.get("id") != tenant_id:
-                continue
-            facilities = sub_client.get("facilities") or []
-            remaining = []
-            for facility in facilities:
-                if facility.get("id") == facility_id:
-                    deleted_facility = facility
-                    updated = True
+                elif service['RemarkCodes'] == "M77":
+                    flag = True
+                    q = f"SELECT * FROM denial_actions WHERE ClaimNo='{claim_no}' limit 1"
+                    cursor.execute(q)
+                    row = cursor.fetchone()
+                    if row != None:
+                        ret["Appeal"][0] = "N/A"
+                        ret["Appeal"][1] = row["action"]
+                        ret["Appeal"][2] = row["rationale"]
+                        if row["evidence"] != None:
+                            ret["Appeal"][3] = row["evidence"]
+                        ret["Appeal"][4] = row["root_cause"]
+                        ret["Appeal"][5] = row["recommendation"]
+                        ret["Appeal"][6] = 0
+                    break
+        if flag == False:
+            q = f"SELECT * FROM denial_actions WHERE ClaimNo='{claim_no}' limit 1"
+            cursor.execute(q)
+            row = cursor.fetchone()
+            if row != None:
+                ret["Appeal"][0] = "N/A"
+                ret["Appeal"][1] = row["action"]
+                ret["Appeal"][2] = row["rationale"]
+                if row["evidence"] != None:
+                    ret["Appeal"][3] = row["evidence"]
+                ret["Appeal"][4] = row["root_cause"]
+                ret["Appeal"][5] = row["recommendation"]
+                ret["Appeal"][6] = 2
+            else:
+                q = f"SELECT * FROM action_denials_co97 WHERE ClaimID='{claim_no}' limit 1"
+                cursor.execute(q)
+                row = cursor.fetchone()
+                if row != None:
+                    ret["Appeal"][0] = "N/A"
+                    ret["Appeal"][1] = "N/A"
+                    if row["Evidence"] != None:
+                        ret["Appeal"][3] = row["Evidence"]
+                    ret["Appeal"][4] = row["root_cause"]
+                    ret["Appeal"][5] = row["Recommendation"]
+                    ret["Appeal"][6] = 1
                 else:
-                    remaining.append(facility)
-            if updated:
-                sub_client["facilities"] = remaining
-                break
+                    q = f"SELECT * FROM appeals WHERE ClaimNo='{claim_no}' limit 1"
+                    cursor.execute(q)
+                    row = cursor.fetchone()
+                    if row != None:
+                        ret["Appeal"][0] = row["Appeal1"]
+                        ret["Appeal"][1] = row["Appeal2"]
+                        ret["Appeal"][2] = row["Appeal3"]
+                        ret["Appeal"][3] = row["Appeal4"]
+                        ret["Appeal"][4] = row["Appeal5"]
+                        ret["Appeal"][5] = row["Appeal6"]
+                        ret["Appeal"][6] = 0
+                    else:
+                        ret["Appeal"][6] = -1
 
-        if not updated:
-            return jsonify({"error": "Facility not found"}), 404
+        q = f"select count(username) up from rate where claimno='{claim_no}' and action=1 and username != '{username}'"
+        cursor.execute(q)
+        row = cursor.fetchone()
+        if row != None:
+            ret["up"] = row["up"]
 
-        doc_ref.update({"subClients": sub_clients, "lastUpdated": firestore.SERVER_TIMESTAMP})
+        q = f"select count(username) down from rate where claimno='{claim_no}' and action=-1 and username != '{username}'"
+        cursor.execute(q)
+        row = cursor.fetchone()
+        if row != None:
+            ret["down"] = row["down"]
 
-        result = _serialize_value(deleted_facility or {"id": facility_id})
-        return jsonify(result), 200
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to delete facility", "detail": str(exc)}), 500
+        q = f"select action from rate where claimno='{claim_no}' and username='{username}'"
+        cursor.execute(q)
+        row = cursor.fetchone()
+        if row != None:
+            ret["rate"] = row["action"]
+        else:
+            ret["rate"] = 0
 
 
-@clients_api.route("/clients/<client_id>/tenants/<tenant_id>", methods=["PATCH", "OPTIONS"])
-def update_tenant(client_id, tenant_id):
+        ret["Comment"] = {}
+        ret["Comment"]["Additional"] = ""
+        ret["Comment"]["CPT"] = ""
+        ret["Comment"]["Description"] = ""
+        ret["Comment"]["Recommendation"] = ""
+        ret["Comment"]["Root"] = ""
+        ret["Comment"]["Steps"] = ""
+        ret["Comment"]["Evidence1"] = ""
+        ret["Comment"]["Evidence2"] = ""
+        q = f"SELECT * FROM comments WHERE ClaimNo='{claim_no}' limit 1"
+        cursor.execute(q)
+        row = cursor.fetchone()
+        if row != None:
+            ret["Comment"] = row
+        
+        return ret, 200
+    except Exception as e:
+        print(f"[ERROR]: {e}")
+        return {"error": "Internal server Error"}, 500
+    finally:
+        close_connection(cursor, conn)
+        _end = time.time()
+        print("/get_rebound_claim", _end - _start)
+
+
+@rebound_api_get_claim.route("/triage_actions", methods=["GET"])
+@medevolve_api_get_claim.route("/triage_actions", methods=["GET"])
+@pilotcustomer_api_get_claim.route("/triage_actions", methods=["GET"])
+def get_triage_actions():
     """
-    Update a tenant under a client (stored in subClients array).
+    This endpoint fetches triage action items for a denial category.
+    ---
+    tags:
+      - Claim Details
+    parameters:
+      - in: query
+        name: denial_category
+        type: string
+        required: true
+        description: Denial category name
+    responses:
+      200:
+        description: Successful response
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              allowFreeText:
+                type: boolean
     """
+    conn = None
+    cursor = None
     try:
-        if request.method == "OPTIONS":
-            return ("", 204)
-        payload = request.get_json(silent=True) or {}
-        payload.pop("id", None)
-        payload.pop("createdAt", None)
-
-        if not payload:
-            return jsonify({"error": "No updates provided"}), 400
-
-        doc_ref = db.collection("clients").document(client_id)
-        doc = doc_ref.get()
-        if not doc.exists:
-            return jsonify({"error": "Client not found"}), 404
-
-        data = doc.to_dict() or {}
-        sub_clients = data.get("subClients") or []
-
-        updated_tenant = None
-        for sub_client in sub_clients:
-            if sub_client.get("id") == tenant_id:
-                for key, value in payload.items():
-                    sub_client[key] = value
-                updated_tenant = sub_client
-                break
-
-        if updated_tenant is None:
-            return jsonify({"error": "Tenant not found"}), 404
-
-        doc_ref.update({"subClients": sub_clients, "lastUpdated": firestore.SERVER_TIMESTAMP})
-
-        result = _serialize_value(updated_tenant)
-        return jsonify(result), 200
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to update tenant", "detail": str(exc)}), 500
-
-
-@clients_api.route("/clients/<client_id>/users", methods=["GET"])
-def get_client_users(client_id):
-    """
-    Return users linked to a client (by client name in users.client array).
-    """
-    try:
-        client_doc = db.collection("clients").document(client_id).get()
-        if not client_doc.exists:
-            return jsonify({"error": "Client not found"}), 404
-
-        client_data = client_doc.to_dict() or {}
-        client_name = client_data.get("name")
-        if not client_name:
+        conn, cursor, db_name = get_connection(request.base_url)
+        denial_category = (request.args.get("denial_category") or "").strip()
+        if denial_category == "":
             return jsonify([]), 200
 
-        query = db.collection("users").where("client", "array_contains", client_name).stream()
-        users = []
-        for doc in query:
-            data = doc.to_dict() or {}
-            data = _serialize_value(data)
-            data["id"] = doc.id
-            users.append(data)
-        return jsonify(users), 200
-    except Exception as exc:  # pragma: no cover - simple pass-through
-        return jsonify({"error": "Failed to fetch client users", "detail": str(exc)}), 500
+        q = f"""
+            SELECT action_label, allow_free_text, sort_order, transaction_options
+            FROM claim_action_items
+            WHERE category='{denial_category}' AND is_active=1
+            ORDER BY sort_order, action_label
+        """
+        try:
+            cursor.execute(q)
+            rows = cursor.fetchall()
+        except Exception as query_error:
+            logger.error(f"[QUERY ERROR]: {query_error} - Query: {q}")
+            return jsonify([]), 200
+
+        ret = []
+        for row in rows or []:
+            transaction_options = []
+            raw_options = row.get("transaction_options")
+            if raw_options:
+                try:
+                    parsed = json.loads(raw_options)
+                    if isinstance(parsed, list):
+                        transaction_options = parsed
+                except (json.JSONDecodeError, TypeError):
+                    transaction_options = []
+            ret.append(
+                {
+                    "label": row["action_label"],
+                    "allowFreeText": bool(row.get("allow_free_text", 0)),
+                    "transactionOptions": transaction_options,
+                }
+            )
+        # If Pend 277 claims don't have a DB action yet, add a safe default.
+        if denial_category.lower() == "pend 277":
+            has_request = any(
+                (item.get("label") or "").strip().lower() == "request 277"
+                for item in ret
+            )
+            if not has_request:
+                ret.append(
+                    {
+                        "label": "Request 277",
+                        "allowFreeText": False,
+                        "transactionOptions": [],
+                    }
+                )
+        return jsonify(ret), 200
+    except Exception as e:
+        logger.error(f"[ERROR]: {e}")
+        return jsonify({"error": "Internal server Error"}), 500
+    finally:
+        close_connection(cursor, conn)
