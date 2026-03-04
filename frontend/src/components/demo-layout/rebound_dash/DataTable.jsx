@@ -253,10 +253,11 @@ const DataTable = (props) => {
     fontSize: '0.9rem',
   };
 
-  const showDetail = (claimNo) => {
+  const showDetail = (claimNo, rowCategory) => {
     const token = {
       claimNo,
       appTitle,
+      claimCategory: rowCategory,
     }
     console.log(location.pathname)
     navigate(`${type === 0 ? '/rebound' : '/pilotcustomer'}/detail/${btoa(JSON.stringify(token))}`);
@@ -963,55 +964,55 @@ const DataTable = (props) => {
                           inputProps={{ "aria-label": `Select row ${index + 1}` }}
                         />
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "120px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "120px" }}>
                         {row.Priority || ''}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
                         {getFacility(row)}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
                         {row.ProvTaxID || row.ProviderTaxID || ''}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
                         {row.ClaimNo}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "130px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "130px" }}>
                         {row.PayerID}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
                         {row.PayerName}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "120px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "120px" }}>
                         {row.PayerSeq === 'P' ? "Primary" : (row.PayerSeq === 'S' ? 'Secondary' : (row.PayerSeq || ''))}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
                         {row.PatientName || row.Patient || ''}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
                         {scrubPhi(getPatientAccountNumber(row))}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                         {formatDateSafe(row.ServiceDate)}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {row.PlaceOfService}
                       </TableCell>
                       <TableCell
                         className="text-wrap"
-                        onClick={() => showDetail(row.ClaimNo)}
+                        onClick={() => showDetail(row.ClaimNo, row.Category)}
                         style={{ ...bodyCellStyle, minWidth: "140px" }}  >
                         {formatCurrencyExact(row.Amount)}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                         {formatCurrencyExact(row.AllowedAmt)}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {formatCurrencyExact(row.PaidAmt || row.PaidAmount || row.Paid)}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {formatCurrencyExact(row.PatientResp || row.PatientResponsibility)}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                         {formatCurrencyExact(
                           row?.Balance !== undefined && row?.Balance !== null && row?.Balance !== ""
                             ? Number(row.Balance) || 0
@@ -1020,13 +1021,13 @@ const DataTable = (props) => {
                               (Number(row.AllowedAmt) || 0)
                         )}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {(() => {
                           const category = (row.Category || '').trim() || 'DELINQUENT';
                           return category;
                         })()}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {(() => {
                           const group = ((row.PrimaryGroup ?? '') || '').trim();
                           const code = ((row.PrimaryCode ?? '') || '').trim();
@@ -1034,19 +1035,19 @@ const DataTable = (props) => {
                           return denialCode || '';
                         })()}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {(() => {
                           const remarkText = (row.Remark || '').split('*')[0] || '';
                           return remarkText ? samplifyString(remarkText) : '';
                         })()}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
                         {(() => {
                           const primaryDx = (row.PrimaryDX || '').split("::")[0];
                           return primaryDx;
                         })()}
                       </TableCell>
-                      <TableCell onClick={() => showDetail(row.ClaimNo)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
+                      <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {row.PrimaryProcedure || ''}
                       </TableCell>
                     </TableRow>)

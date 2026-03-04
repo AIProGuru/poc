@@ -35,6 +35,7 @@ const ReboundDetailView = () => {
   const username = useSelector((state) => state.auth.username);
   const [detailShowStatus, setDetailShowStatus] = useState(0);
   const [routeTitle, setRouteTitle] = useState('');
+  const [routeCategory, setRouteCategory] = useState('');
   const [currentClaim, setCurrentClaim] = useState(null);
   const [appeal, setAppeal] = useState([])
   const [actionDate, setActionDate] = useState(null)
@@ -114,6 +115,9 @@ const ReboundDetailView = () => {
       }
       if (token.appTitle) {
         setRouteTitle(token.appTitle);
+      }
+      if (token.claimCategory) {
+        setRouteCategory(token.claimCategory);
       }
     }
   }, [apiUrl, token])
@@ -792,7 +796,17 @@ const ReboundDetailView = () => {
     { id: 2, date: '2023-10-12', notes: 'Second note', writer: 'Jane Smith' },
     // Add more data as needed
   ];
-  const isPend277 = ((routeTitle || appTitle || "").toLowerCase().includes("pend 277"));
+  const claimCategory =
+    currentClaim?.Claim?.Data?.Category ||
+    currentClaim?.Claim?.Data?.CategoryName ||
+    currentClaim?.Claim?.Data?.ClaimCategory ||
+    "";
+  const normalizePend = (value) =>
+    `${value}`.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const pend277Flag = Boolean(currentClaim?.Claim?.Data?.Pend277);
+  const isPend277 = pend277Flag || [routeTitle, appTitle, routeCategory, claimCategory]
+    .filter(Boolean)
+    .some((value) => normalizePend(value).includes("pend277"));
   const showOptumDetails = false;
 
   return (
@@ -941,36 +955,51 @@ const ReboundDetailView = () => {
             <div className={`rounded-2xl border p-6 ${isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-100 shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 text-gray-900 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
               <p className="text-lg font-semibold">Insights</p>
               <div className={`mt-3 h-px w-full ${isDark ? 'bg-white/20' : 'bg-gray-200'}`} />
-              <p className={`mt-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                This was <span className="text-[#FF5C5C] font-semibold">DENIED</span> for:
-              </p>
-              <ul className="mt-3 space-y-2 text-sm">
-              {(() => {
-                const reasons = (currentClaim?.Remit?.[0]?.ServiceLine || [])
-                  .flatMap((line) => (line.Codes || []).map((code) => {
-                    const groupCode = `${code.AdjustmentGroup || ''}`.trim();
-                    const reasonCode = `${code.AdjustmentReason || ''}`.trim();
-                    const description = `${code.Description || ''}`.trim();
-                    if (!groupCode && !reasonCode && !description) return '';
-                    if (shouldExcludeAdjustment(groupCode, reasonCode)) return '';
-                    const prefix = groupCode ? `${groupCode} ${reasonCode}`.trim() : reasonCode;
-                    return description ? `${prefix} - ${description}`.trim() : prefix;
-                  }))
-                  .filter(Boolean);
+              {isPend277 ? (
+                <>
+                  <p className={`mt-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    This requires <span className="text-[#FF5C5C] font-semibold">REVIEW</span> for:
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm">
+                    <li className={isDark ? 'text-gray-200' : 'text-gray-700'}>
+                      - 277 pending from Payer
+                    </li>
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <p className={`mt-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    This was <span className="text-[#FF5C5C] font-semibold">DENIED</span> for:
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm">
+                    {(() => {
+                      const reasons = (currentClaim?.Remit?.[0]?.ServiceLine || [])
+                        .flatMap((line) => (line.Codes || []).map((code) => {
+                          const groupCode = `${code.AdjustmentGroup || ''}`.trim();
+                          const reasonCode = `${code.AdjustmentReason || ''}`.trim();
+                          const description = `${code.Description || ''}`.trim();
+                          if (!groupCode && !reasonCode && !description) return '';
+                          if (shouldExcludeAdjustment(groupCode, reasonCode)) return '';
+                          const prefix = groupCode ? `${groupCode} ${reasonCode}`.trim() : reasonCode;
+                          return description ? `${prefix} - ${description}`.trim() : prefix;
+                        }))
+                        .filter(Boolean);
 
-                if (reasons.length === 0) {
-                  return (
-                    <li className={isDark ? 'text-gray-400' : 'text-gray-500'}>- No adjustment details available.</li>
-                  );
-                }
+                      if (reasons.length === 0) {
+                        return (
+                          <li className={isDark ? 'text-gray-400' : 'text-gray-500'}>- No adjustment details available.</li>
+                        );
+                      }
 
-                return reasons.slice(0, 6).map((reason, idx) => (
-                  <li key={`insight-${idx}`} className={isDark ? 'text-gray-200' : 'text-gray-700'}>
-                    - {reason}
-                  </li>
-                ));
-              })()}
-              </ul>
+                      return reasons.slice(0, 6).map((reason, idx) => (
+                        <li key={`insight-${idx}`} className={isDark ? 'text-gray-200' : 'text-gray-700'}>
+                          - {reason}
+                        </li>
+                      ));
+                    })()}
+                  </ul>
+                </>
+              )}
               {isPend277 && showOptumDetails && (
                 <div className={`mt-6 rounded-2xl border p-5 ${isDark ? 'border-[#30354a] bg-[#1b1f29]' : 'border-gray-200 bg-slate-50'}`}>
                   <div className="flex flex-wrap items-center justify-between gap-3">

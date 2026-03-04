@@ -145,6 +145,27 @@ def get_rebound_claim():
         id = ret["Claim"]["Data"]["id"]
         id_835 = ret["Claim"]["Data"]["id_835"]
 
+        # Pend 277/835 flags for claim-status detail context.
+        pend277 = False
+        pend835 = False
+        try:
+            if id_835 is None or id_835 == 0:
+                q = """
+                    SELECT 1
+                    FROM optum_claim_status_request_encounter e
+                    JOIN optum_claim_status_response r ON r.request_id = e.request_id
+                    WHERE e.trading_partner_claim_number = %s
+                    LIMIT 1
+                """
+                cursor.execute(q, (ret["Claim"]["Data"]["ClaimNo"],))
+                has_optum = cursor.fetchone() is not None
+                pend277 = not has_optum
+                pend835 = has_optum
+        except Exception as pend_error:
+            logger.warning(f"Failed to compute pend flags: {pend_error}")
+        ret["Claim"]["Data"]["Pend277"] = pend277
+        ret["Claim"]["Data"]["Pend835"] = pend835
+
         claim_no_splits = ret["Claim"]["Data"]["ClaimNo"].split('-')
 
         q = f"""
