@@ -49,6 +49,12 @@ const ReboundDetailView = () => {
   const [optumResponse, setOptumResponse] = useState(null);
   const [optumLoading, setOptumLoading] = useState(false);
   const [optumError, setOptumError] = useState("");
+  const [showOptumDetails, setShowOptumDetails] = useState(false);
+  const [eligibilityRequest, setEligibilityRequest] = useState(null);
+  const [eligibilityResponse, setEligibilityResponse] = useState(null);
+  const [eligibilityLoading, setEligibilityLoading] = useState(false);
+  const [eligibilityError, setEligibilityError] = useState("");
+  const [showEligibilityDetails, setShowEligibilityDetails] = useState(false);
   const [triageActions, setTriageActions] = useState([]);
   const [triageOtherText, setTriageOtherText] = useState("");
   const [triageNotes, setTriageNotes] = useState("");
@@ -588,6 +594,23 @@ const ReboundDetailView = () => {
     };
   };
 
+  const buildEligibilityRequestFromClaim = (claim) => {
+    const data = claim?.Claim?.Data || {};
+    const patientName = `${data.PatientName || data.Patient || ""}`.trim();
+    const [lastName, firstName] = patientName.includes(",")
+      ? patientName.split(",").map((part) => part.trim())
+      : ["", patientName.split(" ").slice(0, -1).join(" ")];
+    return {
+      payerId: data.PayerID || "",
+      payerName: data.PayerName || "",
+      memberId: data.PatientID || "",
+      patientFirstName: firstName || "",
+      patientLastName: lastName || patientName.split(" ").slice(-1)[0] || "",
+      patientDob: data.PatientDOB || "",
+      serviceDate: data.ServiceDate || "",
+    };
+  };
+
   const updateProviderField = (field, value) => {
     setOptumRequest((prev) => {
       const next = { ...(prev || {}), providers: [...((prev && prev.providers) || [])] };
@@ -711,6 +734,10 @@ const ReboundDetailView = () => {
 
   const onDetailShowStatusChange = (value) => {
     setDetailShowStatus(value);
+    if (value !== 4) {
+      setShowOptumDetails(false);
+      setShowEligibilityDetails(false);
+    }
   }
 
 
@@ -747,6 +774,9 @@ const ReboundDetailView = () => {
     setOptumRequest(buildOptumRequestFromClaim(currentClaim));
     setOptumResponse(null);
     setOptumError("");
+    setEligibilityRequest(buildEligibilityRequestFromClaim(currentClaim));
+    setEligibilityResponse(null);
+    setEligibilityError("");
   }, [currentClaim]);
 
   const handleRequest277 = () => {
@@ -771,6 +801,30 @@ const ReboundDetailView = () => {
       })
       .finally(() => {
         setOptumLoading(false);
+      });
+  };
+
+  const handleRequest270 = () => {
+    if (!eligibilityRequest) return;
+    setEligibilityLoading(true);
+    setEligibilityError("");
+    axios
+      .post(`${apiUrl}/eligibility/270`, eligibilityRequest)
+      .then((res) => {
+        setEligibilityResponse(res?.data || {});
+        toast.success("270 response received.");
+      })
+      .catch((err) => {
+        const detail =
+          err?.response?.data?.detail ||
+          err?.response?.data?.error ||
+          err?.message ||
+          "Failed to request 270.";
+        setEligibilityError(detail);
+        toast.error("Failed to request 270.");
+      })
+      .finally(() => {
+        setEligibilityLoading(false);
       });
   };
 
@@ -807,7 +861,15 @@ const ReboundDetailView = () => {
   const isPend277 = pend277Flag || [routeTitle, appTitle, routeCategory, claimCategory]
     .filter(Boolean)
     .some((value) => normalizePend(value).includes("pend277"));
-  const showOptumDetails = false;
+  const isEligibility = [routeTitle, appTitle, routeCategory, claimCategory]
+    .filter(Boolean)
+    .some((value) => normalizePend(value).includes("eligibility"));
+  const showRaw277 = () => {
+    setShowOptumDetails(true);
+  };
+  const showRaw270 = () => {
+    setShowEligibilityDetails(true);
+  };
 
   return (
     <>
@@ -999,176 +1061,6 @@ const ReboundDetailView = () => {
                     })()}
                   </ul>
                 </>
-              )}
-              {isPend277 && showOptumDetails && (
-                <div className={`mt-6 rounded-2xl border p-5 ${isDark ? 'border-[#30354a] bg-[#1b1f29]' : 'border-gray-200 bg-slate-50'}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className={`text-sm font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Claim Status (277)</p>
-                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Send a 276 request to Optum and view the 277 response.</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleRequest277}
-                      disabled={optumLoading}
-                      className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${optumLoading
-                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                        : isDark
-                          ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
-                          : 'bg-slate-900 text-white hover:bg-slate-800'
-                        }`}
-                    >
-                      {optumLoading ? 'Requesting...' : 'Request 277'}
-                    </button>
-                  </div>
-                  {optumRequest && (
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Control Number</span>
-                        <input
-                          value={optumRequest.controlNumber || ""}
-                          onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), controlNumber: e.target.value }))}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Trading Partner Service ID</span>
-                        <input
-                          value={optumRequest.tradingPartnerServiceId || ""}
-                          onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), tradingPartnerServiceId: e.target.value }))}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1 md:col-span-2">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Trading Partner Name</span>
-                        <input
-                          value={optumRequest.tradingPartnerName || ""}
-                          onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), tradingPartnerName: e.target.value }))}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Provider Type</span>
-                        <input
-                          value={(optumRequest.providers && optumRequest.providers[0]?.providerType) || ""}
-                          onChange={(e) => updateProviderField("providerType", e.target.value)}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Provider NPI</span>
-                        <input
-                          value={(optumRequest.providers && optumRequest.providers[0]?.npi) || ""}
-                          onChange={(e) => updateProviderField("npi", e.target.value)}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Provider Tax ID</span>
-                        <input
-                          value={(optumRequest.providers && optumRequest.providers[0]?.taxId) || ""}
-                          onChange={(e) => updateProviderField("taxId", e.target.value)}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Subscriber Member ID</span>
-                        <input
-                          value={optumRequest.subscriber?.memberId || ""}
-                          onChange={(e) => updateSubscriberField("memberId", e.target.value)}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Subscriber First Name</span>
-                        <input
-                          value={optumRequest.subscriber?.firstName || ""}
-                          onChange={(e) => updateSubscriberField("firstName", e.target.value)}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Subscriber Last Name</span>
-                        <input
-                          value={optumRequest.subscriber?.lastName || ""}
-                          onChange={(e) => updateSubscriberField("lastName", e.target.value)}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Date of Service</span>
-                        <input
-                          type="date"
-                          value={optumRequest.encounter?.beginningDateOfService || ""}
-                          onChange={(e) => {
-                            updateEncounterField("beginningDateOfService", e.target.value);
-                            updateEncounterField("endDateOfService", e.target.value);
-                            updateServiceLineField("serviceLineDate", e.target.value);
-                          }}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Submitted Amount</span>
-                        <input
-                          value={optumRequest.encounter?.submittedAmount || ""}
-                          onChange={(e) => updateEncounterField("submittedAmount", e.target.value)}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Procedure Code</span>
-                        <input
-                          value={optumRequest.serviceLineInformation?.procedureCode || ""}
-                          onChange={(e) => updateServiceLineField("procedureCode", e.target.value)}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Procedure Modifiers (comma-separated)</span>
-                        <input
-                          value={(optumRequest.serviceLineInformation?.procedureModifiers || []).join(", ")}
-                          onChange={(e) => updateServiceLineField(
-                            "procedureModifiers",
-                            e.target.value.split(",").map((item) => item.trim()).filter(Boolean)
-                          )}
-                          className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      </label>
-                    </div>
-                  )}
-                  {optumError && (
-                    <div className={`mt-4 text-sm ${isDark ? 'text-red-300' : 'text-red-600'}`}>
-                      {optumError}
-                    </div>
-                  )}
-                  {optumResponse && (
-                    <div className={`mt-4 rounded-xl border p-4 ${isDark ? 'border-[#30354a] bg-[#10131b]' : 'border-gray-200 bg-white'}`}>
-                      <p className={`text-sm font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Latest 277 Response</p>
-                      <div className={`mt-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Control Number: {optumResponse.controlNumber || "N/A"}
-                      </div>
-                      {(optumResponse.claims || []).map((claim, idx) => {
-                        const status = claim?.claimStatus || {};
-                        const statusValue = status.statusCategoryCodeValue || status.statusCodeValue || "";
-                        const insightLabel = getInsightStatusLabel(statusValue);
-                        return (
-                          <div key={`optum-claim-${idx}`} className="mt-3 text-sm">
-                            <div className={`font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                              Status: {insightLabel || "Pending"}
-                            </div>
-                            <div className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                              {statusValue || "No status description available."}
-                            </div>
-                            <div className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                              Effective Date: {status.effectiveDate || "N/A"}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
               )}
             </div>
           )}
@@ -1754,24 +1646,65 @@ const ReboundDetailView = () => {
               <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-lg font-semibold">Triage</p>
-                  {isPend277 && (
-                    <button
-                      type="button"
-                      onClick={handleRequest277}
-                      disabled={optumLoading || !optumRequest}
-                      className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${optumLoading || !optumRequest
-                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                        : isDark
+                  <div className="flex flex-wrap items-center gap-2">
+                    {isEligibility && (
+                      <button
+                        type="button"
+                        onClick={showRaw270}
+                        className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${isDark
                           ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
                           : 'bg-slate-900 text-white hover:bg-slate-800'
-                        }`}
-                    >
-                      {optumLoading ? 'Requesting 277...' : 'Request 277'}
-                    </button>
-                  )}
+                          }`}
+                      >
+                        Raw 270
+                      </button>
+                    )}
+                    {isPend277 && (
+                      <button
+                        type="button"
+                        onClick={showRaw277}
+                        className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${isDark
+                          ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                          : 'bg-slate-900 text-white hover:bg-slate-800'
+                          }`}
+                      >
+                        Raw 277
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className={`p-4 border-t ${isDark ? 'bg-[#27282D] border-[#CDCDCD]' : 'bg-gray-50 border-gray-200'}`}>
                   <div className="flex flex-col gap-3">
+                    {isEligibility && (
+                      <button
+                        type="button"
+                        onClick={handleRequest270}
+                        disabled={eligibilityLoading || !eligibilityRequest}
+                        className={`self-start px-4 py-2 rounded-xl text-xs font-semibold transition ${eligibilityLoading || !eligibilityRequest
+                          ? 'bg-gray-400 text-white cursor-not-allowed'
+                          : isDark
+                            ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                            : 'bg-slate-900 text-white hover:bg-slate-800'
+                          }`}
+                      >
+                        {eligibilityLoading ? 'Requesting 270...' : 'Request 270'}
+                      </button>
+                    )}
+                    {isPend277 && (
+                      <button
+                        type="button"
+                        onClick={handleRequest277}
+                        disabled={optumLoading || !optumRequest}
+                        className={`self-start px-4 py-2 rounded-xl text-xs font-semibold transition ${optumLoading || !optumRequest
+                          ? 'bg-gray-400 text-white cursor-not-allowed'
+                          : isDark
+                            ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                            : 'bg-slate-900 text-white hover:bg-slate-800'
+                          }`}
+                      >
+                        {optumLoading ? 'Requesting 277...' : 'Request 277'}
+                      </button>
+                    )}
                     {triageActions.map((action, idx) => {
                       const isOther =
                         action.allowFreeText ||
@@ -2068,7 +2001,8 @@ const ReboundDetailView = () => {
                             currentClaim.Claim.Data.Category == '' ? 'Delinquent' : (
                               currentClaim.Claim.Data.Category == 'Patient Resp' ? 'Patient Resp' : 'Recoverable'
                             )
-                          )}
+          )}
+
                         </p>
                       </div>
                     </div>
@@ -2669,6 +2603,310 @@ const ReboundDetailView = () => {
           </>}
 
         </div>
+      )}
+      {isPend277 && (
+        <Modal
+          open={showOptumDetails}
+          onClose={() => setShowOptumDetails(false)}
+          aria-labelledby="raw-277-title"
+        >
+          <Box className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] w-[90vw] max-w-5xl overflow-y-auto rounded-2xl p-6 ${isDark ? 'bg-[#1b1f29] text-gray-100' : 'bg-white text-gray-900'}`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p id="raw-277-title" className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Claim Status (277)</p>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Send a 276 request to Optum and view the 277 response.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleRequest277}
+                  disabled={optumLoading}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${optumLoading
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : isDark
+                      ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                      : 'bg-slate-900 text-white hover:bg-slate-800'
+                    }`}
+                >
+                  {optumLoading ? 'Requesting...' : 'Request 277'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowOptumDetails(false)}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${isDark
+                    ? 'bg-[#2b2f36] text-gray-200 hover:bg-[#3a3f4a]'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            {optumRequest && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Control Number</span>
+                  <input
+                    value={optumRequest.controlNumber || ""}
+                    onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), controlNumber: e.target.value }))}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Trading Partner Service ID</span>
+                  <input
+                    value={optumRequest.tradingPartnerServiceId || ""}
+                    onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), tradingPartnerServiceId: e.target.value }))}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1 md:col-span-2">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Trading Partner Name</span>
+                  <input
+                    value={optumRequest.tradingPartnerName || ""}
+                    onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), tradingPartnerName: e.target.value }))}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Provider Type</span>
+                  <input
+                    value={(optumRequest.providers && optumRequest.providers[0]?.providerType) || ""}
+                    onChange={(e) => updateProviderField("providerType", e.target.value)}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Provider NPI</span>
+                  <input
+                    value={(optumRequest.providers && optumRequest.providers[0]?.npi) || ""}
+                    onChange={(e) => updateProviderField("npi", e.target.value)}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Provider Tax ID</span>
+                  <input
+                    value={(optumRequest.providers && optumRequest.providers[0]?.taxId) || ""}
+                    onChange={(e) => updateProviderField("taxId", e.target.value)}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Subscriber Member ID</span>
+                  <input
+                    value={optumRequest.subscriber?.memberId || ""}
+                    onChange={(e) => updateSubscriberField("memberId", e.target.value)}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Subscriber First Name</span>
+                  <input
+                    value={optumRequest.subscriber?.firstName || ""}
+                    onChange={(e) => updateSubscriberField("firstName", e.target.value)}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Subscriber Last Name</span>
+                  <input
+                    value={optumRequest.subscriber?.lastName || ""}
+                    onChange={(e) => updateSubscriberField("lastName", e.target.value)}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Date of Service</span>
+                  <input
+                    type="date"
+                    value={optumRequest.encounter?.beginningDateOfService || ""}
+                    onChange={(e) => {
+                      updateEncounterField("beginningDateOfService", e.target.value);
+                      updateEncounterField("endDateOfService", e.target.value);
+                      updateServiceLineField("serviceLineDate", e.target.value);
+                    }}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Submitted Amount</span>
+                  <input
+                    value={optumRequest.encounter?.submittedAmount || ""}
+                    onChange={(e) => updateEncounterField("submittedAmount", e.target.value)}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Procedure Code</span>
+                  <input
+                    value={optumRequest.serviceLineInformation?.procedureCode || ""}
+                    onChange={(e) => updateServiceLineField("procedureCode", e.target.value)}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Procedure Modifiers (comma-separated)</span>
+                  <input
+                    value={(optumRequest.serviceLineInformation?.procedureModifiers || []).join(", ")}
+                    onChange={(e) => updateServiceLineField(
+                      "procedureModifiers",
+                      e.target.value.split(",").map((item) => item.trim()).filter(Boolean)
+                    )}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+              </div>
+            )}
+            {optumError && (
+              <div className={`mt-4 text-sm ${isDark ? 'text-red-300' : 'text-red-600'}`}>
+                {optumError}
+              </div>
+            )}
+            {optumResponse && (
+              <div className={`mt-4 rounded-xl border p-4 ${isDark ? 'border-[#30354a] bg-[#10131b]' : 'border-gray-200 bg-white'}`}>
+                <p className={`text-sm font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Latest 277 Response</p>
+                <div className={`mt-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Control Number: {optumResponse.controlNumber || "N/A"}
+                </div>
+                {(optumResponse.claims || []).map((claim, idx) => {
+                  const status = claim?.claimStatus || {};
+                  const statusValue = status.statusCategoryCodeValue || status.statusCodeValue || "";
+                  const insightLabel = getInsightStatusLabel(statusValue);
+                  return (
+                    <div key={`optum-claim-${idx}`} className="mt-3 text-sm">
+                      <div className={`font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Status: {insightLabel || "Pending"}
+                      </div>
+                      <div className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {statusValue || "No status description available."}
+                      </div>
+                      <div className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Effective Date: {status.effectiveDate || "N/A"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Box>
+        </Modal>
+      )}
+      {isEligibility && (
+        <Modal
+          open={showEligibilityDetails}
+          onClose={() => setShowEligibilityDetails(false)}
+          aria-labelledby="raw-270-title"
+        >
+          <Box className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] w-[90vw] max-w-4xl overflow-y-auto rounded-2xl p-6 ${isDark ? 'bg-[#1b1f29] text-gray-100' : 'bg-white text-gray-900'}`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p id="raw-270-title" className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Eligibility (270)</p>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Send a 270 request and view the 271 response.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleRequest270}
+                  disabled={eligibilityLoading || !eligibilityRequest}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${eligibilityLoading || !eligibilityRequest
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : isDark
+                      ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                      : 'bg-slate-900 text-white hover:bg-slate-800'
+                    }`}
+                >
+                  {eligibilityLoading ? 'Requesting 270...' : 'Request 270'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEligibilityDetails(false)}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${isDark
+                    ? 'bg-[#2b2f36] text-gray-200 hover:bg-[#3a3f4a]'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            {eligibilityRequest && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Payer ID</span>
+                  <input
+                    value={eligibilityRequest.payerId || ""}
+                    onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), payerId: e.target.value }))}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Payer Name</span>
+                  <input
+                    value={eligibilityRequest.payerName || ""}
+                    onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), payerName: e.target.value }))}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Member ID</span>
+                  <input
+                    value={eligibilityRequest.memberId || ""}
+                    onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), memberId: e.target.value }))}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Patient DOB</span>
+                  <input
+                    type="date"
+                    value={normalizeDateInput(eligibilityRequest.patientDob || "")}
+                    onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), patientDob: e.target.value }))}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Patient First Name</span>
+                  <input
+                    value={eligibilityRequest.patientFirstName || ""}
+                    onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), patientFirstName: e.target.value }))}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Patient Last Name</span>
+                  <input
+                    value={eligibilityRequest.patientLastName || ""}
+                    onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), patientLastName: e.target.value }))}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+                <label className="flex flex-col gap-1 md:col-span-2">
+                  <span className={`text-xs font-semibold ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Date of Service</span>
+                  <input
+                    type="date"
+                    value={normalizeDateInput(eligibilityRequest.serviceDate || "")}
+                    onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), serviceDate: e.target.value }))}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </label>
+              </div>
+            )}
+            {eligibilityError && (
+              <div className={`mt-4 text-sm ${isDark ? 'text-red-300' : 'text-red-600'}`}>
+                {eligibilityError}
+              </div>
+            )}
+            {eligibilityResponse && (
+              <div className={`mt-4 rounded-xl border p-4 text-xs ${isDark ? 'border-[#30354a] bg-[#10131b] text-gray-200' : 'border-gray-200 bg-white text-gray-700'}`}>
+                <div className="font-semibold mb-2">Latest 271 Response</div>
+                <pre className="whitespace-pre-wrap break-words">
+                  {JSON.stringify(eligibilityResponse, null, 2)}
+                </pre>
+              </div>
+            )}
+          </Box>
+        </Modal>
       )}
       <Modal
         open={showAppealModal}
