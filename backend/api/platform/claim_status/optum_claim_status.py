@@ -68,6 +68,14 @@ def _split_name(value):
     return {"first": " ".join(parts[:-1]), "last": parts[-1]}
 
 
+def _date_to_str(value):
+    if not value:
+        return None
+    if isinstance(value, (datetime, date)):
+        return value.strftime("%Y-%m-%d")
+    return str(value)
+
+
 def _normalize_units(value):
     if value is None or value == "":
         return ""
@@ -150,6 +158,7 @@ def _build_optum_request_from_claim(cursor, claim_no):
     service = cursor.fetchone() or {}
 
     service_date = _parse_date(service.get("ServiceDate") or claim.get("ServiceDate"))
+    service_date_str = _date_to_str(service_date)
     modifiers_raw = service.get("Modifier")
     modifiers = []
     if isinstance(modifiers_raw, str):
@@ -173,8 +182,8 @@ def _build_optum_request_from_claim(cursor, claim_no):
             "lastName": patient_last,
         },
         "encounter": {
-            "beginningDateOfService": service_date,
-            "endDateOfService": service_date,
+            "beginningDateOfService": service_date_str,
+            "endDateOfService": service_date_str,
             "trackingNumber": claim.get("ClaimNo") or "",
             "tradingPartnerClaimNumber": claim.get("ClaimNo") or "",
             "patientAccountNumber": claim.get("ClaimNo") or "",
@@ -186,12 +195,12 @@ def _build_optum_request_from_claim(cursor, claim_no):
             "procedureModifiers": modifiers,
             "lineItemChargeAmount": service.get("Charges") or "",
             "unitsOfServiceCount": _normalize_units(service.get("Units") or ""),
-            "serviceLineDate": service_date,
+            "serviceLineDate": service_date_str,
         },
     }
 
     if patient_dob:
-        payload["subscriber"]["dateOfBirth"] = patient_dob
+        payload["subscriber"]["dateOfBirth"] = _date_to_str(patient_dob)
 
     return payload
 
