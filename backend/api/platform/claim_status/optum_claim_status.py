@@ -4,6 +4,7 @@ import os
 import json
 import requests
 from datetime import datetime, date
+from decimal import Decimal
 from db import get_connection, close_connection
 
 
@@ -74,6 +75,14 @@ def _date_to_str(value):
     if isinstance(value, (datetime, date)):
         return value.strftime("%Y-%m-%d")
     return str(value)
+
+
+def _to_primitive(value):
+    if value is None:
+        return ""
+    if isinstance(value, Decimal):
+        return float(value)
+    return value
 
 
 def _normalize_units(value):
@@ -187,13 +196,13 @@ def _build_optum_request_from_claim(cursor, claim_no):
             "trackingNumber": claim.get("ClaimNo") or "",
             "tradingPartnerClaimNumber": claim.get("ClaimNo") or "",
             "patientAccountNumber": claim.get("ClaimNo") or "",
-            "submittedAmount": claim.get("Amount") or "",
+            "submittedAmount": _to_primitive(claim.get("Amount")),
         },
         "serviceLineInformation": {
             "productOrServiceIDQualifier": "HC",
             "procedureCode": service.get("Code") or "",
             "procedureModifiers": modifiers,
-            "lineItemChargeAmount": service.get("Charges") or "",
+            "lineItemChargeAmount": _to_primitive(service.get("Charges")),
             "unitsOfServiceCount": _normalize_units(service.get("Units") or ""),
             "serviceLineDate": service_date_str,
         },
