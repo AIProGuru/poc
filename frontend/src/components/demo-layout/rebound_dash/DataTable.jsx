@@ -302,37 +302,9 @@ const DataTable = (props) => {
     let failed = 0;
     const errors = [];
     try {
-      const payloads = [];
-      for (const claimNo of selectedIds) {
-        try {
-          const claimRes = await axios.get(
-            `${apiUrl}/get_claim?id=${encodeURIComponent(claimNo)}&username=${encodeURIComponent(username || "")}`
-          );
-          payloads.push(buildOptumRequestFromClaim(claimRes.data));
-          done += 1;
-          setBulk277Progress({ total: selectedIds.length, done, failed });
-        } catch (err) {
-          failed += 1;
-          errors.push({
-            claimNo,
-            detail:
-              err?.response?.data?.detail ||
-              err?.response?.data?.error ||
-              err?.message ||
-              "Failed to load claim data",
-          });
-          done += 1;
-          setBulk277Progress({ total: selectedIds.length, done, failed });
-        }
-      }
-
-      if (payloads.length === 0) {
-        setBulk277Errors(errors);
-        setBulk277Loading(false);
-        toast.error("No valid claims to request.");
-        return;
-      }
-
+      const payloads = selectedIds.map((claimNo) => ({ claimId: claimNo }));
+      done = selectedIds.length;
+      setBulk277Progress({ total: selectedIds.length, done, failed });
       const bulkRes = await axios.post(`${apiUrl}/claim-status/optum/bulk`, {
         requests: payloads,
       });

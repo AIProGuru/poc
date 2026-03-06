@@ -55,6 +55,147 @@ def _map_insight_status(status_value):
     return "Pending"
 
 
+def _split_name(value):
+    raw = f"{value or ''}".strip()
+    if not raw:
+        return {"first": "", "last": ""}
+    if "," in raw:
+        last, first = [part.strip() for part in raw.split(",", 1)]
+        return {"first": first or "", "last": last or ""}
+    parts = [part for part in raw.split(" ") if part]
+    if len(parts) == 1:
+        return {"first": parts[0], "last": ""}
+    return {"first": " ".join(parts[:-1]), "last": parts[-1]}
+
+
+def _normalize_units(value):
+    if value is None or value == "":
+        return ""
+    try:
+        num = float(value)
+        if num.is_integer():
+            return str(int(num))
+        return str(num)
+    except (TypeError, ValueError):
+        return ""
+
+
+def _build_optum_request_from_claim(cursor, claim_no):
+    cursor.execute(
+        """
+        SELECT
+          ClaimNo,
+          ServiceDate,
+          Amount,
+          PayerName,
+          PayerID,
+          PatientID,
+          PatientName,
+          COALESCE(BillProvName, '') AS BillProvName,
+          ProvNPI,
+          ProvTaxID
+        FROM CUSTOM_ALL
+        WHERE ClaimNo = %s
+        LIMIT 1
+        """,
+        (claim_no,),
+    )
+    claim = cursor.fetchone() or {}
+    if not claim:
+        raise ValueError("Claim not found.")
+
+    patient_name = claim.get("PatientName") or ""
+    patient_first = ""
+    patient_last = ""
+    patient_dob = None
+
+    if not patient_name:
+        cursor.execute(
+            """
+            SELECT PatientFirst, PatientLast, PatientDOB
+            FROM CUSTOM_EDI_Claims_CLONE
+            WHERE ClaimNo = %s
+            LIMIT 1
+            """,
+            (claim_no,),
+        )
+        edi_row = cursor.fetchone() or {}
+        patient_first = (edi_row.get("PatientFirst") or "").strip()
+        patient_last = (edi_row.get("PatientLast") or "").strip()
+        patient_dob = _parse_date(edi_row.get("PatientDOB"))
+    else:
+        name_parts = _split_name(patient_name)
+        patient_first = name_parts["first"]
+        patient_last = name_parts["last"]
+
+    if not patient_first or not patient_last:
+        raise ValueError("Missing patient first/last name for Optum request.")
+
+    cursor.execute(
+        """
+        SELECT
+          CUSTOM_SERVICE.Code,
+          CUSTOM_SERVICE.Modifier,
+          CUSTOM_SERVICE.ServiceDate,
+          CUSTOM_SERVICE.Charges,
+          CUSTOM_SERVICE.Units
+        FROM CUSTOM_SERVICE
+        LEFT JOIN cpt ON cpt.Code = CUSTOM_SERVICE.Code
+        WHERE ClaimNo = %s AND (cpt.Type = 'CPT' OR cpt.Type = 'HCPCS')
+        ORDER BY CUSTOM_SERVICE.ServiceDate
+        LIMIT 1
+        """,
+        (claim_no,),
+    )
+    service = cursor.fetchone() or {}
+
+    service_date = _parse_date(service.get("ServiceDate") or claim.get("ServiceDate"))
+    modifiers_raw = service.get("Modifier")
+    modifiers = []
+    if isinstance(modifiers_raw, str):
+        modifiers = [m.strip() for m in modifiers_raw.split(",") if m.strip()][:3]
+
+    payload = {
+        "controlNumber": f"{claim.get('ClaimNo')}-{int(datetime.utcnow().timestamp())}",
+        "tradingPartnerName": claim.get("PayerName") or "",
+        "tradingPartnerServiceId": claim.get("PayerID") or "",
+        "providers": [
+            {
+                "providerType": "Billing",
+                "organizationName": claim.get("BillProvName") or "",
+                "npi": claim.get("ProvNPI") or "",
+                "taxId": claim.get("ProvTaxID") or "",
+            }
+        ],
+        "subscriber": {
+            "memberId": claim.get("PatientID") or "",
+            "firstName": patient_first,
+            "lastName": patient_last,
+        },
+        "encounter": {
+            "beginningDateOfService": service_date,
+            "endDateOfService": service_date,
+            "trackingNumber": claim.get("ClaimNo") or "",
+            "tradingPartnerClaimNumber": claim.get("ClaimNo") or "",
+            "patientAccountNumber": claim.get("ClaimNo") or "",
+            "submittedAmount": claim.get("Amount") or "",
+        },
+        "serviceLineInformation": {
+            "productOrServiceIDQualifier": "HC",
+            "procedureCode": service.get("Code") or "",
+            "procedureModifiers": modifiers,
+            "lineItemChargeAmount": service.get("Charges") or "",
+            "unitsOfServiceCount": _normalize_units(service.get("Units") or ""),
+            "serviceLineDate": service_date,
+        },
+    }
+
+    if patient_dob:
+        payload["subscriber"]["dateOfBirth"] = patient_dob
+
+    return payload
+
+
 def _get_optum_token():
     client_id = os.getenv("OPTUM_CLIENT_ID")
     client_secret = os.getenv("OPTUM_CLIENT_SECRET")
@@ -588,6 +729,10 @@ def claim_status_optum():
     try:
         conn, cursor, _ = get_connection(request.base_url)
 
+        claim_id = payload.get("claimId") or payload.get("claimNo")
+        if claim_id:
+            payload = _build_optum_request_from_claim(cursor, claim_id)
+
         request_id = _insert_request(cursor, payload)
         response = _call_optum_claim_status(payload)
         response_id = _insert_response(cursor, request_id, response)
@@ -605,6 +750,11 @@ def claim_status_optum():
         if conn:
             conn.rollback()
         return jsonify({"error": "Optum API error", "detail": str(exc)}), 502
+    except ValueError as exc:
+        logger.error("Claim status validation error: %s", exc)
+        if conn:
+            conn.rollback()
+        return jsonify({"error": "Invalid claim data", "detail": str(exc)}), 400
     except Exception as exc:
         logger.error("Claim status error: %s", exc)
         if conn:
@@ -640,6 +790,10 @@ def claim_status_optum_bulk():
 
         for idx, req_payload in enumerate(requests_payload):
             try:
+                claim_id = req_payload.get("claimId") or req_payload.get("claimNo")
+                if claim_id:
+                    req_payload = _build_optum_request_from_claim(cursor, claim_id)
+
                 request_id = _insert_request(cursor, req_payload)
                 response = _call_optum_claim_status(req_payload)
                 response_id = _insert_response(cursor, request_id, response)

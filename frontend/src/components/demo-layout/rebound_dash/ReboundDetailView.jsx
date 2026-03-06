@@ -784,7 +784,13 @@ const ReboundDetailView = () => {
     setOptumLoading(true);
     setOptumError("");
     axios
-      .post(`${apiUrl}/claim-status/optum`, optumRequest)
+      .post(`${apiUrl}/claim-status/optum`, {
+        claimId:
+          currentClaim?.Claim?.Data?.ClaimNo ||
+          currentClaim?.ClaimNo ||
+          optumRequest?.encounter?.tradingPartnerClaimNumber ||
+          "",
+      })
       .then((res) => {
         const payload = res?.data?.response || res?.data || {};
         setOptumResponse(payload);
