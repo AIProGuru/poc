@@ -253,7 +253,11 @@ def _call_optum_claim_status(payload):
         "Accept": "application/json",
     }
     resp = requests.post(api_url, json=payload, headers=headers, timeout=60)
-    resp.raise_for_status()
+    try:
+        resp.raise_for_status()
+    except requests.HTTPError:
+        logger.error("Optum API error response body: %s", resp.text)
+        raise
     return resp.json() if resp.content else {}
 
 
@@ -765,9 +769,16 @@ def claim_status_optum():
         ), 200
     except requests.HTTPError as exc:
         logger.error("Optum API error: %s", exc)
+        if getattr(exc, "response", None) is not None:
+            try:
+                detail = exc.response.json()
+            except ValueError:
+                detail = exc.response.text
+        else:
+            detail = str(exc)
         if conn:
             conn.rollback()
-        return jsonify({"error": "Optum API error", "detail": str(exc)}), 502
+        return jsonify({"error": "Optum API error", "detail": detail}), 502
     except ValueError as exc:
         logger.error("Claim status validation error: %s", exc)
         if conn:
