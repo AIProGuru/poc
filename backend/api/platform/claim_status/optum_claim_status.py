@@ -76,6 +76,17 @@ def _date_to_str(value):
         return value.strftime("%Y-%m-%d")
     return str(value)
 
+def _date_to_yyyymmdd(value):
+    if not value:
+        return None
+    if isinstance(value, (datetime, date)):
+        return value.strftime("%Y%m%d")
+    text = str(value)
+    try:
+        return datetime.strptime(text, "%Y-%m-%d").strftime("%Y%m%d")
+    except ValueError:
+        return text.replace("-", "")
+
 
 def _to_primitive(value):
     if value is None:
@@ -87,14 +98,14 @@ def _to_primitive(value):
 
 def _normalize_units(value):
     if value is None or value == "":
-        return ""
+        return "1"
     try:
         num = float(value)
         if num.is_integer():
             return str(int(num))
         return str(num)
     except (TypeError, ValueError):
-        return ""
+        return "1"
 
 
 def _build_optum_request_from_claim(cursor, claim_no):
@@ -167,19 +178,20 @@ def _build_optum_request_from_claim(cursor, claim_no):
     service = cursor.fetchone() or {}
 
     service_date = _parse_date(service.get("ServiceDate") or claim.get("ServiceDate"))
-    service_date_str = _date_to_str(service_date)
+    service_date_str = _date_to_yyyymmdd(service_date)
     modifiers_raw = service.get("Modifier")
     modifiers = []
     if isinstance(modifiers_raw, str):
         modifiers = [m.strip() for m in modifiers_raw.split(",") if m.strip()][:3]
 
+    control_number = f"{int(datetime.utcnow().timestamp()) % 1000000000:09d}"
     payload = {
-        "controlNumber": f"{claim.get('ClaimNo')}-{int(datetime.utcnow().timestamp())}",
+        "controlNumber": control_number,
         "tradingPartnerName": claim.get("PayerName") or "",
         "tradingPartnerServiceId": claim.get("PayerID") or "",
         "providers": [
             {
-                "providerType": "Billing",
+                "providerType": "BillingProvider",
                 "organizationName": claim.get("BillProvName") or "",
                 "npi": claim.get("ProvNPI") or "",
                 "taxId": claim.get("ProvTaxID") or "",
@@ -209,7 +221,7 @@ def _build_optum_request_from_claim(cursor, claim_no):
     }
 
     if patient_dob:
-        payload["subscriber"]["dateOfBirth"] = _date_to_str(patient_dob)
+        payload["subscriber"]["dateOfBirth"] = _date_to_yyyymmdd(patient_dob)
 
     return payload
 
