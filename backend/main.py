@@ -87,6 +87,7 @@ from api.platform.claim_status.optum_claim_status import (
 )
 
 from api.platform.demo.demo import demo_api
+from api.client_management import client_management_bp
 
 def create_app():
     app = Flask(__name__)
@@ -186,6 +187,7 @@ def create_app():
     app.register_blueprint(rebound_api_claim_status)
     app.register_blueprint(medevolve_api_claim_status)
     app.register_blueprint(pilotcustomer_api_claim_status)
+    app.register_blueprint(client_management_bp)
 
 
 

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import './ClientManagement.css';
@@ -55,6 +56,9 @@ const ClientManagement = () => {
   };
   const [isClientTypeOpen, setIsClientTypeOpen] = useState(false);
   const [logoUploadingId, setLogoUploadingId] = useState(null);
+  const clientTypeButtonRef = useRef(null);
+  const clientTypeMenuRef = useRef(null);
+  const [clientTypeMenuStyle, setClientTypeMenuStyle] = useState(null);
   const CLIENT_TYPE_OPTIONS = [
     'Service Provider',
     'Hospital System',
@@ -88,6 +92,7 @@ const ClientManagement = () => {
     }));
     setIsClientTypeOpen(false);
   };
+
 
   const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -305,6 +310,46 @@ const ClientManagement = () => {
         : bValue.localeCompare(aValue);
     });
 
+  useLayoutEffect(() => {
+    if (!isClientTypeOpen) {
+      setClientTypeMenuStyle(null);
+      return;
+    }
+    const updateMenuPosition = () => {
+      const button = clientTypeButtonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setClientTypeMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 6)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        maxWidth: '320px',
+        minWidth: '220px'
+      });
+    };
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isClientTypeOpen, filteredClients.length]);
+
+  useEffect(() => {
+    if (!isClientTypeOpen) return;
+    const handleOutsideClick = (event) => {
+      const button = clientTypeButtonRef.current;
+      const menu = clientTypeMenuRef.current;
+      const target = event.target;
+      if (button?.contains(target) || menu?.contains(target)) return;
+      setIsClientTypeOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isClientTypeOpen]);
+
   // Animation variants for framer-motion
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -423,14 +468,11 @@ const ClientManagement = () => {
               </div>
             </td>
             <td className="px-3 py-3">
-              <div
-                className="relative"
-                tabIndex={0}
-                onBlur={() => setIsClientTypeOpen(false)}
-              >
+              <div className="relative" tabIndex={0}>
                 <button
                   type="button"
                   onClick={() => setIsClientTypeOpen((prev) => !prev)}
+                  ref={clientTypeButtonRef}
                   className={`${rowInputClass} flex items-center justify-between`}
                 >
                   <span className={newClient.clientType ? '' : 'text-gray-400'}>
@@ -440,8 +482,12 @@ const ClientManagement = () => {
                     <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
-                {isClientTypeOpen && (
-                  <div className={`absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border ${isDark ? 'bg-[#1f232a] border-[#ffffff20]' : 'bg-white border-slate-200'} shadow-lg`}>
+                {isClientTypeOpen && clientTypeMenuStyle && createPortal(
+                  <div
+                    ref={clientTypeMenuRef}
+                    style={clientTypeMenuStyle}
+                    className={`z-50 rounded-md border ${isDark ? 'bg-[#1f232a] border-[#ffffff20]' : 'bg-white border-slate-200'} shadow-lg`}
+                  >
                     {CLIENT_TYPE_OPTIONS.map((option) => (
                       <button
                         key={option}
@@ -453,7 +499,8 @@ const ClientManagement = () => {
                         {option}
                       </button>
                     ))}
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </td>

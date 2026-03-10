@@ -65,6 +65,7 @@ const DataTable = (props) => {
   const pos = useSelector((state) => state.app.pos)
   const extra = useSelector((state) => state.app.extraFilter);
   const selectedClaimIds = useSelector((state) => state.app.selectedClaimIds);
+  const navPendCounts = useSelector((state) => state.app.navPendCounts);
   const accessExtra = useMemo(
     () => buildAccessExtra(extra, access, role),
     [extra, access, role]
@@ -199,6 +200,22 @@ const DataTable = (props) => {
     const balance = charges - adjustment45 - allowed;
     return { count, charges, allowed, payerPayments, patientResp, adjustment45, balance };
   }, [tableData]);
+  const isClaimStatusView = (appTitle || "").toLowerCase().startsWith("claim status");
+  const hasSummaryFilters = Boolean(
+    keyword || startDate || endDate || code || remark || procedure || pos
+  );
+  const pend277Count = Number(navPendCounts?.pend277 || 0);
+  const pend835Count = Number(navPendCounts?.pend835 || 0);
+  const claimStatusBootstrapCount = useMemo(() => {
+    const title = (appTitle || "").toLowerCase();
+    if (title.includes("pend 277")) return pend277Count;
+    if (title.includes("pend 835")) return pend835Count;
+    return pend277Count + pend835Count;
+  }, [appTitle, pend277Count, pend835Count]);
+  const summaryCount =
+    isClaimStatusView && !hasSummaryFilters
+      ? claimStatusBootstrapCount
+      : summaryTotals?.count ?? summary.count;
   // Mirror the facility value used in the Claim (837) detail view.
   const getFacility = (row) => {
     const claimData =
@@ -609,7 +626,7 @@ const DataTable = (props) => {
       >
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           {[
-            { label: 'Count', value: samplifyInteger(summaryTotals?.count ?? summary.count) },
+            { label: 'Count', value: samplifyInteger(summaryCount) },
             { label: 'Charges', value: formatCurrencyRounded(summaryTotals?.charges ?? summary.charges) },
             { label: 'Exp Reimbursement', value: formatCurrencyRounded(0) },
             { label: 'Allowed Amt', value: formatCurrencyRounded(summaryTotals?.allowed ?? summary.allowed) },
