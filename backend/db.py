@@ -20,7 +20,7 @@ config = {
     "user": os.getenv('RDS_USER', 'root'),
     "password": os.getenv('RDS_PASSWORD', ''),
     "port": int(os.getenv('RDS_PORT', '3306')),
-    "pool_size": 32,
+    "pool_size": 5,
     "connection_timeout": 20,
     "buffered": True
 }
@@ -45,20 +45,24 @@ def create_connection_pool(database_name, pool_name):
         logger.error(f"Failed to create connection pool: {e}")
         raise
 
-# Initialize connection pools with error handling
+# Initialize connection pools lazily to avoid exhausting DB connections on startup.
 rebound_conn = None
 medevolve_conn = None
 
-try:
-    # rebound_conn = create_connection_pool("r2", "rebound_pool")
-    medevolve_conn = create_connection_pool("medevolve", "medevolve_pool")
-    logger.info("Connection pools created successfully")
-except Exception as e:
-    logger.warning(f"Failed to initialize connection pools: {e}")
-    logger.warning("Running in development mode without database connection")
-    # Don't raise the exception, allow the app to start without database
+def _ensure_pools():
+    global rebound_conn, medevolve_conn
+    if medevolve_conn is not None:
+        return
+    try:
+        # rebound_conn = create_connection_pool("r2", "rebound_pool")
+        medevolve_conn = create_connection_pool("medevolve", "medevolve_pool")
+        logger.info("Connection pools created successfully")
+    except Exception as e:
+        logger.warning(f"Failed to initialize connection pools: {e}")
+        logger.warning("Running in development mode without database connection")
 
 def get_connection(base_url):
+    _ensure_pools()
     if medevolve_conn is None:
         raise Exception("Database connection not available. Please check your MySQL configuration.")
     

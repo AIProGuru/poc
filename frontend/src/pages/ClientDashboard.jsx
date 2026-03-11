@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getRoleLabel, normalizeRole } from '../utils/roles';
 import { motion } from 'framer-motion';
@@ -75,6 +76,79 @@ const ClientDashboard = () => {
       fetchUsersForClient();
     }
   }, [client, activeTab]);
+
+  useLayoutEffect(() => {
+    if (!isNewTenantTypeOpen) {
+      setNewTenantTypeMenuStyle(null);
+      return;
+    }
+    const updateMenuPosition = () => {
+      const button = newTenantTypeButtonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setNewTenantTypeMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 6)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        maxWidth: '320px',
+        minWidth: '220px'
+      });
+    };
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isNewTenantTypeOpen]);
+
+  useLayoutEffect(() => {
+    if (!isNewTenantStatusOpen) {
+      setNewTenantStatusMenuStyle(null);
+      return;
+    }
+    const updateMenuPosition = () => {
+      const button = newTenantStatusButtonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setNewTenantStatusMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 6)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        maxWidth: '320px',
+        minWidth: '180px'
+      });
+    };
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isNewTenantStatusOpen]);
+
+  useEffect(() => {
+    if (!isNewTenantTypeOpen && !isNewTenantStatusOpen) return;
+    const handleOutsideClick = (event) => {
+      const target = event.target;
+      if (
+        newTenantTypeButtonRef.current?.contains(target) ||
+        newTenantTypeMenuRef.current?.contains(target) ||
+        newTenantStatusButtonRef.current?.contains(target) ||
+        newTenantStatusMenuRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setIsNewTenantTypeOpen(false);
+      setIsNewTenantStatusOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isNewTenantTypeOpen, isNewTenantStatusOpen]);
 
   // Move all user-related functions to the main component level
   const handleUserSearch = (e) => {
@@ -155,6 +229,14 @@ const ClientDashboard = () => {
     email: '',
     status: 'Active'
   });
+  const [isNewTenantTypeOpen, setIsNewTenantTypeOpen] = useState(false);
+  const [isNewTenantStatusOpen, setIsNewTenantStatusOpen] = useState(false);
+  const newTenantTypeButtonRef = useRef(null);
+  const newTenantTypeMenuRef = useRef(null);
+  const newTenantStatusButtonRef = useRef(null);
+  const newTenantStatusMenuRef = useRef(null);
+  const [newTenantTypeMenuStyle, setNewTenantTypeMenuStyle] = useState(null);
+  const [newTenantStatusMenuStyle, setNewTenantStatusMenuStyle] = useState(null);
 
 
 useEffect(() => {
@@ -193,6 +275,7 @@ const TenantDetailsModal = () => {
   const [facilityTab, setFacilityTab] = useState('facilities');
   const [isEditingTenant, setIsEditingTenant] = useState(tenantDetailsStartInEdit);
   const [isEditTenantTypeOpen, setIsEditTenantTypeOpen] = useState(false);
+  const [isEditTenantStatusOpen, setIsEditTenantStatusOpen] = useState(false);
   const [editTenantForm, setEditTenantForm] = useState({
     name: '',
     clientType: '',
@@ -221,6 +304,12 @@ const TenantDetailsModal = () => {
     email: ''
   });
   const prevTenantIdRef = useRef(null);
+  const editTenantTypeButtonRef = useRef(null);
+  const editTenantTypeMenuRef = useRef(null);
+  const editTenantStatusButtonRef = useRef(null);
+  const editTenantStatusMenuRef = useRef(null);
+  const [editTenantTypeMenuStyle, setEditTenantTypeMenuStyle] = useState(null);
+  const [editTenantStatusMenuStyle, setEditTenantStatusMenuStyle] = useState(null);
   const editInputClass = "w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]";
   const rowInputClass = editInputClass;
   const STATUS_OPTIONS = ['Active', 'Pending', 'On Hold'];
@@ -253,6 +342,79 @@ const TenantDetailsModal = () => {
 
     setIsEditingTenant(tenantDetailsStartInEdit);
   }, [selectedTenant?.id, tenantDetailsStartInEdit]);
+
+  useLayoutEffect(() => {
+    if (!isEditTenantTypeOpen) {
+      setEditTenantTypeMenuStyle(null);
+      return;
+    }
+    const updateMenuPosition = () => {
+      const button = editTenantTypeButtonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setEditTenantTypeMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 6)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        maxWidth: '320px',
+        minWidth: '220px'
+      });
+    };
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isEditTenantTypeOpen]);
+
+  useLayoutEffect(() => {
+    if (!isEditTenantStatusOpen) {
+      setEditTenantStatusMenuStyle(null);
+      return;
+    }
+    const updateMenuPosition = () => {
+      const button = editTenantStatusButtonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setEditTenantStatusMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 6)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        maxWidth: '320px',
+        minWidth: '180px'
+      });
+    };
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isEditTenantStatusOpen]);
+
+  useEffect(() => {
+    if (!isEditTenantTypeOpen && !isEditTenantStatusOpen) return;
+    const handleOutsideClick = (event) => {
+      const target = event.target;
+      if (
+        editTenantTypeButtonRef.current?.contains(target) ||
+        editTenantTypeMenuRef.current?.contains(target) ||
+        editTenantStatusButtonRef.current?.contains(target) ||
+        editTenantStatusMenuRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setIsEditTenantTypeOpen(false);
+      setIsEditTenantStatusOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isEditTenantTypeOpen, isEditTenantStatusOpen]);
 
   useEffect(() => {
     if (!selectedTenant) return;
@@ -694,14 +856,11 @@ const TenantDetailsModal = () => {
               <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
                 {isEditingTenant ? (
                   <>
-                    <div
-                      className="relative"
-                      tabIndex={0}
-                      onBlur={() => setIsEditTenantTypeOpen(false)}
-                    >
+                    <div className="relative" tabIndex={0}>
                       <button
                         type="button"
                         onClick={() => setIsEditTenantTypeOpen((prev) => !prev)}
+                        ref={editTenantTypeButtonRef}
                         className="w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20] flex items-center justify-between"
                       >
                         <span className={editTenantForm.clientType ? '' : 'text-gray-400'}>
@@ -711,8 +870,12 @@ const TenantDetailsModal = () => {
                           <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
-                      {isEditTenantTypeOpen && (
-                        <div className="absolute z-20 mt-1 min-w-[220px] max-w-[320px] rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg">
+                      {isEditTenantTypeOpen && editTenantTypeMenuStyle && createPortal(
+                        <div
+                          ref={editTenantTypeMenuRef}
+                          style={editTenantTypeMenuStyle}
+                          className="z-50 rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg"
+                        >
                           {CLIENT_TYPE_OPTIONS.map((option) => (
                             <button
                               key={option}
@@ -727,22 +890,50 @@ const TenantDetailsModal = () => {
                               {option}
                             </button>
                           ))}
-                        </div>
+                        </div>,
+                        document.body
                       )}
                     </div>
                     <div className="mt-3 flex items-center gap-3">
                       <span className="text-gray-400 text-sm">Status:</span>
-                      <select
-                        value={editTenantForm.status}
-                        onChange={(e) => setEditTenantForm(prev => ({ ...prev, status: e.target.value }))}
-                        className="p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#1f232a] text-white border-[#ffffff20] hover:border-gray-400"
-                      >
-                        {STATUS_OPTIONS.map((status) => (
-                          <option key={status} value={status} className="bg-[#1f232a] text-white">
-                            {status}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative" tabIndex={0}>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditTenantStatusOpen((prev) => !prev)}
+                          ref={editTenantStatusButtonRef}
+                          className="p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20] flex items-center justify-between min-w-[160px]"
+                        >
+                          <span className={editTenantForm.status ? '' : 'text-gray-400'}>
+                            {editTenantForm.status || 'Select status'}
+                          </span>
+                          <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                            <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                        {isEditTenantStatusOpen && editTenantStatusMenuStyle && createPortal(
+                          <div
+                            ref={editTenantStatusMenuRef}
+                            style={editTenantStatusMenuStyle}
+                            className="z-50 rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg"
+                          >
+                            {STATUS_OPTIONS.map((status) => (
+                              <button
+                                key={status}
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  setEditTenantForm(prev => ({ ...prev, status }));
+                                  setIsEditTenantStatusOpen(false);
+                                }}
+                                className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
+                              >
+                                {status}
+                              </button>
+                            ))}
+                          </div>,
+                          document.body
+                        )}
+                      </div>
                     </div>
                   </>
                 ) : (
@@ -1134,34 +1325,84 @@ const TenantDetailsModal = () => {
                           />
                         </td>
                         <td className="px-3 py-3">
-                          <select
-                            name="clientType"
-                            value={newTenant.clientType}
-                            onChange={(e) => setNewTenant(prev => ({ ...prev, clientType: e.target.value }))}
-                            className={`${rowInputClass} bg-[#1f232a] text-white`}
-                            required
-                          >
-                            <option value="" className="bg-[#1f232a] text-white">Select tenant type</option>
-                            {CLIENT_TYPE_OPTIONS.map((option) => (
-                              <option key={option} value={option} className="bg-[#1f232a] text-white">
-                                {option}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative" tabIndex={0}>
+                            <button
+                              type="button"
+                              onClick={() => setIsNewTenantTypeOpen((prev) => !prev)}
+                              ref={newTenantTypeButtonRef}
+                              className={`${rowInputClass} flex items-center justify-between`}
+                            >
+                              <span className={newTenant.clientType ? '' : 'text-gray-400'}>
+                                {newTenant.clientType || 'Select tenant type'}
+                              </span>
+                              <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                                <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                            {isNewTenantTypeOpen && newTenantTypeMenuStyle && createPortal(
+                              <div
+                                ref={newTenantTypeMenuRef}
+                                style={newTenantTypeMenuStyle}
+                                className="z-50 rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg"
+                              >
+                                {CLIENT_TYPE_OPTIONS.map((option) => (
+                                  <button
+                                    key={option}
+                                    type="button"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => {
+                                      setNewTenant(prev => ({ ...prev, clientType: option }));
+                                      setIsNewTenantTypeOpen(false);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
+                                  >
+                                    {option}
+                                  </button>
+                                ))}
+                              </div>,
+                              document.body
+                            )}
+                          </div>
                         </td>
                         <td className="px-3 py-3">
-                          <select
-                            name="status"
-                            value={newTenant.status}
-                            onChange={(e) => setNewTenant(prev => ({ ...prev, status: e.target.value }))}
-                            className={`${rowInputClass} bg-[#1f232a] text-white`}
-                          >
-                            {['Active', 'Pending', 'On Hold'].map((option) => (
-                              <option key={option} value={option} className="bg-[#1f232a] text-white">
-                                {option}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative" tabIndex={0}>
+                            <button
+                              type="button"
+                              onClick={() => setIsNewTenantStatusOpen((prev) => !prev)}
+                              ref={newTenantStatusButtonRef}
+                              className={`${rowInputClass} flex items-center justify-between`}
+                            >
+                              <span className={newTenant.status ? '' : 'text-gray-400'}>
+                                {newTenant.status || 'Select status'}
+                              </span>
+                              <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none">
+                                <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                            {isNewTenantStatusOpen && newTenantStatusMenuStyle && createPortal(
+                              <div
+                                ref={newTenantStatusMenuRef}
+                                style={newTenantStatusMenuStyle}
+                                className="z-50 rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg"
+                              >
+                                {['Active', 'Pending', 'On Hold'].map((option) => (
+                                  <button
+                                    key={option}
+                                    type="button"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => {
+                                      setNewTenant(prev => ({ ...prev, status: option }));
+                                      setIsNewTenantStatusOpen(false);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-sm whitespace-normal text-gray-200 hover:bg-[#2a2f38]"
+                                  >
+                                    {option}
+                                  </button>
+                                ))}
+                              </div>,
+                              document.body
+                            )}
+                          </div>
                         </td>
                         <td className="px-3 py-3">
                           <input

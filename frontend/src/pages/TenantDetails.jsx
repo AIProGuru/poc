@@ -1,5 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { SERVER_URL } from '../utils/config';
@@ -35,6 +36,7 @@ const TenantDetails = () => {
   const [facilityTab, setFacilityTab] = useState('facilities');
   const [isEditingTenant, setIsEditingTenant] = useState(Boolean(location.state?.edit));
   const [isEditTenantTypeOpen, setIsEditTenantTypeOpen] = useState(false);
+  const [isEditTenantStatusOpen, setIsEditTenantStatusOpen] = useState(false);
   const [editTenantForm, setEditTenantForm] = useState({
     name: '',
     clientType: '',
@@ -62,6 +64,12 @@ const TenantDetails = () => {
     contact: '',
     email: ''
   });
+  const editTenantTypeButtonRef = useRef(null);
+  const editTenantTypeMenuRef = useRef(null);
+  const editTenantStatusButtonRef = useRef(null);
+  const editTenantStatusMenuRef = useRef(null);
+  const [editTenantTypeMenuStyle, setEditTenantTypeMenuStyle] = useState(null);
+  const [editTenantStatusMenuStyle, setEditTenantStatusMenuStyle] = useState(null);
 
   const editInputClass = "w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]";
   const rowInputClass = editInputClass;
@@ -129,6 +137,79 @@ const TenantDetails = () => {
       email: ''
     });
   }, [selectedTenant?.id, location.state?.edit]);
+
+  useLayoutEffect(() => {
+    if (!isEditTenantTypeOpen) {
+      setEditTenantTypeMenuStyle(null);
+      return;
+    }
+    const updateMenuPosition = () => {
+      const button = editTenantTypeButtonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setEditTenantTypeMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 6)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        maxWidth: '320px',
+        minWidth: '220px'
+      });
+    };
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isEditTenantTypeOpen]);
+
+  useLayoutEffect(() => {
+    if (!isEditTenantStatusOpen) {
+      setEditTenantStatusMenuStyle(null);
+      return;
+    }
+    const updateMenuPosition = () => {
+      const button = editTenantStatusButtonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setEditTenantStatusMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 6)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        maxWidth: '320px',
+        minWidth: '180px'
+      });
+    };
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isEditTenantStatusOpen]);
+
+  useEffect(() => {
+    if (!isEditTenantTypeOpen && !isEditTenantStatusOpen) return;
+    const handleOutsideClick = (event) => {
+      const target = event.target;
+      if (
+        editTenantTypeButtonRef.current?.contains(target) ||
+        editTenantTypeMenuRef.current?.contains(target) ||
+        editTenantStatusButtonRef.current?.contains(target) ||
+        editTenantStatusMenuRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setIsEditTenantTypeOpen(false);
+      setIsEditTenantStatusOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isEditTenantTypeOpen, isEditTenantStatusOpen]);
 
   const handleTenantUpdate = async (formData) => {
     if (!selectedTenant || !client) return false;
@@ -522,14 +603,11 @@ const TenantDetails = () => {
                   <div>
                     <p className="text-gray-400">Tenant Type</p>
                     {isEditingTenant ? (
-                      <div
-                        className="relative mt-1"
-                        tabIndex={0}
-                        onBlur={() => setIsEditTenantTypeOpen(false)}
-                      >
+                      <div className="relative mt-1" tabIndex={0}>
                         <button
                           type="button"
                           onClick={() => setIsEditTenantTypeOpen((prev) => !prev)}
+                          ref={editTenantTypeButtonRef}
                           className={`${editInputClass} flex items-center justify-between`}
                         >
                           <span className={editTenantForm.clientType ? '' : 'text-gray-400'}>
@@ -539,8 +617,12 @@ const TenantDetails = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                           </svg>
                         </button>
-                        {isEditTenantTypeOpen && (
-                          <div className="absolute z-10 w-full mt-1 bg-[#1f232a] border border-[#ffffff20] rounded-md shadow-lg">
+                        {isEditTenantTypeOpen && editTenantTypeMenuStyle && createPortal(
+                          <div
+                            ref={editTenantTypeMenuRef}
+                            style={editTenantTypeMenuStyle}
+                            className="z-50 rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg"
+                          >
                             {CLIENT_TYPE_OPTIONS.map((option) => (
                               <button
                                 key={option}
@@ -555,7 +637,8 @@ const TenantDetails = () => {
                                 {option}
                               </button>
                             ))}
-                          </div>
+                          </div>,
+                          document.body
                         )}
                       </div>
                     ) : (
@@ -565,17 +648,44 @@ const TenantDetails = () => {
                   <div>
                     <p className="text-gray-400">Status</p>
                     {isEditingTenant ? (
-                      <select
-                        value={editTenantForm.status}
-                        onChange={(e) => setEditTenantForm(prev => ({ ...prev, status: e.target.value }))}
-                        className={`${editInputClass} bg-[#1f232a] text-white`}
-                      >
-                        {STATUS_OPTIONS.map((option) => (
-                          <option key={option} value={option} className="bg-[#1f232a] text-white">
-                            {option}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative mt-1" tabIndex={0}>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditTenantStatusOpen((prev) => !prev)}
+                          ref={editTenantStatusButtonRef}
+                          className={`${editInputClass} flex items-center justify-between`}
+                        >
+                          <span className={editTenantForm.status ? '' : 'text-gray-400'}>
+                            {editTenantForm.status || 'Select status'}
+                          </span>
+                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {isEditTenantStatusOpen && editTenantStatusMenuStyle && createPortal(
+                          <div
+                            ref={editTenantStatusMenuRef}
+                            style={editTenantStatusMenuStyle}
+                            className="z-50 rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg"
+                          >
+                            {STATUS_OPTIONS.map((option) => (
+                              <button
+                                key={option}
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  setEditTenantForm(prev => ({ ...prev, status: option }));
+                                  setIsEditTenantStatusOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2a2f38]"
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>,
+                          document.body
+                        )}
+                      </div>
                     ) : (
                       <div className="flex items-center mt-1">
                         <span className={`w-2 h-2 rounded-full mr-2 ${
