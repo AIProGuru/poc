@@ -77,79 +77,6 @@ const ClientDashboard = () => {
     }
   }, [client, activeTab]);
 
-  useLayoutEffect(() => {
-    if (!isNewTenantTypeOpen) {
-      setNewTenantTypeMenuStyle(null);
-      return;
-    }
-    const updateMenuPosition = () => {
-      const button = newTenantTypeButtonRef.current;
-      if (!button) return;
-      const rect = button.getBoundingClientRect();
-      setNewTenantTypeMenuStyle({
-        position: 'fixed',
-        top: `${Math.round(rect.bottom + 6)}px`,
-        left: `${Math.round(rect.left)}px`,
-        width: `${Math.round(rect.width)}px`,
-        maxWidth: '320px',
-        minWidth: '220px'
-      });
-    };
-    updateMenuPosition();
-    window.addEventListener('resize', updateMenuPosition);
-    window.addEventListener('scroll', updateMenuPosition, true);
-    return () => {
-      window.removeEventListener('resize', updateMenuPosition);
-      window.removeEventListener('scroll', updateMenuPosition, true);
-    };
-  }, [isNewTenantTypeOpen]);
-
-  useLayoutEffect(() => {
-    if (!isNewTenantStatusOpen) {
-      setNewTenantStatusMenuStyle(null);
-      return;
-    }
-    const updateMenuPosition = () => {
-      const button = newTenantStatusButtonRef.current;
-      if (!button) return;
-      const rect = button.getBoundingClientRect();
-      setNewTenantStatusMenuStyle({
-        position: 'fixed',
-        top: `${Math.round(rect.bottom + 6)}px`,
-        left: `${Math.round(rect.left)}px`,
-        width: `${Math.round(rect.width)}px`,
-        maxWidth: '320px',
-        minWidth: '180px'
-      });
-    };
-    updateMenuPosition();
-    window.addEventListener('resize', updateMenuPosition);
-    window.addEventListener('scroll', updateMenuPosition, true);
-    return () => {
-      window.removeEventListener('resize', updateMenuPosition);
-      window.removeEventListener('scroll', updateMenuPosition, true);
-    };
-  }, [isNewTenantStatusOpen]);
-
-  useEffect(() => {
-    if (!isNewTenantTypeOpen && !isNewTenantStatusOpen) return;
-    const handleOutsideClick = (event) => {
-      const target = event.target;
-      if (
-        newTenantTypeButtonRef.current?.contains(target) ||
-        newTenantTypeMenuRef.current?.contains(target) ||
-        newTenantStatusButtonRef.current?.contains(target) ||
-        newTenantStatusMenuRef.current?.contains(target)
-      ) {
-        return;
-      }
-      setIsNewTenantTypeOpen(false);
-      setIsNewTenantStatusOpen(false);
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [isNewTenantTypeOpen, isNewTenantStatusOpen]);
-
   // Move all user-related functions to the main component level
   const handleUserSearch = (e) => {
     setSearchKeyword(e.target.value);
@@ -238,8 +165,80 @@ const ClientDashboard = () => {
   const [newTenantTypeMenuStyle, setNewTenantTypeMenuStyle] = useState(null);
   const [newTenantStatusMenuStyle, setNewTenantStatusMenuStyle] = useState(null);
 
+  useLayoutEffect(() => {
+    if (!isNewTenantTypeOpen) {
+      setNewTenantTypeMenuStyle(null);
+      return;
+    }
+    const updateMenuPosition = () => {
+      const button = newTenantTypeButtonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setNewTenantTypeMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 6)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        maxWidth: '320px',
+        minWidth: '220px'
+      });
+    };
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isNewTenantTypeOpen]);
 
-useEffect(() => {
+  useLayoutEffect(() => {
+    if (!isNewTenantStatusOpen) {
+      setNewTenantStatusMenuStyle(null);
+      return;
+    }
+    const updateMenuPosition = () => {
+      const button = newTenantStatusButtonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setNewTenantStatusMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 6)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        maxWidth: '320px',
+        minWidth: '180px'
+      });
+    };
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isNewTenantStatusOpen]);
+
+  useEffect(() => {
+    if (!isNewTenantTypeOpen && !isNewTenantStatusOpen) return;
+    const handleOutsideClick = (event) => {
+      const target = event.target;
+      if (
+        newTenantTypeButtonRef.current?.contains(target) ||
+        newTenantTypeMenuRef.current?.contains(target) ||
+        newTenantStatusButtonRef.current?.contains(target) ||
+        newTenantStatusMenuRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setIsNewTenantTypeOpen(false);
+      setIsNewTenantStatusOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isNewTenantTypeOpen, isNewTenantStatusOpen]);
+
+  useEffect(() => {
   // Set loading state
   setLoading(true);
   
@@ -258,7 +257,7 @@ useEffect(() => {
 
   // Call the function
   fetchClientData();
-}, [clientId, navigate]);
+  }, [clientId, navigate]);
 
 // Add this function to handle opening tenant details
 const openTenantDetails = (tenant, options = {}) => {
