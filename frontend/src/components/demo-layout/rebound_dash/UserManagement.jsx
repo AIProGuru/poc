@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
@@ -103,6 +103,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   const pageSizes = [5, 10, 20, 25];
   const [totalUsers, setTotalUsers] = useState([]);
   const [users, setUsers] = useState([]);
+  const [clientOptions, setClientOptions] = useState([]);
+  const [clientOptionsLoading, setClientOptionsLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -120,7 +122,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     password: '',
     status: 0,
     access_level: 0,
-    tenant: 'pilotcustomer',
+    tenant: '',
     client: [],
     facility: [],
     clientState: [],
@@ -138,7 +140,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       password: '',
       status: 0,
       access_level: 0,
-      tenant: 'pilotcustomer',
+      tenant: '',
       client: [],
       facility: [],
       clientState: [],
@@ -167,6 +169,78 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       denialCategory: (prev.denialCategory || []).filter((category) => allowed.has(category)),
     }));
   }, [user.client]);
+
+  const sanitizeTenantValue = (raw) => {
+    if (!raw) return "";
+    return String(raw)
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "")
+      .replace(/[^a-z0-9_-]/g, "");
+  };
+
+  const resolvedClientOptions = useMemo(() => {
+    const options = (clientOptions || []).filter(Boolean);
+    return options.length > 0
+      ? options
+      : [
+          { value: "pilotcustomer", label: "Pilot Customer" },
+          { value: "betacustomer", label: "Beta Customer" },
+        ];
+  }, [clientOptions]);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchClientOptions = async () => {
+      setClientOptionsLoading(true);
+      try {
+        const response = await fetch(`${SERVER_URL}/api/clients`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await response.json().catch(() => []);
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to fetch clients");
+        }
+        const options = (Array.isArray(data) ? data : [])
+          .map((client) => {
+            const value = sanitizeTenantValue(
+              client?.basePath || client?.tenant || client?.slug || client?.name
+            );
+            if (!value) return null;
+            return {
+              value,
+              label: client?.name || value,
+            };
+          })
+          .filter(Boolean);
+        if (mounted) {
+          setClientOptions(options);
+        }
+      } catch (error) {
+        console.error("Failed to load client options:", error);
+        if (mounted) {
+          setClientOptions([]);
+        }
+      } finally {
+        if (mounted) {
+          setClientOptionsLoading(false);
+        }
+      }
+    };
+    fetchClientOptions();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!resolvedClientOptions.length) return;
+    const hasMatch = resolvedClientOptions.some((option) => option.value === user.tenant);
+    if (!user.tenant || !hasMatch) {
+      setUser((prev) => ({ ...prev, tenant: resolvedClientOptions[0].value }));
+    }
+  }, [resolvedClientOptions, user.tenant]);
 
   const requireAuthToken = async () => {
     if (!auth.currentUser) {
@@ -1272,13 +1346,17 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                   <select
                     value={user.tenant}
                     onChange={(e) => setUser({ ...user, tenant: e.target.value })}
-                    className={`text-sm rounded-full px-4 py-2.5 border bg-clip-padding focus:outline-none ${theme === 'dark' ?
+                    className={`user-tenant-select ${theme === 'dark' ? 'user-tenant-select--dark' : 'user-tenant-select--light'} text-sm rounded-full px-4 py-2.5 border bg-clip-padding focus:outline-none ${theme === 'dark' ?
                       'bg-[#FFFFFF]/10 text-white border-transparent ring-1 ring-inset ring-[#3B3F46] focus:border-[#6b6c71] focus:border-opacity-50' :
                       'bg-slate-50 text-slate-900 border-slate-200 focus:border-gray-800'
                       }`}
+                    disabled={clientOptionsLoading}
                   >
-                    <option value="pilotcustomer">Pilot Customer</option>
-                    <option value="betacustomer">Beta Customer</option>
+                    {resolvedClientOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

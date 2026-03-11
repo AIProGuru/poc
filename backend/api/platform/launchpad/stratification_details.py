@@ -151,7 +151,7 @@ def get_rebound_data_all():
     cursor = None
     try:
         # Get database connection and cursor
-        conn, cursor, db_name = get_connection(request.base_url)
+        conn, cursor, db_name = get_connection(request)
         
         # Extract parameters from the request JSON
         tab_index = request.json.get("tabIndex")
@@ -276,7 +276,7 @@ def get_rebound_data_summary():
                 request.headers.get("User-Agent", ""),
                 request.get_json(silent=True),
             )
-        conn, cursor, db_name = get_connection(request.base_url)
+        conn, cursor, db_name = get_connection(request)
         tab_index = request.json.get("tabIndex")
         keyword = request.json.get("keyword")
         selectedTags = request.json.get("selectedTags") or []

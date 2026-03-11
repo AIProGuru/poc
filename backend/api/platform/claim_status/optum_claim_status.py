@@ -765,7 +765,7 @@ def claim_status_optum():
     conn = None
     cursor = None
     try:
-        conn, cursor, _ = get_connection(request.base_url)
+        conn, cursor, _ = get_connection(request)
 
         claim_id = payload.get("claimId") or payload.get("claimNo")
         if claim_id:
@@ -832,7 +832,7 @@ def claim_status_optum_bulk():
     failure_count = 0
 
     try:
-        conn, cursor, _ = get_connection(request.base_url)
+        conn, cursor, _ = get_connection(request)
 
         for idx, req_payload in enumerate(requests_payload):
             try:

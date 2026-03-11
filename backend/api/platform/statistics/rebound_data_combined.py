@@ -250,7 +250,7 @@ def get_rebound_data_combined():
     conn = None
     cursor = None
     try:
-        conn, cursor,db_name = get_connection(request.base_url)
+        conn, cursor,db_name = get_connection(request)
         categorized_results = {
             "Recoverable": {},
             "AI_automation": {},

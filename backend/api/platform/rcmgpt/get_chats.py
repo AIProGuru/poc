@@ -82,7 +82,7 @@ def get_chats():
               type: string
     """
     try:
-        conn, cursor,db_name = get_connection(request.base_url)
+        conn, cursor,db_name = get_connection(request)
         email = request.args.get('user_email')
         if not email:
             return({"error": "User email is required"}), 400

@@ -65,7 +65,7 @@ def get_artificial_intelligence():
     conn = None
     cursor = None
     try:
-        conn, cursor, db_name = get_connection(request.base_url)
+        conn, cursor, db_name = get_connection(request)
 
         ret = []
         payload = request.get_json(silent=True) or {}

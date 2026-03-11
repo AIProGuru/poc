@@ -99,7 +99,7 @@ def get_rebound_data_part2_all():
             return jsonify({"error": "Unsupported Media Type: Content-Type must be application/json"}), 415
 
         # Get database connection and cursor
-        conn, cursor, db_name = get_connection(request.base_url)
+        conn, cursor, db_name = get_connection(request)
         
         # Extract parameters from the request JSON
         tab_index = request.json.get("tabIndex")

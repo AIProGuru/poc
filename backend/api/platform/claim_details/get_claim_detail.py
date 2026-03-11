@@ -100,7 +100,7 @@ def get_rebound_claim():
     conn = None
     cursor = None
     try:
-        conn, cursor, db_name = get_connection(request.base_url)
+        conn, cursor, db_name = get_connection(request)
         claim_no = request.args.get("id")
         username = request.args.get("username")
         ret = {"Claim": {}, "Remit": {}, "RelatedEncounters": []}
@@ -520,7 +520,7 @@ def get_triage_actions():
     conn = None
     cursor = None
     try:
-        conn, cursor, db_name = get_connection(request.base_url)
+        conn, cursor, db_name = get_connection(request)
         denial_category = (request.args.get("denial_category") or "").strip()
         if denial_category == "":
             return jsonify([]), 200

@@ -59,7 +59,7 @@ def save_comment():
     conn = None
     cursor = None
     try:
-        conn, cursor, db_name = get_connection(request.base_url)
+        conn, cursor, db_name = get_connection(request)
         payload = request.get_json(force=True) or {}
         claim_no = payload.get("ClaimNo")
         comment = payload.get("comment") or {}

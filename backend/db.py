@@ -63,36 +63,52 @@ def _ensure_pools():
         logger.warning(f"Failed to initialize connection pools: {e}")
         logger.warning("Running in development mode without database connection")
 
-def get_connection(base_url):
+def _extract_tenant_hint(request_or_url):
+    if request_or_url is None:
+        return ""
+    # If a Flask request object is provided, inspect headers + path.
+    if hasattr(request_or_url, "headers") and hasattr(request_or_url, "path"):
+        header_hint = (
+            request_or_url.headers.get("X-Tenant")
+            or request_or_url.headers.get("X-Client")
+            or request_or_url.headers.get("X-Client-Db")
+            or ""
+        )
+        path_hint = request_or_url.path or ""
+        base_hint = getattr(request_or_url, "base_url", "") or ""
+        return " ".join([header_hint, path_hint, base_hint]).lower()
+    return str(request_or_url).lower()
+
+
+def get_connection(request_or_url):
     _ensure_pools()
     if medevolve_conn is None and betacustomer_conn is None:
         raise Exception("Database connection not available. Please check your MySQL configuration.")
-    
-    base_url = base_url or ""
 
-    # if 'rebound' in base_url:
+    hint = _extract_tenant_hint(request_or_url)
+
+    # if 'rebound' in hint:
     #     conn = rebound_conn.get_connection()
     #     cursor = conn.cursor(dictionary=True)
     #     # Set SQL mode to be more permissive with dates
     #     cursor.execute("SET SESSION sql_mode = '';")
     #     return conn, cursor, 'rebound'
-    if 'betacustomer' in base_url:
+    if "betacustomer" in hint:
         if betacustomer_conn is None:
             raise Exception("Database connection not available. Please check your MySQL configuration.")
         conn = betacustomer_conn.get_connection()
         cursor = conn.cursor(dictionary=True)
         # Set SQL mode to be more permissive with dates
         cursor.execute("SET SESSION sql_mode = '';")
-        return conn, cursor, 'betacustomer'
-    if 'medevolve' in base_url or 'pilotcustomer' in base_url:
+        return conn, cursor, "betacustomer"
+    if "medevolve" in hint or "pilotcustomer" in hint:
         conn = medevolve_conn.get_connection()
         cursor = conn.cursor(dictionary=True)
         # Set SQL mode to be more permissive with dates
         cursor.execute("SET SESSION sql_mode = '';")
-        database_name = 'pilotcustomer' if 'pilotcustomer' in base_url else 'medevolve'
+        database_name = "pilotcustomer" if "pilotcustomer" in hint else "medevolve"
         return conn, cursor, database_name
-    else:
-        raise ValueError("Invalid base URL")
+    raise ValueError("Invalid base URL")
 
 def close_connection(cursor, conn):
     if cursor:

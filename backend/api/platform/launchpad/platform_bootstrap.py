@@ -94,7 +94,7 @@ def platform_bootstrap():
         pos = payload.get("pos", "")
         extra = payload.get("extra", {}) or {}
 
-        conn, cursor, db_name = get_connection(request.base_url)
+        conn, cursor, db_name = get_connection(request)
 
         delinquent_label = os.getenv("DELIQUENT") or "Delinquent"
         delinquent_safe = delinquent_label.replace("'", "''")

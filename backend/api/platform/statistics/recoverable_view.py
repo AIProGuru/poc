@@ -47,7 +47,7 @@ def get_statistics():
     conn = None
     cursor = None
     try:
-        conn, cursor,db_name = get_connection(request.base_url)
+        conn, cursor,db_name = get_connection(request)
         q = """
             SELECT 
                 Category AS label, 

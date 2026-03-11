@@ -72,7 +72,7 @@ def get_counts():
     cursor = None
     try:
         # Get database connection and cursor
-        conn, cursor, db_name = get_connection(request.base_url)
+        conn, cursor, db_name = get_connection(request)
         
         # SQL query to fetch counts and amounts
         query = """

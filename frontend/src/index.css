@@ -562,3 +562,46 @@ body{
   transform: translateY(-2px);
   box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
 }
+
+/* User management client selector */
+.user-tenant-select {
+  appearance: none;
+}
+
+.user-tenant-select--dark {
+  color-scheme: dark;
+  background-color: #1f232a;
+  color: #e5e7eb;
+  border-color: #3b3f46;
+}
+
+.user-tenant-select--dark option {
+  background-color: #1f232a;
+  color: #e5e7eb;
+}
+
+.user-tenant-select--dark option:checked,
+.user-tenant-select--dark option:focus,
+.user-tenant-select--dark option:hover {
+  background-color: #4b5563;
+  color: #f9fafb;
+}
+
+.user-tenant-select--light {
+  color-scheme: light;
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #e2e8f0;
+}
+
+.user-tenant-select--light option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.user-tenant-select--light option:checked,
+.user-tenant-select--light option:focus,
+.user-tenant-select--light option:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}

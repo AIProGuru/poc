@@ -49,7 +49,7 @@ def save_appeals():
     conn = None
     cursor = None
     try:
-        conn, cursor,db_name = get_connection(request.base_url)
+        conn, cursor,db_name = get_connection(request)
 
         id = request.json.get("ClaimNo")
         appeals = request.json.get("appeals")

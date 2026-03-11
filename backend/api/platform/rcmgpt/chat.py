@@ -49,7 +49,7 @@ def get_chat():
               type: string
     """
     try:
-        conn, cursor = get_connection(request.base_url)
+        conn, cursor = get_connection(request)
         chat_uuid = request.args.get('chatUuid')
         if not chat_uuid:
             return({"uuid": "Chat UUID is required"}), 400

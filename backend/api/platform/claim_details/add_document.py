@@ -62,7 +62,7 @@ def add_document():
     conn = None
     cursor = None
     try:
-        conn, cursor,db_name = get_connection(request.base_url)
+        conn, cursor,db_name = get_connection(request)
         id = request.json.get("ClaimNo")
         category = request.json.get("Category")
         denial_code = request.json.get("DenialCode")

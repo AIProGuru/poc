@@ -66,7 +66,7 @@ def save_action():
     conn = None
     cursor = None
     try:
-        conn, cursor ,db_name= get_connection(request.base_url)
+        conn, cursor ,db_name= get_connection(request)
         claimno = request.json.get("claimno")
         action_date = request.json.get("action_date")
         action = request.json.get("action")

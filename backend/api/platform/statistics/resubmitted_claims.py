@@ -109,7 +109,7 @@ def get_resubmitted_claims():
     conn = None
     cursor = None
     try:
-        conn, cursor, db_name = get_connection(request.base_url)
+        conn, cursor, db_name = get_connection(request)
         
         # Get pagination parameters
         currentPage = int(request.args.get("currentPage", 1))
