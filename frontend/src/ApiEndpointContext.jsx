@@ -76,6 +76,14 @@ export const ApiEndpointProvider = ({ children }) => {
       } catch (err) {
         // Ignore storage write errors (private mode, etc.)
       }
+    } else if (location.pathname.startsWith('/betacustomer')) {
+      setApiUrl(`${SERVER_URL}/api/v1/betacustomer`)
+      dispatch(setType(3))
+      try {
+        localStorage.setItem(LAST_APP_TYPE_KEY, '3');
+      } catch (err) {
+        // Ignore storage write errors (private mode, etc.)
+      }
     } else if(location.pathname.startsWith('/demo')) {
       // setApiUrl(`${SERVER_URL}/api/v1/demo`)
       setApiUrl(`${SERVER_URL}/api/v1/rebound`)
@@ -87,10 +95,10 @@ export const ApiEndpointProvider = ({ children }) => {
       }
     } else if (location.pathname.startsWith('/management')) {
       let resolvedType = appType;
-      if (resolvedType !== 1 && resolvedType !== 2) {
+      if (resolvedType !== 1 && resolvedType !== 2 && resolvedType !== 3) {
         try {
           const storedType = Number(localStorage.getItem(LAST_APP_TYPE_KEY));
-          if (storedType === 1 || storedType === 2) {
+          if (storedType === 1 || storedType === 2 || storedType === 3) {
             resolvedType = storedType;
             dispatch(setType(storedType));
           }
@@ -100,6 +108,8 @@ export const ApiEndpointProvider = ({ children }) => {
       }
       if (resolvedType === 1) {
         setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
+      } else if (resolvedType === 3) {
+        setApiUrl(`${SERVER_URL}/api/v1/betacustomer`)
       } else {
         setApiUrl(`${SERVER_URL}/api/v1/rebound`)
       }

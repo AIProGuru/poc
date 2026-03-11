@@ -126,7 +126,7 @@ const DetailView = () => {
       claimNo
     }
     console.log(location.pathname)
-    navigate(`${type === 0 ? '/rebound' : '/pilotcustomer'}/detail/${btoa(JSON.stringify(token))}`);
+    navigate(`${type === 0 ? '/rebound' : type === 3 ? '/betacustomer' : '/pilotcustomer'}/detail/${btoa(JSON.stringify(token))}`);
   }
 
 

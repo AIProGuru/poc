@@ -11,10 +11,12 @@ logger = logging.getLogger(__name__)
 rebound_api_recoverable = Blueprint('rebound_api_recoverable', __name__, url_prefix='/api/v1/rebound')
 medevolve_api_recoverable = Blueprint('medevolve_api_recoverable', __name__, url_prefix='/api/v1/medevolve')
 pilotcustomer_api_recoverable = Blueprint('pilotcustomer_api_recoverable', __name__, url_prefix='/api/v1/pilotcustomer')
+betacustomer_api_recoverable = Blueprint('betacustomer_api_recoverable', __name__, url_prefix='/api/v1/betacustomer')
 
 @rebound_api_recoverable.route("/statistics", methods=["GET"])
 @medevolve_api_recoverable.route("/statistics", methods=["GET"])
 @pilotcustomer_api_recoverable.route("/statistics", methods=["GET"])
+@betacustomer_api_recoverable.route("/statistics", methods=["GET"])
 def get_statistics():
     """
     This endpoint fetches statistics data.

@@ -19,9 +19,13 @@ medevolve_api_get_claim.api_name = 'medevolve_api_get_claim'
 pilotcustomer_api_get_claim = Blueprint('pilotcustomer_api_get_claim', __name__, url_prefix='/api/v1/pilotcustomer')
 pilotcustomer_api_get_claim.api_name = 'pilotcustomer_api_get_claim'
 
+betacustomer_api_get_claim = Blueprint('betacustomer_api_get_claim', __name__, url_prefix='/api/v1/betacustomer')
+betacustomer_api_get_claim.api_name = 'betacustomer_api_get_claim'
+
 @rebound_api_get_claim.route("/get_claim", methods=["GET"])
 @medevolve_api_get_claim.route("/get_claim", methods=["GET"])
 @pilotcustomer_api_get_claim.route("/get_claim", methods=["GET"])
+@betacustomer_api_get_claim.route("/get_claim", methods=["GET"])
 def get_rebound_claim():
     """
     This endpoint fetches claim details based on the claim number.
@@ -487,6 +491,7 @@ def get_rebound_claim():
 @rebound_api_get_claim.route("/triage_actions", methods=["GET"])
 @medevolve_api_get_claim.route("/triage_actions", methods=["GET"])
 @pilotcustomer_api_get_claim.route("/triage_actions", methods=["GET"])
+@betacustomer_api_get_claim.route("/triage_actions", methods=["GET"])
 def get_triage_actions():
     """
     This endpoint fetches triage action items for a denial category.

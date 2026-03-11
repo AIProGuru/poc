@@ -24,6 +24,7 @@ addUserSchema = {
         "denialCategory": {"type": "array"},
         "payer": {"type": "array"},
         "value": {"type": "array"},
+        "tenant": {"type": "string"},
     },
     "required": ["email", "password", "firstname", "lastname", "role", "status"],
     "additionalProperties": False,
@@ -178,6 +179,7 @@ def update_user(user_id):
             "value",
             "access_level",
             "user_id",
+            "tenant",
         }
 
         sanitized = {k: v for k, v in payload.items() if k in allowed_fields}

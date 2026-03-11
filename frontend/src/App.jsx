@@ -47,6 +47,19 @@ const showlist = [
   '/testimonial',
 ];
 
+const resolveAppType = (userData = {}) => {
+  const rawType = userData.appType ?? userData.type;
+  if (Number.isFinite(rawType)) {
+    return rawType;
+  }
+  const rawTenant = `${userData.tenant || userData.product || userData.basePath || ""}`.toLowerCase();
+  if (rawTenant === 'rebound') return 0;
+  if (rawTenant === 'pilotcustomer') return 1;
+  if (rawTenant === 'betacustomer') return 3;
+  if (rawTenant === 'demo') return 2;
+  return null;
+};
+
 function App() {
   const location = useLocation();
   const { getSession } = useContext(AccountContext);
@@ -121,7 +134,7 @@ function App() {
         dispatch(setTenant(session.userData.tenant ?? session.userData.product ?? session.userData.basePath ?? ""))
         dispatch(setAppType(session.userData.appType ?? session.userData.type ?? null))
         {
-          const resolvedType = session.userData.appType ?? session.userData.type;
+          const resolvedType = resolveAppType(session.userData);
           if (Number.isFinite(resolvedType)) {
             dispatch(setType(resolvedType));
           }
@@ -182,7 +195,7 @@ function App() {
         dispatch(setTenant(userData.tenant ?? userData.product ?? userData.basePath ?? ""));
         dispatch(setAppType(userData.appType ?? userData.type ?? null));
         {
-          const resolvedType = userData.appType ?? userData.type;
+          const resolvedType = resolveAppType(userData);
           if (Number.isFinite(resolvedType)) {
             dispatch(setType(resolvedType));
           }

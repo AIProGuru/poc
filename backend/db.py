@@ -48,14 +48,16 @@ def create_connection_pool(database_name, pool_name):
 # Initialize connection pools lazily to avoid exhausting DB connections on startup.
 rebound_conn = None
 medevolve_conn = None
+betacustomer_conn = None
 
 def _ensure_pools():
-    global rebound_conn, medevolve_conn
-    if medevolve_conn is not None:
+    global rebound_conn, medevolve_conn, betacustomer_conn
+    if medevolve_conn is not None and betacustomer_conn is not None:
         return
     try:
         # rebound_conn = create_connection_pool("r2", "rebound_pool")
         medevolve_conn = create_connection_pool("medevolve", "medevolve_pool")
+        betacustomer_conn = create_connection_pool("betacustomer", "betacustomer_pool")
         logger.info("Connection pools created successfully")
     except Exception as e:
         logger.warning(f"Failed to initialize connection pools: {e}")
@@ -63,7 +65,7 @@ def _ensure_pools():
 
 def get_connection(base_url):
     _ensure_pools()
-    if medevolve_conn is None:
+    if medevolve_conn is None and betacustomer_conn is None:
         raise Exception("Database connection not available. Please check your MySQL configuration.")
     
     base_url = base_url or ""
@@ -74,6 +76,14 @@ def get_connection(base_url):
     #     # Set SQL mode to be more permissive with dates
     #     cursor.execute("SET SESSION sql_mode = '';")
     #     return conn, cursor, 'rebound'
+    if 'betacustomer' in base_url:
+        if betacustomer_conn is None:
+            raise Exception("Database connection not available. Please check your MySQL configuration.")
+        conn = betacustomer_conn.get_connection()
+        cursor = conn.cursor(dictionary=True)
+        # Set SQL mode to be more permissive with dates
+        cursor.execute("SET SESSION sql_mode = '';")
+        return conn, cursor, 'betacustomer'
     if 'medevolve' in base_url or 'pilotcustomer' in base_url:
         conn = medevolve_conn.get_connection()
         cursor = conn.cursor(dictionary=True)

@@ -120,6 +120,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     password: '',
     status: 0,
     access_level: 0,
+    tenant: 'pilotcustomer',
     client: [],
     facility: [],
     clientState: [],
@@ -137,6 +138,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       password: '',
       status: 0,
       access_level: 0,
+      tenant: 'pilotcustomer',
       client: [],
       facility: [],
       clientState: [],
@@ -420,6 +422,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
         lastname: user.lastname,
         role: user.role,
         status: user.status,
+        tenant: user.tenant,
         client: user.client,
         denialCategory: user.denialCategory,
         payer: user.payer,
@@ -1260,6 +1263,23 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                       OFF
                     </button>
                   </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 items-center">
+                <div className="flex flex-col gap-2">
+                  <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-slate-700'}`}>Client</span>
+                  <select
+                    value={user.tenant}
+                    onChange={(e) => setUser({ ...user, tenant: e.target.value })}
+                    className={`text-sm rounded-full px-4 py-2.5 border bg-clip-padding focus:outline-none ${theme === 'dark' ?
+                      'bg-[#FFFFFF]/10 text-white border-transparent ring-1 ring-inset ring-[#3B3F46] focus:border-[#6b6c71] focus:border-opacity-50' :
+                      'bg-slate-50 text-slate-900 border-slate-200 focus:border-gray-800'
+                      }`}
+                  >
+                    <option value="pilotcustomer">Pilot Customer</option>
+                    <option value="betacustomer">Beta Customer</option>
+                  </select>
                 </div>
               </div>
 

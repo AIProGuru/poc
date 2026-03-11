@@ -68,7 +68,7 @@ const ReboundDash = () => {
     [accessModules, accessDenialCategory, accessPayer, accessValue]
   );
   const appTitle = useSelector((state) => state.app.title);
-  const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/pilotcustomer' : '/demo';
+  const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/pilotcustomer' : appType === 3 ? '/betacustomer' : '/demo';
   const isDenialsRoute = location.pathname.includes('/denials');
   const isUserManagementView = selectedNav === 'user-management';
   // Show AI models only when the app title indicates AI Agents/Automation (set by Sidebar or ArIntel),

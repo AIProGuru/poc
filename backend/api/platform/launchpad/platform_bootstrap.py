@@ -15,11 +15,13 @@ logger = logging.getLogger(__name__)
 rebound_api_bootstrap = Blueprint('rebound_api_bootstrap', __name__, url_prefix='/api/v1/rebound')
 medevolve_api_bootstrap = Blueprint('medevolve_api_bootstrap', __name__, url_prefix='/api/v1/medevolve')
 pilotcustomer_api_bootstrap = Blueprint('pilotcustomer_api_bootstrap', __name__, url_prefix='/api/v1/pilotcustomer')
+betacustomer_api_bootstrap = Blueprint('betacustomer_api_bootstrap', __name__, url_prefix='/api/v1/betacustomer')
 
 
 @rebound_api_bootstrap.route("/platform_bootstrap", methods=["POST", "OPTIONS"])
 @medevolve_api_bootstrap.route("/platform_bootstrap", methods=["POST", "OPTIONS"])
 @pilotcustomer_api_bootstrap.route("/platform_bootstrap", methods=["POST", "OPTIONS"])
+@betacustomer_api_bootstrap.route("/platform_bootstrap", methods=["POST", "OPTIONS"])
 def platform_bootstrap():
     """
     This endpoint fetches all platform bootstrap data in one call.

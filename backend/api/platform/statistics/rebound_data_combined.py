@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 rebound_api_combined = Blueprint('rebound_api_combined', __name__, url_prefix='/api/v1/rebound')
 medevolve_api_combined = Blueprint('medevolve_api_combined', __name__, url_prefix='/api/v1/medevolve')
 pilotcustomer_api_combined = Blueprint('pilotcustomer_api_combined', __name__, url_prefix='/api/v1/pilotcustomer')
+betacustomer_api_combined = Blueprint('betacustomer_api_combined', __name__, url_prefix='/api/v1/betacustomer')
 
 def newGenerateSQL(
     tab_index,
@@ -156,6 +157,7 @@ def newGenerateSQL(
 @rebound_api_combined.route("/stats_part1_combined", methods=["GET"])
 @medevolve_api_combined.route("/stats_part1_combined", methods=["GET"])
 @pilotcustomer_api_combined.route("/stats_part1_combined", methods=["GET"])
+@betacustomer_api_combined.route("/stats_part1_combined", methods=["GET"])
 def get_rebound_data_combined():
     """
     This endpoint fetches combined statistics data for different categories.

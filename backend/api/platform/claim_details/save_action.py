@@ -10,10 +10,12 @@ logger = logging.getLogger(__name__)
 rebound_api_action = Blueprint('rebound_api_action', __name__, url_prefix='/api/v1/rebound')
 medevolve_api_action = Blueprint('medevolve_api_action', __name__, url_prefix='/api/v1/medevolve')
 pilotcustomer_api_action = Blueprint('pilotcustomer_api_action', __name__, url_prefix='/api/v1/pilotcustomer')
+betacustomer_api_action = Blueprint('betacustomer_api_action', __name__, url_prefix='/api/v1/betacustomer')
 
 @rebound_api_action.route("/save_action", methods=["POST"])
 @medevolve_api_action.route("/save_action", methods=["POST"])
 @pilotcustomer_api_action.route("/save_action", methods=["POST"])
+@betacustomer_api_action.route("/save_action", methods=["POST"])
 def save_action():
     """
     This endpoint saves an action to the database.

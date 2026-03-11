@@ -11,10 +11,12 @@ logger = logging.getLogger(__name__)
 rebound_api_payer = Blueprint('rebound_api_payer', __name__, url_prefix='/api/v1/rebound')
 medevolve_api_payer = Blueprint('medevolve_api_payer', __name__, url_prefix='/api/v1/medevolve')
 pilotcustomer_api_payer = Blueprint('pilotcustomer_api_payer', __name__, url_prefix='/api/v1/pilotcustomer')
+betacustomer_api_payer = Blueprint('betacustomer_api_payer', __name__, url_prefix='/api/v1/betacustomer')
 
 @rebound_api_payer.route("/get_all_payers", methods=["GET"])
 @medevolve_api_payer.route("/get_all_payers", methods=["GET"])
 @pilotcustomer_api_payer.route("/get_all_payers", methods=["GET"])
+@betacustomer_api_payer.route("/get_all_payers", methods=["GET"])
 def get_all_payers():
     """
     This endpoint fetches all distinct payer names from the system.

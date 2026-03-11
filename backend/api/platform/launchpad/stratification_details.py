@@ -21,6 +21,9 @@ medevolve_api_stratification.api_name = 'medevolve_api_stratification'
 pilotcustomer_api_stratification = Blueprint('pilotcustomer_api_stratification', __name__, url_prefix='/api/v1/pilotcustomer')
 pilotcustomer_api_stratification.api_name = 'pilotcustomer_api_stratification'
 
+betacustomer_api_stratification = Blueprint('betacustomer_api_stratification', __name__, url_prefix='/api/v1/betacustomer')
+betacustomer_api_stratification.api_name = 'betacustomer_api_stratification'
+
 ALLOWED_SORT_COLUMNS = {
     "ClaimNo",
     "ProvTaxID",
@@ -65,6 +68,7 @@ def map_sort_field(sort: str) -> str:
 @rebound_api_stratification.route("/data_all", methods=["POST"])
 @medevolve_api_stratification.route("/data_all", methods=["POST"])
 @pilotcustomer_api_stratification.route("/data_all", methods=["POST"])
+@betacustomer_api_stratification.route("/data_all", methods=["POST"])
 def get_rebound_data_all():
     """
     This endpoint fetches platform data with pagination and filtering options.
@@ -253,6 +257,7 @@ def get_rebound_data_all():
 @rebound_api_stratification.route("/data_summary", methods=["POST"])
 @medevolve_api_stratification.route("/data_summary", methods=["POST"])
 @pilotcustomer_api_stratification.route("/data_summary", methods=["POST"])
+@betacustomer_api_stratification.route("/data_summary", methods=["POST"])
 def get_rebound_data_summary():
     """
     This endpoint returns aggregate totals for the current filter set.

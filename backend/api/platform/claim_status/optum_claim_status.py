@@ -20,6 +20,9 @@ medevolve_api_claim_status = Blueprint(
 pilotcustomer_api_claim_status = Blueprint(
     "pilotcustomer_api_claim_status", __name__, url_prefix="/api/v1/pilotcustomer"
 )
+betacustomer_api_claim_status = Blueprint(
+    "betacustomer_api_claim_status", __name__, url_prefix="/api/v1/betacustomer"
+)
 
 
 def _parse_date(value):
@@ -750,6 +753,7 @@ def _insert_response(cursor, request_id, response):
 @rebound_api_claim_status.route("/claim-status/optum", methods=["POST"])
 @medevolve_api_claim_status.route("/claim-status/optum", methods=["POST"])
 @pilotcustomer_api_claim_status.route("/claim-status/optum", methods=["POST"])
+@betacustomer_api_claim_status.route("/claim-status/optum", methods=["POST"])
 def claim_status_optum():
     if not request.is_json:
         return (
@@ -808,6 +812,7 @@ def claim_status_optum():
 @rebound_api_claim_status.route("/claim-status/optum/bulk", methods=["POST"])
 @medevolve_api_claim_status.route("/claim-status/optum/bulk", methods=["POST"])
 @pilotcustomer_api_claim_status.route("/claim-status/optum/bulk", methods=["POST"])
+@betacustomer_api_claim_status.route("/claim-status/optum/bulk", methods=["POST"])
 def claim_status_optum_bulk():
     if not request.is_json:
         return (

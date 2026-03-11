@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import {
   AreaChart,
@@ -28,6 +29,7 @@ const ResubmittedClaims = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState("asc");
   const navigate = useNavigate();
+  const type = useSelector((state) => state.app.type);
   const BASE_URL = apiUrl;
 
   const fetchData = async (page, total = false) => {
@@ -95,7 +97,8 @@ const ResubmittedClaims = () => {
 
   const handleClaimClick = (claimId) => {
     const encodedClaimId = btoa(JSON.stringify({ claimNo: claimId }));
-    navigate(`/pilotcustomer/detail/${encodedClaimId}`);
+    const basePath = type === 0 ? "/rebound" : type === 3 ? "/betacustomer" : "/pilotcustomer";
+    navigate(`${basePath}/detail/${encodedClaimId}`);
   };
 
   const toggleSortOrder = () => {

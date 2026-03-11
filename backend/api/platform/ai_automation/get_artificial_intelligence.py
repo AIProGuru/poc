@@ -12,10 +12,12 @@ logger = logging.getLogger(__name__)
 rebound_api_ai = Blueprint('rebound_api_ai', __name__, url_prefix='/api/v1/rebound')
 medevolve_api_ai = Blueprint('medevolve_api_ai', __name__, url_prefix='/api/v1/medevolve')
 pilotcustomer_api_ai = Blueprint('pilotcustomer_api_ai', __name__, url_prefix='/api/v1/pilotcustomer')
+betacustomer_api_ai = Blueprint('betacustomer_api_ai', __name__, url_prefix='/api/v1/betacustomer')
 
 @rebound_api_ai.route("/get_artificial_intelligence", methods=["GET", "POST"])
 @medevolve_api_ai.route("/get_artificial_intelligence", methods=["GET", "POST"])
 @pilotcustomer_api_ai.route("/get_artificial_intelligence", methods=["GET", "POST"])
+@betacustomer_api_ai.route("/get_artificial_intelligence", methods=["GET", "POST"])
 def get_artificial_intelligence():
     """
     This endpoint fetches artificial intelligence model data.

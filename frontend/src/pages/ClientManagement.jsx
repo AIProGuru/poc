@@ -33,12 +33,13 @@ const ClientManagement = () => {
 
   const resolveHomePath = (userData = {}) => {
     const rawTenant = `${userData.tenant || userData.product || userData.basePath || ""}`.toLowerCase();
-    if (rawTenant === "rebound" || rawTenant === "pilotcustomer" || rawTenant === "demo") {
+    if (rawTenant === "rebound" || rawTenant === "pilotcustomer" || rawTenant === "betacustomer" || rawTenant === "demo") {
       return `/${rawTenant}`;
     }
     const rawType = userData.appType ?? userData.type;
     if (rawType === 0) return "/rebound";
     if (rawType === 1) return "/pilotcustomer";
+    if (rawType === 3) return "/betacustomer";
     if (rawType === 2) return "/demo";
     return "";
   };

@@ -52,7 +52,7 @@ const Sidebar = () => {
   const [isMobileView, setIsMobileView] = useState(false);
 
   const basePath =
-    type === 0 ? "/rebound" : type === 1 ? "/pilotcustomer" : "/demo";
+    type === 0 ? "/rebound" : type === 1 ? "/pilotcustomer" : type === 3 ? "/betacustomer" : "/demo";
   const isDark = theme === "dark";
 
   const denialsCount = useMemo(() => {

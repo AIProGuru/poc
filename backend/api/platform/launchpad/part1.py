@@ -21,9 +21,13 @@ medevolve_api_part1.api_name = 'medevolve_api_part1'
 pilotcustomer_api_part1 = Blueprint('pilotcustomer_api_part1', __name__, url_prefix='/api/v1/pilotcustomer')
 pilotcustomer_api_part1.api_name = 'pilotcustomer_api_part1'
 
+betacustomer_api_part1 = Blueprint('betacustomer_api_part1', __name__, url_prefix='/api/v1/betacustomer')
+betacustomer_api_part1.api_name = 'betacustomer_api_part1'
+
 @rebound_api_part1.route("/part1_all", methods=["POST"])
 @medevolve_api_part1.route("/part1_all", methods=["POST"])
 @pilotcustomer_api_part1.route("/part1_all", methods=["POST"])
+@betacustomer_api_part1.route("/part1_all", methods=["POST"])
 def get_rebound_data_part1_all():
     """
     This endpoint fetches platform data part 1 with filtering options.
@@ -166,6 +170,7 @@ def get_rebound_data_part1_all():
 @rebound_api_part1.route("/part1_all_grouped", methods=["POST"])
 @medevolve_api_part1.route("/part1_all_grouped", methods=["POST"])
 @pilotcustomer_api_part1.route("/part1_all_grouped", methods=["POST"])
+@betacustomer_api_part1.route("/part1_all_grouped", methods=["POST"])
 def get_rebound_data_part1_all_grouped():
     """
     This endpoint fetches platform data part 1 grouped by category.

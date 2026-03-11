@@ -71,7 +71,19 @@ const routesConfig = [
     children: reboundRoutes,
   },
   {
+    path: "/betacustomer",
+    element: <PrivateRoute role={AUTH_ROLES} element={Demo} />,
+    children: reboundRoutes,
+  },
+  {
     path: "/pilotcustomer/resubmitted_claims",
+    element: (
+      <PrivateRoute role={AUTH_ROLES} element={ResubmittedClaims} />
+    ),
+    children: reboundRoutes,
+  },
+  {
+    path: "/betacustomer/resubmitted_claims",
     element: (
       <PrivateRoute role={AUTH_ROLES} element={ResubmittedClaims} />
     ),
