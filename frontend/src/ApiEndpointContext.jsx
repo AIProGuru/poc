@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SERVER_URL } from './utils/config';
 import axios from 'axios';
@@ -18,6 +18,7 @@ import {
   setNavPendCounts,
   increaseLoading,
   decreaseLoading,
+  setTableData,
 } from './redux/reducers/app.reducer';
 
 import {
@@ -39,6 +40,7 @@ export const ApiEndpointProvider = ({ children }) => {
   const dispatch = useDispatch();
   const appType = useSelector((state) => state.app.type);
   const authReady = useSelector((state) => state.auth.authReady);
+  const tenant = useSelector((state) => state.auth.tenant);
   const role = useSelector((state) => state.auth.role);
   const accessModules = useSelector((state) => state.auth.modules);
   const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
@@ -58,8 +60,79 @@ export const ApiEndpointProvider = ({ children }) => {
     [access, role]
   );
   const [apiUrl, setApiUrl] = useState('');
+  const lastTenantRef = useRef('');
 
   useEffect(() => {
+    const tenantValue = `${tenant || ""}`.toLowerCase();
+    if (!authReady || !tenantValue) return;
+    if (lastTenantRef.current && lastTenantRef.current !== tenantValue) {
+      // Clear tenant-scoped data when switching tenants to avoid stale counts.
+      dispatch(setTableData([]));
+      dispatch(setTags([]));
+      dispatch(setAllPayers([]));
+      dispatch(setNavGrouped({}));
+      dispatch(setNavPendCounts({}));
+      dispatch(setCount([]));
+      dispatch(setCategoryLabel([]));
+      dispatch(setCategoryValue([]));
+      dispatch(setRecovery([]));
+      dispatch(setModels([]));
+      dispatch(setTabIndex(0));
+      setApiUrl('');
+    }
+    lastTenantRef.current = tenantValue;
+  }, [authReady, tenant, dispatch]);
+
+  useEffect(() => {
+    const tenantValue = `${tenant || ""}`.toLowerCase();
+    if (!authReady) {
+      // Avoid selecting a tenant-specific API before auth is resolved.
+      setApiUrl('');
+      return;
+    }
+    if (tenantValue) {
+      if (tenantValue === 'rebound') {
+        setApiUrl(`${SERVER_URL}/api/v1/rebound`);
+        dispatch(setType(0));
+        try {
+          localStorage.setItem(LAST_APP_TYPE_KEY, '0');
+        } catch (err) {
+          // Ignore storage write errors (private mode, etc.)
+        }
+        return;
+      }
+      if (tenantValue === 'pilotcustomer') {
+        setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`);
+        dispatch(setType(1));
+        try {
+          localStorage.setItem(LAST_APP_TYPE_KEY, '1');
+        } catch (err) {
+          // Ignore storage write errors (private mode, etc.)
+        }
+        return;
+      }
+      if (tenantValue === 'betacustomer') {
+        setApiUrl(`${SERVER_URL}/api/v1/betacustomer`);
+        dispatch(setType(3));
+        try {
+          localStorage.setItem(LAST_APP_TYPE_KEY, '3');
+        } catch (err) {
+          // Ignore storage write errors (private mode, etc.)
+        }
+        return;
+      }
+      if (tenantValue === 'demo') {
+        setApiUrl(`${SERVER_URL}/api/v1/rebound`);
+        dispatch(setType(2));
+        try {
+          localStorage.setItem(LAST_APP_TYPE_KEY, '2');
+        } catch (err) {
+          // Ignore storage write errors (private mode, etc.)
+        }
+        return;
+      }
+    }
+
     if (location.pathname.startsWith('/rebound')) {
       setApiUrl(`${SERVER_URL}/api/v1/rebound`)
       dispatch(setType(0))
@@ -114,7 +187,7 @@ export const ApiEndpointProvider = ({ children }) => {
         setApiUrl(`${SERVER_URL}/api/v1/rebound`)
       }
     }
-  }, [location.pathname, appType, dispatch]);
+  }, [location.pathname, appType, authReady, tenant, dispatch]);
 
   useEffect(() => {
     if (!apiUrl || !authReady) return;

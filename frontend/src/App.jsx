@@ -1,6 +1,6 @@
 import { useRoutes } from "react-router-dom";
 import { useEffect, useRef, useContext } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import routesConfig from "./routes";
 import { MAINTAINING } from "./utils/config";
@@ -62,6 +62,7 @@ const resolveAppType = (userData = {}) => {
 
 function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { getSession } = useContext(AccountContext);
   const apiUrl = useApiEndpoint();
   // if (apiUrl === '') {
@@ -73,6 +74,8 @@ function App() {
   const showChatBot = useSelector((state) => state.gpt.showGPT)
   const chatbot = useRef(null);
   const getAuth = useSelector((state) => state.auth.isAuthenticated);
+  const authReady = useSelector((state) => state.auth.authReady);
+  const tenant = useSelector((state) => state.auth.tenant);
   const realtimeDb = useRef(getFirestore(app));
 
   const onCloseChatbot = () => {
@@ -214,6 +217,27 @@ function App() {
       unsubscribeAuth();
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!authReady) return;
+    const tenantValue = `${tenant || ""}`.toLowerCase();
+    if (!tenantValue) return;
+    const allowedTenants = new Set(['rebound', 'pilotcustomer', 'betacustomer', 'demo']);
+    if (!allowedTenants.has(tenantValue)) return;
+
+    const path = location.pathname || "";
+    const parts = path.split('/').filter(Boolean);
+    if (parts.length === 0) return;
+
+    const currentBase = parts[0];
+    if (!allowedTenants.has(currentBase)) return;
+
+    if (currentBase !== tenantValue) {
+      const rest = parts.slice(1).join('/');
+      const target = rest ? `/${tenantValue}/${rest}` : `/${tenantValue}`;
+      navigate(target, { replace: true });
+    }
+  }, [authReady, tenant, location.pathname, navigate]);
 
   return (
     <div className="w-full h-screen">
