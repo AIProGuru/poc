@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   setAppTitle,
   setTheme,
@@ -23,9 +23,11 @@ import { canAccessWorklists } from "../../utils/roles";
 const Sidebar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const type = useSelector((state) => state.app.type);
   const theme = useSelector((state) => state.app.theme);
   const role = useSelector((state) => state.auth.role);
+  const tenant = useSelector((state) => state.auth.tenant);
   const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
   const counts = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
@@ -51,8 +53,20 @@ const Sidebar = () => {
   const [mobileExpanded, setMobileExpanded] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
 
-  const basePath =
+  const tenantValue = `${tenant || ""}`.toLowerCase();
+  const pathBase = (location.pathname.split("/")[1] || "").toLowerCase();
+  const baseFromTenant =
+    tenantValue === "rebound" ? "/rebound"
+      : tenantValue === "pilotcustomer" ? "/pilotcustomer"
+        : tenantValue === "betacustomer" ? "/betacustomer"
+          : tenantValue === "demo" ? "/demo"
+            : null;
+  const baseFromPath = ["rebound", "pilotcustomer", "betacustomer", "demo"].includes(pathBase)
+    ? `/${pathBase}`
+    : null;
+  const baseFromType =
     type === 0 ? "/rebound" : type === 1 ? "/pilotcustomer" : type === 3 ? "/betacustomer" : "/demo";
+  const basePath = baseFromTenant || baseFromPath || baseFromType;
   const isDark = theme === "dark";
 
   const denialsCount = useMemo(() => {

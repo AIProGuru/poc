@@ -53,6 +53,7 @@ const ReboundDash = () => {
   const dispatch = useDispatch();
   const theme = useSelector((state) => state.app.theme);
   const appType = useSelector((state) => state.app.type);
+  const tenant = useSelector((state) => state.auth.tenant);
   const role = useSelector((state) => state.auth.role);
   const accessModules = useSelector((state) => state.auth.modules);
   const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
@@ -68,7 +69,23 @@ const ReboundDash = () => {
     [accessModules, accessDenialCategory, accessPayer, accessValue]
   );
   const appTitle = useSelector((state) => state.app.title);
-  const baseAppPath = appType === 0 ? '/rebound' : appType === 1 ? '/pilotcustomer' : appType === 3 ? '/betacustomer' : '/demo';
+  const tenantValue = `${tenant || ""}`.toLowerCase();
+  const pathBase = (location.pathname.split('/')[1] || '').toLowerCase();
+  const baseFromTenant =
+    tenantValue === 'rebound' ? '/rebound'
+      : tenantValue === 'pilotcustomer' ? '/pilotcustomer'
+        : tenantValue === 'betacustomer' ? '/betacustomer'
+          : tenantValue === 'demo' ? '/demo'
+            : null;
+  const baseFromPath = ['rebound', 'pilotcustomer', 'betacustomer', 'demo'].includes(pathBase)
+    ? `/${pathBase}`
+    : null;
+  const baseFromType =
+    appType === 0 ? '/rebound'
+      : appType === 1 ? '/pilotcustomer'
+        : appType === 3 ? '/betacustomer'
+          : '/demo';
+  const baseAppPath = baseFromTenant || baseFromPath || baseFromType;
   const isDenialsRoute = location.pathname.includes('/denials');
   const isUserManagementView = selectedNav === 'user-management';
   // Show AI models only when the app title indicates AI Agents/Automation (set by Sidebar or ArIntel),

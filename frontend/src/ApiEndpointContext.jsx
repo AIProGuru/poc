@@ -19,12 +19,22 @@ import {
   increaseLoading,
   decreaseLoading,
   setTableData,
+  setExtraFilter,
+  setCurrentPage,
+  setKeyword,
+  setStartDate,
+  setEndDate,
+  setCode,
+  setRemark,
+  setProcedure,
+  setPOS,
 } from './redux/reducers/app.reducer';
 
 import {
   setTags,
   setAllPayers,
 } from './redux/reducers/tag.reducer';
+import { setSelectedTags } from './redux/reducers/tag.reducer';
 
 import { setCount, setRecovery } from './redux/reducers/count.reducer';
 import { setCategoryLabel, setCategoryValue } from './redux/reducers/statistics.reducer';
@@ -61,6 +71,8 @@ export const ApiEndpointProvider = ({ children }) => {
   );
   const [apiUrl, setApiUrl] = useState('');
   const lastTenantRef = useRef('');
+  const didInitRef = useRef(false);
+  const bootstrapRef = useRef({ key: '', id: 0 });
 
   useEffect(() => {
     const tenantValue = `${tenant || ""}`.toLowerCase();
@@ -79,6 +91,7 @@ export const ApiEndpointProvider = ({ children }) => {
       dispatch(setModels([]));
       dispatch(setTabIndex(0));
       setApiUrl('');
+      bootstrapRef.current = { key: '', id: 0 };
     }
     lastTenantRef.current = tenantValue;
   }, [authReady, tenant, dispatch]);
@@ -88,12 +101,41 @@ export const ApiEndpointProvider = ({ children }) => {
     if (!authReady) {
       // Avoid selecting a tenant-specific API before auth is resolved.
       setApiUrl('');
+      didInitRef.current = false;
+      return;
+    }
+    const pathBase = (location.pathname.split('/')[1] || '').toLowerCase();
+    const desiredBase =
+      tenantValue === 'rebound' || tenantValue === 'pilotcustomer' || tenantValue === 'betacustomer' || tenantValue === 'demo'
+        ? tenantValue
+        : (pathBase === 'rebound' || pathBase === 'pilotcustomer' || pathBase === 'betacustomer' || pathBase === 'demo')
+          ? pathBase
+          : '';
+
+    if (desiredBase) {
+      const desiredUrl =
+        desiredBase === 'rebound' ? `${SERVER_URL}/api/v1/rebound`
+          : desiredBase === 'pilotcustomer' ? `${SERVER_URL}/api/v1/pilotcustomer`
+            : desiredBase === 'betacustomer' ? `${SERVER_URL}/api/v1/betacustomer`
+              : `${SERVER_URL}/api/v1/rebound`;
+
+      if (apiUrl !== desiredUrl) {
+        setApiUrl(desiredUrl);
+        dispatch(setType(desiredBase === 'rebound' ? 0 : desiredBase === 'pilotcustomer' ? 1 : desiredBase === 'betacustomer' ? 3 : 2));
+        didInitRef.current = true;
+        try {
+          localStorage.setItem(LAST_APP_TYPE_KEY, String(desiredBase === 'rebound' ? 0 : desiredBase === 'pilotcustomer' ? 1 : desiredBase === 'betacustomer' ? 3 : 2));
+        } catch (err) {
+          // Ignore storage write errors (private mode, etc.)
+        }
+      }
       return;
     }
     if (tenantValue) {
       if (tenantValue === 'rebound') {
         setApiUrl(`${SERVER_URL}/api/v1/rebound`);
         dispatch(setType(0));
+        didInitRef.current = true;
         try {
           localStorage.setItem(LAST_APP_TYPE_KEY, '0');
         } catch (err) {
@@ -104,6 +146,7 @@ export const ApiEndpointProvider = ({ children }) => {
       if (tenantValue === 'pilotcustomer') {
         setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`);
         dispatch(setType(1));
+        didInitRef.current = true;
         try {
           localStorage.setItem(LAST_APP_TYPE_KEY, '1');
         } catch (err) {
@@ -114,6 +157,7 @@ export const ApiEndpointProvider = ({ children }) => {
       if (tenantValue === 'betacustomer') {
         setApiUrl(`${SERVER_URL}/api/v1/betacustomer`);
         dispatch(setType(3));
+        didInitRef.current = true;
         try {
           localStorage.setItem(LAST_APP_TYPE_KEY, '3');
         } catch (err) {
@@ -124,6 +168,7 @@ export const ApiEndpointProvider = ({ children }) => {
       if (tenantValue === 'demo') {
         setApiUrl(`${SERVER_URL}/api/v1/rebound`);
         dispatch(setType(2));
+        didInitRef.current = true;
         try {
           localStorage.setItem(LAST_APP_TYPE_KEY, '2');
         } catch (err) {
@@ -133,9 +178,14 @@ export const ApiEndpointProvider = ({ children }) => {
       }
     }
 
+    if (didInitRef.current) {
+      return;
+    }
+
     if (location.pathname.startsWith('/rebound')) {
       setApiUrl(`${SERVER_URL}/api/v1/rebound`)
       dispatch(setType(0))
+      didInitRef.current = true;
       try {
         localStorage.setItem(LAST_APP_TYPE_KEY, '0');
       } catch (err) {
@@ -144,6 +194,7 @@ export const ApiEndpointProvider = ({ children }) => {
     } else if (location.pathname.startsWith('/pilotcustomer')) {
       setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
       dispatch(setType(1))
+      didInitRef.current = true;
       try {
         localStorage.setItem(LAST_APP_TYPE_KEY, '1');
       } catch (err) {
@@ -152,6 +203,7 @@ export const ApiEndpointProvider = ({ children }) => {
     } else if (location.pathname.startsWith('/betacustomer')) {
       setApiUrl(`${SERVER_URL}/api/v1/betacustomer`)
       dispatch(setType(3))
+      didInitRef.current = true;
       try {
         localStorage.setItem(LAST_APP_TYPE_KEY, '3');
       } catch (err) {
@@ -161,6 +213,7 @@ export const ApiEndpointProvider = ({ children }) => {
       // setApiUrl(`${SERVER_URL}/api/v1/demo`)
       setApiUrl(`${SERVER_URL}/api/v1/rebound`)
       dispatch(setType(2))
+      didInitRef.current = true;
       try {
         localStorage.setItem(LAST_APP_TYPE_KEY, '2');
       } catch (err) {
@@ -181,16 +234,45 @@ export const ApiEndpointProvider = ({ children }) => {
       }
       if (resolvedType === 1) {
         setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
+        didInitRef.current = true;
       } else if (resolvedType === 3) {
         setApiUrl(`${SERVER_URL}/api/v1/betacustomer`)
+        didInitRef.current = true;
       } else {
         setApiUrl(`${SERVER_URL}/api/v1/rebound`)
+        didInitRef.current = true;
       }
     }
   }, [location.pathname, appType, authReady, tenant, dispatch]);
 
   useEffect(() => {
     if (!apiUrl || !authReady) return;
+    // Reset filters/table state when switching tenants so data loads correctly.
+    dispatch(setExtraFilter({ IncludeAllCategories: true }));
+    dispatch(setSelectedTags([]));
+    dispatch(setCurrentPage(1));
+    dispatch(setKeyword(''));
+    dispatch(setStartDate(null));
+    dispatch(setEndDate(null));
+    dispatch(setCode(''));
+    dispatch(setRemark(''));
+    dispatch(setProcedure(''));
+    dispatch(setPOS(''));
+    dispatch(setTabIndex(0));
+    dispatch(setTableLoading(true));
+    dispatch(setPart1Loading(true));
+    dispatch(setPart2Loading(true));
+  }, [apiUrl, authReady, dispatch]);
+
+  useEffect(() => {
+    if (!apiUrl || !authReady) return;
+    const bootstrapKey = `${apiUrl}::${JSON.stringify(accessExtra || {})}`;
+    if (bootstrapRef.current.key === bootstrapKey) {
+      return;
+    }
+    bootstrapRef.current.key = bootstrapKey;
+    const requestId = ++bootstrapRef.current.id;
+
     dispatch(setPart1Loading(true));
     dispatch(setPart2Loading(true));
     dispatch(setTableLoading(true));
@@ -216,6 +298,9 @@ export const ApiEndpointProvider = ({ children }) => {
         extra: accessExtra,
       })
       .then((res) => {
+        if (bootstrapRef.current.id !== requestId || bootstrapRef.current.key !== bootstrapKey) {
+          return;
+        }
         const data = res?.data || {};
         dispatch(setTags(data.tags || []));
         dispatch(setAllPayers(data.payers || []));
@@ -259,7 +344,6 @@ export const ApiEndpointProvider = ({ children }) => {
           }));
         dispatch(setModels(mapModels(data.models || [])));
 
-        dispatch(decreaseLoading());
         dispatch(setTagLoading(false));
         dispatch(setCountLoading(false));
         dispatch(setStatisticsLoading(false));
@@ -267,12 +351,17 @@ export const ApiEndpointProvider = ({ children }) => {
         dispatch(setRecoveryLoading(false));
       })
       .catch(() => {
-        dispatch(decreaseLoading());
+        if (bootstrapRef.current.id !== requestId || bootstrapRef.current.key !== bootstrapKey) {
+          return;
+        }
         dispatch(setTagLoading(false));
         dispatch(setCountLoading(false));
         dispatch(setStatisticsLoading(false));
         dispatch(setPayerLoading(false));
         dispatch(setRecoveryLoading(false));
+      })
+      .finally(() => {
+        dispatch(decreaseLoading());
       });
   }, [apiUrl, accessExtra, authReady, dispatch])
 

@@ -1,5 +1,5 @@
 import { useRoutes } from "react-router-dom";
-import { useEffect, useRef, useContext } from "react";
+import { useEffect, useRef, useContext, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import routesConfig from "./routes";
@@ -25,13 +25,43 @@ import {
   setShowGPT,
 } from "./redux/reducers/gpt.reducer";
 import { AccountContext } from "./utils/Account";
-import { increaseLoading, decreaseLoading, setTagLoading, setType } from "./redux/reducers/app.reducer";
+import {
+  increaseLoading,
+  decreaseLoading,
+  setTagLoading,
+  setType,
+  setTableData,
+  setExtraFilter,
+  setCurrentPage,
+  setKeyword,
+  setStartDate,
+  setEndDate,
+  setCode,
+  setRemark,
+  setProcedure,
+  setPOS,
+  setTabIndex,
+  setModels,
+  setNavGrouped,
+  setNavPendCounts,
+  setLoading,
+  setPart1Loading,
+  setPart2Loading,
+  setTableLoading,
+  setCountLoading,
+  setStatisticsLoading,
+  setPayerLoading,
+  setRecoveryLoading,
+} from "./redux/reducers/app.reducer";
 import ChatBot from "./components/demo-layout/rebound_dash/ChatBot";
 import ChatBotButton from "./components/demo-layout/rebound_dash/ChatBotButton";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { doc, getFirestore, onSnapshot } from "firebase/firestore";
 import { app, auth } from "./FirebaseConfig";
+import { setTags, setAllPayers, setSelectedTags } from "./redux/reducers/tag.reducer";
+import { setCount, setPart1Count, setPart2Count, setRecovery } from "./redux/reducers/count.reducer";
+import { setCategoryLabel, setCategoryValue } from "./redux/reducers/statistics.reducer";
 
 const showlist = [
   '/',
@@ -77,6 +107,43 @@ function App() {
   const authReady = useSelector((state) => state.auth.authReady);
   const tenant = useSelector((state) => state.auth.tenant);
   const realtimeDb = useRef(getFirestore(app));
+  const lastUidRef = useRef("");
+  const lastTenantRef = useRef("");
+
+  const clearTenantState = useCallback(() => {
+    dispatch(setTableData([]));
+    dispatch(setTags([]));
+    dispatch(setAllPayers([]));
+    dispatch(setSelectedTags([]));
+    dispatch(setCount([]));
+    dispatch(setPart1Count([]));
+    dispatch(setPart2Count([]));
+    dispatch(setRecovery([]));
+    dispatch(setCategoryLabel([]));
+    dispatch(setCategoryValue([]));
+    dispatch(setModels([]));
+    dispatch(setNavGrouped({}));
+    dispatch(setNavPendCounts({}));
+    dispatch(setExtraFilter({}));
+    dispatch(setKeyword(''));
+    dispatch(setCurrentPage(1));
+    dispatch(setStartDate(null));
+    dispatch(setEndDate(null));
+    dispatch(setCode(''));
+    dispatch(setRemark(''));
+    dispatch(setProcedure(''));
+    dispatch(setPOS(''));
+    dispatch(setTabIndex(0));
+    dispatch(setLoading(0));
+    dispatch(setPart1Loading(false));
+    dispatch(setPart2Loading(false));
+    dispatch(setTableLoading(false));
+    dispatch(setTagLoading(false));
+    dispatch(setCountLoading(false));
+    dispatch(setStatisticsLoading(false));
+    dispatch(setPayerLoading(false));
+    dispatch(setRecoveryLoading(false));
+  }, [dispatch]);
 
   const onCloseChatbot = () => {
     dispatch(setShowGPT(false));
@@ -179,8 +246,29 @@ function App() {
         dispatch(setDenialCategory([]));
         dispatch(setPayer([]));
         dispatch(setValue([]));
+        clearTenantState();
+        lastUidRef.current = "";
+        lastTenantRef.current = "";
         return;
       }
+      if (lastUidRef.current && lastUidRef.current !== user.uid) {
+        clearTenantState();
+        lastTenantRef.current = "";
+        dispatch(setUsername(''));
+        dispatch(setFirstname(''));
+        dispatch(setLastname(''));
+        dispatch(setEmail(''));
+        dispatch(setRole(''));
+        dispatch(setPermission(''));
+        dispatch(setTenant(''));
+        dispatch(setAppType(null));
+        dispatch(setType(0));
+        dispatch(setModules([]));
+        dispatch(setDenialCategory([]));
+        dispatch(setPayer([]));
+        dispatch(setValue([]));
+      }
+      lastUidRef.current = user.uid;
       const docRef = doc(realtimeDb.current, "users", user.uid);
       unsubscribeDoc = onSnapshot(docRef, (snapshot) => {
         if (!snapshot.exists()) {
@@ -191,6 +279,11 @@ function App() {
           return;
         }
         const userData = snapshot.data() || {};
+        const nextTenant = `${userData.tenant ?? userData.product ?? userData.basePath ?? ""}`.toLowerCase();
+        if (lastTenantRef.current && lastTenantRef.current !== nextTenant) {
+          clearTenantState();
+        }
+        lastTenantRef.current = nextTenant;
         dispatch(setFirstname(userData.firstname ?? ""));
         dispatch(setLastname(userData.lastname ?? ""));
         dispatch(setEmail(userData.email ?? ""));
