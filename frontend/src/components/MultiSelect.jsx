@@ -6,7 +6,8 @@ const MultiSelect = ({
   selected,
   onChange,
   placeholder,
-  theme
+  theme,
+  containerClassName,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,7 +46,7 @@ const MultiSelect = ({
   };
 
   return (
-    <div className="mb-6 w-full" ref={wrapperRef}>
+    <div className={containerClassName || "mb-6 w-full"} ref={wrapperRef}>
 
       <div className="relative">
         <div

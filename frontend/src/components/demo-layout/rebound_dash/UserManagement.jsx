@@ -1464,7 +1464,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                 />
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2 items-center">
+              <div className="grid gap-4 sm:grid-cols-2 items-start">
                 <input
                   type="text"
                   className={`text-sm rounded-full px-4 py-2.5 border bg-clip-padding focus:outline-none ${theme === 'dark' ?
@@ -1530,6 +1530,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
+                  <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-slate-700'}`}>Facility</span>
                   <MultiSelect
                     label="Facility"
                     options={facilityOptions}
@@ -1537,6 +1538,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     onChange={(value) => setUser({ ...user, facility: value })}
                     placeholder={facilityOptionsLoading ? "Loading facilities..." : "Select Facility"}
                     theme={theme}
+                    containerClassName="w-full"
                   />
                 </div>
               </div>
