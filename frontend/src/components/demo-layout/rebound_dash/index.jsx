@@ -59,14 +59,16 @@ const ReboundDash = () => {
   const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
   const accessPayer = useSelector((state) => state.auth.payer);
   const accessValue = useSelector((state) => state.auth.value);
+  const accessFacility = useSelector((state) => state.auth.facility);
   const access = useMemo(
     () => ({
       modules: accessModules,
       denialCategory: accessDenialCategory,
       payer: accessPayer,
       value: accessValue,
+      facility: accessFacility,
     }),
-    [accessModules, accessDenialCategory, accessPayer, accessValue]
+    [accessModules, accessDenialCategory, accessPayer, accessValue, accessFacility]
   );
   const appTitle = useSelector((state) => state.app.title);
   const tenantValue = `${tenant || ""}`.toLowerCase();

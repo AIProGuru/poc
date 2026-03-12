@@ -115,6 +115,44 @@ def get_artificial_intelligence():
             if range_conditions:
                 conditions.append(f"({' OR '.join(range_conditions)})")
 
+            facilities = extra_filters.get("AllowedFacilities") or []
+            tax_ids = []
+            npis = []
+            for item in facilities:
+                if not item:
+                    continue
+                if isinstance(item, str):
+                    tax_ids.append(item)
+                    continue
+                tax_id = (
+                    item.get("taxId")
+                    or item.get("taxID")
+                    or item.get("facilityTaxId")
+                    or item.get("facilityTaxID")
+                    or item.get("FedTaxID")
+                )
+                npi = (
+                    item.get("npi")
+                    or item.get("NPI")
+                    or item.get("facilityNpi")
+                    or item.get("facilityNPI")
+                    or item.get("ProvNPI")
+                    or item.get("BillProvNPI")
+                )
+                if tax_id:
+                    tax_ids.append(str(tax_id))
+                if npi:
+                    npis.append(str(npi))
+            facility_conditions = []
+            if tax_ids:
+                tax_list = ", ".join(["'{}'".format(str(t).replace("'", "''")) for t in tax_ids])
+                facility_conditions.append(f"CUSTOM_ALL.ProvTaxID IN ({tax_list})")
+            if npis:
+                npi_list = ", ".join(["'{}'".format(str(n).replace("'", "''")) for n in npis])
+                facility_conditions.append(f"CUSTOM_ALL.ProvNPI IN ({npi_list})")
+            if facility_conditions:
+                conditions.append(f"({' OR '.join(facility_conditions)})")
+
             return " AND ".join(conditions)
 
         def inject_conditions(query_text, conditions_sql):

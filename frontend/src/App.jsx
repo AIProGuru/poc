@@ -19,6 +19,7 @@ import {
   setDenialCategory,
   setPayer,
   setValue,
+  setFacility,
 } from "./redux/reducers/auth.reducer";
 import { useApiEndpoint } from "./ApiEndpointContext";
 import {
@@ -209,6 +210,11 @@ function App() {
             dispatch(setType(resolvedType));
           }
         }
+        dispatch(setModules(session.userData.client ?? []))
+        dispatch(setDenialCategory(session.userData.denialCategory ?? []))
+        dispatch(setPayer(session.userData.payer ?? []))
+        dispatch(setValue(session.userData.value ?? []))
+        dispatch(setFacility(session.userData.facility ?? []))
         dispatch(setPermission(""))
         dispatch(decreaseLoading())
       })
@@ -246,6 +252,7 @@ function App() {
         dispatch(setDenialCategory([]));
         dispatch(setPayer([]));
         dispatch(setValue([]));
+        dispatch(setFacility([]));
         clearTenantState();
         lastUidRef.current = "";
         lastTenantRef.current = "";
@@ -267,6 +274,7 @@ function App() {
         dispatch(setDenialCategory([]));
         dispatch(setPayer([]));
         dispatch(setValue([]));
+        dispatch(setFacility([]));
       }
       lastUidRef.current = user.uid;
       const docRef = doc(realtimeDb.current, "users", user.uid);
@@ -300,6 +308,7 @@ function App() {
         dispatch(setDenialCategory(userData.denialCategory ?? []));
         dispatch(setPayer(userData.payer ?? []));
         dispatch(setValue(userData.value ?? []));
+        dispatch(setFacility(userData.facility ?? []));
       });
     });
 

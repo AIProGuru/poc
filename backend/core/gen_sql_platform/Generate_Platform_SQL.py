@@ -187,6 +187,31 @@ def generate_sql(
                 conditions.append(f"(CUSTOM_ALL.Amount <= {max_val})")
         if len(conditions) > 0:
             query += f" AND ({' OR '.join(conditions)})"
+    if "AllowedFacilities" in extra:
+        facilities = extra.get("AllowedFacilities") or []
+        tax_ids = []
+        npis = []
+        for item in facilities:
+            if not item:
+                continue
+            if isinstance(item, str):
+                tax_ids.append(item)
+                continue
+            tax_id = item.get("taxId") or item.get("taxID") or item.get("facilityTaxId") or item.get("facilityTaxID") or item.get("FedTaxID")
+            npi = item.get("npi") or item.get("NPI") or item.get("facilityNpi") or item.get("facilityNPI") or item.get("ProvNPI") or item.get("BillProvNPI")
+            if tax_id:
+                tax_ids.append(str(tax_id))
+            if npi:
+                npis.append(str(npi))
+        conditions = []
+        if tax_ids:
+            safe_tax = ", ".join(["'{}'".format(str(t).replace("'", "''")) for t in tax_ids])
+            conditions.append(f"CUSTOM_ALL.ProvTaxID IN ({safe_tax})")
+        if npis:
+            safe_npi = ", ".join(["'{}'".format(str(n).replace("'", "''")) for n in npis])
+            conditions.append(f"CUSTOM_ALL.ProvNPI IN ({safe_npi})")
+        if conditions:
+            query += f" AND ({' OR '.join(conditions)})"
     if extra.get("Missing835"):
         query += "AND (CUSTOM_ALL.id_835 IS NULL OR CUSTOM_ALL.id_835=0) "
     if extra.get("Pend277"):

@@ -19,6 +19,7 @@ import {
   setDenialCategory,
   setPayer,
   setValue,
+  setFacility,
 } from '../redux/reducers/auth.reducer';
 import {  doc, getDoc } from 'firebase/firestore/lite'; // Import Firestore methods
 import { db } from '../FirebaseConfig';
@@ -116,6 +117,7 @@ const getSession = () => {
         dispatch(setDenialCategory([]));
         dispatch(setPayer([]));
         dispatch(setValue([]));
+        dispatch(setFacility([]));
         try {
           localStorage.removeItem('lastAppType');
         } catch (err) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
@@ -105,6 +105,10 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   const [users, setUsers] = useState([]);
   const [clientOptions, setClientOptions] = useState([]);
   const [clientOptionsLoading, setClientOptionsLoading] = useState(false);
+  const [rawClients, setRawClients] = useState([]);
+  const [facilityOptions, setFacilityOptions] = useState([]);
+  const [facilityOptionsLoading, setFacilityOptionsLoading] = useState(false);
+  const facilityCacheRef = useRef({});
   const [keyword, setKeyword] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -179,13 +183,102 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       .replace(/[^a-z0-9_-]/g, "");
   };
 
+  const normalizeFacility = (facility) => {
+    if (!facility || typeof facility !== "object") return null;
+    const name =
+      facility.name ||
+      facility.facilityName ||
+      facility.FacilityName ||
+      facility.label ||
+      "Facility";
+    const taxId =
+      facility.taxId ||
+      facility.taxID ||
+      facility.facilityTaxId ||
+      facility.facilityTaxID ||
+      facility.FacilityTaxID ||
+      facility.FedTaxID ||
+      "";
+    const npi =
+      facility.npi ||
+      facility.NPI ||
+      facility.facilityNpi ||
+      facility.facilityNPI ||
+      facility.ProvNPI ||
+      facility.BillProvNPI ||
+      "";
+    return { ...facility, name, taxId, npi };
+  };
+
+  const buildFacilityLabel = (facility, tenantLabel) => {
+    if (!facility) return "";
+    const parts = [];
+    if (facility.name) parts.push(facility.name);
+    if (tenantLabel) parts.push(tenantLabel);
+    if (facility.taxId) parts.push(`TaxID ${facility.taxId}`);
+    if (facility.npi) parts.push(`NPI ${facility.npi}`);
+    return parts.join(" · ");
+  };
+
+  const buildFacilityOptions = (clientDetail) => {
+    if (!clientDetail || typeof clientDetail !== "object") return [];
+    const facilities = [];
+    const tenants = Array.isArray(clientDetail.subClients) ? clientDetail.subClients : [];
+    const directFacilities = Array.isArray(clientDetail.facilities)
+      ? clientDetail.facilities
+      : [];
+    const appendFacilities = (list, tenantMeta) => {
+      (list || []).forEach((facility) => {
+        const normalized = normalizeFacility(facility);
+        if (!normalized) return;
+        const label = buildFacilityLabel(normalized, tenantMeta?.label);
+        facilities.push({
+          ...normalized,
+          tenantId: tenantMeta?.id,
+          tenantName: tenantMeta?.label,
+          clientId: clientDetail.id,
+          clientName: clientDetail.name,
+          label,
+          PayerName: label,
+        });
+      });
+    };
+    if (tenants.length > 0) {
+      tenants.forEach((tenant) => {
+        const tenantLabel =
+          tenant?.name ||
+          tenant?.clientType ||
+          tenant?.tenant ||
+          tenant?.basePath ||
+          tenant?.id ||
+          "";
+        appendFacilities(tenant?.facilities || [], { id: tenant?.id, label: tenantLabel });
+      });
+    }
+    if (directFacilities.length > 0) {
+      appendFacilities(directFacilities, { id: null, label: "" });
+    }
+    return facilities;
+  };
+
+  const resolveClientForTenant = (tenantValue) => {
+    const normalizedTenant = sanitizeTenantValue(tenantValue);
+    if (!normalizedTenant) return null;
+    return (rawClients || []).find((client) => {
+      const candidate = sanitizeTenantValue(
+        client?.basePath || client?.tenant || client?.slug || client?.name
+      );
+      return candidate && candidate === normalizedTenant;
+    });
+  };
+
   const resolvedClientOptions = useMemo(() => {
     const options = (clientOptions || []).filter(Boolean);
     return options.length > 0
       ? options
       : [
-          { value: "pilotcustomer", label: "Pilot Customer" },
-          { value: "betacustomer", label: "Beta Customer" },
+          { value: "pilotcustomer", label: "Pilot Customer", id: "pilotcustomer" },
+          { value: "betacustomer", label: "Beta Customer", id: "betacustomer" },
         ];
   }, [clientOptions]);
 
@@ -211,10 +304,12 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
             return {
               value,
               label: client?.name || value,
+              id: client?.id || value,
             };
           })
           .filter(Boolean);
         if (mounted) {
+          setRawClients(Array.isArray(data) ? data : []);
           setClientOptions(options);
         }
       } catch (error) {
@@ -241,6 +336,79 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       setUser((prev) => ({ ...prev, tenant: resolvedClientOptions[0].value }));
     }
   }, [resolvedClientOptions, user.tenant]);
+
+  useEffect(() => {
+    const tenantValue = user.tenant;
+    if (!tenantValue) {
+      setFacilityOptions([]);
+      setUser((prev) => ({ ...prev, facility: [] }));
+      return;
+    }
+    const client = resolveClientForTenant(tenantValue);
+    if (!client?.id) {
+      setFacilityOptions([]);
+      setUser((prev) => ({ ...prev, facility: [] }));
+      return;
+    }
+    const cached = facilityCacheRef.current[client.id];
+    if (cached) {
+      setFacilityOptions(cached);
+      return;
+    }
+    let mounted = true;
+    const fetchFacilities = async () => {
+      setFacilityOptionsLoading(true);
+      try {
+        const response = await fetch(`${SERVER_URL}/api/clients/${client.id}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        const detail = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(detail?.error || "Failed to fetch facilities");
+        }
+        const options = buildFacilityOptions(detail);
+        if (mounted) {
+          facilityCacheRef.current[client.id] = options;
+          setFacilityOptions(options);
+        }
+      } catch (error) {
+        console.error("Failed to load facilities:", error);
+        if (mounted) {
+          setFacilityOptions([]);
+        }
+      } finally {
+        if (mounted) {
+          setFacilityOptionsLoading(false);
+        }
+      }
+    };
+    fetchFacilities();
+    return () => {
+      mounted = false;
+    };
+  }, [user.tenant, rawClients]);
+
+  useEffect(() => {
+    if (!Array.isArray(user.facility) || user.facility.length === 0) return;
+    if (!facilityOptions.length) {
+      setUser((prev) => ({ ...prev, facility: [] }));
+      return;
+    }
+    const allowSet = new Set(
+      facilityOptions.map((option) => `${option.taxId || ""}::${option.npi || ""}::${option.label || option.PayerName || ""}`)
+    );
+    const nextFacilities = user.facility.filter((item) => {
+      const taxId = item?.taxId || item?.taxID || item?.facilityTaxId || item?.facilityTaxID || "";
+      const npi = item?.npi || item?.NPI || item?.facilityNpi || item?.facilityNPI || "";
+      const label = item?.label || item?.PayerName || item?.name || "";
+      const key = `${taxId || ""}::${npi || ""}::${label}`;
+      return allowSet.has(key);
+    });
+    if (nextFacilities.length !== user.facility.length) {
+      setUser((prev) => ({ ...prev, facility: nextFacilities }));
+    }
+  }, [facilityOptions]);
 
   const requireAuthToken = async () => {
     if (!auth.currentUser) {
@@ -498,6 +666,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
         status: user.status,
         tenant: user.tenant,
         client: user.client,
+        facility: user.facility,
         denialCategory: user.denialCategory,
         payer: user.payer,
         value: user.value,
@@ -1007,6 +1176,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                               const currentUser = users.find(u => u.id === row.id);
                               setUpdate_user_id(row.id);
                               setUser({
+                                tenant: currentUser.tenant || "",
                                 client: currentUser.client || [],
                                 facility: currentUser.facility || [],
                                 clientState: currentUser.clientState || [],
@@ -1359,6 +1529,16 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     ))}
                   </select>
                 </div>
+                <div className="flex flex-col gap-2">
+                  <MultiSelect
+                    label="Facility"
+                    options={facilityOptions}
+                    selected={user.facility}
+                    onChange={(value) => setUser({ ...user, facility: value })}
+                    placeholder={facilityOptionsLoading ? "Loading facilities..." : "Select Facility"}
+                    theme={theme}
+                  />
+                </div>
               </div>
 
               <div className={`rounded-2xl border px-4 py-4 ${theme === 'dark' ? 'border-[#2A2F38] bg-[#FFFFFF]/10' : 'border-slate-200 bg-slate-50'}`}>
@@ -1523,6 +1703,15 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     selected={user.client}
                     onChange={(value) => setUser({ ...user, client: value })}
                     placeholder="Select Module"
+                    theme={theme}
+                  />
+
+                  <MultiSelect
+                    label="Facility"
+                    options={facilityOptions}
+                    selected={user.facility}
+                    onChange={(value) => setUser({ ...user, facility: value })}
+                    placeholder={facilityOptionsLoading ? "Loading facilities..." : "Select Facility"}
                     theme={theme}
                   />
 

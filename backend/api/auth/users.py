@@ -24,6 +24,7 @@ addUserSchema = {
         "denialCategory": {"type": "array"},
         "payer": {"type": "array"},
         "value": {"type": "array"},
+        "facility": {"type": "array"},
         "tenant": {"type": "string"},
     },
     "required": ["email", "password", "firstname", "lastname", "role", "status"],

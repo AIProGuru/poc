@@ -16,6 +16,7 @@ const initialState = {
   denialCategory: [],
   payer: [],
   value: [],
+  facility: [],
 };
 
 const authReducer = createSlice({
@@ -64,6 +65,9 @@ const authReducer = createSlice({
     setValue: (state, action) => {
       state.value = Array.isArray(action.payload) ? action.payload : [];
     },
+    setFacility: (state, action) => {
+      state.facility = Array.isArray(action.payload) ? action.payload : [];
+    },
   }
 });
 
@@ -82,6 +86,7 @@ export const {
   setDenialCategory,
   setPayer,
   setValue,
+  setFacility,
 } = authReducer.actions;
 
 export default authReducer.reducer;

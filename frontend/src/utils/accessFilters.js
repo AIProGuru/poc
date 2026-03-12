@@ -28,6 +28,62 @@ const parseValueRange = (label) => {
   return null;
 };
 
+const normalizeFacilityEntry = (entry) => {
+  if (!entry) return null;
+  if (typeof entry === 'string') {
+    const taxMatch = entry.match(/tax\s*id[:\s]*([0-9-]+)/i);
+    const npiMatch = entry.match(/npi[:\s]*([0-9-]+)/i);
+    return {
+      name: entry,
+      taxId: taxMatch ? taxMatch[1] : '',
+      npi: npiMatch ? npiMatch[1] : '',
+    };
+  }
+  if (typeof entry === 'object') {
+    const taxId =
+      entry.taxId ||
+      entry.taxID ||
+      entry.tax_id ||
+      entry.facilityTaxId ||
+      entry.facilityTaxID ||
+      entry.FacilityTaxID ||
+      entry.FedTaxID ||
+      '';
+    const npi =
+      entry.npi ||
+      entry.NPI ||
+      entry.facilityNpi ||
+      entry.facilityNPI ||
+      entry.ProvNPI ||
+      entry.BillProvNPI ||
+      '';
+    const name =
+      entry.name ||
+      entry.facilityName ||
+      entry.FacilityName ||
+      entry.PayerName ||
+      entry.label ||
+      '';
+    return { name, taxId, npi };
+  }
+  return null;
+};
+
+const normalizeFacilityList = (facilityList) => {
+  if (!Array.isArray(facilityList)) return [];
+  const normalized = facilityList
+    .map((entry) => normalizeFacilityEntry(entry))
+    .filter((entry) => entry && (entry.taxId || entry.npi || entry.name));
+  if (!normalized.length) return [];
+  const seen = new Set();
+  return normalized.filter((entry) => {
+    const key = `${entry.taxId || ''}::${entry.npi || ''}::${entry.name || ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 export const buildAccessExtra = (baseExtra, access, role) => {
   if (isPrivilegedRole(role)) return { ...(baseExtra || {}) };
   const extra = { ...(baseExtra || {}) };
@@ -54,6 +110,12 @@ export const buildAccessExtra = (baseExtra, access, role) => {
       .filter((range) => range && !Number.isNaN(range.min));
     if (ranges.length > 0) {
       extra.AllowedValueRanges = ranges;
+    }
+  }
+  if (Array.isArray(access?.facility) && access.facility.length > 0) {
+    const facilities = normalizeFacilityList(access.facility);
+    if (facilities.length > 0) {
+      extra.AllowedFacilities = facilities;
     }
   }
   return extra;
