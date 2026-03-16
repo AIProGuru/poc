@@ -79,7 +79,7 @@ const UserRoleCell = ({ row, onUpdateRole, theme }) => {
 
 const UserManagement = ({ embedded = false, view = 'actions' }) => {
   const navigate = useNavigate();
-  const isTableView = view === 'table';
+  const isTableView = view === 'table' || view === 'actions';
   const isAddView = view === 'add';
   const [assignFilter, setAssignFilter] = useState({
     client: MODULE_OPTIONS,
