@@ -80,7 +80,6 @@ const UserRoleCell = ({ row, onUpdateRole, theme }) => {
 const UserManagement = ({ embedded = false, view = 'actions' }) => {
   const navigate = useNavigate();
   const isTableView = view === 'table';
-  const isActionsView = view === 'actions';
   const isAddView = view === 'add';
   const [assignFilter, setAssignFilter] = useState({
     client: MODULE_OPTIONS,
@@ -113,7 +112,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [showAdminActions, setShowAdminActions] = useState(view === 'actions');
   const [showSkillsets, setShowSkillsets] = useState(true);
   const tableRef = React.useRef(null);
 
@@ -215,8 +213,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     const parts = [];
     if (facility.name) parts.push(facility.name);
     if (tenantLabel) parts.push(tenantLabel);
-    if (facility.taxId) parts.push(`TaxID ${facility.taxId}`);
-    if (facility.npi) parts.push(`NPI ${facility.npi}`);
     return parts.join(" · ");
   };
 
@@ -499,153 +495,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       console.error('Error updating user:', error);
     });
   };
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-
-  // Add the EditUserModal component
-  const EditUserModal = ({ open, onClose, userData, theme }) => {
-    const [formData, setFormData] = React.useState({
-      firstname: userData?.firstname || '',
-      lastname: userData?.lastname || '',
-      email: userData?.email || '',
-      role: getRoleValue(userData?.role),
-      status: userData?.status || 0,
-      id: userData?.id
-    });
-
-    React.useEffect(() => {
-      if (userData) {
-        setFormData({
-          firstname: userData.firstname || '',
-          lastname: userData.lastname || '',
-          email: userData.email || '',
-          role: getRoleValue(userData.role),
-          status: userData.status || 0,
-          id: userData.id
-        });
-      }
-    }, [userData]);
-
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      try {
-        await handleUserUpdate(formData.id, formData);
-        onClose();
-      } catch (error) {
-        console.error('Error updating user:', error);
-        toast.error('Failed to update user');
-      }
-    };
-
-    return (
-      <Modal
-        open={open}
-        onClose={onClose}
-        aria-labelledby="edit-user-modal"
-      >
-        <Box className={`absolute w-[600px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 rounded-xl ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}>
-          <form onSubmit={handleSubmit} className={`flex p-9 rounded-xl flex-col gap-4 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-800'}`}>
-            <div className='text-[32px] font-semibold text-center'>
-              Edit User
-            </div>
-
-            <div className='flex gap-2'>
-              <div className='flex flex-col gap-[6px] w-1/2'>
-                <span className='text-[14px] font-medium'>First Name</span>
-                <input
-                  type="text"
-                  id="edit-first-name"
-                  name="edit-first-name"
-                  className="text-sm rounded-lg block w-full py-2 px-3 border border-gray-600 bg-transparent"
-                  value={formData.firstname}
-                  onChange={(e) => setFormData({ ...formData, firstname: e.target.value })}
-                />
-              </div>
-              <div className='flex flex-col gap-[6px] w-1/2'>
-                <span className='text-[14px] font-medium'>Last Name</span>
-                <input
-                  type="text"
-                  id="edit-last-name"
-                  name="edit-last-name"
-                  className="text-sm rounded-lg block w-full py-2 px-3 border border-gray-600 bg-transparent"
-                  value={formData.lastname}
-                  onChange={(e) => setFormData({ ...formData, lastname: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className='flex flex-col gap-2'>
-              <span>Email</span>
-              <input
-                type="email"
-                id="edit-email"
-                name="edit-email"
-                className="text-sm rounded-lg block w-full py-2 px-3 border border-gray-600 bg-transparent"
-                value={formData.email}
-                readOnly
-              />
-            </div>
-
-            <div className='flex flex-col gap-2'>
-              <span>Role</span>
-              <select
-                id="edit-role"
-                name="edit-role"
-                className={`text-sm rounded-lg block w-full py-2 px-3 border border-gray-600 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'
-                  }`}
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              >
-                {ROLE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className='flex flex-col gap-2'>
-              <span>Status</span>
-              <div className={`relative p-1 rounded-lg flex w-full ${theme === 'dark' ? 'bg-[#1E1E1E]' : 'bg-gray-100'}`}>
-                {['Active', "Inactive"].map((status, index) => (
-                  <button
-                    key={status}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, status: index })}
-                    className={`flex-1 py-2 px-4 rounded-sm ${formData.status === index
-                      ? `${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} ${index === 0 ? 'text-green-600' :
-                        index === 1 ? 'text-orange-400' :
-                          'text-red-600'
-                      }`
-                      : 'text-gray-500'
-                      }`}
-                  >
-                    {status}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className='flex gap-4 mt-6'>
-              <button
-                type="button"
-                className='flex-1 rounded-lg text-[16px] font-semibold bg-[#d1d5db] text-[#3b3f46] py-[10px] border border-solid'
-                onClick={onClose}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className='flex-1 rounded-lg text-[16px] font-semibold py-[10px] border border-solid text-white bg-[#3b3f46]'
-              >
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </Box>
-      </Modal>
-    );
-  };
 
   const addUser_backend = async (e) => {
     e.preventDefault();
@@ -906,9 +755,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   );
 
 
-  useEffect(() => {
-    setShowAdminActions(view === 'actions');
-  }, [view]);
 
   useEffect(() => {
     if (!isAddView) return;
@@ -933,55 +779,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
             {isAddView ? 'User Management > Add New User' : 'User Management'}
           </h1>
         </div>
-        {isActionsView && (
-          <div className={`rounded-2xl ${theme === 'dark' ? 'bg-[#27282D]' : 'bg-white'} p-4`}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Admin Actions</h2>
-              <button
-                type="button"
-                onClick={() => setShowAdminActions((prev) => !prev)}
-                className={`h-8 w-8 rounded-full flex items-center justify-center ${theme === 'dark' ? 'text-white/70 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'
-                  }`}
-                aria-label="Toggle admin actions"
-              >
-                <span className="text-lg leading-none">{showAdminActions ? "-" : "+"}</span>
-              </button>
-            </div>
-            <div className={`mt-3 border-t ${theme === 'dark' ? 'border-[#CDCDCD]' : 'border-slate-200'}`} />
-            {showAdminActions && (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/management/users/new');
-                  }}
-                  className={`rounded-xl border px-3 py-6 text-left transition ${theme === 'dark'
-                    ? 'bg-[#FFFFFF]/10 border-white/5 shadow-[0_4px_4px_rgba(0,0,0,0.25)] hover:border-[#3A465B]'
-                    : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                    }`}
-                >
-                  <p className={`font-inter font-medium text-[18px] leading-[100%] tracking-[0%] ${theme === 'dark' ? 'text-[#0E7D81]' : 'text-slate-400'}`}>
-                    User Management
-                  </p>
-                  <p className="mt-3 font-inter font-bold text-xl leading-none tracking-normal">Add New User</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/management/users')}
-                  className={`rounded-xl border px-4 py-3 text-left transition ${theme === 'dark'
-                    ? 'bg-[#FFFFFF]/10 border-white/5 shadow-[0_4px_4px_rgba(0,0,0,0.25)] hover:border-[#3A465B]'
-                    : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-                    }`}
-                >
-                  <p className={`font-inter font-medium text-[18px] leading-[100%] tracking-[0%] ${theme === 'dark' ? 'text-[#0E7D81]' : 'text-slate-400'}`}>
-                    User Management
-                  </p>
-                  <p className="mt-3 font-inter font-bold text-xl leading-none tracking-normal">Manage Users</p>
-                </button>
-              </div>
-            )}
-          </div>
-        )}
         {isTableView && (
           <>
             <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4">
@@ -1091,17 +888,12 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                       </th>
                       <th scope="col" className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[10px] `}>
                         <div className="flex items-center gap-2">
-                          Actions
-                        </div>
-                      </th>
-                      <th scope="col" className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[10px] `}>
-                        <div className="flex items-center gap-2">
                           Access
                         </div>
                       </th>
-                      <th scope="col" className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[10px] `}>
+                      <th scope="col" className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[120px] `}>
                         <div className="flex items-center gap-2">
-                          Edit
+                          Actions
                         </div>
                       </th>
                     </tr>
@@ -1169,33 +961,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-
-                          <div
-                            className={` cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg mx-auto ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
-                            onClick={() => {
-                              const currentUser = users.find(u => u.id === row.id);
-                              setUpdate_user_id(row.id);
-                              setUser({
-                                tenant: currentUser.tenant || "",
-                                client: currentUser.client || [],
-                                facility: currentUser.facility || [],
-                                clientState: currentUser.clientState || [],
-                                denialCategory: currentUser.denialCategory || [],
-                                payer: currentUser.payer || [],
-                                value: currentUser.value || [],
-                              });
-                              setShowPermissionModal(true);
-                            }}
-                          >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M8.84006 2.4008L3.36673 8.19413C3.16006 8.41413 2.96006 8.84746 2.92006 9.14746L2.6734 11.3075C2.58673 12.0875 3.14673 12.6208 3.92006 12.4875L6.06673 12.1208C6.36673 12.0675 6.78673 11.8475 6.9934 11.6208L12.4667 5.82746C13.4134 4.82746 13.8401 3.68746 12.3667 2.29413C10.9001 0.914129 9.78673 1.4008 8.84006 2.4008Z" stroke="#686B7E" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M7.92676 3.36719C8.21342 5.20719 9.70676 6.61385 11.5601 6.80052" stroke="#686B7E" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M2 14.668H14" stroke="#686B7E" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="relative group">
                             <div className="flex items-center justify-start gap-1 flex-wrap max-w-[150px]">
                               {row.client && row.client.length > 0 ? (
@@ -1258,14 +1023,24 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
-                            {/* Edit Button */}
+                            {/* Permissions Button */}
                             <div
                               className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
                               onClick={() => {
-                                setUser(row);
-                                setShowEditModal(true);
+                                const currentUser = users.find(u => u.id === row.id) || row;
+                                setUpdate_user_id(row.id);
+                                setUser({
+                                  tenant: currentUser.tenant || "",
+                                  client: currentUser.client || [],
+                                  facility: currentUser.facility || [],
+                                  clientState: currentUser.clientState || [],
+                                  denialCategory: currentUser.denialCategory || [],
+                                  payer: currentUser.payer || [],
+                                  value: currentUser.value || [],
+                                });
+                                setShowPermissionModal(true);
                               }}
-                              title="Edit User"
+                              title="Edit Permissions"
                             >
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M8.84 2.4L3.37 8.19C3.16 8.41 2.96 8.85 2.92 9.15L2.67 11.31C2.59 12.09 3.15 12.62 3.92 12.49L6.07 12.12C6.37 12.07 6.79 11.85 6.99 11.62L12.47 5.83C13.41 4.83 13.84 3.69 12.37 2.29C10.9 0.91 9.79 1.4 8.84 2.4Z"
@@ -1396,16 +1171,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
             </div>
           </>
         )}
-        {showEditModal && (
-          <EditUserModal
-            open={showEditModal}
-            onClose={() => setShowEditModal(false)}
-            userData={user}
-            onSave={setUser}
-            theme={theme}
-          />
-        )}
-
         {showDeleteModal && <DeleteConfirmationModal />}
 
         {/* <div className="flex items-center gap-2 justify-start mb-3 pl-3">
