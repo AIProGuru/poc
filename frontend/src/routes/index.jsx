@@ -37,7 +37,9 @@ import TenantDetails from "../pages/TenantDetails";
 import Edit_client from "../pages/Client/Edit_client";
 import demoRoutes from "./demo";
 import AccountSettings from "../pages/AccountSettings";
-import { ALL_ROLES, CLIENT_MANAGEMENT_ROLES, USER_MANAGEMENT_ROLES } from "../utils/roles";
+import AppealTemplates from "../pages/AppealTemplates";
+import GovernanceManagement from "../pages/GovernanceManagement";
+import { ALL_ROLES, CLIENT_MANAGEMENT_ROLES, GOVERNANCE_MANAGEMENT_ROLES, USER_MANAGEMENT_ROLES } from "../utils/roles";
 
 const AUTH_ROLES = ALL_ROLES;
 
@@ -129,6 +131,14 @@ const routesConfig = [
   {
     path: "/client/:id/edit",
     element: <PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={Edit_client} />,
+  },
+  {
+    path: "/governance-management",
+    element: <PrivateRoute role={GOVERNANCE_MANAGEMENT_ROLES} element={GovernanceManagement} />,
+  },
+  {
+    path: "/appeal-templates",
+    element: <PrivateRoute role={GOVERNANCE_MANAGEMENT_ROLES} element={AppealTemplates} />,
   },
   {
     // path: "/home",

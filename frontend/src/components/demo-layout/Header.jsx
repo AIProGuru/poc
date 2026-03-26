@@ -11,7 +11,7 @@ import {
   Switch,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { canAccessClientManagement, canAccessUserManagement } from "../../utils/roles";
+import { canAccessClientManagement, canAccessGovernanceManagement, canAccessUserManagement } from "../../utils/roles";
 
 const Header = () => {
   const role = useSelector((state) => state.auth.role);
@@ -344,6 +344,96 @@ const Header = () => {
 
                   <span className={`text-[14px] font-regular font-inter ${theme === "dark" ? "bg-[#151619] text-white" : "bg-white text-slate-900"}`}>
                     Client Management
+                  </span>
+                </div>
+              )}
+
+              {canAccessGovernanceManagement(role) && (
+                <div
+                  className={`flex items-center gap-2 h-[48px] cursor-pointer pl-2 ${theme === "dark" ? "bg-[#151619] text-white" : "bg-white text-slate-900"}`}
+                  onClick={() => {
+                    handleClose();
+                    dispatch(setAppTitle("Governance Management"));
+                    navigate("/governance-management");
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M10.0003 2.5L15.8337 5.41667V9.79167C15.8337 13.025 13.342 16.05 10.0003 17.5C6.65866 16.05 4.16699 13.025 4.16699 9.79167V5.41667L10.0003 2.5Z"
+                      stroke="#686B7E"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M8.33301 9.58301L9.37467 10.6247L11.8747 8.12467"
+                      stroke="#686B7E"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+
+                  <span className={`text-[14px] font-regular font-inter ${theme === "dark" ? "bg-[#151619] text-white" : "bg-white text-slate-900"}`}>
+                    Governance Management
+                  </span>
+                </div>
+              )}
+
+              {canAccessGovernanceManagement(role) && (
+                <div
+                  className={`flex items-center gap-2 h-[48px] cursor-pointer pl-2 ${theme === "dark" ? "bg-[#151619] text-white" : "bg-white text-slate-900"}`}
+                  onClick={() => {
+                    handleClose();
+                    dispatch(setAppTitle("Appeal Templates"));
+                    navigate("/appeal-templates");
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M6.66699 2.5H11.667L15.8337 6.66667V15.8333C15.8337 16.2936 15.4606 16.6667 15.0003 16.6667H6.66699C6.20675 16.6667 5.83366 16.2936 5.83366 15.8333V3.33333C5.83366 2.8731 6.20675 2.5 6.66699 2.5Z"
+                      stroke="#686B7E"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M11.667 2.5V6.66667H15.8337"
+                      stroke="#686B7E"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M8.33301 10H13.333"
+                      stroke="#686B7E"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M8.33301 12.916H11.6663"
+                      stroke="#686B7E"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+
+                  <span className={`text-[14px] font-regular font-inter ${theme === "dark" ? "bg-[#151619] text-white" : "bg-white text-slate-900"}`}>
+                    Appeal Templates
                   </span>
                 </div>
               )}

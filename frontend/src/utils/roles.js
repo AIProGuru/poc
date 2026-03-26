@@ -51,6 +51,11 @@ export const CLIENT_MANAGEMENT_ROLES = [
   LEGACY_ROLE_INTERNAL_ADMIN,
 ];
 
+export const GOVERNANCE_MANAGEMENT_ROLES = [
+  ROLE_INTERNAL_ADMIN,
+  LEGACY_ROLE_INTERNAL_ADMIN,
+];
+
 export const WORKLIST_ROLES = [
   ROLE_MANAGER,
   ROLE_STANDARD,
@@ -80,6 +85,8 @@ export const getRoleLabel = (role) => ROLE_LABELS[role] || ROLE_LABELS[normalize
 export const canAccessUserManagement = (role) => USER_MANAGEMENT_ROLES.includes(role) || USER_MANAGEMENT_ROLES.includes(normalizeRole(role));
 
 export const canAccessClientManagement = (role) => CLIENT_MANAGEMENT_ROLES.includes(role) || CLIENT_MANAGEMENT_ROLES.includes(normalizeRole(role));
+
+export const canAccessGovernanceManagement = (role) => GOVERNANCE_MANAGEMENT_ROLES.includes(role) || GOVERNANCE_MANAGEMENT_ROLES.includes(normalizeRole(role));
 
 export const canAccessWorklists = (role) => WORKLIST_ROLES.includes(role) || WORKLIST_ROLES.includes(normalizeRole(role));
 
