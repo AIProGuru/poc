@@ -13,10 +13,20 @@ import {
   setRole,
   setFirstname,
   setLastname,
+  setEmail,
   setPermission,
   setTenant,
   setAppType,
+  setModules,
+  setDenialCategory,
+  setPayer,
+  setValue,
+  setFacility,
 } from "../redux/reducers/auth.reducer";
+import { setType, resetViewState } from "../redux/reducers/app.reducer";
+import { setSelectedTags, setTags, setAllPayers } from "../redux/reducers/tag.reducer";
+import { setCount, setPart1Count, setPart2Count, setRecovery } from "../redux/reducers/count.reducer";
+import { setCategoryLabel, setCategoryValue } from "../redux/reducers/statistics.reducer";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -27,6 +37,15 @@ export default function SignIn() {
   const [error, setError] = useState("");
 
   const { authenticate } = useContext(AccountContext);
+  const resolveAppType = (userData = {}) => {
+    const rawTenant = `${userData.tenant || userData.product || userData.basePath || ""}`.toLowerCase();
+    if (rawTenant === "rebound") return 0;
+    if (rawTenant === "pilotcustomer") return 1;
+    if (rawTenant === "betacustomer") return 3;
+    if (rawTenant === "demo") return 2;
+    const rawType = userData.appType ?? userData.type;
+    return Number.isFinite(rawType) ? rawType : null;
+  };
 
   const resolveLandingPath = (userData = {}) => {
     const rawTenant = `${userData.tenant || userData.product || userData.basePath || ""}`.toLowerCase();
@@ -54,15 +73,37 @@ export default function SignIn() {
           setLoading(false)
         }
         else{
+        const userData = userDoc.data();
+        const resolvedType = resolveAppType(userData);
+        dispatch(resetViewState());
+        dispatch(setTags([]));
+        dispatch(setAllPayers([]));
+        dispatch(setSelectedTags([]));
+        dispatch(setCount([]));
+        dispatch(setPart1Count([]));
+        dispatch(setPart2Count([]));
+        dispatch(setRecovery([]));
+        dispatch(setCategoryLabel([]));
+        dispatch(setCategoryValue([]));
         dispatch(setAuth(true));
-        dispatch(setFirstname(userDoc.data().firstname));
-        dispatch(setLastname(userDoc.data().lastname));
-        dispatch(setRole(userDoc.data().role));
-        dispatch(setTenant(userDoc.data().tenant ?? userDoc.data().product ?? userDoc.data().basePath ?? ""));
-        dispatch(setAppType(userDoc.data().appType ?? userDoc.data().type ?? null));
+        dispatch(setFirstname(userData.firstname ?? ""));
+        dispatch(setLastname(userData.lastname ?? ""));
+        dispatch(setEmail(userData.email ?? ""));
+        dispatch(setRole(userData.role ?? ""));
+        dispatch(setTenant(userData.tenant ?? userData.product ?? userData.basePath ?? ""));
+        dispatch(setAppType(userData.appType ?? userData.type ?? null));
+        dispatch(setModules(userData.client ?? []));
+        dispatch(setDenialCategory(userData.denialCategory ?? []));
+        dispatch(setPayer(userData.payer ?? []));
+        dispatch(setValue(userData.value ?? []));
+        dispatch(setFacility(userData.facility ?? []));
+        if (Number.isFinite(resolvedType)) {
+          dispatch(setType(resolvedType));
+        }
         dispatch(setPermission(""));
-        dispatch(setUsername(userDoc.data().firstname ?? ""));
-        navigate(resolveLandingPath(userDoc.data()));
+        dispatch(setUsername(userData.firstname ?? ""));
+        setLoading(false);
+        navigate(resolveLandingPath(userData));
         toast.success("Login Successful!");
         }
       } else {

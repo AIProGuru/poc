@@ -50,6 +50,7 @@ import {
   setStatisticsLoading,
   setPayerLoading,
   setRecoveryLoading,
+  resetViewState,
 } from "./redux/reducers/app.reducer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -94,6 +95,7 @@ function App() {
   const dispatch = useDispatch();
   const routes = useRoutes(routesConfig);
   const isLoading = useSelector((state) => state.app.loading);
+  const bootstrapLoading = useSelector((state) => state.app.bootstrapLoading);
   const getAuth = useSelector((state) => state.auth.isAuthenticated);
   const authReady = useSelector((state) => state.auth.authReady);
   const tenant = useSelector((state) => state.auth.tenant);
@@ -121,6 +123,7 @@ function App() {
   }, [dispatch]);
 
   const clearTenantState = useCallback(() => {
+    dispatch(resetViewState());
     dispatch(setTableData([]));
     dispatch(setTags([]));
     dispatch(setAllPayers([]));
@@ -143,16 +146,6 @@ function App() {
     dispatch(setRemark(''));
     dispatch(setProcedure(''));
     dispatch(setPOS(''));
-    dispatch(setTabIndex(0));
-    dispatch(setLoading(0));
-    dispatch(setPart1Loading(false));
-    dispatch(setPart2Loading(false));
-    dispatch(setTableLoading(false));
-    dispatch(setTagLoading(false));
-    dispatch(setCountLoading(false));
-    dispatch(setStatisticsLoading(false));
-    dispatch(setPayerLoading(false));
-    dispatch(setRecoveryLoading(false));
   }, [dispatch]);
 
   useEffect(() => {
@@ -331,8 +324,8 @@ function App() {
 
   const isMaintaining = MAINTAINING === "true";
   const publicPath = isPublicPath(location.pathname);
-  const shouldShowLoader = !isMaintaining && !publicPath && isLoading !== 0;
-  const shouldShowRoutes = !isMaintaining && (publicPath || isLoading === 0);
+  const shouldShowLoader = !isMaintaining && !publicPath && (isLoading !== 0 || bootstrapLoading);
+  const shouldShowRoutes = !isMaintaining && (publicPath || (isLoading === 0 && !bootstrapLoading));
 
   return (
     <div className="w-full h-screen">

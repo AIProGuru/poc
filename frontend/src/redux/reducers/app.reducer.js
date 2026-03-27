@@ -10,7 +10,7 @@ const initialState = {
   tableData: [],
   tabIndex: 0,
   extraFilter: {},
-  title: "Dashboard",
+  title: "Home",
   part1Loading: false,
   part2Loading: false,
   tableLoading: false,
@@ -20,6 +20,7 @@ const initialState = {
   statisticsLoading: true,
   payerLoading: true,
   loading: 0,
+  bootstrapLoading: false,
   type: 0,
   models: [],
   code: '',
@@ -103,6 +104,9 @@ const appReducer = createSlice({
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
+    setBootstrapLoading: (state, action) => {
+      state.bootstrapLoading = action.payload;
+    },
     setType: (state, action) => {
       state.type = action.payload;
     },
@@ -164,6 +168,35 @@ const appReducer = createSlice({
       state.tableLoading = true;
       state.part1Loading = true;
       state.part2Loading = true;
+    },
+    resetViewState: (state) => {
+      state.startDate = null;
+      state.endDate = null;
+      state.currentPage = 1;
+      state.totalPage = null;
+      state.keyword = '';
+      state.tableData = [];
+      state.tabIndex = 0;
+      state.extraFilter = { IncludeAllCategories: true };
+      state.title = "Home";
+      state.part1Loading = false;
+      state.part2Loading = false;
+      state.tableLoading = false;
+      state.recoveryLoading = false;
+      state.tagLoading = false;
+      state.countLoading = false;
+      state.statisticsLoading = false;
+      state.payerLoading = false;
+      state.loading = 0;
+      state.bootstrapLoading = false;
+      state.models = [];
+      state.code = '';
+      state.remark = '';
+      state.procedure = '';
+      state.pos = '';
+      state.selectedClaimIds = [];
+      state.navGrouped = {};
+      state.navPendCounts = {};
     }
   },
 });
@@ -190,6 +223,7 @@ export const {
   setPart2Loading,
   setTableLoading,
   setLoading,
+  setBootstrapLoading,
   setType,
   setTagLoading,
   setCountLoading,
@@ -205,7 +239,8 @@ export const {
   setNavGrouped,
   setNavPendCounts,
   clearSelectedClaimIds,
-  setTabDefaults
+  setTabDefaults,
+  resetViewState,
 } = appReducer.actions;
 
 export default appReducer.reducer;

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useLayoutEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -258,6 +258,10 @@ const Sidebar = () => {
     []
   );
   const canSeeWorklists = canAccessWorklists(role);
+  const navBootstrapReady = useMemo(() => {
+    if (!canSeeWorklists) return true;
+    return Object.keys(navGrouped).length > 0 || Object.keys(navPendCounts).length > 0;
+  }, [canSeeWorklists, navGrouped, navPendCounts]);
 
   const formatCount = (value) => {
     if (value === null || value === undefined) return value;
@@ -651,7 +655,7 @@ const Sidebar = () => {
     });
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const current = navItems.find((nav) => nav.id === selectedNav);
     if (!current) return;
     dispatch(setAppTitle(current.title));
@@ -709,7 +713,9 @@ const Sidebar = () => {
                 ? parentBadge
                 : childSum > 0
                   ? childSum
-                  : item.badge;
+                  : navBootstrapReady
+                    ? item.badge
+                    : null;
             const navStateClass = isActive
               ? isDark
                 ? "bg-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
@@ -794,7 +800,7 @@ const Sidebar = () => {
                       const childBadge =
                         navBadges[child.id] ??
                         child.badge ??
-                        (navBadges[item.id] ?? 0);
+                        (navBootstrapReady ? navBadges[item.id] ?? null : null);
                       return (
                         <button
                           type="button"
@@ -806,14 +812,16 @@ const Sidebar = () => {
                           onClick={() => handleChildClick(item, child)}
                         >
                           <span className="truncate" title={child.title}>{child.title}</span>
-                          <span
-                            className={`ml-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${childIsActive
-                                ? (isDark ? 'bg-white/20 text-white' : 'bg-white text-slate-900')
-                                : (isDark ? 'bg-[#1F2231] text-[rgba(244,244,244,0.5)]' : 'bg-slate-200 text-slate-700')
-                              }`}
-                          >
-                            {formatCount(childBadge)}
-                          </span>
+                          {childBadge !== null && childBadge !== undefined && (
+                            <span
+                              className={`ml-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${childIsActive
+                                  ? (isDark ? 'bg-white/20 text-white' : 'bg-white text-slate-900')
+                                  : (isDark ? 'bg-[#1F2231] text-[rgba(244,244,244,0.5)]' : 'bg-slate-200 text-slate-700')
+                                }`}
+                            >
+                              {formatCount(childBadge)}
+                            </span>
+                          )}
                         </button>
                       );
                     })}

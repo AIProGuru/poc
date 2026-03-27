@@ -14,9 +14,9 @@ export const history = createBrowserHistory();
 
 // Persist configuration
 const persistConfig = {
-  key: 'root',
+  key: 'app',
   storage,
-  whitelist: ['app'] // Only persist app reducer which contains theme
+  whitelist: ['theme']
 };
 
 // Create persisted app reducer

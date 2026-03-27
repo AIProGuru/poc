@@ -7,6 +7,7 @@ import {
   setPart2Loading,
   setTableLoading,
   setType,
+  setBootstrapLoading,
   setTagLoading,
   setCountLoading,
   setStatisticsLoading,
@@ -16,8 +17,6 @@ import {
   setModels,
   setNavGrouped,
   setNavPendCounts,
-  increaseLoading,
-  decreaseLoading,
   setTableData,
   setExtraFilter,
   setCurrentPage,
@@ -136,12 +135,14 @@ export const ApiEndpointProvider = ({ children }) => {
     if (!authReady) {
       // Avoid selecting a tenant-specific API before auth is resolved.
       setApiUrl('');
+      dispatch(setBootstrapLoading(false));
       didInitRef.current = false;
       bootstrapRef.current = { key: '', id: 0 };
       return;
     }
     if (!tenantValue && !hasTenantRoute && !hasTenantScopedAdminRoute) {
       setApiUrl('');
+      dispatch(setBootstrapLoading(false));
       didInitRef.current = false;
       bootstrapRef.current = { key: '', id: 0 };
       return;
@@ -341,6 +342,7 @@ export const ApiEndpointProvider = ({ children }) => {
     bootstrapRef.current.key = bootstrapKey;
     const requestId = ++bootstrapRef.current.id;
 
+    dispatch(setBootstrapLoading(true));
     dispatch(setPart1Loading(true));
     dispatch(setPart2Loading(true));
     dispatch(setTableLoading(true));
@@ -352,7 +354,6 @@ export const ApiEndpointProvider = ({ children }) => {
     dispatch(setTabIndex(0));
 
     const navBadgeTabIndexes = [6, 2, 1, 4];
-    dispatch(increaseLoading());
     axios
       .post(`${apiUrl}/platform_bootstrap`, {
         tabIndexes: navBadgeTabIndexes,
@@ -417,6 +418,7 @@ export const ApiEndpointProvider = ({ children }) => {
         dispatch(setStatisticsLoading(false));
         dispatch(setPayerLoading(false));
         dispatch(setRecoveryLoading(false));
+        dispatch(setBootstrapLoading(false));
       })
       .catch(() => {
         if (bootstrapRef.current.id !== requestId || bootstrapRef.current.key !== bootstrapKey) {
@@ -427,9 +429,7 @@ export const ApiEndpointProvider = ({ children }) => {
         dispatch(setStatisticsLoading(false));
         dispatch(setPayerLoading(false));
         dispatch(setRecoveryLoading(false));
-      })
-      .finally(() => {
-        dispatch(decreaseLoading());
+        dispatch(setBootstrapLoading(false));
       });
   }, [apiUrl, accessExtra, authReady, dispatch])
 
