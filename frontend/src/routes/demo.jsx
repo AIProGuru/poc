@@ -1,24 +1,21 @@
+import { Suspense, lazy } from "react";
 import PrivateRoute from "../components/private-routes/PrivateRoutes";
-import ReboundDash from "../components/demo-layout/rebound_dash";
-import ReboundStatistics from "../components/demo-layout/rebound_dash/ReboundStatistics";
-import ReboundDetailView from "../components/demo-layout/rebound_dash/ReboundDetailView";
-import ArIntel from "../components/demo-layout/rebound_dash/ArIntel";
-import AIDetail from "../components/demo-layout/rebound_dash/AIDetail";
-import RCMGPT from "../components/demo-layout/rebound_dash/RCMGPT";
-import DemoDash from "../demo/DemoDash";
-import DetailView from "../demo/DetailView";
 import { ALL_ROLES } from "../utils/roles";
 
+const DemoDash = lazy(() => import("../demo/DemoDash"));
+const DetailView = lazy(() => import("../demo/DetailView"));
+
 const AUTH_ROLES = ALL_ROLES;
+const suspense = (element) => <Suspense fallback={null}>{element}</Suspense>;
 
 const demoRoutes = [
   {
     path: "",
-    element: <DemoDash />
+    element: suspense(<DemoDash />)
   },
   {
     path: "detail/:token",
-    element: <PrivateRoute role={AUTH_ROLES} element={DetailView} />
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={DetailView} />)
   },
 ];
 

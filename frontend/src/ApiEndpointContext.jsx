@@ -44,6 +44,34 @@ import { useDispatch, useSelector } from 'react-redux';
 
 const ApiEndpointContext = createContext();
 const LAST_APP_TYPE_KEY = 'lastAppType';
+const LAST_TENANT_BASE_KEY = 'lastTenantBase';
+
+const readStoredTenantBase = () => {
+  try {
+    const value = localStorage.getItem(LAST_TENANT_BASE_KEY);
+    return ['rebound', 'pilotcustomer', 'betacustomer', 'demo'].includes(value || '')
+      ? value
+      : '';
+  } catch (err) {
+    return '';
+  }
+};
+
+const persistTenantBase = (base) => {
+  try {
+    localStorage.setItem(LAST_TENANT_BASE_KEY, base);
+  } catch (err) {
+    // Ignore storage write errors.
+  }
+};
+
+const isTenantScopedAdminPath = (pathname = '') =>
+  pathname.startsWith('/management') ||
+  pathname.startsWith('/clientmanagement') ||
+  pathname.startsWith('/client/') ||
+  pathname.startsWith('/governance-management') ||
+  pathname.startsWith('/appeal-templates') ||
+  pathname.startsWith('/account-settings');
 
 export const ApiEndpointProvider = ({ children }) => {
   const location = useLocation();
@@ -100,17 +128,28 @@ export const ApiEndpointProvider = ({ children }) => {
 
   useEffect(() => {
     const tenantValue = `${tenant || ""}`.toLowerCase();
+    const pathBase = (location.pathname.split('/')[1] || '').toLowerCase();
+    const hasTenantRoute =
+      pathBase === 'rebound' || pathBase === 'pilotcustomer' || pathBase === 'betacustomer' || pathBase === 'demo';
+    const storedTenantBase = readStoredTenantBase();
+    const hasTenantScopedAdminRoute = isTenantScopedAdminPath(location.pathname);
     if (!authReady) {
       // Avoid selecting a tenant-specific API before auth is resolved.
       setApiUrl('');
       didInitRef.current = false;
+      bootstrapRef.current = { key: '', id: 0 };
       return;
     }
-    const pathBase = (location.pathname.split('/')[1] || '').toLowerCase();
+    if (!tenantValue && !hasTenantRoute && !hasTenantScopedAdminRoute) {
+      setApiUrl('');
+      didInitRef.current = false;
+      bootstrapRef.current = { key: '', id: 0 };
+      return;
+    }
     const desiredBase =
       tenantValue === 'rebound' || tenantValue === 'pilotcustomer' || tenantValue === 'betacustomer' || tenantValue === 'demo'
         ? tenantValue
-        : (pathBase === 'rebound' || pathBase === 'pilotcustomer' || pathBase === 'betacustomer' || pathBase === 'demo')
+        : hasTenantRoute
           ? pathBase
           : '';
 
@@ -125,6 +164,7 @@ export const ApiEndpointProvider = ({ children }) => {
         setApiUrl(desiredUrl);
         dispatch(setType(desiredBase === 'rebound' ? 0 : desiredBase === 'pilotcustomer' ? 1 : desiredBase === 'betacustomer' ? 3 : 2));
         didInitRef.current = true;
+        persistTenantBase(desiredBase);
         try {
           localStorage.setItem(LAST_APP_TYPE_KEY, String(desiredBase === 'rebound' ? 0 : desiredBase === 'pilotcustomer' ? 1 : desiredBase === 'betacustomer' ? 3 : 2));
         } catch (err) {
@@ -138,6 +178,7 @@ export const ApiEndpointProvider = ({ children }) => {
         setApiUrl(`${SERVER_URL}/api/v1/rebound`);
         dispatch(setType(0));
         didInitRef.current = true;
+        persistTenantBase('rebound');
         try {
           localStorage.setItem(LAST_APP_TYPE_KEY, '0');
         } catch (err) {
@@ -149,6 +190,7 @@ export const ApiEndpointProvider = ({ children }) => {
         setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`);
         dispatch(setType(1));
         didInitRef.current = true;
+        persistTenantBase('pilotcustomer');
         try {
           localStorage.setItem(LAST_APP_TYPE_KEY, '1');
         } catch (err) {
@@ -160,6 +202,7 @@ export const ApiEndpointProvider = ({ children }) => {
         setApiUrl(`${SERVER_URL}/api/v1/betacustomer`);
         dispatch(setType(3));
         didInitRef.current = true;
+        persistTenantBase('betacustomer');
         try {
           localStorage.setItem(LAST_APP_TYPE_KEY, '3');
         } catch (err) {
@@ -171,6 +214,7 @@ export const ApiEndpointProvider = ({ children }) => {
         setApiUrl(`${SERVER_URL}/api/v1/rebound`);
         dispatch(setType(2));
         didInitRef.current = true;
+        persistTenantBase('demo');
         try {
           localStorage.setItem(LAST_APP_TYPE_KEY, '2');
         } catch (err) {
@@ -188,6 +232,7 @@ export const ApiEndpointProvider = ({ children }) => {
       setApiUrl(`${SERVER_URL}/api/v1/rebound`)
       dispatch(setType(0))
       didInitRef.current = true;
+      persistTenantBase('rebound');
       try {
         localStorage.setItem(LAST_APP_TYPE_KEY, '0');
       } catch (err) {
@@ -197,6 +242,7 @@ export const ApiEndpointProvider = ({ children }) => {
       setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
       dispatch(setType(1))
       didInitRef.current = true;
+      persistTenantBase('pilotcustomer');
       try {
         localStorage.setItem(LAST_APP_TYPE_KEY, '1');
       } catch (err) {
@@ -206,6 +252,7 @@ export const ApiEndpointProvider = ({ children }) => {
       setApiUrl(`${SERVER_URL}/api/v1/betacustomer`)
       dispatch(setType(3))
       didInitRef.current = true;
+      persistTenantBase('betacustomer');
       try {
         localStorage.setItem(LAST_APP_TYPE_KEY, '3');
       } catch (err) {
@@ -216,12 +263,31 @@ export const ApiEndpointProvider = ({ children }) => {
       setApiUrl(`${SERVER_URL}/api/v1/rebound`)
       dispatch(setType(2))
       didInitRef.current = true;
+      persistTenantBase('demo');
       try {
         localStorage.setItem(LAST_APP_TYPE_KEY, '2');
       } catch (err) {
         // Ignore storage write errors (private mode, etc.)
       }
-    } else if (location.pathname.startsWith('/management')) {
+    } else if (hasTenantScopedAdminRoute) {
+      if (storedTenantBase === 'pilotcustomer') {
+        setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
+        dispatch(setType(1));
+        didInitRef.current = true;
+        return;
+      }
+      if (storedTenantBase === 'betacustomer') {
+        setApiUrl(`${SERVER_URL}/api/v1/betacustomer`)
+        dispatch(setType(3));
+        didInitRef.current = true;
+        return;
+      }
+      if (storedTenantBase === 'demo') {
+        setApiUrl(`${SERVER_URL}/api/v1/rebound`)
+        dispatch(setType(2));
+        didInitRef.current = true;
+        return;
+      }
       let resolvedType = appType;
       if (resolvedType !== 1 && resolvedType !== 2 && resolvedType !== 3) {
         try {

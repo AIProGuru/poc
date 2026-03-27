@@ -1,46 +1,48 @@
+import { Suspense, lazy } from "react";
 import PrivateRoute from "../components/private-routes/PrivateRoutes";
-import ReboundDash from "../components/demo-layout/rebound_dash";
-import ReboundStatistics from "../components/demo-layout/rebound_dash/ReboundStatistics";
-import ReboundDetailView from "../components/demo-layout/rebound_dash/ReboundDetailView";
-import ArIntel from "../components/demo-layout/rebound_dash/ArIntel";
-import AIDetail from "../components/demo-layout/rebound_dash/AIDetail";
-import RCMGPT from "../components/demo-layout/rebound_dash/RCMGPT";
 import { ALL_ROLES } from "../utils/roles";
 
+const ReboundDash = lazy(() => import("../components/demo-layout/rebound_dash"));
+const ReboundStatistics = lazy(() => import("../components/demo-layout/rebound_dash/ReboundStatistics"));
+const ReboundDetailView = lazy(() => import("../components/demo-layout/rebound_dash/ReboundDetailView"));
+const ArIntel = lazy(() => import("../components/demo-layout/rebound_dash/ArIntel"));
+const AIDetail = lazy(() => import("../components/demo-layout/rebound_dash/AIDetail"));
+
 const AUTH_ROLES = ALL_ROLES;
+const suspense = (element) => <Suspense fallback={null}>{element}</Suspense>;
 
 const reboundRoutes = [
   {
     path: "",
-    element: <PrivateRoute role={AUTH_ROLES} element={ReboundDash} />
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={ReboundDash} />)
   },
   {
     path: ":token",
-    element: <PrivateRoute role={AUTH_ROLES} element={ReboundDash} />
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={ReboundDash} />)
   },
   {
     path: "denials",
-    element: <PrivateRoute role={AUTH_ROLES} element={ReboundDash} />
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={ReboundDash} />)
   },
   {
     path: "denials/:token",
-    element: <PrivateRoute role={AUTH_ROLES} element={ReboundDash} />
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={ReboundDash} />)
   },
   {
     path: "statistics",
-    element: <PrivateRoute role={AUTH_ROLES} element={ReboundStatistics} />
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={ReboundStatistics} />)
   },
   {
     path: "detail/:token",
-    element: <PrivateRoute role={AUTH_ROLES} element={ReboundDetailView} />
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={ReboundDetailView} />)
   },
   {
     path: "artificial-intelligence",
-    element: <PrivateRoute role={AUTH_ROLES} element={ArIntel} />
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={ArIntel} />)
   },
   {
     path: "artificial-intelligence/:token",
-    element: <PrivateRoute role={AUTH_ROLES} element={AIDetail} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={AIDetail} />),
   },
 ];
 

@@ -26,7 +26,7 @@ const PrivateRoute = ({ role, element: Component, ...rest }) => {
     return <Navigate to="/error-404" replace />;
   }
 
-  return (isAuth && canAccess) ? <Component {...rest} /> : <Navigate to="/" replace />;
+  return (isAuth && canAccess) ? <Component {...rest} /> : <Navigate to="/signin" replace />;
 };
 
 export default PrivateRoute;

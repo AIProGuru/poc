@@ -44,33 +44,31 @@ const UserRoleCell = ({ row, onUpdateRole, theme }) => {
     onUpdateRole(row.id, newRole);
   };
   return (
-    <td>
-      <div className="flex items-center space-x-2">
-        <select
-          value={selectedRole}
-          onChange={handleRoleChange}
-          name="user-role"
-          className={`border border-gray-600 w-[159px] px-2 py-1 rounded-lg appearance-none cursor-pointer ${theme === 'dark'
-            ? "bg-[#151619] text-white"
-            : "bg-white text-gray-500"
-            }`}
-          style={{
-            WebkitAppearance: 'none',
-            MozAppearance: 'none'
-          }}
-        >
-          {ROLE_OPTIONS.map((option) => (
-            <option
-              key={option.value}
-              value={option.value}
-              className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}
-            >
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-    </td>
+    <div className="flex items-center space-x-2">
+      <select
+        value={selectedRole}
+        onChange={handleRoleChange}
+        name="user-role"
+        className={`border border-gray-600 w-[159px] px-2 py-1 rounded-lg appearance-none cursor-pointer ${theme === 'dark'
+          ? "bg-[#151619] text-white"
+          : "bg-white text-gray-500"
+          }`}
+        style={{
+          WebkitAppearance: 'none',
+          MozAppearance: 'none'
+        }}
+      >
+        {ROLE_OPTIONS.map((option) => (
+          <option
+            key={option.value}
+            value={option.value}
+            className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}
+          >
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 };
 
@@ -937,7 +935,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} `}>
                           {row.firstname}
-                        </td> <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} `}>
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} `}>
                           {row.lastname}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} `}>

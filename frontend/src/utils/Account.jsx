@@ -30,6 +30,23 @@ const Account = (props) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const clearAuthState = () => {
+    dispatch(setAuth(false));
+    dispatch(setUsername(''));
+    dispatch(setFirstname(''));
+    dispatch(setLastname(''));
+    dispatch(setEmail(''));
+    dispatch(setRole(''));
+    dispatch(setPermission(''));
+    dispatch(setTenant(''));
+    dispatch(setAppType(null));
+    dispatch(setModules([]));
+    dispatch(setDenialCategory([]));
+    dispatch(setPayer([]));
+    dispatch(setValue([]));
+    dispatch(setFacility([]));
+  };
+
   
 const getSession = () => {
   return new Promise((resolve, reject) => {
@@ -68,7 +85,7 @@ const getSession = () => {
             reject(error);
           });
       } else {
-        reject('No user is signed in');
+        resolve(null);
       }
     });
   });
@@ -106,18 +123,7 @@ const getSession = () => {
   const logout = () => {
     auth.signOut()
       .then(() => {
-        dispatch(setAuth(false));
-        dispatch(setUsername(''));
-        dispatch(setFirstname(''));
-        dispatch(setLastname(''));
-        dispatch(setEmail(''));
-        dispatch(setRole('demo'));
-        dispatch(setPermission(''));
-        dispatch(setModules([]));
-        dispatch(setDenialCategory([]));
-        dispatch(setPayer([]));
-        dispatch(setValue([]));
-        dispatch(setFacility([]));
+        clearAuthState();
         try {
           localStorage.removeItem('lastAppType');
         } catch (err) {

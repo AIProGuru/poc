@@ -20,6 +20,17 @@ import {
 import { setSelectedTags } from "../../redux/reducers/tag.reducer";
 import { canAccessWorklists } from "../../utils/roles";
 
+const readStoredTenantBase = () => {
+  try {
+    const value = localStorage.getItem("lastTenantBase");
+    return ["rebound", "pilotcustomer", "betacustomer", "demo"].includes(value || "")
+      ? `/${value}`
+      : null;
+  } catch (err) {
+    return null;
+  }
+};
+
 const Sidebar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -64,9 +75,10 @@ const Sidebar = () => {
   const baseFromPath = ["rebound", "pilotcustomer", "betacustomer", "demo"].includes(pathBase)
     ? `/${pathBase}`
     : null;
+  const baseFromStored = readStoredTenantBase();
   const baseFromType =
     type === 0 ? "/rebound" : type === 1 ? "/pilotcustomer" : type === 3 ? "/betacustomer" : "/demo";
-  const basePath = baseFromTenant || baseFromPath || baseFromType;
+  const basePath = baseFromTenant || baseFromPath || baseFromStored || baseFromType;
   const isDark = theme === "dark";
 
   const denialsCount = useMemo(() => {

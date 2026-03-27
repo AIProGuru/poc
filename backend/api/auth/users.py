@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from core.firebase.firebase_init import db, auth
 from jsonschema import validate
 import logging
-from db import medevolve_conn
+from db import get_connection, close_connection
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -74,8 +74,8 @@ def admin_delete_user():
     if request.content_type != 'application/json':
         return jsonify({"error": "Unsupported Media Type"}), 415
 
-    conn = medevolve_conn.get_connection()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
 
     try:
         token = request.headers.get("Authorization")
@@ -86,9 +86,21 @@ def admin_delete_user():
         data = request.get_json()
         user_id_to_delete = data.get('user_id')
         deleted_user_email = data.get('email')
+        user_doc = None
         
         if not user_id_to_delete:
             return jsonify({"error": "User ID required"}), 400
+
+        user_doc = db.collection("users").document(user_id_to_delete).get()
+        user_profile = user_doc.to_dict() if user_doc.exists else {}
+        tenant_hint = (
+            data.get("tenant")
+            or user_profile.get("tenant")
+            or user_profile.get("product")
+            or user_profile.get("basePath")
+            or "pilotcustomer"
+        )
+        conn, cursor, _ = get_connection(tenant_hint)
 
         # Revoke refresh tokens so existing sessions are forced to re-auth
         try:
@@ -121,8 +133,7 @@ def admin_delete_user():
         return jsonify({"error": str(e)}), 500
 
     finally:
-        cursor.close()
-        conn.close()
+        close_connection(cursor, conn)
 
 
 @users_bp.route("/users", methods=["GET"])

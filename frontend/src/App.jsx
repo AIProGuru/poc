@@ -22,9 +22,6 @@ import {
   setFacility,
 } from "./redux/reducers/auth.reducer";
 import { useApiEndpoint } from "./ApiEndpointContext";
-import {
-  setShowGPT,
-} from "./redux/reducers/gpt.reducer";
 import { AccountContext } from "./utils/Account";
 import {
   increaseLoading,
@@ -54,8 +51,6 @@ import {
   setPayerLoading,
   setRecoveryLoading,
 } from "./redux/reducers/app.reducer";
-import ChatBot from "./components/demo-layout/rebound_dash/ChatBot";
-import ChatBotButton from "./components/demo-layout/rebound_dash/ChatBotButton";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { doc, getFirestore, onSnapshot } from "firebase/firestore";
@@ -63,20 +58,6 @@ import { app, auth } from "./FirebaseConfig";
 import { setTags, setAllPayers, setSelectedTags } from "./redux/reducers/tag.reducer";
 import { setCount, setPart1Count, setPart2Count, setRecovery } from "./redux/reducers/count.reducer";
 import { setCategoryLabel, setCategoryValue } from "./redux/reducers/statistics.reducer";
-
-const showlist = [
-  '/',
-  '',
-  '/features',
-  '/about',
-  '/contact',
-  '/careers',
-  '/whitepaper',
-  '/signin',
-  '/signup',
-  '/calculate_savings',
-  '/testimonial',
-];
 
 const resolveAppType = (userData = {}) => {
   const rawType = userData.appType ?? userData.type;
@@ -91,25 +72,53 @@ const resolveAppType = (userData = {}) => {
   return null;
 };
 
+const isPublicPath = (pathname = "") => {
+  if (pathname === "/") return true;
+  return [
+    "/signin",
+    "/signup",
+    "/forgot-password",
+    "/contact",
+    "/privacy",
+    "/verify_email",
+    "/update_password",
+    "/verify_error",
+  ].some((path) => pathname === path || pathname.startsWith(`${path}/`));
+};
+
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const { getSession } = useContext(AccountContext);
-  const apiUrl = useApiEndpoint();
-  // if (apiUrl === '') {
-  //   apiUrl = 'https://gabeo-website-backend-iimnlunkua-uc.a.run.app';
-  // }
+  useApiEndpoint();
   const dispatch = useDispatch();
   const routes = useRoutes(routesConfig);
-  const isLoading = useSelector((state) => state.app.loading)
-  const showChatBot = useSelector((state) => state.gpt.showGPT)
-  const chatbot = useRef(null);
+  const isLoading = useSelector((state) => state.app.loading);
   const getAuth = useSelector((state) => state.auth.isAuthenticated);
   const authReady = useSelector((state) => state.auth.authReady);
   const tenant = useSelector((state) => state.auth.tenant);
   const realtimeDb = useRef(getFirestore(app));
   const lastUidRef = useRef("");
   const lastTenantRef = useRef("");
+
+  const resetAuthState = useCallback(() => {
+    dispatch(setAuth(false));
+    dispatch(setUsername(''));
+    dispatch(setFirstname(''));
+    dispatch(setLastname(''));
+    dispatch(setEmail(''));
+    dispatch(setRole(''));
+    dispatch(setPermission(''));
+    dispatch(setTenant(''));
+    dispatch(setAppType(null));
+    dispatch(setModules([]));
+    dispatch(setDenialCategory([]));
+    dispatch(setPayer([]));
+    dispatch(setValue([]));
+    dispatch(setFacility([]));
+    lastUidRef.current = "";
+    lastTenantRef.current = "";
+  }, [dispatch]);
 
   const clearTenantState = useCallback(() => {
     dispatch(setTableData([]));
@@ -146,15 +155,7 @@ function App() {
     dispatch(setRecoveryLoading(false));
   }, [dispatch]);
 
-  const onCloseChatbot = () => {
-    dispatch(setShowGPT(false));
-  };
-
-  // useOnClickOutside(chatbot, onCloseChatbot);
-
-
   useEffect(() => {
-
     const timeoutId = setTimeout(() => {
       if (!getAuth) return;
       // Extract the page_name from the URL
@@ -189,13 +190,17 @@ function App() {
     }, 1000);
 
     return () => clearTimeout(timeoutId); // Cleanup timeout on component unmount
-  }, [getAuth, window.location.pathname]);
+  }, [getAuth, location.pathname]);
 
   useEffect(() => {
     dispatch(increaseLoading())
     getSession()
       .then((session) => {
-        console.log(session)
+        if (!session?.userData) {
+          resetAuthState();
+          clearTenantState();
+          return;
+        }
         dispatch(setAuth(true));
         dispatch(setUsername(session.userData.firstname ?? ""))
         dispatch(setFirstname(session.userData.firstname ?? ""));
@@ -216,16 +221,14 @@ function App() {
         dispatch(setValue(session.userData.value ?? []))
         dispatch(setFacility(session.userData.facility ?? []))
         dispatch(setPermission(""))
-        dispatch(decreaseLoading())
       })
       .catch((err) => {
-        console.log(err);
-        dispatch(setAuth(false));
-        dispatch(setUsername(''));
-        dispatch(setRole(0));
-        dispatch(decreaseLoading())
+        console.error("Failed to restore auth session", err);
+        resetAuthState();
+        clearTenantState();
       })
       .finally(() => {
+        dispatch(decreaseLoading());
         dispatch(setAuthReady(true));
       });
   }, []);
@@ -238,24 +241,9 @@ function App() {
         unsubscribeDoc = null;
       }
       if (!user) {
-        dispatch(setAuth(false));
-        dispatch(setUsername(''));
-        dispatch(setFirstname(''));
-        dispatch(setLastname(''));
-        dispatch(setEmail(''));
-        dispatch(setRole(''));
-        dispatch(setPermission(''));
-        dispatch(setTenant(''));
-        dispatch(setAppType(null));
+        resetAuthState();
         dispatch(setType(0));
-        dispatch(setModules([]));
-        dispatch(setDenialCategory([]));
-        dispatch(setPayer([]));
-        dispatch(setValue([]));
-        dispatch(setFacility([]));
         clearTenantState();
-        lastUidRef.current = "";
-        lastTenantRef.current = "";
         return;
       }
       if (lastUidRef.current && lastUidRef.current !== user.uid) {
@@ -318,7 +306,7 @@ function App() {
       }
       unsubscribeAuth();
     };
-  }, [dispatch]);
+  }, [clearTenantState, dispatch, resetAuthState]);
 
   useEffect(() => {
     if (!authReady) return;
@@ -341,10 +329,15 @@ function App() {
     }
   }, [authReady, tenant, location.pathname, navigate]);
 
+  const isMaintaining = MAINTAINING === "true";
+  const publicPath = isPublicPath(location.pathname);
+  const shouldShowLoader = !isMaintaining && !publicPath && isLoading !== 0;
+  const shouldShowRoutes = !isMaintaining && (publicPath || isLoading === 0);
+
   return (
     <div className="w-full h-screen">
       <ToastContainer position="top-right" autoClose={3000} />
-      {MAINTAINING === 'true' && <div className="flex bg-indigo-400 w-full h-full">
+      {isMaintaining && <div className="flex bg-indigo-400 w-full h-full">
         <div
           role="status"
           className="absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2 text-white text-[48px]"
@@ -352,49 +345,28 @@ function App() {
           Maintaining now...Will come soon!
         </div>
       </div>}
-      {MAINTAINING === 'false' || MAINTAINING === undefined && isLoading !== 0 && (
-        <div className="flex bg-gradient-to-br from-primary-700 to-primary-900 w-full h-full">
+      {shouldShowLoader && (
+        <div className="flex w-full h-full items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+          <div className="relative flex items-center justify-center">
+            <div className="h-24 w-24 rounded-full border-4 border-slate-700 border-t-orange-500 animate-spin" />
+            <div className="absolute flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg shadow-slate-950/30">
+              <img
+                src="/favicon.png"
+                alt="Helio RCM"
+                className="max-h-[36px]"
+              />
+            </div>
+          </div>
           <div
             role="status"
-            className="absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2"
+            className="sr-only"
           >
-            <svg
-              aria-hidden="true"
-              className="w-20 h-20 text-primary-200 animate-spin fill-primary-500"
-              viewBox="0 0 100 101"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                fill="currentColor"
-              />
-              <path
-                d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                fill="currentFill"
-              />
-            </svg>
-            <span className="sr-only">Loading...</span>
-          </div>
-          <div>
-            <img
-              src="/favicon.png"
-              alt=""
-              className="max-h-[36px] absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2"
-            />
+            Loading...
           </div>
         </div>
       )}
-      {(MAINTAINING === 'false' || MAINTAINING === undefined) && isLoading === 0 && (
+      {shouldShowRoutes && (
         <div className="flex flex-col h-full">
-          {/* <div className="block md:hidden">
-            {location.pathname.startsWith('/rcmgpt') === false && <ChatBotButton />}
-          </div>
-          {showChatBot && <div
-            className="fixed md:left-[300px] md:bottom-4 z-[55] w-[100vw] md:w-[600px] flex flex-col drop-shadow-md bg-white md:bg-[#EFF4FE] rounded-none md:rounded-2xl md:mb-2 h-[100vh] md:h-auto"
-          >
-            <ChatBot />
-          </div>} */}
           <div className="flex-1">{routes}</div>
         </div>
       )}

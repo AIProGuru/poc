@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { ROLE_STANDARD } from "../../utils/roles";
 
 const initialState = {
-  isAuthenticated: true,
+  isAuthenticated: false,
   authReady: false,
   username: '',
   firstname: '',

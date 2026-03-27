@@ -31,6 +31,17 @@ import { AccountContext } from "../../../utils/Account";
 import { canAccessUserManagement } from "../../../utils/roles";
 import { buildAccessExtra } from "../../../utils/accessFilters";
 
+const readStoredTenantBase = () => {
+  try {
+    const value = localStorage.getItem("lastTenantBase");
+    return ["rebound", "pilotcustomer", "betacustomer", "demo"].includes(value || "")
+      ? `/${value}`
+      : null;
+  } catch (err) {
+    return null;
+  }
+};
+
 const ReboundDash = () => {
   const apiUrl = useApiEndpoint();
   const location = useLocation();
@@ -82,12 +93,13 @@ const ReboundDash = () => {
   const baseFromPath = ['rebound', 'pilotcustomer', 'betacustomer', 'demo'].includes(pathBase)
     ? `/${pathBase}`
     : null;
+  const baseFromStored = readStoredTenantBase();
   const baseFromType =
     appType === 0 ? '/rebound'
       : appType === 1 ? '/pilotcustomer'
         : appType === 3 ? '/betacustomer'
           : '/demo';
-  const baseAppPath = baseFromTenant || baseFromPath || baseFromType;
+  const baseAppPath = baseFromTenant || baseFromPath || baseFromStored || baseFromType;
   const isDenialsRoute = location.pathname.includes('/denials');
   const isUserManagementView = selectedNav === 'user-management';
   // Show AI models only when the app title indicates AI Agents/Automation (set by Sidebar or ArIntel),
@@ -118,6 +130,7 @@ const ReboundDash = () => {
   const keyword = useSelector((state) => state.app.keyword);
   const extraFilter = useSelector((state) => state.app.extraFilter);
   const didInitDefaultsRef = useRef(false);
+  const appliedTokenRef = useRef(null);
 
   // console.log('apiUrl', apiUrl);
 
@@ -208,6 +221,22 @@ const ReboundDash = () => {
     () => buildAccessExtra({}, access, role),
     [access, role]
   );
+  const decodedToken = useMemo(() => {
+    if (!rawToken) return null;
+    try {
+      const decoded = atob(rawToken);
+      return JSON.parse(decoded);
+    } catch (err) {
+      console.error('Invalid token payload', err);
+      return null;
+    }
+  }, [rawToken]);
+
+  const parseTokenDate = (value) => {
+    if (!value) return null;
+    const parsed = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
 
   const navItems = useMemo(() => [
     { id: 'home', label: 'Home', badge: null, icon: 'home', tab: 0 },
@@ -585,61 +614,60 @@ const ReboundDash = () => {
     if (apiUrl === '') return;
 
     if (rawToken) {
-      let tokenObj = null;
-      try {
-        const decoded = atob(rawToken);
-        tokenObj = JSON.parse(decoded);
-      } catch (err) {
-        console.error('Invalid token payload', err);
-        tokenObj = null;
+      if (!decodedToken || appliedTokenRef.current === rawToken) {
+        return;
       }
-      if (tokenObj) {
-        if (tokenObj.selectedTags != undefined) {
-          dispatch(setSelectedTags(tokenObj.selectedTags));
-        }
-        if (tokenObj.keyword != undefined) {
-          dispatch(setKeyword(tokenObj.keyword));
-        }
-        if (tokenObj.code != undefined) {
-          dispatch(setCode(tokenObj.code));
-        }
-        if (tokenObj.remark != undefined) {
-          dispatch(setRemark(tokenObj.remark));
-        }
-        if (tokenObj.pos != undefined) {
-          dispatch(setPOS(tokenObj.pos));
-        }
-        if (tokenObj.procedure != undefined) {
-          dispatch(setProcedure(tokenObj.procedure));
-        }
-        if (tokenObj.startDate != undefined) {
-          dispatch(setStartDate(tokenObj.startDate));
-        }
-        if (tokenObj.endDate != undefined) {
-          dispatch(setEndDate(tokenObj.endDate));
-        }
-        if (tokenObj.currentPage != undefined) {
-          dispatch(setCurrentPage(tokenObj.currentPage));
-        }
-        if (tokenObj.extra != undefined) {
-          dispatch(setExtraFilter(tokenObj.extra));
-        }
-        if (tokenObj.tabIndex != undefined) {
-          dispatch(setTabIndex(tokenObj.tabIndex));
-        }
-        if (tokenObj.source === 'ai-library') {
-          setAiLibraryDrilldown(true);
-          setSelectedNav('ai-library');
-        }
-        dispatch(setTableLoading(true));
-        dispatch(setPart1Loading(true));
-        dispatch(setPart2Loading(true));
-        dispatch(setTableData([]));
-        dispatch(setPart1Count([]));
-        dispatch(setPart2Count([]));
+      appliedTokenRef.current = rawToken;
+      didInitDefaultsRef.current = true;
+
+      if (decodedToken.selectedTags !== undefined) {
+        dispatch(setSelectedTags(Array.isArray(decodedToken.selectedTags) ? decodedToken.selectedTags : []));
       }
+      if (decodedToken.keyword !== undefined) {
+        dispatch(setKeyword(decodedToken.keyword ?? ''));
+      }
+      if (decodedToken.code !== undefined) {
+        dispatch(setCode(decodedToken.code ?? ''));
+      }
+      if (decodedToken.remark !== undefined) {
+        dispatch(setRemark(decodedToken.remark ?? ''));
+      }
+      if (decodedToken.pos !== undefined) {
+        dispatch(setPOS(decodedToken.pos ?? ''));
+      }
+      if (decodedToken.procedure !== undefined) {
+        dispatch(setProcedure(decodedToken.procedure ?? ''));
+      }
+      if (decodedToken.startDate !== undefined) {
+        dispatch(setStartDate(parseTokenDate(decodedToken.startDate)));
+      }
+      if (decodedToken.endDate !== undefined) {
+        dispatch(setEndDate(parseTokenDate(decodedToken.endDate)));
+      }
+      if (decodedToken.currentPage !== undefined) {
+        dispatch(setCurrentPage(decodedToken.currentPage));
+      }
+      if (decodedToken.extra !== undefined) {
+        dispatch(setExtraFilter(decodedToken.extra && typeof decodedToken.extra === 'object' ? decodedToken.extra : {}));
+      }
+      if (decodedToken.tabIndex !== undefined) {
+        dispatch(setTabIndex(decodedToken.tabIndex));
+      }
+      if (decodedToken.source === 'ai-library') {
+        setAiLibraryDrilldown(true);
+        setSelectedNav('ai-library');
+      }
+      dispatch(setTableLoading(true));
+      dispatch(setPart1Loading(true));
+      dispatch(setPart2Loading(true));
+      dispatch(setTableData([]));
+      dispatch(setPart1Count([]));
+      dispatch(setPart2Count([]));
+      return;
     }
-    if (!rawToken && tags.length > 0 && !didInitDefaultsRef.current) {
+
+    appliedTokenRef.current = null;
+    if (tags.length > 0 && !didInitDefaultsRef.current) {
       const hasExtra = extraFilter && Object.keys(extraFilter).length > 0;
       if (!hasExtra) {
         dispatch(setSelectedTags([]));
@@ -649,7 +677,7 @@ const ReboundDash = () => {
       didInitDefaultsRef.current = true;
     }
 
-  }, [apiUrl, rawToken, tags.length, extraFilter, dispatch])
+  }, [apiUrl, rawToken, decodedToken, tags.length, extraFilter, dispatch])
 
   const changeTab = (index) => {
     let tagsToApply = [];

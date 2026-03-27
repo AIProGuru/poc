@@ -1,52 +1,53 @@
-import Demo from "../pages/Demo";
-import Home from "../pages/Home";
-import SignIn from "../pages/SignIn";
-import SignUp from "../pages/SignUp";
+import { Suspense, lazy } from "react";
 import reboundRoutes from "./rebound";
 import managementRoutes from "./management";
-import CalculateSavingsPage from "../pages/CalculageSaving";
 import PrivateRoute from "../components/private-routes/PrivateRoutes";
-import About from "../pages/About";
-import Feature from "../pages/Feature";
-import VerifyPage from "../pages/VerifyPage";
-import Error404 from "../pages/Error404";
-import ForgotPassword from "../pages/ForgotPassword";
-import UpdatePassword from "../pages/UpdatePassword";
-import Waiting from "../pages/Waiting";
-import Contact from "../pages/Contact";
-// import gptRoutes from "./gpt";
-import NormalChat from "../components/demo-layout/normal_chat";
-import Notfound from "../pages/Notfound";
-import ResubmittedClaims from "../components/demo-layout/rebound_dash/Resubmitted_claims";
-import Privacy from "../pages/Privacy";
-import Careers from "../pages/Careers";
-import Apply from "../pages/Apply";
-import Integrations from "../pages/Integrations";
-import WhitePaper from "../pages/WhitePaper";
-import Blog from "../pages/Blog";
-import BlogDetail from "../components/blog/blog_sub_page/BlogDetail";
-import Clients from "../pages/Hospitals";
-import Hospitals from "../pages/Hospitals";
-import Physicians from "../pages/Physicians";
-import RCM from "../pages/RCM";
-import PracticeManagement from "../pages/PracticeManagement";
-import BillingAgencies from "../pages/BillingAgencies";
-import ClientManagement from "../pages/ClientManagement";
-import ClientDashboard from "../pages/ClientDashboard";
-import TenantDetails from "../pages/TenantDetails";
-import Edit_client from "../pages/Client/Edit_client";
 import demoRoutes from "./demo";
-import AccountSettings from "../pages/AccountSettings";
-import AppealTemplates from "../pages/AppealTemplates";
-import GovernanceManagement from "../pages/GovernanceManagement";
 import { ALL_ROLES, CLIENT_MANAGEMENT_ROLES, GOVERNANCE_MANAGEMENT_ROLES, USER_MANAGEMENT_ROLES } from "../utils/roles";
 
+const Demo = lazy(() => import("../pages/Demo"));
+const Home = lazy(() => import("../pages/Home"));
+const SignIn = lazy(() => import("../pages/SignIn"));
+const SignUp = lazy(() => import("../pages/SignUp"));
+const CalculateSavingsPage = lazy(() => import("../pages/CalculageSaving"));
+const About = lazy(() => import("../pages/About"));
+const Feature = lazy(() => import("../pages/Feature"));
+const VerifyPage = lazy(() => import("../pages/VerifyPage"));
+const Error404 = lazy(() => import("../pages/Error404"));
+const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
+const UpdatePassword = lazy(() => import("../pages/UpdatePassword"));
+const Waiting = lazy(() => import("../pages/Waiting"));
+const Contact = lazy(() => import("../pages/Contact"));
+const NormalChat = lazy(() => import("../components/demo-layout/normal_chat"));
+const Notfound = lazy(() => import("../pages/Notfound"));
+const ResubmittedClaims = lazy(() => import("../components/demo-layout/rebound_dash/Resubmitted_claims"));
+const Privacy = lazy(() => import("../pages/Privacy"));
+const Careers = lazy(() => import("../pages/Careers"));
+const Apply = lazy(() => import("../pages/Apply"));
+const Integrations = lazy(() => import("../pages/Integrations"));
+const WhitePaper = lazy(() => import("../pages/WhitePaper"));
+const Blog = lazy(() => import("../pages/Blog"));
+const BlogDetail = lazy(() => import("../components/blog/blog_sub_page/BlogDetail"));
+const Hospitals = lazy(() => import("../pages/Hospitals"));
+const Physicians = lazy(() => import("../pages/Physicians"));
+const RCM = lazy(() => import("../pages/RCM"));
+const PracticeManagement = lazy(() => import("../pages/PracticeManagement"));
+const BillingAgencies = lazy(() => import("../pages/BillingAgencies"));
+const ClientManagement = lazy(() => import("../pages/ClientManagement"));
+const ClientDashboard = lazy(() => import("../pages/ClientDashboard"));
+const TenantDetails = lazy(() => import("../pages/TenantDetails"));
+const Edit_client = lazy(() => import("../pages/Client/Edit_client"));
+const AccountSettings = lazy(() => import("../pages/AccountSettings"));
+const AppealTemplates = lazy(() => import("../pages/AppealTemplates"));
+const GovernanceManagement = lazy(() => import("../pages/GovernanceManagement"));
+
 const AUTH_ROLES = ALL_ROLES;
+const suspense = (element) => <Suspense fallback={null}>{element}</Suspense>;
 
 const routesConfig = [
   {
     path: "/signin",
-    element: <SignIn />,
+    element: suspense(<SignIn />),
   },
   // {
   //   path: "*",
@@ -54,39 +55,39 @@ const routesConfig = [
   // },
   {
     path: "/management",
-    element: <PrivateRoute role={USER_MANAGEMENT_ROLES} element={Demo} />,
+    element: suspense(<PrivateRoute role={USER_MANAGEMENT_ROLES} element={Demo} />),
     children: managementRoutes,
   },
   {
     path: "/demo",
-    element: <PrivateRoute role={AUTH_ROLES} element={Demo} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Demo} />),
     children: demoRoutes,
   },
   {
     path: "/rebound",
-    element: <PrivateRoute role={AUTH_ROLES} element={Demo} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Demo} />),
     children: reboundRoutes,
   },
   {
     path: "/pilotcustomer",
-    element: <PrivateRoute role={AUTH_ROLES} element={Demo} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Demo} />),
     children: reboundRoutes,
   },
   {
     path: "/betacustomer",
-    element: <PrivateRoute role={AUTH_ROLES} element={Demo} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Demo} />),
     children: reboundRoutes,
   },
   {
     path: "/pilotcustomer/resubmitted_claims",
-    element: (
+    element: suspense(
       <PrivateRoute role={AUTH_ROLES} element={ResubmittedClaims} />
     ),
     children: reboundRoutes,
   },
   {
     path: "/betacustomer/resubmitted_claims",
-    element: (
+    element: suspense(
       <PrivateRoute role={AUTH_ROLES} element={ResubmittedClaims} />
     ),
     children: reboundRoutes,
@@ -94,12 +95,12 @@ const routesConfig = [
 
   {
     path: "/blog",
-    element: <PrivateRoute role={AUTH_ROLES} element={Blog} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Blog} />),
     children: reboundRoutes,
   },
   {
     path: "/blog/:id",
-    element: <PrivateRoute role={AUTH_ROLES} element={BlogDetail} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={BlogDetail} />),
     children: reboundRoutes,
   },
 
@@ -110,139 +111,139 @@ const routesConfig = [
   // },
   {
     path: "/train",
-    element: <PrivateRoute role={USER_MANAGEMENT_ROLES} element={NormalChat} />,
+    element: suspense(<PrivateRoute role={USER_MANAGEMENT_ROLES} element={NormalChat} />),
   },
   {
     path: "/train",
-    element: <PrivateRoute role={USER_MANAGEMENT_ROLES} element={NormalChat} />,
+    element: suspense(<PrivateRoute role={USER_MANAGEMENT_ROLES} element={NormalChat} />),
   },
   {
     path: "/clientmanagement",
-    element: <PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={ClientManagement} />,
+    element: suspense(<PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={ClientManagement} />),
   },
   {
     path: "/client/:clientId",
-    element: <PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={ClientDashboard} />,
+    element: suspense(<PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={ClientDashboard} />),
   },
   {
     path: "/client/:clientId/tenant/:tenantId",
-    element: <PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={TenantDetails} />,
+    element: suspense(<PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={TenantDetails} />),
   },
   {
     path: "/client/:id/edit",
-    element: <PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={Edit_client} />,
+    element: suspense(<PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={Edit_client} />),
   },
   {
     path: "/governance-management",
-    element: <PrivateRoute role={GOVERNANCE_MANAGEMENT_ROLES} element={GovernanceManagement} />,
+    element: suspense(<PrivateRoute role={GOVERNANCE_MANAGEMENT_ROLES} element={GovernanceManagement} />),
   },
   {
     path: "/appeal-templates",
-    element: <PrivateRoute role={GOVERNANCE_MANAGEMENT_ROLES} element={AppealTemplates} />,
+    element: suspense(<PrivateRoute role={GOVERNANCE_MANAGEMENT_ROLES} element={AppealTemplates} />),
   },
   {
     // path: "/home",
     path: "/",
-    element: <Home />
+    element: suspense(<Home />)
     // element: <PrivateRoute role={AUTH_ROLES} element={Home} />,
   },
   {
     path: "/signup",
-    element: <SignUp />,
+    element: suspense(<SignUp />),
   },
   {
     path: "/contact",
-    element: <Contact />
+    element: suspense(<Contact />)
     // element: <PrivateRoute role={AUTH_ROLES} element={Contact} />,
   },
   {
     path: "/careers",
-    element: <PrivateRoute role={AUTH_ROLES} element={Careers} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Careers} />),
   },
   {
     path: "/clients/hospitals-and-health-systems",
-    element: <PrivateRoute role={AUTH_ROLES} element={Hospitals} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Hospitals} />),
   },
   {
     path: "/clients/physician-practices-and-providers",
-    element: <PrivateRoute role={AUTH_ROLES} element={Physicians} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Physicians} />),
   },
   {
     path: "/clients/revenue-cycle-management-rcm-vendors",
-    element: <PrivateRoute role={AUTH_ROLES} element={RCM} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={RCM} />),
   },
   {
     path: "/clients/practice-management-systems-and-ehr-vendors",
-    element: <PrivateRoute role={AUTH_ROLES} element={PracticeManagement} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={PracticeManagement} />),
   },
   {
     path: "/clients/billing-agencies-msos-and-tpas",
-    element: <PrivateRoute role={AUTH_ROLES} element={BillingAgencies} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={BillingAgencies} />),
   },
   {
     path: "/whitepaper",
-    element: <PrivateRoute role={AUTH_ROLES} element={WhitePaper} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={WhitePaper} />),
   },
   {
     path: "/apply/:token",
-    element: <PrivateRoute role={AUTH_ROLES} element={Apply} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Apply} />),
   },
   {
     path: "/privacy",
-    element: <PrivateRoute role={AUTH_ROLES} element={Privacy} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Privacy} />),
   },
   {
     path: "/integrations",
-    element: <PrivateRoute role={AUTH_ROLES} element={Integrations} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Integrations} />),
   },
   {
     path: "/signin",
-    element: <SignIn />,
+    element: suspense(<SignIn />),
   },
   {
     path: "/features",
-    element: <PrivateRoute role={AUTH_ROLES} element={Feature} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Feature} />),
   },
   {
     path: "/about",
-    element: <PrivateRoute role={AUTH_ROLES} element={About} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={About} />),
   },
   {
     path: "/calculate_savings",
-    element: <PrivateRoute role={AUTH_ROLES} element={CalculateSavingsPage} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={CalculateSavingsPage} />),
   },
   {
     path: "/verify_email",
-    element: <PrivateRoute role={AUTH_ROLES} element={VerifyPage} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={VerifyPage} />),
   },
   {
     path: "/update_password",
-    element: <PrivateRoute role={AUTH_ROLES} element={UpdatePassword} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={UpdatePassword} />),
   },
   {
     path: "error-404",
-    element: <PrivateRoute role={AUTH_ROLES} element={Error404} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Error404} />),
   },
   {
     path: "/forgot-password",
-    element: <ForgotPassword />,
+    element: suspense(<ForgotPassword />),
   },
   {
     path: "/waiting",
-    element: <PrivateRoute role={AUTH_ROLES} element={Waiting} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Waiting} />),
   },
 
   {
     path: "/verify_error",
-    element: <Error404 message={"Verify error"} />,
+    element: suspense(<Error404 message={"Verify error"} />),
   },
   {
     path: "/account-settings",
-    element: <PrivateRoute role={AUTH_ROLES} element={AccountSettings} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={AccountSettings} />),
   },
   {
     path: "*",
-    element: <PrivateRoute role={AUTH_ROLES} element={Notfound} />,
+    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Notfound} />),
   },
 ];
 

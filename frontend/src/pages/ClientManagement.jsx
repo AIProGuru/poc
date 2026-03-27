@@ -8,6 +8,17 @@ import axios from 'axios';
 import { SERVER_URL } from '../utils/config';
 import Header from '../components/demo-layout/Header';
 
+const readStoredTenantBase = () => {
+  try {
+    const value = localStorage.getItem('lastTenantBase');
+    return ['rebound', 'pilotcustomer', 'betacustomer', 'demo'].includes(value || '')
+      ? value
+      : '';
+  } catch (err) {
+    return '';
+  }
+};
+
 const ClientManagement = () => {
   const navigate = useNavigate();
   const platformApiUrl = `${SERVER_URL}/api`;
@@ -48,6 +59,11 @@ const ClientManagement = () => {
     const path = resolveHomePath({ tenant, appType });
     if (path) {
       navigate(path);
+      return;
+    }
+    const storedTenantBase = readStoredTenantBase();
+    if (storedTenantBase) {
+      navigate(`/${storedTenantBase}`);
       return;
     }
     const fallbackPath = resolveHomePath({ appType: appTypeFallback });
