@@ -87,14 +87,18 @@ const DataTable = (props) => {
   };
   const formatCurrencyRounded = (value) => `$${samplifyInteger(Number(value) || 0)}`;
   const formatCurrencyExact = (value) => `$${samplifyDouble(Number(value) || 0)}`;
-  const getPatientPaymentValue = (row) => Number(row?.PatientPayment) || 0;
+  const getPatientPaymentValue = (row) =>
+    Number(row?.PatientPayment ?? row?.PatientResp ?? row?.PatientResponsibility) || 0;
   const getArBalanceValue = (row) => {
     if (!row) return 0;
+    const patientResp = Number(row.PatientResp || row.PatientResponsibility) || 0;
     const charges = Number(row.Amount) || 0;
     const adjustment45 = getAdjustment45Value(row);
     const payerPayments = Number(row.PaidAmt || row.PaidAmount || row.Paid) || 0;
     const patientPayments = getPatientPaymentValue(row);
-    return charges - adjustment45 - payerPayments - patientPayments;
+    return isPatientRespView
+      ? patientResp - patientPayments
+      : charges - adjustment45 - payerPayments - patientPayments;
   };
   const normalizeDateInput = (value) => {
     if (!value) return "";
@@ -193,6 +197,7 @@ const DataTable = (props) => {
   const [summaryTotals, setSummaryTotals] = useState(null);
   const summaryRequestRef = useRef(0);
   const summarySignatureRef = useRef('');
+  const isPatientRespView = tabIndex === 2 || (selectedTags.length > 0 && selectedTags.every((tag) => tag === 'Patient Resp'));
   const summary = React.useMemo(() => {
     const count = tableData.length;
     const charges = tableData.reduce((sum, row) => sum + (Number(row.Amount) || 0), 0);
@@ -201,9 +206,11 @@ const DataTable = (props) => {
     const patientPayment = tableData.reduce((sum, row) => sum + getPatientPaymentValue(row), 0);
     const patientResp = tableData.reduce((sum, row) => sum + (Number(row.PatientResp || row.PatientResponsibility) || 0), 0);
     const adjustment45 = tableData.reduce((sum, row) => sum + getAdjustment45Value(row), 0);
-    const balance = charges - adjustment45 - payerPayments - patientPayment;
+    const balance = isPatientRespView
+      ? patientResp - patientPayment
+      : charges - adjustment45 - payerPayments - patientPayment;
     return { count, charges, allowed, payerPayments, patientPayment, patientResp, adjustment45, balance };
-  }, [tableData]);
+  }, [isPatientRespView, tableData]);
   const isClaimStatusView = (appTitle || "").toLowerCase().startsWith("claim status");
   const hasSummaryFilters = Boolean(
     keyword || startDate || endDate || code || remark || procedure || pos
@@ -629,11 +636,16 @@ const DataTable = (props) => {
             { label: 'Charges', value: formatCurrencyRounded(summaryTotals?.charges ?? summary.charges) },
             { label: 'Exp Reimbursement', value: formatCurrencyRounded(0) },
             { label: 'Allowed Amt', value: formatCurrencyRounded(summaryTotals?.allowed ?? summary.allowed) },
-            { label: 'Payer Payments', value: formatCurrencyRounded(summaryTotals?.payerPayments ?? summary.payerPayments) },
-            { label: 'Patient Resp', value: formatCurrencyRounded(summaryTotals?.patientPayment ?? summary.patientPayment) },
+            { label: isPatientRespView ? 'Patient Payment' : 'Payer Payments', value: formatCurrencyRounded(summaryTotals?.patientPayment ?? summary.patientPayment) },
+            { label: 'Patient Resp', value: formatCurrencyRounded(summaryTotals?.patientResp ?? summary.patientResp) },
             {
               label: 'Balance',
-              value: formatCurrencyRounded(summaryTotals?.balance ?? summary.balance),
+              value: formatCurrencyRounded(
+                isPatientRespView
+                  ? (Number(summaryTotals?.patientResp ?? summary.patientResp) || 0) -
+                    (Number(summaryTotals?.patientPayment ?? summary.patientPayment) || 0)
+                  : (summaryTotals?.balance ?? summary.balance)
+              ),
             },
           ].map((item) => (
             <div
@@ -856,7 +868,7 @@ const DataTable = (props) => {
                     </TableCell>
                     <TableCell style={{ ...headerCellStyle, minWidth: "150px" }} onClick={() => setOrder("PaidAmt")} className="cursor-pointer">
                       <div className="flex items-center gap-2">
-                        Payer Payments
+                        {isPatientRespView ? 'Patient Payment' : 'Payer Payments'}
                         {renderSortIcon('PaidAmt')}
                       </div>
                     </TableCell>
@@ -982,7 +994,7 @@ const DataTable = (props) => {
                         {formatCurrencyExact(row.AllowedAmt)}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
-                        {formatCurrencyExact(row.PaidAmt || row.PaidAmount || row.Paid)}
+                        {formatCurrencyExact(isPatientRespView ? getPatientPaymentValue(row) : (row.PaidAmt || row.PaidAmount || row.Paid))}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {formatCurrencyExact(row.PatientResp || row.PatientResponsibility)}

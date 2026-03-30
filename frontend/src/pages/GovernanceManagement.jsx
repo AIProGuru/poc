@@ -28,8 +28,8 @@ const CONFIG_TABS = [
     id: "actionCodes",
     label: "Action Codes",
     columns: [
+      { key: "actionCode", label: "Action Code", aliases: ["action code", "action codes", "code"] },
       { key: "category", label: "Category", aliases: ["category"] },
-      { key: "actionCode", label: "Action Codes", aliases: ["action code", "action codes", "code"] },
       { key: "tickleTime", label: "Tickle Time", aliases: ["tickle time"] },
     ],
   },
@@ -200,7 +200,7 @@ const GovernanceManagement = () => {
           </button>
           <div>
             <h1 className="mb-2 text-2xl font-bold">Governance Management</h1>
-            <p className={subduedText}>Three columns per config with manual entry and one upload action.</p>
+            <p className={subduedText}>A standardized framework for rules, processes, and CMS codes to ensure consistency and compliance across all clients.</p>
           </div>
         </div>
 
@@ -304,7 +304,7 @@ const GovernanceManagement = () => {
                             onChange={(event) =>
                               handleRowChange(activeTab, row.id, column.key, event.target.value)
                             }
-                            className={`w-full min-w-[220px] rounded-lg border px-3 py-2 outline-none transition ${inputClasses}`}
+                            className={`w-full rounded-lg border px-3 py-2 outline-none transition ${inputClasses} ${column.key === "tickleTime" ? "min-w-[72px] max-w-[72px]" : "min-w-[220px]"}`}
                           />
                         </td>
                       ))}

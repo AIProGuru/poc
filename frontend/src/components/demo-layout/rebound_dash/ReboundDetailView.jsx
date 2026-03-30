@@ -406,7 +406,7 @@ const ReboundDetailView = () => {
     const numericValue = Number(value);
     return Number.isNaN(numericValue) ? "N/A" : `$${samplifyDouble(numericValue)}`;
   };
-  const getPatientPaymentValue = () => 0;
+  const getPatientPaymentValue = () => Number(currentClaim?.Remit?.[0]?.PatientResp) || 0;
 
   const formatUnitsValue = (value) => {
     if (value === undefined || value === null || value === "") return "N/A";
@@ -473,6 +473,7 @@ const ReboundDetailView = () => {
 
   const getClaimSummary = () => {
     if (!currentClaim?.Claim?.Data) return null;
+    const isPatientRespClaim = `${currentClaim?.Claim?.Data?.Category || ""}`.trim() === "Patient Resp";
     const latestLines = currentClaim?.Remit?.[0]?.ServiceLine || [];
     const chargesFromLines = latestLines.reduce(
       (sum, line) => sum + (Number(line?.ChargedAmount) || 0),
@@ -501,8 +502,10 @@ const ReboundDetailView = () => {
       .reduce((sum, val) => sum + val, 0);
     const patientPayment = getPatientPaymentValue();
     const patientResp = Number(currentClaim?.Remit?.[0]?.PatientResp) || 0;
-    const balance = charges - adjustment45 - payerPayments - patientPayment;
-    return { count: 1, charges, expReimbursement, allowed, payerPayments, patientPayment, patientResp, balance };
+    const balance = isPatientRespClaim
+      ? patientResp - patientPayment
+      : charges - adjustment45 - payerPayments - patientPayment;
+    return { count: 1, charges, expReimbursement, allowed, payerPayments, patientPayment, patientResp, balance, isPatientRespClaim };
   };
 
   const renderTruncated = (value, maxWidth = '180px') => {
@@ -895,8 +898,8 @@ const ReboundDetailView = () => {
                 { label: 'Charges', value: formatCurrency(summary.charges) },
                 { label: 'Exp Reimbursement', value: formatCurrency(summary.expReimbursement) },
                 { label: 'Allowed Amt', value: formatCurrency(summary.allowed) },
-                { label: 'Payer Payments', value: formatCurrency(summary.payerPayments) },
-                { label: 'Patient Resp', value: formatCurrency(summary.patientPayment) },
+                { label: summary.isPatientRespClaim ? 'Patient Payment' : 'Payer Payments', value: formatCurrency(summary.isPatientRespClaim ? summary.patientPayment : summary.payerPayments) },
+                { label: 'Patient Resp', value: formatCurrency(summary.patientResp) },
                 { label: 'Balance', value: formatCurrency(summary.balance) },
               ].map((item) => (
                 <div

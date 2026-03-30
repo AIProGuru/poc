@@ -214,7 +214,7 @@ def get_rebound_data_all():
             CUSTOM_ALL.RecoveryAllowed,
             CUSTOM_ALL.PaidAmt,
             CUSTOM_ALL.PatientResp,
-            0 AS PatientPayment,
+            CUSTOM_ALL.PatientResp AS PatientPayment,
             COALESCE(CUSTOM_ALL.Amount, 0) - COALESCE(CUSTOM_ALL.Adjustment45Amount, 0) - COALESCE(CUSTOM_ALL.PaidAmt, 0) AS Balance,
             COALESCE(CUSTOM_ALL.BillProvName, '') AS FacilityName,
             COALESCE(NULLIF(TRIM(CUSTOM_ALL.Category), ''), '{delinquent_label}') AS Category,
@@ -310,7 +310,7 @@ def get_rebound_data_summary():
             COALESCE(sum(CUSTOM_ALL.Amount), 0) AS total_amount,
             COALESCE(sum(CUSTOM_ALL.AllowedAmt), 0) AS total_allowed,
             COALESCE(sum(CUSTOM_ALL.PaidAmt), 0) AS total_payer_paid,
-            0 AS total_patient_payment,
+            COALESCE(sum(CUSTOM_ALL.PatientResp), 0) AS total_patient_payment,
             COALESCE(sum(CUSTOM_ALL.PatientResp), 0) AS total_patient_resp,
             COALESCE(sum(CUSTOM_ALL.Adjustment45Amount), 0) AS total_adjustment45
             {newGenerateSQL(
