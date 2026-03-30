@@ -411,6 +411,7 @@ const DataTable = (props) => {
     });
     if (summarySignatureRef.current === signature) return;
     summarySignatureRef.current = signature;
+    setSummaryTotals(null);
     const requestId = ++summaryRequestRef.current;
     axios.post(`${apiUrl}/data_summary`, {
       selectedTags,

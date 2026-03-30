@@ -47,7 +47,7 @@ const Sidebar = () => {
   const navPendCounts = useSelector((state) => state.app.navPendCounts) || {};
   const [navBadges, setNavBadges] = useState({});
   const isPrivilegedRole = ["admin", "super-admin", "manager", "internal-admin"].includes(role);
-  const placeholderNavs = [
+  const placeholderNavs = useMemo(() => ([
     "dashboard",
     "support",
     "settings",
@@ -57,7 +57,7 @@ const Sidebar = () => {
     "payment-variance",
     "payment-variance:payer-overpaid",
     "payment-variance:payer-underpaid",
-  ];
+  ]), []);
 
   const [selectedNav, setSelectedNav] = useState("home");
   const [expandedNav, setExpandedNav] = useState(() => new Set());
@@ -256,6 +256,39 @@ const Sidebar = () => {
       "payment-posting": ["Contractual Adj", "Payment", "Write-off", "Refund"],
     }),
     []
+  );
+  const normalizeTagKey = useCallback((value) => `${value || ""}`.trim().toLowerCase(), []);
+  const availableTagLookup = useMemo(() => {
+    const lookup = new Map();
+    (tags || []).forEach((tag) => {
+      const normalized = normalizeTagKey(tag);
+      if (!normalized || lookup.has(normalized)) return;
+      lookup.set(normalized, tag);
+    });
+    return lookup;
+  }, [tags, normalizeTagKey]);
+  const resolveFilterTags = useCallback(
+    (tagList) => {
+      const aliasMap = {
+        "patient responsibility": "Patient Resp",
+        "bal due from pt": "Patient Resp",
+        "pend 835": "Delinquent",
+      };
+      const resolved = (tagList || [])
+        .map((tag) => {
+          const normalized = normalizeTagKey(tag);
+          if (!normalized) return "";
+          const aliased = aliasMap[normalized] || tag;
+          return (
+            availableTagLookup.get(normalizeTagKey(aliased)) ||
+            availableTagLookup.get(normalized) ||
+            aliased
+          );
+        })
+        .filter((tag) => `${tag || ""}`.trim() !== "");
+      return [...new Set(resolved)];
+    },
+    [availableTagLookup, normalizeTagKey]
   );
   const canSeeWorklists = canAccessWorklists(role);
   const navBootstrapReady = useMemo(() => {
@@ -490,7 +523,7 @@ const Sidebar = () => {
       }
       const isAiLibrary = navId === "ai-library";
       let extra = navExtraFilters[navId] || navExtraFilters[fallbackTab] || {};
-      let tagOverride = navTagFilters[navId];
+      let tagOverride = resolveFilterTags(navTagFilters[navId]);
 
       if (navId === "home") {
         extra = { IncludeAllCategories: true };
@@ -510,11 +543,11 @@ const Sidebar = () => {
         dispatch(setTabIndex(tabOverrideMap[navId] ?? 6));
       } else if (navId === "ai-library") {
         // Keep denial categories visible when browsing AI Agents
-        dispatch(setSelectedTags(tags));
+        dispatch(setSelectedTags(resolveFilterTags(tags)));
         dispatch(setTabIndex(6));
       } else if (navId === "denials") {
-        const defaultTags = tags.filter(
-          (tag) => tag && tag !== "Contractual Adj" && tag !== "Patient Resp"
+        const defaultTags = resolveFilterTags(tags).filter(
+          (tag) => tag && tag !== "Contractual Adj" && tag !== "Patient Resp" && tag !== "Delinquent"
         );
         dispatch(setSelectedTags(defaultTags));
         dispatch(setTabIndex(6));
@@ -524,12 +557,13 @@ const Sidebar = () => {
 
       dispatch(setCurrentPage(1));
       if (!isAiLibrary) {
+        dispatch(setTableData([]));
         dispatch(setTableLoading(true));
       } else {
         dispatch(setTableLoading(false));
       }
     },
-    [dispatch, navExtraFilters, navTagFilters, tags]
+    [dispatch, navExtraFilters, navTagFilters, placeholderNavs, resolveFilterTags, tags]
   );
 
   useEffect(() => {
@@ -551,7 +585,7 @@ const Sidebar = () => {
       const rows = navGrouped[String(tab)] || [];
       const map = {};
       rows.forEach((row) => {
-        const key = row?.Category;
+        const key = normalizeTagKey(row?.Category);
         if (!key) return;
         map[key] = (map[key] || 0) + (Number(row.Count) || 0);
       });
@@ -560,7 +594,10 @@ const Sidebar = () => {
     };
     const sumTags = (tagList, tab) => {
       const map = getMapForTab(tab);
-      return tagList.reduce((sum, tag) => sum + (map[tag] || 0), 0);
+      return resolveFilterTags(tagList).reduce(
+        (sum, tag) => sum + (map[normalizeTagKey(tag)] || 0),
+        0
+      );
     };
     const next = {};
     navTagKeys.forEach((navId) => {
@@ -579,7 +616,7 @@ const Sidebar = () => {
       next["claim-status"] = pend277 + pend835;
     }
     setNavBadges(next);
-  }, [navGrouped, navItems, navTagFilters, canSeeWorklists, navPendCounts]);
+  }, [navGrouped, navItems, navTagFilters, canSeeWorklists, navPendCounts, normalizeTagKey, resolveFilterTags]);
 
   useEffect(() => {
     const handleResize = () => {

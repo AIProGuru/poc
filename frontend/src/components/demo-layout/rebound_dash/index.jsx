@@ -129,6 +129,7 @@ const ReboundDash = () => {
   const lastname = useSelector((state) => state.auth.lastname);
   const keyword = useSelector((state) => state.app.keyword);
   const extraFilter = useSelector((state) => state.app.extraFilter);
+  const selectedTags = useSelector((state) => state.tags.selectedTags);
   const didInitDefaultsRef = useRef(false);
   const appliedTokenRef = useRef(null);
 
@@ -669,7 +670,8 @@ const ReboundDash = () => {
     appliedTokenRef.current = null;
     if (tags.length > 0 && !didInitDefaultsRef.current) {
       const hasExtra = extraFilter && Object.keys(extraFilter).length > 0;
-      if (!hasExtra) {
+      const hasSelectedTags = Array.isArray(selectedTags) && selectedTags.length > 0;
+      if (!hasExtra && !hasSelectedTags) {
         dispatch(setSelectedTags([]));
         dispatch(setExtraFilter({ IncludeAllCategories: true }));
         dispatch(setTableLoading(true));
@@ -677,7 +679,7 @@ const ReboundDash = () => {
       didInitDefaultsRef.current = true;
     }
 
-  }, [apiUrl, rawToken, decodedToken, tags.length, extraFilter, dispatch])
+  }, [apiUrl, rawToken, decodedToken, tags.length, extraFilter, selectedTags, dispatch])
 
   const changeTab = (index) => {
     let tagsToApply = [];
