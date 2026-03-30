@@ -630,7 +630,7 @@ const DataTable = (props) => {
             { label: 'Exp Reimbursement', value: formatCurrencyRounded(0) },
             { label: 'Allowed Amt', value: formatCurrencyRounded(summaryTotals?.allowed ?? summary.allowed) },
             { label: 'Payer Payments', value: formatCurrencyRounded(summaryTotals?.payerPayments ?? summary.payerPayments) },
-            { label: 'Patient Payment', value: formatCurrencyRounded(summaryTotals?.patientPayment ?? summary.patientPayment) },
+            { label: 'Patient Resp', value: formatCurrencyRounded(summaryTotals?.patientPayment ?? summary.patientPayment) },
             {
               label: 'Balance',
               value: formatCurrencyRounded(summaryTotals?.balance ?? summary.balance),

@@ -896,7 +896,7 @@ const ReboundDetailView = () => {
                 { label: 'Exp Reimbursement', value: formatCurrency(summary.expReimbursement) },
                 { label: 'Allowed Amt', value: formatCurrency(summary.allowed) },
                 { label: 'Payer Payments', value: formatCurrency(summary.payerPayments) },
-                { label: 'Patient Payment', value: formatCurrency(summary.patientPayment) },
+                { label: 'Patient Resp', value: formatCurrency(summary.patientPayment) },
                 { label: 'Balance', value: formatCurrency(summary.balance) },
               ].map((item) => (
                 <div
