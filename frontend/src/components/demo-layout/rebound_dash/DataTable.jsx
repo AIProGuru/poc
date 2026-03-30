@@ -87,6 +87,15 @@ const DataTable = (props) => {
   };
   const formatCurrencyRounded = (value) => `$${samplifyInteger(Number(value) || 0)}`;
   const formatCurrencyExact = (value) => `$${samplifyDouble(Number(value) || 0)}`;
+  const getPatientPaymentValue = (row) => Number(row?.PatientPayment) || 0;
+  const getArBalanceValue = (row) => {
+    if (!row) return 0;
+    const charges = Number(row.Amount) || 0;
+    const adjustment45 = getAdjustment45Value(row);
+    const payerPayments = Number(row.PaidAmt || row.PaidAmount || row.Paid) || 0;
+    const patientPayments = getPatientPaymentValue(row);
+    return charges - adjustment45 - payerPayments - patientPayments;
+  };
   const normalizeDateInput = (value) => {
     if (!value) return "";
     const parsed = new Date(Date.parse(value));
@@ -186,21 +195,14 @@ const DataTable = (props) => {
   const summarySignatureRef = useRef('');
   const summary = React.useMemo(() => {
     const count = tableData.length;
-    const charges = tableData.reduce((sum, row) => {
-      if (row?.Balance !== undefined && row?.Balance !== null && row?.Balance !== "") {
-        const balance = Number(row.Balance) || 0;
-        const adjustment45 = getAdjustment45Value(row);
-        const allowed = Number(row.AllowedAmt) || 0;
-        return sum + balance + adjustment45 + allowed;
-      }
-      return sum + (Number(row.Amount) || 0);
-    }, 0);
+    const charges = tableData.reduce((sum, row) => sum + (Number(row.Amount) || 0), 0);
     const allowed = tableData.reduce((sum, row) => sum + (Number(row.AllowedAmt) || 0), 0);
     const payerPayments = tableData.reduce((sum, row) => sum + (Number(row.PaidAmount || row.PaidAmt || row.Paid) || 0), 0);
+    const patientPayment = tableData.reduce((sum, row) => sum + getPatientPaymentValue(row), 0);
     const patientResp = tableData.reduce((sum, row) => sum + (Number(row.PatientResp || row.PatientResponsibility) || 0), 0);
     const adjustment45 = tableData.reduce((sum, row) => sum + getAdjustment45Value(row), 0);
-    const balance = charges - adjustment45 - allowed;
-    return { count, charges, allowed, payerPayments, patientResp, adjustment45, balance };
+    const balance = charges - adjustment45 - payerPayments - patientPayment;
+    return { count, charges, allowed, payerPayments, patientPayment, patientResp, adjustment45, balance };
   }, [tableData]);
   const isClaimStatusView = (appTitle || "").toLowerCase().startsWith("claim status");
   const hasSummaryFilters = Boolean(
@@ -535,15 +537,9 @@ const DataTable = (props) => {
     tableData.forEach((row, index) => {
       const remark = row.Remark ? [...new Set(row.Remark.split('*'))].join('*') : '';
       const adjustment45 = getAdjustment45Value(row);
-      const charges =
-        row?.Balance !== undefined && row?.Balance !== null && row?.Balance !== ""
-          ? (Number(row.Balance) || 0) + adjustment45 + (Number(row.AllowedAmt) || 0)
-          : Number(row.Amount) || 0;
+      const charges = Number(row.Amount) || 0;
       const allowed = Number(row.AllowedAmt) || 0;
-      const balance =
-        row?.Balance !== undefined && row?.Balance !== null && row?.Balance !== ""
-          ? Number(row.Balance) || 0
-          : charges - adjustment45 - allowed;
+      const balance = getArBalanceValue(row);
       let value = [
         row.Priority || '',
         getFacility(row),
@@ -633,23 +629,10 @@ const DataTable = (props) => {
             { label: 'Exp Reimbursement', value: formatCurrencyRounded(0) },
             { label: 'Allowed Amt', value: formatCurrencyRounded(summaryTotals?.allowed ?? summary.allowed) },
             { label: 'Payer Payments', value: formatCurrencyRounded(summaryTotals?.payerPayments ?? summary.payerPayments) },
-            { label: 'Patient Resp', value: formatCurrencyRounded(summaryTotals?.patientResp ?? summary.patientResp) },
+            { label: 'Patient Payment', value: formatCurrencyRounded(summaryTotals?.patientPayment ?? summary.patientPayment) },
             {
               label: 'Balance',
-              value: (() => {
-                const adjustment45 =
-                  summaryTotals?.adjustment45 ??
-                  summaryTotals?.Adjustment45 ??
-                  summaryTotals?.Adjustment45Amount ??
-                  summaryTotals?.Denied45 ??
-                  summary.adjustment45 ??
-                  0;
-                const charges = summaryTotals?.charges ?? summary.charges;
-                const allowed = summaryTotals?.allowed ?? summary.allowed;
-                const balanceValue =
-                  (Number(charges) || 0) - (Number(adjustment45) || 0) - (Number(allowed) || 0);
-                return formatCurrencyRounded(balanceValue);
-              })(),
+              value: formatCurrencyRounded(summaryTotals?.balance ?? summary.balance),
             },
           ].map((item) => (
             <div
@@ -1004,13 +987,7 @@ const DataTable = (props) => {
                         {formatCurrencyExact(row.PatientResp || row.PatientResponsibility)}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                        {formatCurrencyExact(
-                          row?.Balance !== undefined && row?.Balance !== null && row?.Balance !== ""
-                            ? Number(row.Balance) || 0
-                            : (Number(row.Amount) || 0) -
-                              getAdjustment45Value(row) -
-                              (Number(row.AllowedAmt) || 0)
-                        )}
+                        {formatCurrencyExact(getArBalanceValue(row))}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {(() => {

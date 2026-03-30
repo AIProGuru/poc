@@ -406,6 +406,7 @@ const ReboundDetailView = () => {
     const numericValue = Number(value);
     return Number.isNaN(numericValue) ? "N/A" : `$${samplifyDouble(numericValue)}`;
   };
+  const getPatientPaymentValue = () => 0;
 
   const formatUnitsValue = (value) => {
     if (value === undefined || value === null || value === "") return "N/A";
@@ -498,9 +499,10 @@ const ReboundDetailView = () => {
     const payerPayments = latestLines
       .map((rr) => Number(rr.PaidAmount) || 0)
       .reduce((sum, val) => sum + val, 0);
+    const patientPayment = getPatientPaymentValue();
     const patientResp = Number(currentClaim?.Remit?.[0]?.PatientResp) || 0;
-    const balance = charges - adjustment45 - allowed;
-    return { count: 1, charges, expReimbursement, allowed, payerPayments, patientResp, balance };
+    const balance = charges - adjustment45 - payerPayments - patientPayment;
+    return { count: 1, charges, expReimbursement, allowed, payerPayments, patientPayment, patientResp, balance };
   };
 
   const renderTruncated = (value, maxWidth = '180px') => {
@@ -894,7 +896,7 @@ const ReboundDetailView = () => {
                 { label: 'Exp Reimbursement', value: formatCurrency(summary.expReimbursement) },
                 { label: 'Allowed Amt', value: formatCurrency(summary.allowed) },
                 { label: 'Payer Payments', value: formatCurrency(summary.payerPayments) },
-                { label: 'Patient Resp', value: formatCurrency(summary.patientResp) },
+                { label: 'Patient Payment', value: formatCurrency(summary.patientPayment) },
                 { label: 'Balance', value: formatCurrency(summary.balance) },
               ].map((item) => (
                 <div

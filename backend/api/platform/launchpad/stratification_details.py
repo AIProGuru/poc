@@ -214,7 +214,8 @@ def get_rebound_data_all():
             CUSTOM_ALL.RecoveryAllowed,
             CUSTOM_ALL.PaidAmt,
             CUSTOM_ALL.PatientResp,
-            CUSTOM_ALL.Balance,
+            0 AS PatientPayment,
+            COALESCE(CUSTOM_ALL.Amount, 0) - COALESCE(CUSTOM_ALL.Adjustment45Amount, 0) - COALESCE(CUSTOM_ALL.PaidAmt, 0) AS Balance,
             COALESCE(CUSTOM_ALL.BillProvName, '') AS FacilityName,
             COALESCE(NULLIF(TRIM(CUSTOM_ALL.Category), ''), '{delinquent_label}') AS Category,
             COALESCE(CUSTOM_ALL.PrimaryGroup, '') AS PrimaryGroup,
@@ -297,6 +298,7 @@ def get_rebound_data_summary():
                     "charges": 0,
                     "allowed": 0,
                     "payerPayments": 0,
+                    "patientPayment": 0,
                     "patientResp": 0,
                     "adjustment45": 0,
                     "balance": 0,
@@ -305,9 +307,10 @@ def get_rebound_data_summary():
 
         summary_sql = f"""select
             count(ID) AS cnt,
-            COALESCE(sum(CUSTOM_ALL.Balance + CUSTOM_ALL.Adjustment45Amount + CUSTOM_ALL.AllowedAmt), 0) AS total_amount,
+            COALESCE(sum(CUSTOM_ALL.Amount), 0) AS total_amount,
             COALESCE(sum(CUSTOM_ALL.AllowedAmt), 0) AS total_allowed,
             COALESCE(sum(CUSTOM_ALL.PaidAmt), 0) AS total_payer_paid,
+            0 AS total_patient_payment,
             COALESCE(sum(CUSTOM_ALL.PatientResp), 0) AS total_patient_resp,
             COALESCE(sum(CUSTOM_ALL.Adjustment45Amount), 0) AS total_adjustment45
             {newGenerateSQL(
@@ -328,20 +331,23 @@ def get_rebound_data_summary():
         charges = result.get("total_amount") or 0
         allowed = result.get("total_allowed") or 0
         payer_paid = result.get("total_payer_paid") or 0
+        patient_payment = result.get("total_patient_payment") or 0
         patient_resp = result.get("total_patient_resp") or 0
         adjustment45 = result.get("total_adjustment45") or 0
         charges = float(charges or 0)
         allowed = float(allowed or 0)
         payer_paid = float(payer_paid or 0)
+        patient_payment = float(patient_payment or 0)
         patient_resp = float(patient_resp or 0)
         adjustment45 = float(adjustment45 or 0)
-        balance = float(charges) - float(adjustment45) - float(allowed)
+        balance = float(charges) - float(adjustment45) - float(payer_paid) - float(patient_payment)
         return jsonify(
             {
                 "count": result.get("cnt") or 0,
                 "charges": float(charges),
                 "allowed": float(allowed),
                 "payerPayments": float(payer_paid),
+                "patientPayment": float(patient_payment),
                 "patientResp": float(patient_resp),
                 "adjustment45": float(adjustment45),
                 "balance": float(balance),
