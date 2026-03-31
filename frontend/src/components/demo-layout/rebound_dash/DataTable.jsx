@@ -195,6 +195,16 @@ const DataTable = (props) => {
     return 0;
   };
   const [summaryTotals, setSummaryTotals] = useState(null);
+  const emptySummary = useMemo(() => ({
+    count: 0,
+    charges: 0,
+    allowed: 0,
+    payerPayments: 0,
+    patientPayment: 0,
+    patientResp: 0,
+    adjustment45: 0,
+    balance: 0,
+  }), []);
   const summaryRequestRef = useRef(0);
   const summarySignatureRef = useRef('');
   const isPatientRespView = tabIndex === 2 || (selectedTags.length > 0 && selectedTags.every((tag) => tag === 'Patient Resp'));
@@ -226,7 +236,8 @@ const DataTable = (props) => {
   const summaryCount =
     isClaimStatusView && !hasSummaryFilters
       ? claimStatusBootstrapCount
-      : summaryTotals?.count ?? summary.count;
+      : summaryTotals?.count ?? emptySummary.count;
+  const displayedSummary = summaryTotals ?? emptySummary;
   // Mirror the facility value used in the Claim (837) detail view.
   const getFacility = (row) => {
     const claimData =
@@ -633,18 +644,18 @@ const DataTable = (props) => {
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           {[
             { label: 'Count', value: samplifyInteger(summaryCount) },
-            { label: 'Charges', value: formatCurrencyRounded(summaryTotals?.charges ?? summary.charges) },
+            { label: 'Charges', value: formatCurrencyRounded(displayedSummary.charges) },
             { label: 'Exp Reimbursement', value: formatCurrencyRounded(0) },
-            { label: 'Allowed Amt', value: formatCurrencyRounded(summaryTotals?.allowed ?? summary.allowed) },
-            { label: isPatientRespView ? 'Patient Payment' : 'Payer Payments', value: formatCurrencyRounded(summaryTotals?.patientPayment ?? summary.patientPayment) },
-            { label: 'Patient Resp', value: formatCurrencyRounded(summaryTotals?.patientResp ?? summary.patientResp) },
+            { label: 'Allowed Amt', value: formatCurrencyRounded(displayedSummary.allowed) },
+            { label: isPatientRespView ? 'Patient Payment' : 'Payer Payments', value: formatCurrencyRounded(displayedSummary.patientPayment) },
+            { label: 'Patient Resp', value: formatCurrencyRounded(displayedSummary.patientResp) },
             {
               label: 'Balance',
               value: formatCurrencyRounded(
                 isPatientRespView
-                  ? (Number(summaryTotals?.patientResp ?? summary.patientResp) || 0) -
-                    (Number(summaryTotals?.patientPayment ?? summary.patientPayment) || 0)
-                  : (summaryTotals?.balance ?? summary.balance)
+                  ? (Number(displayedSummary.patientResp) || 0) -
+                    (Number(displayedSummary.patientPayment) || 0)
+                  : displayedSummary.balance
               ),
             },
           ].map((item) => (
