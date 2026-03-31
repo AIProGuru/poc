@@ -406,7 +406,8 @@ const ReboundDetailView = () => {
     const numericValue = Number(value);
     return Number.isNaN(numericValue) ? "N/A" : `$${samplifyDouble(numericValue)}`;
   };
-  const getPatientPaymentValue = () => Number(currentClaim?.Remit?.[0]?.PatientResp) || 0;
+  const getPatientPaymentValue = () =>
+    Number(currentClaim?.Claim?.Data?.PatientPayment ?? currentClaim?.Claim?.Data?.PatientPaid) || 0;
 
   const formatUnitsValue = (value) => {
     if (value === undefined || value === null || value === "") return "N/A";

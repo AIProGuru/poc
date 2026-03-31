@@ -88,7 +88,7 @@ const DataTable = (props) => {
   const formatCurrencyRounded = (value) => `$${samplifyInteger(Number(value) || 0)}`;
   const formatCurrencyExact = (value) => `$${samplifyDouble(Number(value) || 0)}`;
   const getPatientPaymentValue = (row) =>
-    Number(row?.PatientPayment ?? row?.PatientResp ?? row?.PatientResponsibility) || 0;
+    Number(row?.PatientPayment ?? row?.PatientPaid) || 0;
   const getArBalanceValue = (row) => {
     if (!row) return 0;
     const patientResp = Number(row.PatientResp || row.PatientResponsibility) || 0;

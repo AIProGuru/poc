@@ -74,7 +74,7 @@ SELECT
   SUBSTRING_INDEX(ClaimNo, '-', -1) AS ClaimNoLast,
   servicedate_837.ServiceDate,
   InsuranceType,
-  FedTaxID, BillProvNPI, PayerName, PayerID, PayerResponsibility, PatientFirst, PatientLast, PlaceOfService, Amount, PrincipalDiagnosis, ClaimFrequency, TransactionDate, TransactionType, PatientID, PayerAddress, PayerCity, PayerState, PayerZip, BillProvLast, BillProvAddress, BillProvCity, BillProvState, BillProvZip, BillProvSpecialty, RendProvSpecialty, PriorAuthorization
+  FedTaxID, BillProvNPI, PayerName, PayerID, PayerResponsibility, PatientFirst, PatientLast, PlaceOfService, Amount, PrincipalDiagnosis, ClaimFrequency, TransactionDate, TransactionType, PatientID, PayerAddress, PayerCity, PayerState, PayerZip, BillProvLast, BillProvAddress, BillProvCity, BillProvState, BillProvZip, BillProvSpecialty, RendProvSpecialty, PriorAuthorization, PatientPaid
 FROM EDI_Claims
 LEFT JOIN servicedate_837 ON servicedate_837.id_837=EDI_Claims.ID;
 
@@ -317,11 +317,13 @@ SELECT
   COALESCE(allowed_by_action.AllowedAfterAction, 0) AS RecoveryAllowed,
   CUSTOM_EDI_PaidClaims_CLONE.ClaimPaid AS PaidAmt,
   CAST(COALESCE(CUSTOM_EDI_PaidClaims_CLONE.PatientResp, 0) AS DECIMAL(12,2)) AS PatientResp,
+  CAST(COALESCE(CUSTOM_EDI_Claims_CLONE.PatientPaid, 0) AS DECIMAL(12,2)) AS PatientPayment,
   adjustment.AdjustmentAmount AS DeniedAmt,
   (
     COALESCE(CUSTOM_EDI_PaidClaims_CLONE.ChargeAmount, CUSTOM_EDI_Claims_CLONE.Amount, 0)
     - COALESCE(adjustment_45.Adjustment45Amount, 0)
     - COALESCE(allowed_latest.AllowedAmount, 0)
+    - COALESCE(CUSTOM_EDI_Claims_CLONE.PatientPaid, 0)
   ) AS Balance,
   CUSTOM_CATEGORY.Category,
   CUSTOM_CATEGORY.AdjustmentGroup AS PrimaryGroup,

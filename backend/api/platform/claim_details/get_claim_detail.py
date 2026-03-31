@@ -116,6 +116,7 @@ def get_rebound_claim():
                 CUSTOM_ALL.Amount,
                 CUSTOM_ALL.AllowedAmt,
                 CUSTOM_ALL.PaidAmt,
+                CUSTOM_ALL.PatientPayment,
                 CUSTOM_ALL.DeniedAmt,
                 CUSTOM_PAID_AMOUNT.ChargeAmount,
                 CUSTOM_PAID_AMOUNT.PaidAmount,
