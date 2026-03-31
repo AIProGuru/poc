@@ -64,6 +64,26 @@ def map_sort_field(sort: str) -> str:
     return f"{target}{suffix}"
 
 
+def get_custom_all_patient_payment_expr(cursor, db_name: str) -> str:
+    """Use PatientPayment when the column exists; otherwise fall back to 0."""
+    try:
+        cursor.execute(
+            """
+            SELECT 1
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = %s
+              AND TABLE_NAME = 'CUSTOM_ALL'
+              AND COLUMN_NAME = 'PatientPayment'
+            LIMIT 1
+            """,
+            (db_name,),
+        )
+        return "COALESCE(CUSTOM_ALL.PatientPayment, 0)" if cursor.fetchone() else "0"
+    except Exception as exc:
+        logger.warning("Unable to inspect CUSTOM_ALL.PatientPayment: %s", exc)
+        return "0"
+
+
 # Define the endpoint for fetching rebound data
 @rebound_api_stratification.route("/data_all", methods=["POST"])
 @medevolve_api_stratification.route("/data_all", methods=["POST"])
@@ -198,6 +218,7 @@ def get_rebound_data_all():
         print("bbbbbbbbbbbbbbbbbbbbbbb", result['cnt'])
         # Generate SQL query to fetch the data with pagination
         delinquent_label = os.getenv('DELIQUENT', 'Delinquent').replace("'", "''")
+        patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name)
         data_sql = f"""select
             CUSTOM_ALL.ClaimNo,
             CUSTOM_ALL.ProvTaxID,
@@ -214,8 +235,8 @@ def get_rebound_data_all():
             CUSTOM_ALL.RecoveryAllowed,
             CUSTOM_ALL.PaidAmt,
             CUSTOM_ALL.PatientResp,
-            COALESCE(CUSTOM_ALL.PatientPayment, 0) AS PatientPayment,
-            COALESCE(CUSTOM_ALL.Amount, 0) - COALESCE(CUSTOM_ALL.Adjustment45Amount, 0) - COALESCE(CUSTOM_ALL.PaidAmt, 0) - COALESCE(CUSTOM_ALL.PatientPayment, 0) AS Balance,
+            {patient_payment_expr} AS PatientPayment,
+            COALESCE(CUSTOM_ALL.Amount, 0) - COALESCE(CUSTOM_ALL.Adjustment45Amount, 0) - COALESCE(CUSTOM_ALL.PaidAmt, 0) - {patient_payment_expr} AS Balance,
             COALESCE(CUSTOM_ALL.BillProvName, '') AS FacilityName,
             COALESCE(NULLIF(TRIM(CUSTOM_ALL.Category), ''), '{delinquent_label}') AS Category,
             COALESCE(CUSTOM_ALL.PrimaryGroup, '') AS PrimaryGroup,
@@ -304,13 +325,14 @@ def get_rebound_data_summary():
                     "balance": 0,
                 }
             ), 200
+        patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name)
 
         summary_sql = f"""select
             count(ID) AS cnt,
             COALESCE(sum(CUSTOM_ALL.Amount), 0) AS total_amount,
             COALESCE(sum(CUSTOM_ALL.AllowedAmt), 0) AS total_allowed,
             COALESCE(sum(CUSTOM_ALL.PaidAmt), 0) AS total_payer_paid,
-            COALESCE(sum(CUSTOM_ALL.PatientPayment), 0) AS total_patient_payment,
+            COALESCE(sum({patient_payment_expr}), 0) AS total_patient_payment,
             COALESCE(sum(CUSTOM_ALL.PatientResp), 0) AS total_patient_resp,
             COALESCE(sum(CUSTOM_ALL.Adjustment45Amount), 0) AS total_adjustment45
             {newGenerateSQL(

@@ -22,6 +22,26 @@ pilotcustomer_api_get_claim.api_name = 'pilotcustomer_api_get_claim'
 betacustomer_api_get_claim = Blueprint('betacustomer_api_get_claim', __name__, url_prefix='/api/v1/betacustomer')
 betacustomer_api_get_claim.api_name = 'betacustomer_api_get_claim'
 
+
+def get_custom_all_patient_payment_expr(cursor, db_name: str) -> str:
+    """Use PatientPayment when the column exists; otherwise fall back to 0."""
+    try:
+        cursor.execute(
+            """
+            SELECT 1
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = %s
+              AND TABLE_NAME = 'CUSTOM_ALL'
+              AND COLUMN_NAME = 'PatientPayment'
+            LIMIT 1
+            """,
+            (db_name,),
+        )
+        return "COALESCE(CUSTOM_ALL.PatientPayment, 0)" if cursor.fetchone() else "0"
+    except Exception as exc:
+        logger.warning("Unable to inspect CUSTOM_ALL.PatientPayment: %s", exc)
+        return "0"
+
 @rebound_api_get_claim.route("/get_claim", methods=["GET"])
 @medevolve_api_get_claim.route("/get_claim", methods=["GET"])
 @pilotcustomer_api_get_claim.route("/get_claim", methods=["GET"])
@@ -103,6 +123,7 @@ def get_rebound_claim():
         conn, cursor, db_name = get_connection(request)
         claim_no = request.args.get("id")
         username = request.args.get("username")
+        patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name)
         ret = {"Claim": {}, "Remit": {}, "RelatedEncounters": []}
         q = f"""
             SELECT
@@ -116,7 +137,7 @@ def get_rebound_claim():
                 CUSTOM_ALL.Amount,
                 CUSTOM_ALL.AllowedAmt,
                 CUSTOM_ALL.PaidAmt,
-                CUSTOM_ALL.PatientPayment,
+                {patient_payment_expr} AS PatientPayment,
                 CUSTOM_ALL.DeniedAmt,
                 CUSTOM_PAID_AMOUNT.ChargeAmount,
                 CUSTOM_PAID_AMOUNT.PaidAmount,
