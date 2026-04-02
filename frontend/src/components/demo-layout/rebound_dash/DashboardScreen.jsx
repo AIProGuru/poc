@@ -33,9 +33,29 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
   const totals = useMemo(() => {
     const totalCount = filteredModels.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
     const totalAmount = filteredModels.reduce((sum, row) => sum + (Number(row.Amount) || 0), 0);
-    const avgPerHour = totalCount > 0 ? Math.max(1, Math.round(totalCount / 24)) : 0;
-    const accuracy = clamp(60 + (totalCount % 36), 60, 95);
-    return { totalCount, totalAmount, avgPerHour, accuracy };
+    const inventoryCount = filteredModels.reduce((sum, row) => {
+      const amount = Number(row.Amount) || 0;
+      return amount !== 0 ? sum + (Number(row.Count) || 0) : sum;
+    }, 0);
+    const activeAiAgents = selectedAgent
+      ? (filteredModels.length > 0 ? 1 : 0)
+      : new Set(
+          filteredModels.map((row) => `${row.ModelTitle || row.model_title || 'AI Agent'}`.trim() || 'AI Agent')
+        ).size;
+    const manualUsers = 0;
+    const activeUsers = manualUsers + activeAiAgents;
+    const dailyCapacity = activeUsers * 50;
+    const burnRateDays = dailyCapacity > 0 ? Math.ceil(inventoryCount / dailyCapacity) : 0;
+    return {
+      totalCount,
+      totalAmount,
+      inventoryCount,
+      activeAiAgents,
+      manualUsers,
+      activeUsers,
+      dailyCapacity,
+      burnRateDays,
+    };
   }, [filteredModels]);
 
   const categoryRows = useMemo(() => {
@@ -58,16 +78,14 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
       });
   }, [filteredModels]);
 
+  const helioWeekColors = ["#1CB5E0", "#46E5B9", "#2DD5A5", "#22B8CF", "#5C7CFA"];
+
   const recoveryBars = useMemo(() => {
     const base = totals.totalAmount || 0;
-    if (!base) return [40, 64, 52, 78, 60, 90, 72];
+    if (!base) return [42, 64, 53, 78, 61];
     const seed = Math.max(1, Math.round(base / 10000));
-    return Array.from({ length: 7 }, (_, idx) => clamp(40 + ((seed + idx * 7) % 60), 35, 95));
+    return Array.from({ length: 5 }, (_, idx) => clamp(40 + ((seed + idx * 7) % 60), 35, 95));
   }, [totals.totalAmount]);
-
-  const remainingActions = useMemo(() => {
-    return categoryRows.slice(0, 4).map((row) => [row[0], row[1]]);
-  }, [categoryRows]);
 
   return (
     <div
@@ -86,7 +104,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
       <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
         <div className={`rounded-xl border p-4 ${panel}`}>
           <div className="text-sm font-semibold">User Productivity (Daily)</div>
-          <div className={`mt-2 text-xs ${subtle}`}>Agents and output score</div>
+          <div className={`mt-2 text-xs ${subtle}`}>Agents and Output</div>
           <div className="mt-4 space-y-3">
             {productivity.length === 0 ? (
               <div className={`text-sm ${muted}`}>No AI agents available.</div>
@@ -114,16 +132,19 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
           <div className={`rounded-xl border p-4 ${panel}`}>
             <div className="text-sm font-semibold">Current Burn Rate</div>
             <div className="mt-6 rounded-lg border border-[#2b2f37] bg-black/40 p-6 text-center">
-              <div className="text-5xl font-semibold">{totals.avgPerHour}</div>
-              <div className={`mt-2 text-xs ${subtle}`}>Average claims per hour</div>
+              <div className="text-5xl font-semibold">{totals.burnRateDays.toLocaleString("en-US")}</div>
+              <div className={`mt-2 text-xs ${subtle}`}>Days to burn through current inventory</div>
+              <div className={`mt-3 text-[11px] leading-5 ${subtle}`}>
+                Burn Rate = Total Inventory (Bal &ne; 0) / ({totals.activeUsers.toLocaleString("en-US")} active users x 50 accounts/day)
+              </div>
             </div>
           </div>
 
           <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">Remaining, AR balance, averages</div>
+            <div className="text-sm font-semibold">Outstanding AR Inventory By Category</div>
             <div className={`mt-4 hidden sm:grid sm:grid-cols-[1.5fr_0.9fr_0.9fr_0.9fr_0.6fr] text-[11px] uppercase tracking-[0.12em] ${subtle}`}>
               <div>Category</div>
-              <div className="text-right">Remaining</div>
+              <div className="text-right">Inventory</div>
               <div className="text-right">AR Balance</div>
               <div className="text-right">Avg AR Balance</div>
               <div className="text-right">Avg Age</div>
@@ -137,7 +158,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
                   <div className="sm:hidden space-y-1 rounded-lg border border-[#2b2f37] bg-black/20 p-3">
                     <div className="text-gray-200 font-semibold truncate" title={row[0]}>{row[0]}</div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className={subtle}>Remaining</span>
+                      <span className={subtle}>Inventory</span>
                       <span className="tabular-nums">{row[1]}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
@@ -171,13 +192,15 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
 
           <div className="grid gap-4 lg:grid-cols-[280px_1fr] lg:col-span-2">
           <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">Inventory Accuracy</div>
-            <div className="mt-4 h-32 rounded-lg border border-[#2b2f37] bg-black/30 p-4">
-              <div className="text-xs uppercase text-[#7b808c]">Accuracy trend</div>
-              <div className="mt-4 h-2 w-full rounded-full bg-[#2a2d33]">
-                <div className="h-2 rounded-full bg-[#9aa0ab]" style={{ width: `${totals.accuracy}%` }} />
+            <div className="text-sm font-semibold">Future State: Inventory Accuracy</div>
+            <div className="mt-4 min-h-32 rounded-lg border border-[#2b2f37] bg-black/30 p-4">
+              <div className="text-xs uppercase text-[#7b808c]">Planned metric</div>
+              <div className={`mt-3 text-sm leading-6 ${muted}`}>
+                Inventory accuracy will be measured by whether a user flags a category as incorrect and changes it to the correct category.
               </div>
-              <div className={`mt-3 text-2xl font-semibold ${muted}`}>{totals.accuracy}%</div>
+              <div className={`mt-3 text-xs ${subtle}`}>
+                This tile is a future-state placeholder until that workflow is built.
+              </div>
             </div>
           </div>
 
@@ -187,7 +210,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
               <div className="flex items-end justify-between gap-1 sm:gap-2">
                 {recoveryBars.map((h, idx) => (
                   <div key={idx} className="flex w-full flex-col items-center">
-                    <div className="w-full rounded-md bg-[#858b95]" style={{ height: `${h}px` }} />
+                    <div className="w-full rounded-md" style={{ height: `${h}px`, backgroundColor: helioWeekColors[idx % helioWeekColors.length] }} />
                     <span className={`mt-1 text-[10px] ${subtle}`}>{`W${idx + 1}`}</span>
                   </div>
                 ))}
@@ -196,27 +219,25 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
           </div>
 
           <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">${`${Math.round(totals.totalAmount / 1_000_000 * 10) / 10}`}M Outstanding AR Balance</div>
-            <div className="mt-6 text-3xl font-semibold">{`${Math.round(totals.totalAmount / 1_000_000 * 10) / 10}`}M</div>
+            <div className="text-sm font-semibold">AR Balance</div>
+            <div className="mt-6 text-3xl font-semibold">{`$${Math.round(totals.totalAmount).toLocaleString("en-US")}`}</div>
             <div className={`mt-2 text-xs ${subtle}`}>Balance across all open claims</div>
-            <div className="mt-4 h-1.5 w-full rounded-full bg-[#2a2d33]">
-              <div className="h-1.5 rounded-full bg-[#9aa0ab]" style={{ width: `${clamp(Math.round((totals.totalAmount % 1_000_000) / 10_000), 20, 90)}%` }} />
-            </div>
           </div>
 
           <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">Remaining Actions</div>
+            <div className="text-sm font-semibold">Daily Capacity</div>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {remainingActions.length === 0 ? (
-                <div className={`text-sm ${muted}`}>No actions available.</div>
-              ) : (
-                remainingActions.map(([label, value]) => (
-                  <div key={label} className="rounded-lg border border-[#2b2f37] bg-black/30 p-3">
-                    <div className={`text-xs ${subtle}`}>{label}</div>
-                    <div className="mt-1 text-xl font-semibold">{value}</div>
-                  </div>
-                ))
-              )}
+              {[
+                ["Active Users", totals.activeUsers.toLocaleString("en-US")],
+                ["Manual Users", totals.manualUsers.toLocaleString("en-US")],
+                ["AI Agents", totals.activeAiAgents.toLocaleString("en-US")],
+                ["Accounts / Day", totals.dailyCapacity.toLocaleString("en-US")],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-[#2b2f37] bg-black/30 p-3">
+                  <div className={`text-xs ${subtle}`}>{label}</div>
+                  <div className="mt-1 text-xl font-semibold">{value}</div>
+                </div>
+              ))}
             </div>
           </div>
           </div>
