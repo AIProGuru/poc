@@ -1,10 +1,13 @@
-import React, { useMemo } from "react";
+/* eslint-disable react/prop-types */
+import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 
-const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const formatCurrency = (value) => `$${Number(value || 0).toLocaleString("en-US")}`;
 
 const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
-  const models = useSelector((state) => state.app.models) || [];
+  const [hoveredRecoveryWeek, setHoveredRecoveryWeek] = useState(null);
+  const modelsState = useSelector((state) => state.app.models);
+  const models = useMemo(() => modelsState ?? [], [modelsState]);
   const surface = isDark ? "bg-[#1b1c20] border-[#2b2f37] text-gray-100" : "bg-white border-slate-200 text-slate-900";
   const panel = isDark ? "bg-[#202228] border-[#2b2f37]" : "bg-white border-slate-200";
   const muted = isDark ? "text-[#b7bcc6]" : "text-slate-500";
@@ -31,12 +34,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
   }, [models, selectedAgent]);
 
   const totals = useMemo(() => {
-    const totalCount = filteredModels.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
     const totalAmount = filteredModels.reduce((sum, row) => sum + (Number(row.Amount) || 0), 0);
-    const inventoryCount = filteredModels.reduce((sum, row) => {
-      const amount = Number(row.Amount) || 0;
-      return amount !== 0 ? sum + (Number(row.Count) || 0) : sum;
-    }, 0);
     const activeAiAgents = selectedAgent
       ? (filteredModels.length > 0 ? 1 : 0)
       : new Set(
@@ -45,18 +43,14 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
     const manualUsers = 0;
     const activeUsers = manualUsers + activeAiAgents;
     const dailyCapacity = activeUsers * 50;
-    const burnRateDays = dailyCapacity > 0 ? Math.ceil(inventoryCount / dailyCapacity) : 0;
     return {
-      totalCount,
       totalAmount,
-      inventoryCount,
       activeAiAgents,
       manualUsers,
       activeUsers,
       dailyCapacity,
-      burnRateDays,
     };
-  }, [filteredModels]);
+  }, [filteredModels, selectedAgent]);
 
   const categoryRows = useMemo(() => {
     const categoryMap = new Map();
@@ -79,13 +73,18 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
   }, [filteredModels]);
 
   const helioWeekColors = ["#1CB5E0", "#46E5B9", "#2DD5A5", "#22B8CF", "#5C7CFA"];
+  const inventoryAccuracy = 82;
 
-  const recoveryBars = useMemo(() => {
-    const base = totals.totalAmount || 0;
-    if (!base) return [42, 64, 53, 78, 61];
-    const seed = Math.max(1, Math.round(base / 10000));
-    return Array.from({ length: 5 }, (_, idx) => clamp(40 + ((seed + idx * 7) % 60), 35, 95));
-  }, [totals.totalAmount]);
+  const recoveryBars = useMemo(
+    () => ([
+      { week: "W1", height: 42, claims: 55, recovered: 40000 },
+      { week: "W2", height: 64, claims: 75, recovered: 70000 },
+      { week: "W3", height: 53, claims: 62, recovered: 52000 },
+      { week: "W4", height: 78, claims: 88, recovered: 93000 },
+      { week: "W5", height: 61, claims: 71, recovered: 68000 },
+    ]),
+    []
+  );
 
   return (
     <div
@@ -132,10 +131,10 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
           <div className={`rounded-xl border p-4 ${panel}`}>
             <div className="text-sm font-semibold">Current Burn Rate</div>
             <div className="mt-6 rounded-lg border border-[#2b2f37] bg-black/40 p-6 text-center">
-              <div className="text-5xl font-semibold">{totals.burnRateDays.toLocaleString("en-US")}</div>
+              <div className="text-5xl font-semibold">75</div>
               <div className={`mt-2 text-xs ${subtle}`}>Days to burn through current inventory</div>
               <div className={`mt-3 text-[11px] leading-5 ${subtle}`}>
-                Burn Rate = Total Inventory (Bal &ne; 0) / ({totals.activeUsers.toLocaleString("en-US")} active users x 50 accounts/day)
+                Estimated time remaining at the current operating pace.
               </div>
             </div>
           </div>
@@ -192,26 +191,38 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
 
           <div className="grid gap-4 lg:grid-cols-[280px_1fr] lg:col-span-2">
           <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">Future State: Inventory Accuracy</div>
-            <div className="mt-4 min-h-32 rounded-lg border border-[#2b2f37] bg-black/30 p-4">
-              <div className="text-xs uppercase text-[#7b808c]">Planned metric</div>
-              <div className={`mt-3 text-sm leading-6 ${muted}`}>
-                Inventory accuracy will be measured by whether a user flags a category as incorrect and changes it to the correct category.
+            <div className="text-sm font-semibold">Inventory Accuracy</div>
+            <div className="mt-4 h-32 rounded-lg border border-[#2b2f37] bg-black/30 p-4">
+              <div className="text-xs uppercase text-[#7b808c]">Accuracy trend</div>
+              <div className="mt-4 h-2 w-full rounded-full bg-[#2a2d33]">
+                <div className="h-2 rounded-full bg-[#9aa0ab]" style={{ width: `${inventoryAccuracy}%` }} />
               </div>
-              <div className={`mt-3 text-xs ${subtle}`}>
-                This tile is a future-state placeholder until that workflow is built.
-              </div>
+              <div className={`mt-3 text-2xl font-semibold ${muted}`}>{inventoryAccuracy}%</div>
             </div>
           </div>
 
           <div className={`rounded-xl border p-4 ${panel}`}>
             <div className="text-sm font-semibold">Recovery $ Month to Date (MTD)</div>
-            <div className="mt-4 h-32 rounded-lg border border-[#2b2f37] bg-black/30 p-4">
+            <div className="relative mt-4 h-32 rounded-lg border border-[#2b2f37] bg-black/30 p-4">
+              {hoveredRecoveryWeek ? (
+                <div className="pointer-events-none absolute left-4 top-4 z-10 rounded-lg border border-[#2b2f37] bg-[#121418] px-3 py-2 text-xs text-white shadow-lg">
+                  <div>{`${hoveredRecoveryWeek.week} Claims: ${hoveredRecoveryWeek.claims}`}</div>
+                  <div>{`Recovered: ${formatCurrency(hoveredRecoveryWeek.recovered)}`}</div>
+                </div>
+              ) : null}
               <div className="flex items-end justify-between gap-1 sm:gap-2">
-                {recoveryBars.map((h, idx) => (
-                  <div key={idx} className="flex w-full flex-col items-center">
-                    <div className="w-full rounded-md" style={{ height: `${h}px`, backgroundColor: helioWeekColors[idx % helioWeekColors.length] }} />
-                    <span className={`mt-1 text-[10px] ${subtle}`}>{`W${idx + 1}`}</span>
+                {recoveryBars.map((bar, idx) => (
+                  <div
+                    key={bar.week}
+                    className="flex w-full flex-col items-center"
+                    onMouseEnter={() => setHoveredRecoveryWeek(bar)}
+                    onMouseLeave={() => setHoveredRecoveryWeek(null)}
+                  >
+                    <div
+                      className="w-full rounded-md transition-transform duration-150 hover:scale-[1.03]"
+                      style={{ height: `${bar.height}px`, backgroundColor: helioWeekColors[idx % helioWeekColors.length] }}
+                    />
+                    <span className={`mt-1 text-[10px] ${subtle}`}>{bar.week}</span>
                   </div>
                 ))}
               </div>
