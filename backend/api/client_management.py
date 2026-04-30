@@ -22,6 +22,20 @@ def _serialize_doc(doc):
     return data
 
 
+def _facility_doc(client_id: str, tenant_id: str, facility_id: str):
+    return (
+        _client_doc(client_id)
+        .collection("tenants")
+        .document(tenant_id)
+        .collection("facilities")
+        .document(facility_id)
+    )
+
+
+def _list_subcollection(parent_ref, collection_name: str):
+    return [_serialize_doc(doc) for doc in parent_ref.collection(collection_name).stream()]
+
+
 @client_management_bp.route("/clients", methods=["GET"])
 def list_clients():
     try:
@@ -67,7 +81,10 @@ def get_client(client_id):
             tenant_data = _serialize_doc(tenant_doc)
             facilities = []
             for facility_doc in tenant_doc.reference.collection("facilities").stream():
-                facilities.append(_serialize_doc(facility_doc))
+                facility_data = _serialize_doc(facility_doc)
+                facility_data["payerPlanCodes"] = _list_subcollection(facility_doc.reference, "payerPlanCodes")
+                facility_data["transactionCodes"] = _list_subcollection(facility_doc.reference, "transactionCodes")
+                facilities.append(facility_data)
             tenant_data["facilities"] = facilities
             tenants.append(tenant_data)
 
@@ -110,6 +127,10 @@ def delete_client(client_id):
         for tenant_doc in client_ref.collection("tenants").stream():
             tenant_ref = tenant_doc.reference
             for facility_doc in tenant_ref.collection("facilities").stream():
+                for payer_plan_doc in facility_doc.reference.collection("payerPlanCodes").stream():
+                    payer_plan_doc.reference.delete()
+                for transaction_code_doc in facility_doc.reference.collection("transactionCodes").stream():
+                    transaction_code_doc.reference.delete()
                 facility_doc.reference.delete()
             tenant_ref.delete()
 
@@ -209,6 +230,10 @@ def delete_tenant(client_id, tenant_id):
             return jsonify({"error": "Tenant not found"}), 404
 
         for facility_doc in tenant_ref.collection("facilities").stream():
+            for payer_plan_doc in facility_doc.reference.collection("payerPlanCodes").stream():
+                payer_plan_doc.reference.delete()
+            for transaction_code_doc in facility_doc.reference.collection("transactionCodes").stream():
+                transaction_code_doc.reference.delete()
             facility_doc.reference.delete()
         tenant_ref.delete()
         return jsonify({"message": "Tenant deleted"}), 200
@@ -235,6 +260,8 @@ def add_facility(client_id, tenant_id):
 
         created = dict(payload)
         created["id"] = facility_ref.id
+        created.setdefault("payerPlanCodes", [])
+        created.setdefault("transactionCodes", [])
         return jsonify(created), 200
     except Exception as exc:
         logger.error("Error adding facility for tenant %s: %s", tenant_id, exc)
@@ -251,13 +278,7 @@ def update_facility(client_id, tenant_id, facility_id):
         return jsonify({"error": "Request body is required"}), 400
 
     try:
-        facility_ref = (
-            _client_doc(client_id)
-            .collection("tenants")
-            .document(tenant_id)
-            .collection("facilities")
-            .document(facility_id)
-        )
+        facility_ref = _facility_doc(client_id, tenant_id, facility_id)
         if not facility_ref.get().exists:
             return jsonify({"error": "Facility not found"}), 404
 
@@ -272,18 +293,152 @@ def update_facility(client_id, tenant_id, facility_id):
 @client_management_bp.route("/clients/<client_id>/tenants/<tenant_id>/facilities/<facility_id>", methods=["DELETE"])
 def delete_facility(client_id, tenant_id, facility_id):
     try:
-        facility_ref = (
-            _client_doc(client_id)
-            .collection("tenants")
-            .document(tenant_id)
-            .collection("facilities")
-            .document(facility_id)
-        )
+        facility_ref = _facility_doc(client_id, tenant_id, facility_id)
         if not facility_ref.get().exists:
             return jsonify({"error": "Facility not found"}), 404
 
+        for payer_plan_doc in facility_ref.collection("payerPlanCodes").stream():
+            payer_plan_doc.reference.delete()
+        for transaction_code_doc in facility_ref.collection("transactionCodes").stream():
+            transaction_code_doc.reference.delete()
         facility_ref.delete()
         return jsonify({"message": "Facility deleted"}), 200
     except Exception as exc:
         logger.error("Error deleting facility %s: %s", facility_id, exc)
         return jsonify({"error": "Failed to delete facility"}), 500
+
+
+@client_management_bp.route(
+    "/clients/<client_id>/tenants/<tenant_id>/facilities/<facility_id>/payer-plan-codes",
+    methods=["POST"],
+)
+def add_payer_plan_code(client_id, tenant_id, facility_id):
+    if request.content_type != "application/json":
+        return jsonify({"error": "Unsupported Media Type"}), 415
+
+    payload = request.get_json() or {}
+    try:
+        facility_ref = _facility_doc(client_id, tenant_id, facility_id)
+        if not facility_ref.get().exists:
+            return jsonify({"error": "Facility not found"}), 404
+
+        code_ref = facility_ref.collection("payerPlanCodes").document()
+        payload = {k: v for k, v in payload.items() if v is not None}
+        payload.setdefault("createdAt", datetime.utcnow().isoformat())
+        code_ref.set(payload)
+
+        created = dict(payload)
+        created["id"] = code_ref.id
+        return jsonify(created), 200
+    except Exception as exc:
+        logger.error("Error adding payer plan code for facility %s: %s", facility_id, exc)
+        return jsonify({"error": "Failed to add payer plan code"}), 500
+
+
+@client_management_bp.route(
+    "/clients/<client_id>/tenants/<tenant_id>/facilities/<facility_id>/payer-plan-codes/<code_id>",
+    methods=["PATCH"],
+)
+def update_payer_plan_code(client_id, tenant_id, facility_id, code_id):
+    if request.content_type != "application/json":
+        return jsonify({"error": "Unsupported Media Type"}), 415
+
+    payload = request.get_json() or {}
+    if not payload:
+        return jsonify({"error": "Request body is required"}), 400
+
+    try:
+        code_ref = _facility_doc(client_id, tenant_id, facility_id).collection("payerPlanCodes").document(code_id)
+        if not code_ref.get().exists:
+            return jsonify({"error": "Payer plan code not found"}), 404
+
+        code_ref.set(payload, merge=True)
+        return jsonify(_serialize_doc(code_ref.get())), 200
+    except Exception as exc:
+        logger.error("Error updating payer plan code %s: %s", code_id, exc)
+        return jsonify({"error": "Failed to update payer plan code"}), 500
+
+
+@client_management_bp.route(
+    "/clients/<client_id>/tenants/<tenant_id>/facilities/<facility_id>/payer-plan-codes/<code_id>",
+    methods=["DELETE"],
+)
+def delete_payer_plan_code(client_id, tenant_id, facility_id, code_id):
+    try:
+        code_ref = _facility_doc(client_id, tenant_id, facility_id).collection("payerPlanCodes").document(code_id)
+        if not code_ref.get().exists:
+            return jsonify({"error": "Payer plan code not found"}), 404
+
+        code_ref.delete()
+        return jsonify({"message": "Payer plan code deleted"}), 200
+    except Exception as exc:
+        logger.error("Error deleting payer plan code %s: %s", code_id, exc)
+        return jsonify({"error": "Failed to delete payer plan code"}), 500
+
+
+@client_management_bp.route(
+    "/clients/<client_id>/tenants/<tenant_id>/facilities/<facility_id>/transaction-codes",
+    methods=["POST"],
+)
+def add_transaction_code(client_id, tenant_id, facility_id):
+    if request.content_type != "application/json":
+        return jsonify({"error": "Unsupported Media Type"}), 415
+
+    payload = request.get_json() or {}
+    try:
+        facility_ref = _facility_doc(client_id, tenant_id, facility_id)
+        if not facility_ref.get().exists:
+            return jsonify({"error": "Facility not found"}), 404
+
+        code_ref = facility_ref.collection("transactionCodes").document()
+        payload = {k: v for k, v in payload.items() if v is not None}
+        payload.setdefault("createdAt", datetime.utcnow().isoformat())
+        code_ref.set(payload)
+
+        created = dict(payload)
+        created["id"] = code_ref.id
+        return jsonify(created), 200
+    except Exception as exc:
+        logger.error("Error adding transaction code for facility %s: %s", facility_id, exc)
+        return jsonify({"error": "Failed to add transaction code"}), 500
+
+
+@client_management_bp.route(
+    "/clients/<client_id>/tenants/<tenant_id>/facilities/<facility_id>/transaction-codes/<code_id>",
+    methods=["PATCH"],
+)
+def update_transaction_code(client_id, tenant_id, facility_id, code_id):
+    if request.content_type != "application/json":
+        return jsonify({"error": "Unsupported Media Type"}), 415
+
+    payload = request.get_json() or {}
+    if not payload:
+        return jsonify({"error": "Request body is required"}), 400
+
+    try:
+        code_ref = _facility_doc(client_id, tenant_id, facility_id).collection("transactionCodes").document(code_id)
+        if not code_ref.get().exists:
+            return jsonify({"error": "Transaction code not found"}), 404
+
+        code_ref.set(payload, merge=True)
+        return jsonify(_serialize_doc(code_ref.get())), 200
+    except Exception as exc:
+        logger.error("Error updating transaction code %s: %s", code_id, exc)
+        return jsonify({"error": "Failed to update transaction code"}), 500
+
+
+@client_management_bp.route(
+    "/clients/<client_id>/tenants/<tenant_id>/facilities/<facility_id>/transaction-codes/<code_id>",
+    methods=["DELETE"],
+)
+def delete_transaction_code(client_id, tenant_id, facility_id, code_id):
+    try:
+        code_ref = _facility_doc(client_id, tenant_id, facility_id).collection("transactionCodes").document(code_id)
+        if not code_ref.get().exists:
+            return jsonify({"error": "Transaction code not found"}), 404
+
+        code_ref.delete()
+        return jsonify({"message": "Transaction code deleted"}), 200
+    except Exception as exc:
+        logger.error("Error deleting transaction code %s: %s", code_id, exc)
+        return jsonify({"error": "Failed to delete transaction code"}), 500

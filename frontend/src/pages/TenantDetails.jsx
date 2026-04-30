@@ -22,6 +22,26 @@ const FACILITY_TYPE_OPTIONS = [
 ];
 
 const STATUS_OPTIONS = ['Active', 'Pending', 'On Hold'];
+const PAYER_TYPE_OPTIONS = ['Commercial', 'Medicare', 'Medicaid', 'Workers Comp', 'Self Pay', 'Other'];
+const PAYER_MODULE_OPTIONS = ['Claim Submission', 'Appeal', 'Eligibility', 'Payment Posting', 'Other'];
+const PAYER_CATEGORY_OPTIONS = ['Primary', 'Secondary', 'Tertiary', 'Corrected Claim', 'Appeal', 'Other'];
+const TRANSACTION_CODE_TYPE_OPTIONS = ['Adjustment', 'Denial', 'Remark', 'Status', 'Payment', 'Other'];
+
+const EMPTY_PAYER_PLAN_CODE = {
+  payerType: '',
+  payerId: '',
+  payerDescription: '',
+  payerAddress: '',
+  payerPhoneNumber: '',
+  module: '',
+  category: ''
+};
+
+const EMPTY_TRANSACTION_CODE = {
+  transactionCodeType: '',
+  transactionCode: '',
+  transactionCodeDescription: ''
+};
 
 const TenantDetails = () => {
   const { clientId, tenantId } = useParams();
@@ -34,6 +54,8 @@ const TenantDetails = () => {
   const [loading, setLoading] = useState(true);
 
   const [facilityTab, setFacilityTab] = useState('facilities');
+  const [facilitySearch, setFacilitySearch] = useState('');
+  const [selectedFacilityId, setSelectedFacilityId] = useState('');
   const [isEditingTenant, setIsEditingTenant] = useState(Boolean(location.state?.edit));
   const [isEditTenantTypeOpen, setIsEditTenantTypeOpen] = useState(false);
   const [isEditTenantStatusOpen, setIsEditTenantStatusOpen] = useState(false);
@@ -64,6 +86,12 @@ const TenantDetails = () => {
     contact: '',
     email: ''
   });
+  const [newPayerPlanCode, setNewPayerPlanCode] = useState(EMPTY_PAYER_PLAN_CODE);
+  const [editingPayerPlanCodeId, setEditingPayerPlanCodeId] = useState(null);
+  const [payerPlanCodeEditForm, setPayerPlanCodeEditForm] = useState(EMPTY_PAYER_PLAN_CODE);
+  const [newTransactionCode, setNewTransactionCode] = useState(EMPTY_TRANSACTION_CODE);
+  const [editingTransactionCodeId, setEditingTransactionCodeId] = useState(null);
+  const [transactionCodeEditForm, setTransactionCodeEditForm] = useState(EMPTY_TRANSACTION_CODE);
   const editTenantTypeButtonRef = useRef(null);
   const editTenantTypeMenuRef = useRef(null);
   const editTenantStatusButtonRef = useRef(null);
@@ -136,7 +164,26 @@ const TenantDetails = () => {
       contact: '',
       email: ''
     });
+    setFacilitySearch('');
+    setSelectedFacilityId('');
+    setNewPayerPlanCode({ ...EMPTY_PAYER_PLAN_CODE });
+    setEditingPayerPlanCodeId(null);
+    setPayerPlanCodeEditForm({ ...EMPTY_PAYER_PLAN_CODE });
+    setNewTransactionCode({ ...EMPTY_TRANSACTION_CODE });
+    setEditingTransactionCodeId(null);
+    setTransactionCodeEditForm({ ...EMPTY_TRANSACTION_CODE });
   }, [selectedTenant?.id, location.state?.edit]);
+
+  useEffect(() => {
+    if (!selectedTenant) return;
+    const facilities = selectedTenant.facilities || [];
+    if (selectedFacilityId && facilities.some((facility) => String(facility.id) === String(selectedFacilityId))) {
+      return;
+    }
+    setSelectedFacilityId('');
+    setEditingPayerPlanCodeId(null);
+    setEditingTransactionCodeId(null);
+  }, [selectedTenant?.facilities, selectedFacilityId]);
 
   useLayoutEffect(() => {
     if (!isEditTenantTypeOpen) {
@@ -446,6 +493,238 @@ const TenantDetails = () => {
       email: ''
     });
   };
+
+  const facilities = selectedTenant?.facilities || [];
+  const normalizedFacilitySearch = facilitySearch.trim().toLowerCase();
+  const filteredFacilities = normalizedFacilitySearch
+    ? facilities.filter((facility) =>
+        [
+          facility.name,
+          facility.facilityType,
+          facility.contact,
+          facility.email,
+          facility.status,
+          facility.taxId,
+          facility.npi
+        ]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedFacilitySearch))
+      )
+    : facilities;
+  const selectedFacility = facilities.find((facility) => String(facility.id) === String(selectedFacilityId)) || null;
+
+  const updateFacilityInState = (facilityId, updater) => {
+    if (!selectedTenant || !client) return;
+    const updatedSubClients = (client.subClients || []).map((subClient) => {
+      if (subClient.id !== selectedTenant.id) return subClient;
+      const nextFacilities = (subClient.facilities || []).map((facility) => {
+        if (String(facility.id) !== String(facilityId)) return facility;
+        return updater(facility);
+      });
+      return { ...subClient, facilities: nextFacilities };
+    });
+
+    setClient((prev) => ({
+      ...prev,
+      subClients: updatedSubClients
+    }));
+
+    const updatedTenant = updatedSubClients.find((subClient) => subClient.id === selectedTenant.id);
+    if (updatedTenant) {
+      setSelectedTenant(updatedTenant);
+    }
+  };
+
+  const codeBaseUrl = (facilityId) =>
+    `${resolvedApiUrl}/clients/${client.id}/tenants/${selectedTenant.id}/facilities/${facilityId}`;
+
+  const handlePayerPlanCodeSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedFacility) {
+      alert('Select a facility before adding payer plan codes.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await axios.post(
+        `${codeBaseUrl(selectedFacility.id)}/payer-plan-codes`,
+        newPayerPlanCode,
+        { withCredentials: true }
+      );
+      const createdCode = res.data || { ...newPayerPlanCode, id: `payer-plan-${Date.now()}` };
+      updateFacilityInState(selectedFacility.id, (facility) => ({
+        ...facility,
+        payerPlanCodes: [...(facility.payerPlanCodes || []), createdCode]
+      }));
+      setNewPayerPlanCode({ ...EMPTY_PAYER_PLAN_CODE });
+    } catch (error) {
+      console.error('Error adding payer plan code:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const beginPayerPlanCodeEdit = (code) => {
+    setEditingPayerPlanCodeId(code.id);
+    setPayerPlanCodeEditForm({
+      payerType: code.payerType || '',
+      payerId: code.payerId || '',
+      payerDescription: code.payerDescription || '',
+      payerAddress: code.payerAddress || '',
+      payerPhoneNumber: code.payerPhoneNumber || '',
+      module: code.module || '',
+      category: code.category || ''
+    });
+  };
+
+  const cancelPayerPlanCodeEdit = () => {
+    setEditingPayerPlanCodeId(null);
+    setPayerPlanCodeEditForm({ ...EMPTY_PAYER_PLAN_CODE });
+  };
+
+  const handlePayerPlanCodeUpdate = async (codeId) => {
+    if (!selectedFacility) return;
+    try {
+      setLoading(true);
+      const res = await axios.patch(
+        `${codeBaseUrl(selectedFacility.id)}/payer-plan-codes/${codeId}`,
+        payerPlanCodeEditForm,
+        { withCredentials: true }
+      );
+      const updatedCode = res.data || { ...payerPlanCodeEditForm, id: codeId };
+      updateFacilityInState(selectedFacility.id, (facility) => ({
+        ...facility,
+        payerPlanCodes: (facility.payerPlanCodes || []).map((code) =>
+          code.id === codeId ? { ...code, ...updatedCode } : code
+        )
+      }));
+      cancelPayerPlanCodeEdit();
+    } catch (error) {
+      console.error('Error updating payer plan code:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePayerPlanCodeDelete = async (codeId) => {
+    if (!selectedFacility) return;
+    const confirmed = window.confirm('Delete this payer plan code? This cannot be undone.');
+    if (!confirmed) return;
+    try {
+      setLoading(true);
+      await axios.delete(
+        `${codeBaseUrl(selectedFacility.id)}/payer-plan-codes/${codeId}`,
+        { withCredentials: true }
+      );
+      updateFacilityInState(selectedFacility.id, (facility) => ({
+        ...facility,
+        payerPlanCodes: (facility.payerPlanCodes || []).filter((code) => code.id !== codeId)
+      }));
+      if (editingPayerPlanCodeId === codeId) {
+        cancelPayerPlanCodeEdit();
+      }
+    } catch (error) {
+      console.error('Error deleting payer plan code:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTransactionCodeSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedFacility) {
+      alert('Select a facility before adding transaction codes.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await axios.post(
+        `${codeBaseUrl(selectedFacility.id)}/transaction-codes`,
+        newTransactionCode,
+        { withCredentials: true }
+      );
+      const createdCode = res.data || { ...newTransactionCode, id: `transaction-code-${Date.now()}` };
+      updateFacilityInState(selectedFacility.id, (facility) => ({
+        ...facility,
+        transactionCodes: [...(facility.transactionCodes || []), createdCode]
+      }));
+      setNewTransactionCode({ ...EMPTY_TRANSACTION_CODE });
+    } catch (error) {
+      console.error('Error adding transaction code:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const beginTransactionCodeEdit = (code) => {
+    setEditingTransactionCodeId(code.id);
+    setTransactionCodeEditForm({
+      transactionCodeType: code.transactionCodeType || '',
+      transactionCode: code.transactionCode || '',
+      transactionCodeDescription: code.transactionCodeDescription || ''
+    });
+  };
+
+  const cancelTransactionCodeEdit = () => {
+    setEditingTransactionCodeId(null);
+    setTransactionCodeEditForm({ ...EMPTY_TRANSACTION_CODE });
+  };
+
+  const handleTransactionCodeUpdate = async (codeId) => {
+    if (!selectedFacility) return;
+    try {
+      setLoading(true);
+      const res = await axios.patch(
+        `${codeBaseUrl(selectedFacility.id)}/transaction-codes/${codeId}`,
+        transactionCodeEditForm,
+        { withCredentials: true }
+      );
+      const updatedCode = res.data || { ...transactionCodeEditForm, id: codeId };
+      updateFacilityInState(selectedFacility.id, (facility) => ({
+        ...facility,
+        transactionCodes: (facility.transactionCodes || []).map((code) =>
+          code.id === codeId ? { ...code, ...updatedCode } : code
+        )
+      }));
+      cancelTransactionCodeEdit();
+    } catch (error) {
+      console.error('Error updating transaction code:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTransactionCodeDelete = async (codeId) => {
+    if (!selectedFacility) return;
+    const confirmed = window.confirm('Delete this transaction code? This cannot be undone.');
+    if (!confirmed) return;
+    try {
+      setLoading(true);
+      await axios.delete(
+        `${codeBaseUrl(selectedFacility.id)}/transaction-codes/${codeId}`,
+        { withCredentials: true }
+      );
+      updateFacilityInState(selectedFacility.id, (facility) => ({
+        ...facility,
+        transactionCodes: (facility.transactionCodes || []).filter((code) => code.id !== codeId)
+      }));
+      if (editingTransactionCodeId === codeId) {
+        cancelTransactionCodeEdit();
+      }
+    } catch (error) {
+      console.error('Error deleting transaction code:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1e1f24] text-white">
@@ -699,25 +978,8 @@ const TenantDetails = () => {
                 </div>
               </div>
               <div className="md:col-span-2">
-                <h3 className="text-[#f4f4f4] text-sm font-medium mb-3">Location</h3>
-                <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
-                  {isEditingTenant ? (
-                    <input
-                      type="text"
-                      name="address"
-                      value={editTenantForm.address}
-                      onChange={(e) => setEditTenantForm(prev => ({ ...prev, address: e.target.value }))}
-                      className={editInputClass}
-                    />
-                  ) : (
-                    <p className="text-white">{selectedTenant.address}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="md:col-span-2">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {[
                       { id: 'facilities', label: 'Facilities' },
                       { id: 'payer-plan', label: 'Payer Plan' },
@@ -737,8 +999,59 @@ const TenantDetails = () => {
                       </button>
                     ))}
                   </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <input
+                      type="search"
+                      value={facilitySearch}
+                      onChange={(e) => setFacilitySearch(e.target.value)}
+                      className="w-full sm:w-72 p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]"
+                      placeholder="Search facilities"
+                    />
+                    <select
+                      value={selectedFacilityId}
+                      onChange={(e) => {
+                        setSelectedFacilityId(e.target.value);
+                        setEditingPayerPlanCodeId(null);
+                        setEditingTransactionCodeId(null);
+                      }}
+                      className="w-full sm:w-72 p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#1f232a] text-white border-[#ffffff20]"
+                    >
+                      <option value="" className="bg-[#1f232a] text-white">Select facility</option>
+                      {filteredFacilities.map((facility) => (
+                        <option key={facility.id} value={facility.id} className="bg-[#1f232a] text-white">
+                          {facility.name || 'Unnamed Facility'}{facility.facilityType ? ` - ${facility.facilityType}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className="bg-[#ffffff08] rounded-lg p-5 border border-[#ffffff10]">
+                  {facilityTab !== 'facilities' && (
+                    <div className="mb-4 rounded-lg border border-[#ffffff10] bg-[#1f232a] p-4">
+                      {selectedFacility ? (
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+                          <div>
+                            <p className="text-gray-400">Selected Facility</p>
+                            <p className="text-white font-medium">{selectedFacility.name || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">Type</p>
+                            <p className="text-white">{selectedFacility.facilityType || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">Contact</p>
+                            <p className="text-white">{selectedFacility.contact || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">Status</p>
+                            <p className="text-white">{selectedFacility.status || selectedTenant.status || '-'}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-400">Select a facility before entering or managing codes.</p>
+                      )}
+                    </div>
+                  )}
                   {facilityTab === 'facilities' && (
                     <form onSubmit={handleNewFacilitySubmit} className="overflow-x-auto">
                       <table className="min-w-[1100px] w-full bg-transparent">
@@ -866,15 +1179,20 @@ const TenantDetails = () => {
                               </div>
                             </td>
                           </tr>
-                          {(selectedTenant.facilities || []).length === 0 && (
+                          {filteredFacilities.length === 0 && (
                             <tr>
                               <td colSpan={8} className="px-3 py-6 text-sm text-gray-400">
-                                No facilities added yet.
+                                {facilities.length === 0 ? 'No facilities added yet.' : 'No facilities match your search.'}
                               </td>
                             </tr>
                           )}
-                          {(selectedTenant.facilities || []).map((facility) => (
-                            <tr key={facility.id} className="border-b border-[#ffffff10] text-sm">
+                          {filteredFacilities.map((facility) => (
+                            <tr
+                              key={facility.id}
+                              className={`border-b border-[#ffffff10] text-sm ${
+                                String(selectedFacilityId) === String(facility.id) ? 'bg-[#ffffff08]' : ''
+                              }`}
+                            >
                               <td className="px-3 py-3">
                                 {editingFacilityId === facility.id ? (
                                   <input
@@ -992,6 +1310,17 @@ const TenantDetails = () => {
                                   <div className="flex items-center justify-center gap-2">
                                     <button
                                       type="button"
+                                      onClick={() => setSelectedFacilityId(facility.id)}
+                                      className={`px-3 py-2 text-xs font-medium rounded-md transition ${
+                                        String(selectedFacilityId) === String(facility.id)
+                                          ? 'bg-green-500/20 text-green-300'
+                                          : 'bg-[#ffffff10] text-white hover:bg-[#ffffff20]'
+                                      }`}
+                                    >
+                                      {String(selectedFacilityId) === String(facility.id) ? 'Selected' : 'Select'}
+                                    </button>
+                                    <button
+                                      type="button"
                                       onClick={() => beginFacilityEdit(facility)}
                                       className="px-3 py-2 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition"
                                     >
@@ -1014,10 +1343,342 @@ const TenantDetails = () => {
                     </form>
                   )}
                   {facilityTab === 'payer-plan' && (
-                    <p className="text-sm text-gray-400">No payer plans added yet.</p>
+                    selectedFacility ? (
+                      <form onSubmit={handlePayerPlanCodeSubmit} className="overflow-x-auto">
+                        <table className="min-w-[1320px] w-full bg-transparent">
+                          <colgroup>
+                            <col className="w-[160px]" />
+                            <col className="w-[150px]" />
+                            <col className="w-[220px]" />
+                            <col className="w-[260px]" />
+                            <col className="w-[180px]" />
+                            <col className="w-[180px]" />
+                            <col className="w-[170px]" />
+                            <col className="w-[190px]" />
+                          </colgroup>
+                          <thead>
+                            <tr className="text-[#9ca3af] border-b border-[#ffffff20]">
+                              <th className="px-3 py-3 text-left">Payer Type</th>
+                              <th className="px-3 py-3 text-left">Payer ID</th>
+                              <th className="px-3 py-3 text-left">Payer Description</th>
+                              <th className="px-3 py-3 text-left">Payer Address</th>
+                              <th className="px-3 py-3 text-left">Payer Phone Number</th>
+                              <th className="px-3 py-3 text-left">Module</th>
+                              <th className="px-3 py-3 text-left">Category</th>
+                              <th className="px-3 py-3 text-center">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b border-[#ffffff20] text-[#D9D9D9CC] bg-[#ffffff05]">
+                              <td className="px-3 py-3">
+                                <select
+                                  value={newPayerPlanCode.payerType}
+                                  onChange={(e) => setNewPayerPlanCode(prev => ({ ...prev, payerType: e.target.value }))}
+                                  className={`${rowInputClass} bg-[#1f232a] text-white`}
+                                  required
+                                >
+                                  <option value="" className="bg-[#1f232a] text-white">Select type</option>
+                                  {PAYER_TYPE_OPTIONS.map((option) => (
+                                    <option key={option} value={option} className="bg-[#1f232a] text-white">{option}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="px-3 py-3">
+                                <input
+                                  value={newPayerPlanCode.payerId}
+                                  onChange={(e) => setNewPayerPlanCode(prev => ({ ...prev, payerId: e.target.value }))}
+                                  className={rowInputClass}
+                                  placeholder="Payer ID"
+                                  required
+                                />
+                              </td>
+                              <td className="px-3 py-3">
+                                <input
+                                  value={newPayerPlanCode.payerDescription}
+                                  onChange={(e) => setNewPayerPlanCode(prev => ({ ...prev, payerDescription: e.target.value }))}
+                                  className={rowInputClass}
+                                  placeholder="Description"
+                                  required
+                                />
+                              </td>
+                              <td className="px-3 py-3">
+                                <input
+                                  value={newPayerPlanCode.payerAddress}
+                                  onChange={(e) => setNewPayerPlanCode(prev => ({ ...prev, payerAddress: e.target.value }))}
+                                  className={rowInputClass}
+                                  placeholder="Address"
+                                  required
+                                />
+                              </td>
+                              <td className="px-3 py-3">
+                                <input
+                                  type="tel"
+                                  value={newPayerPlanCode.payerPhoneNumber}
+                                  onChange={(e) => setNewPayerPlanCode(prev => ({ ...prev, payerPhoneNumber: e.target.value }))}
+                                  className={rowInputClass}
+                                  placeholder="Phone"
+                                  required
+                                />
+                              </td>
+                              <td className="px-3 py-3">
+                                <select
+                                  value={newPayerPlanCode.module}
+                                  onChange={(e) => setNewPayerPlanCode(prev => ({ ...prev, module: e.target.value }))}
+                                  className={`${rowInputClass} bg-[#1f232a] text-white`}
+                                  required
+                                >
+                                  <option value="" className="bg-[#1f232a] text-white">Select module</option>
+                                  {PAYER_MODULE_OPTIONS.map((option) => (
+                                    <option key={option} value={option} className="bg-[#1f232a] text-white">{option}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="px-3 py-3">
+                                <select
+                                  value={newPayerPlanCode.category}
+                                  onChange={(e) => setNewPayerPlanCode(prev => ({ ...prev, category: e.target.value }))}
+                                  className={`${rowInputClass} bg-[#1f232a] text-white`}
+                                  required
+                                >
+                                  <option value="" className="bg-[#1f232a] text-white">Select category</option>
+                                  {PAYER_CATEGORY_OPTIONS.map((option) => (
+                                    <option key={option} value={option} className="bg-[#1f232a] text-white">{option}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="px-3 py-3 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <button type="submit" className="px-3 py-2 bg-[#3b3f46] hover:bg-gray-700 text-white text-xs font-medium rounded-md transition-all">Add</button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setNewPayerPlanCode({ ...EMPTY_PAYER_PLAN_CODE })}
+                                    className="px-3 py-2 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
+                                  >
+                                    Clear
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                            {(selectedFacility.payerPlanCodes || []).length === 0 && (
+                              <tr>
+                                <td colSpan={8} className="px-3 py-6 text-sm text-gray-400">No payer plan codes added for this facility.</td>
+                              </tr>
+                            )}
+                            {(selectedFacility.payerPlanCodes || []).map((code) => (
+                              <tr key={code.id} className="border-b border-[#ffffff10] text-sm">
+                                <td className="px-3 py-3">
+                                  {editingPayerPlanCodeId === code.id ? (
+                                    <select
+                                      value={payerPlanCodeEditForm.payerType}
+                                      onChange={(e) => setPayerPlanCodeEditForm(prev => ({ ...prev, payerType: e.target.value }))}
+                                      className={`${rowInputClass} bg-[#1f232a] text-white`}
+                                      required
+                                    >
+                                      <option value="" className="bg-[#1f232a] text-white">Select type</option>
+                                      {PAYER_TYPE_OPTIONS.map((option) => (
+                                        <option key={option} value={option} className="bg-[#1f232a] text-white">{option}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <span className="text-white">{code.payerType || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  {editingPayerPlanCodeId === code.id ? (
+                                    <input value={payerPlanCodeEditForm.payerId} onChange={(e) => setPayerPlanCodeEditForm(prev => ({ ...prev, payerId: e.target.value }))} className={rowInputClass} />
+                                  ) : (
+                                    <span className="text-white">{code.payerId || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  {editingPayerPlanCodeId === code.id ? (
+                                    <input value={payerPlanCodeEditForm.payerDescription} onChange={(e) => setPayerPlanCodeEditForm(prev => ({ ...prev, payerDescription: e.target.value }))} className={rowInputClass} />
+                                  ) : (
+                                    <span className="text-white">{code.payerDescription || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  {editingPayerPlanCodeId === code.id ? (
+                                    <input value={payerPlanCodeEditForm.payerAddress} onChange={(e) => setPayerPlanCodeEditForm(prev => ({ ...prev, payerAddress: e.target.value }))} className={rowInputClass} />
+                                  ) : (
+                                    <span className="text-white">{code.payerAddress || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  {editingPayerPlanCodeId === code.id ? (
+                                    <input type="tel" value={payerPlanCodeEditForm.payerPhoneNumber} onChange={(e) => setPayerPlanCodeEditForm(prev => ({ ...prev, payerPhoneNumber: e.target.value }))} className={rowInputClass} />
+                                  ) : (
+                                    <span className="text-white">{code.payerPhoneNumber || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  {editingPayerPlanCodeId === code.id ? (
+                                    <select value={payerPlanCodeEditForm.module} onChange={(e) => setPayerPlanCodeEditForm(prev => ({ ...prev, module: e.target.value }))} className={`${rowInputClass} bg-[#1f232a] text-white`}>
+                                      <option value="" className="bg-[#1f232a] text-white">Select module</option>
+                                      {PAYER_MODULE_OPTIONS.map((option) => (
+                                        <option key={option} value={option} className="bg-[#1f232a] text-white">{option}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <span className="text-white">{code.module || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  {editingPayerPlanCodeId === code.id ? (
+                                    <select value={payerPlanCodeEditForm.category} onChange={(e) => setPayerPlanCodeEditForm(prev => ({ ...prev, category: e.target.value }))} className={`${rowInputClass} bg-[#1f232a] text-white`}>
+                                      <option value="" className="bg-[#1f232a] text-white">Select category</option>
+                                      {PAYER_CATEGORY_OPTIONS.map((option) => (
+                                        <option key={option} value={option} className="bg-[#1f232a] text-white">{option}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <span className="text-white">{code.category || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3 text-center">
+                                  {editingPayerPlanCodeId === code.id ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                      <button type="button" onClick={() => handlePayerPlanCodeUpdate(code.id)} className="px-3 py-2 bg-[#3b3f46] text-white text-xs font-medium rounded-md hover:bg-gray-700 transition">Save</button>
+                                      <button type="button" onClick={cancelPayerPlanCodeEdit} className="px-3 py-2 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition">Cancel</button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-center gap-2">
+                                      <button type="button" onClick={() => beginPayerPlanCodeEdit(code)} className="px-3 py-2 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition">Edit</button>
+                                      <button type="button" onClick={() => handlePayerPlanCodeDelete(code.id)} className="px-3 py-2 bg-red-500/20 text-red-300 text-xs font-medium rounded-md hover:bg-red-500/30 transition">Delete</button>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </form>
+                    ) : (
+                      <p className="text-sm text-gray-400">Select a facility before entering or managing payer plan codes.</p>
+                    )
                   )}
                   {facilityTab === 'transaction-codes' && (
-                    <p className="text-sm text-gray-400">No transaction codes added yet.</p>
+                    selectedFacility ? (
+                      <form onSubmit={handleTransactionCodeSubmit} className="overflow-x-auto">
+                        <table className="min-w-[820px] w-full bg-transparent">
+                          <colgroup>
+                            <col className="w-[220px]" />
+                            <col className="w-[220px]" />
+                            <col className="w-[260px]" />
+                            <col className="w-[160px]" />
+                          </colgroup>
+                          <thead>
+                            <tr className="text-[#9ca3af] border-b border-[#ffffff20]">
+                              <th className="px-3 py-3 text-left">Transaction Code Type</th>
+                              <th className="px-3 py-3 text-left">Transaction Code</th>
+                              <th className="px-3 py-3 text-left">Transaction Code Description</th>
+                              <th className="px-3 py-3 text-center">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b border-[#ffffff20] text-[#D9D9D9CC] bg-[#ffffff05]">
+                              <td className="px-3 py-3">
+                                <select
+                                  value={newTransactionCode.transactionCodeType}
+                                  onChange={(e) => setNewTransactionCode(prev => ({ ...prev, transactionCodeType: e.target.value }))}
+                                  className={`${rowInputClass} bg-[#1f232a] text-white`}
+                                  required
+                                >
+                                  <option value="" className="bg-[#1f232a] text-white">Select type</option>
+                                  {TRANSACTION_CODE_TYPE_OPTIONS.map((option) => (
+                                    <option key={option} value={option} className="bg-[#1f232a] text-white">{option}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="px-3 py-3">
+                                <input
+                                  value={newTransactionCode.transactionCode}
+                                  onChange={(e) => setNewTransactionCode(prev => ({ ...prev, transactionCode: e.target.value }))}
+                                  className={rowInputClass}
+                                  placeholder="Code"
+                                  required
+                                />
+                              </td>
+                              <td className="px-3 py-3">
+                                <input
+                                  value={newTransactionCode.transactionCodeDescription}
+                                  onChange={(e) => setNewTransactionCode(prev => ({ ...prev, transactionCodeDescription: e.target.value }))}
+                                  className={rowInputClass}
+                                  placeholder="Description"
+                                  required
+                                />
+                              </td>
+                              <td className="px-3 py-3 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <button type="submit" className="px-3 py-2 bg-[#3b3f46] hover:bg-gray-700 text-white text-xs font-medium rounded-md transition-all">Add</button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setNewTransactionCode({ ...EMPTY_TRANSACTION_CODE })}
+                                    className="px-3 py-2 bg-[#ffffff10] hover:bg-[#ffffff20] text-white text-xs font-medium rounded-md transition-all"
+                                  >
+                                    Clear
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                            {(selectedFacility.transactionCodes || []).length === 0 && (
+                              <tr>
+                                <td colSpan={4} className="px-3 py-6 text-sm text-gray-400">No transaction codes added for this facility.</td>
+                              </tr>
+                            )}
+                            {(selectedFacility.transactionCodes || []).map((code) => (
+                              <tr key={code.id} className="border-b border-[#ffffff10] text-sm">
+                                <td className="px-3 py-3">
+                                  {editingTransactionCodeId === code.id ? (
+                                    <select
+                                      value={transactionCodeEditForm.transactionCodeType}
+                                      onChange={(e) => setTransactionCodeEditForm(prev => ({ ...prev, transactionCodeType: e.target.value }))}
+                                      className={`${rowInputClass} bg-[#1f232a] text-white`}
+                                    >
+                                      <option value="" className="bg-[#1f232a] text-white">Select type</option>
+                                      {TRANSACTION_CODE_TYPE_OPTIONS.map((option) => (
+                                        <option key={option} value={option} className="bg-[#1f232a] text-white">{option}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <span className="text-white">{code.transactionCodeType || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  {editingTransactionCodeId === code.id ? (
+                                    <input value={transactionCodeEditForm.transactionCode} onChange={(e) => setTransactionCodeEditForm(prev => ({ ...prev, transactionCode: e.target.value }))} className={rowInputClass} />
+                                  ) : (
+                                    <span className="text-white">{code.transactionCode || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  {editingTransactionCodeId === code.id ? (
+                                    <input value={transactionCodeEditForm.transactionCodeDescription} onChange={(e) => setTransactionCodeEditForm(prev => ({ ...prev, transactionCodeDescription: e.target.value }))} className={rowInputClass} />
+                                  ) : (
+                                    <span className="text-white">{code.transactionCodeDescription || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3 text-center">
+                                  {editingTransactionCodeId === code.id ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                      <button type="button" onClick={() => handleTransactionCodeUpdate(code.id)} className="px-3 py-2 bg-[#3b3f46] text-white text-xs font-medium rounded-md hover:bg-gray-700 transition">Save</button>
+                                      <button type="button" onClick={cancelTransactionCodeEdit} className="px-3 py-2 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition">Cancel</button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-center gap-2">
+                                      <button type="button" onClick={() => beginTransactionCodeEdit(code)} className="px-3 py-2 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition">Edit</button>
+                                      <button type="button" onClick={() => handleTransactionCodeDelete(code.id)} className="px-3 py-2 bg-red-500/20 text-red-300 text-xs font-medium rounded-md hover:bg-red-500/30 transition">Delete</button>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </form>
+                    ) : (
+                      <p className="text-sm text-gray-400">Select a facility before entering or managing transaction codes.</p>
+                    )
                   )}
                 </div>
               </div>
