@@ -46,6 +46,7 @@ ALLOWED_SORT_COLUMNS = {
     "Remark",
     "ActionDate",
     "ActionTaken",
+    "Priority",
     # facility mapping
     "BillProvName",
 }
@@ -82,6 +83,150 @@ def get_custom_all_patient_payment_expr(cursor, db_name: str) -> str:
     except Exception as exc:
         logger.warning("Unable to inspect CUSTOM_ALL.PatientPayment: %s", exc)
         return "0"
+
+
+def get_existing_columns(cursor, db_name: str, table_name: str) -> set:
+    try:
+        cursor.execute(
+            """
+            SELECT COLUMN_NAME
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = %s
+              AND TABLE_NAME = %s
+            """,
+            (db_name, table_name),
+        )
+        return {row["COLUMN_NAME"] for row in cursor.fetchall() or []}
+    except Exception as exc:
+        logger.warning("Unable to inspect columns for %s: %s", table_name, exc)
+        return set()
+
+
+def first_existing_column(columns: set, candidates: List[str]) -> Optional[str]:
+    lowered = {column.lower(): column for column in columns}
+    for candidate in candidates:
+        match = lowered.get(candidate.lower())
+        if match:
+            return match
+    return None
+
+
+def build_priority_helpers(custom_all_columns: set, actions_columns: set, patient_payment_expr: str) -> Dict[str, str]:
+    handoff_column = first_existing_column(
+        custom_all_columns,
+        [
+            "HandoffFlag",
+            "Handoff",
+            "IsHandoff",
+            "HandoffStatus",
+            "AssignedTo",
+            "AssignedUser",
+            "ReviewUser",
+            "SentTo",
+        ],
+    )
+    tickle_column = first_existing_column(
+        custom_all_columns,
+        ["TickleDate", "TickleTime", "TickleAt", "FollowUpDate", "NextActionDate", "NextWorkDate"],
+    )
+    discharge_column = first_existing_column(
+        custom_all_columns,
+        ["DischargeDate", "Discharge_Date", "ClaimAgeByDischargeDate"],
+    )
+
+    actions_claim_no_column = first_existing_column(actions_columns, ["ClaimNo"])
+    actions_status_column = first_existing_column(actions_columns, ["claim_status"])
+    actions_action_column = first_existing_column(actions_columns, ["action"])
+
+    if handoff_column:
+        handoff_expr = f"""
+            CASE
+                WHEN CUSTOM_ALL.`{handoff_column}` IS NULL THEN 0
+                WHEN LOWER(TRIM(CAST(CUSTOM_ALL.`{handoff_column}` AS CHAR))) IN ('1','true','yes','y','handoff','assigned','sent')
+                    THEN 1
+                WHEN TRIM(CAST(CUSTOM_ALL.`{handoff_column}` AS CHAR)) <> '' THEN 1
+                ELSE 0
+            END
+        """
+    elif actions_claim_no_column and (actions_status_column or actions_action_column):
+        handoff_predicates = []
+        if actions_status_column:
+            handoff_predicates.append(f"LOWER(COALESCE(a_handoff.`{actions_status_column}`, '')) LIKE '%handoff%'")
+        if actions_action_column:
+            handoff_predicates.append(f"LOWER(COALESCE(a_handoff.`{actions_action_column}`, '')) LIKE '%handoff%'")
+        handoff_predicate_sql = " OR ".join(handoff_predicates) or "1=0"
+        handoff_expr = """
+            CASE WHEN EXISTS (
+                SELECT 1
+                FROM actions a_handoff
+                WHERE a_handoff.`{actions_claim_no_column}` = CUSTOM_ALL.ClaimNo
+                  AND ({handoff_predicate_sql})
+            ) THEN 1 ELSE 0 END
+        """.format(
+            actions_claim_no_column=actions_claim_no_column,
+            handoff_predicate_sql=handoff_predicate_sql,
+        )
+    else:
+        handoff_expr = "0"
+
+    tickle_date_expr = (
+        f"COALESCE(DATE(CUSTOM_ALL.`{tickle_column}`), STR_TO_DATE(CUSTOM_ALL.`{tickle_column}`, '%m/%d/%Y'), STR_TO_DATE(CUSTOM_ALL.`{tickle_column}`, '%Y-%m-%d'))"
+        if tickle_column
+        else "NULL"
+    )
+    discharge_date_expr = (
+        f"COALESCE(DATE(CUSTOM_ALL.`{discharge_column}`), STR_TO_DATE(CUSTOM_ALL.`{discharge_column}`, '%m/%d/%Y'), STR_TO_DATE(CUSTOM_ALL.`{discharge_column}`, '%Y-%m-%d'))"
+        if discharge_column
+        else "DATE(CUSTOM_ALL.ServiceDate)"
+    )
+    balance_expr = (
+        f"COALESCE(CUSTOM_ALL.Amount, 0) - COALESCE(CUSTOM_ALL.Adjustment45Amount, 0) "
+        f"- COALESCE(CUSTOM_ALL.PaidAmt, 0) - {patient_payment_expr}"
+    )
+
+    return {
+        "handoff": handoff_expr,
+        "tickle_date": tickle_date_expr,
+        "discharge_date": discharge_date_expr,
+        "balance": balance_expr,
+    }
+
+
+def build_priority_order_sql() -> str:
+    return """
+        HandoffFlag DESC,
+        CASE WHEN HandoffFlag = 1 THEN COALESCE(ActionDateParsed, LoadDate, ServiceDate, '9999-12-31') END ASC,
+        IsOverdue DESC,
+        CASE WHEN IsOverdue = 1 THEN TickleDate END ASC,
+        CASE
+            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance >= 25000 THEN 1
+            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance >= 10000 THEN 2
+            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance >= 5000 THEN 3
+            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance >= 1000 THEN 4
+            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance >= 100 THEN 5
+            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance > 0 THEN 6
+            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance < 0 THEN 7
+            ELSE 8
+        END ASC,
+        CASE WHEN HandoffFlag = 0 AND IsOverdue = 0 THEN PayerName END ASC,
+        CASE WHEN HandoffFlag = 0 AND IsOverdue = 0 THEN ROUND(Balance, 2) END DESC,
+        CASE WHEN HandoffFlag = 0 AND IsOverdue = 0 THEN PrimaryProcedure END ASC,
+        COALESCE(DischargeDate, ServiceDate, LoadDate, '9999-12-31') ASC,
+        ClaimNo ASC
+    """
+
+
+def build_outer_order_sql(sort: str) -> str:
+    priority_order = build_priority_order_sql()
+    if not sort or sort == "Priority":
+        return f"Priority ASC, {priority_order}"
+    if sort == "Priority-":
+        return f"Priority DESC, {priority_order}"
+    direction = "DESC" if sort.endswith("-") else "ASC"
+    column = sort[:-1] if sort.endswith("-") else sort
+    if column == "BillProvName":
+        column = "FacilityName"
+    return f"`{column}` {direction}, Priority ASC, {priority_order}"
 
 
 # Define the endpoint for fetching rebound data
@@ -193,33 +338,57 @@ def get_rebound_data_all():
         is_pend_flow = bool(extra.get("Pend277") or extra.get("Pend835"))
         if not include_all_categories and not selectedTags and not is_pend_flow:
             return jsonify({"maxPage": 0, "data": []}), 200
-        
-        # Generate SQL query to count the total number of records
-        count_sql = f"""select
-            count(ID) AS cnt
-            {newGenerateSQL(
-                tab_index,
-                keyword,
-                selectedTags,
-                startDate,
-                endDate,
-                code,
-                remark,
-                procedure,
-                pos,
-                extra,
-                ""
-            )}"""
-        
-        cursor.execute(count_sql)
-        result = cursor.fetchone()
-        maxPage = int((result["cnt"] - 1) / perPage) + 1
-        print("aaaaaaaaaaaaaaaaaaaaaaa", count_sql)
-        print("bbbbbbbbbbbbbbbbbbbbbbb", result['cnt'])
-        # Generate SQL query to fetch the data with pagination
+
         delinquent_label = os.getenv('DELIQUENT', 'Delinquent').replace("'", "''")
         patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name)
-        data_sql = f"""select
+        custom_all_columns = get_existing_columns(cursor, db_name, "CUSTOM_ALL")
+        actions_columns = get_existing_columns(cursor, db_name, "actions")
+        priority_helpers = build_priority_helpers(custom_all_columns, actions_columns, patient_payment_expr)
+
+        base_from_sql = newGenerateSQL(
+            tab_index,
+            keyword,
+            selectedTags,
+            startDate,
+            endDate,
+            code,
+            remark,
+            procedure,
+            pos,
+            extra,
+            ""
+        )
+
+        # Generate SQL query to count the total number of eligible queue records.
+        count_sql = f"""
+            SELECT COUNT(1) AS cnt
+            FROM (
+                SELECT
+                    {priority_helpers["balance"]} AS Balance,
+                    {priority_helpers["handoff"]} AS HandoffFlag,
+                    CASE
+                        WHEN {priority_helpers["tickle_date"]} IS NOT NULL
+                         AND CURRENT_DATE() >= {priority_helpers["tickle_date"]}
+                            THEN 1
+                        ELSE 0
+                    END AS IsOverdue
+                {base_from_sql}
+            ) queue_claims
+            WHERE queue_claims.HandoffFlag = 1
+               OR queue_claims.IsOverdue = 1
+               OR queue_claims.Balance <> 0
+        """
+
+        cursor.execute(count_sql)
+        result = cursor.fetchone()
+        total_count = int(result.get("cnt") or 0)
+        maxPage = int((total_count - 1) / perPage) + 1 if total_count > 0 else 0
+        print("aaaaaaaaaaaaaaaaaaaaaaa", count_sql)
+        print("bbbbbbbbbbbbbbbbbbbbbbb", total_count)
+        # Generate SQL query to fetch the data with pagination
+        priority_order_sql = build_priority_order_sql()
+        outer_order_sql = build_outer_order_sql(sort)
+        base_sql = f"""select
             CUSTOM_ALL.ClaimNo,
             CUSTOM_ALL.ProvTaxID,
             CUSTOM_ALL.ProvNPI,
@@ -236,12 +405,30 @@ def get_rebound_data_all():
             CUSTOM_ALL.PaidAmt,
             CUSTOM_ALL.PatientResp,
             {patient_payment_expr} AS PatientPayment,
-            COALESCE(CUSTOM_ALL.Amount, 0) - COALESCE(CUSTOM_ALL.Adjustment45Amount, 0) - COALESCE(CUSTOM_ALL.PaidAmt, 0) - {patient_payment_expr} AS Balance,
+            {priority_helpers["balance"]} AS Balance,
             COALESCE(CUSTOM_ALL.BillProvName, '') AS FacilityName,
             COALESCE(NULLIF(TRIM(CUSTOM_ALL.Category), ''), '{delinquent_label}') AS Category,
             COALESCE(CUSTOM_ALL.PrimaryGroup, '') AS PrimaryGroup,
             COALESCE(CUSTOM_ALL.PrimaryCode, '') AS PrimaryCode,
-            CUSTOM_ALL.PrimaryDX, CUSTOM_ALL.PrimaryProcedure, CUSTOM_ALL.Remark, CUSTOM_ALL.ActionDate, CUSTOM_ALL.ActionTaken
+            CUSTOM_ALL.PrimaryDX,
+            CUSTOM_ALL.PrimaryProcedure,
+            CUSTOM_ALL.Remark,
+            CUSTOM_ALL.ActionDate,
+            CUSTOM_ALL.ActionTaken,
+            {priority_helpers["handoff"]} AS HandoffFlag,
+            {priority_helpers["tickle_date"]} AS TickleDate,
+            CASE
+                WHEN {priority_helpers["tickle_date"]} IS NOT NULL
+                 AND CURRENT_DATE() >= {priority_helpers["tickle_date"]}
+                    THEN 1
+                ELSE 0
+            END AS IsOverdue,
+            {priority_helpers["discharge_date"]} AS DischargeDate,
+            COALESCE(
+                STR_TO_DATE(CUSTOM_ALL.ActionDate, '%m/%d/%Y'),
+                STR_TO_DATE(CUSTOM_ALL.ActionDate, '%Y-%m-%d'),
+                DATE(CUSTOM_ALL.ActionDate)
+            ) AS ActionDateParsed
             {newGenerateSQL(
                 tab_index,
                 keyword,
@@ -253,8 +440,59 @@ def get_rebound_data_all():
                 procedure,
                 pos,
                 extra,
-                sort
-            )} LIMIT {perPage} OFFSET {(currentPage-1)*perPage}"""
+                ""
+            )}"""
+        data_sql = f"""
+            WITH prioritized_claims AS (
+                SELECT
+                    base_claims.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY base_claims.Category
+                        ORDER BY {priority_order_sql}
+                    ) AS Priority
+                FROM (
+                    {base_sql}
+                ) base_claims
+                WHERE base_claims.HandoffFlag = 1
+                   OR base_claims.IsOverdue = 1
+                   OR base_claims.Balance <> 0
+            )
+            SELECT
+                Priority,
+                ClaimNo,
+                ProvTaxID,
+                ProvNPI,
+                PayerName,
+                PayerID,
+                PayerSeq,
+                LoadDate,
+                ServiceDate,
+                PlaceOfService,
+                Amount,
+                Adjustment45Amount,
+                AllowedAmt,
+                RecoveryAllowed,
+                PaidAmt,
+                PatientResp,
+                PatientPayment,
+                Balance,
+                FacilityName,
+                Category,
+                PrimaryGroup,
+                PrimaryCode,
+                PrimaryDX,
+                PrimaryProcedure,
+                Remark,
+                ActionDate,
+                ActionTaken,
+                HandoffFlag,
+                TickleDate,
+                IsOverdue,
+                DischargeDate
+            FROM prioritized_claims
+            ORDER BY {outer_order_sql}
+            LIMIT {perPage} OFFSET {(currentPage-1)*perPage}
+        """
 
         print("ccccccccccccccccccccc", data_sql)
         cursor.execute(data_sql)

@@ -76,7 +76,7 @@ const DataTable = (props) => {
   const [bulk277Loading, setBulk277Loading] = useState(false);
   const [bulk277Progress, setBulk277Progress] = useState({ total: 0, done: 0, failed: 0 });
   const [bulk277Errors, setBulk277Errors] = useState([]);
-  const [order, _setOrder] = useState("ClaimNo");
+  const [order, _setOrder] = useState("Priority");
   const theme = useSelector((state) => state.app.theme);
   const isDarkMode = theme === 'dark';
   const tableBackground = isDarkMode ? '#27282D' : '#ffffff';
