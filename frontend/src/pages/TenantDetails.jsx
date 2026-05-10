@@ -23,9 +23,9 @@ const FACILITY_TYPE_OPTIONS = [
 
 const STATUS_OPTIONS = ['Active', 'Pending', 'On Hold'];
 const PAYER_TYPE_OPTIONS = ['Commercial', 'Medicare', 'Medicaid', 'Workers Comp', 'Self Pay', 'Other'];
-const PAYER_MODULE_OPTIONS = ['Claim Submission', 'Appeal', 'Eligibility', 'Payment Posting', 'Other'];
+const PAYER_MODULE_OPTIONS = ['Claim Submission', 'Appeal', 'Denials', 'Payment Posting', 'Other'];
 const PAYER_CATEGORY_OPTIONS = ['Primary', 'Secondary', 'Tertiary', 'Corrected Claim', 'Appeal', 'Other'];
-const TRANSACTION_CODE_TYPE_OPTIONS = ['Adjustment', 'Denial', 'Remark', 'Status', 'Payment', 'Other'];
+const TRANSACTION_CODE_TYPE_OPTIONS = ['Contractual Adjustment', 'Write-off', 'Patient Payment', 'Payer Payment', 'Other'];
 
 const EMPTY_PAYER_PLAN_CODE = {
   payerType: '',
