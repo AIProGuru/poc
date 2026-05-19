@@ -1058,14 +1058,15 @@ const ReboundDetailView = () => {
                           return description ? `${prefix} - ${description}`.trim() : prefix;
                         }))
                         .filter(Boolean);
+                      const uniqueReasons = [...new Set(reasons)];
 
-                      if (reasons.length === 0) {
+                      if (uniqueReasons.length === 0) {
                         return (
                           <li className={isDark ? 'text-gray-400' : 'text-gray-500'}>- No adjustment details available.</li>
                         );
                       }
 
-                      return reasons.slice(0, 6).map((reason, idx) => (
+                      return uniqueReasons.map((reason, idx) => (
                         <li key={`insight-${idx}`} className={isDark ? 'text-gray-200' : 'text-gray-700'}>
                           - {reason}
                         </li>
