@@ -5,6 +5,7 @@ import time
 import logging
 from datetime import date, datetime
 from db import get_connection, close_connection
+from api.platform.claim_details.appeal_documents import fetch_supporting_documents
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -499,6 +500,12 @@ def get_rebound_claim():
         row = cursor.fetchone()
         if row != None:
             ret["Comment"] = row
+
+        try:
+            ret["SupportingDocuments"] = fetch_supporting_documents(cursor, claim_no)
+        except Exception as doc_err:
+            logger.warning(f"Could not load supporting documents: {doc_err}")
+            ret["SupportingDocuments"] = []
         
         return ret, 200
     except Exception as e:

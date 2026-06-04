@@ -64,6 +64,7 @@ const ReboundDetailView = () => {
   const type = useSelector((state) => state.app.type)
   const claimStatus = useRef(null);
   const triageDropdownRefs = useRef({});
+  const triageFileInputRefs = useRef({});
   const [originalComment, setOriginalComment] = useState({
     Additional: "",
     CPT: "",
@@ -101,6 +102,27 @@ const ReboundDetailView = () => {
     transactionCode: "",
     transactionOptions: [],
   }));
+
+  const TRIAGE_DOC_MAX_BYTES = 50 * 1024 * 1024;
+  const TRIAGE_DOC_FILE_TYPES = [
+    { value: "clinical_note", label: "Clinical Note" },
+    { value: "medical_record", label: "Medical Record" },
+    { value: "lab_results", label: "Lab Results" },
+    { value: "imaging", label: "Imaging / Radiology" },
+    { value: "operative_report", label: "Operative Report" },
+    { value: "authorization", label: "Prior Authorization" },
+    { value: "eob_eop", label: "EOB / EOP" },
+    { value: "other", label: "Other" },
+  ];
+  const createTriageDocRow = () => ({
+    id: `doc-row-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    fileName: "",
+    fileType: "clinical_note",
+    file: null,
+  });
+  const [triageDocRows, setTriageDocRows] = useState([createTriageDocRow()]);
+  const [supportingDocuments, setSupportingDocuments] = useState([]);
+  const [triageDocUploadingId, setTriageDocUploadingId] = useState(null);
 
   let { token } = useParams()
   useEffect(() => {
@@ -319,6 +341,119 @@ const ReboundDetailView = () => {
     }).catch(err => {
       toast.error('Error occurred while submitting.');
     });
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes && bytes !== 0) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getTriageDocTypeLabel = (value) =>
+    TRIAGE_DOC_FILE_TYPES.find((item) => item.value === value)?.label || value;
+
+  const restoreContentScroll = (scrollTop) => {
+    const scrollEl = document.querySelector(".content-scrollbar");
+    if (scrollEl && typeof scrollTop === "number") {
+      scrollEl.scrollTop = scrollTop;
+    }
+  };
+
+  const handleTriageDocFileSelect = (rowId, file) => {
+    if (!file) return;
+    if (file.size > TRIAGE_DOC_MAX_BYTES) {
+      toast.error("File exceeds the maximum size of 50 MB.");
+      return;
+    }
+    setTriageDocRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? { ...row, file, fileName: row.fileName.trim() || file.name }
+          : row
+      )
+    );
+  };
+
+  const openTriageFilePicker = (rowId) => {
+    const scrollEl = document.querySelector(".content-scrollbar");
+    const savedScrollTop = scrollEl?.scrollTop ?? 0;
+    const input = triageFileInputRefs.current[rowId];
+    if (!input) return;
+
+    const restoreScroll = () => restoreContentScroll(savedScrollTop);
+
+    const handleWindowFocus = () => {
+      requestAnimationFrame(restoreScroll);
+    };
+    window.addEventListener("focus", handleWindowFocus, { once: true });
+
+    input.click();
+  };
+
+  const handleTriageDocFileChange = (rowId, event) => {
+    const scrollEl = document.querySelector(".content-scrollbar");
+    const savedScrollTop = scrollEl?.scrollTop ?? 0;
+    handleTriageDocFileSelect(rowId, event.target.files?.[0]);
+    event.target.value = "";
+    event.target.blur();
+    requestAnimationFrame(() => restoreContentScroll(savedScrollTop));
+  };
+
+  const uploadTriageDocument = (rowId) => {
+    if (!currentClaim) return;
+    const row = triageDocRows.find((item) => item.id === rowId);
+    if (!row?.file) {
+      toast.info("Select a file before uploading.");
+      return;
+    }
+    if (row.file.size > TRIAGE_DOC_MAX_BYTES) {
+      toast.error("File exceeds the maximum size of 50 MB.");
+      return;
+    }
+    const claimNoValue =
+      currentClaim?.Claim?.Data?.ClaimNo || currentClaim?.ClaimNo || claimNo;
+    const formData = new FormData();
+    formData.append("file", row.file);
+    formData.append("claimno", claimNoValue);
+    formData.append("file_name", row.fileName.trim() || row.file.name);
+    formData.append("file_type", row.fileType);
+    formData.append("username", username);
+
+    setTriageDocUploadingId(rowId);
+    axios
+      .post(`${apiUrl}/upload_appeal_document`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((res) => {
+        toast.success("Document uploaded.");
+        setSupportingDocuments((prev) => [res.data, ...prev]);
+        setTriageDocRows((prev) => {
+          const remaining = prev.filter((item) => item.id !== rowId);
+          return remaining.length > 0 ? remaining : [createTriageDocRow()];
+        });
+      })
+      .catch((err) => {
+        const message =
+          err?.response?.data?.error || "Error occurred while uploading the document.";
+        toast.error(message);
+      })
+      .finally(() => {
+        setTriageDocUploadingId(null);
+      });
+  };
+
+  const removeSupportingDocument = (docId) => {
+    if (!docId) return;
+    axios
+      .delete(`${apiUrl}/appeal_documents/${docId}`)
+      .then(() => {
+        toast.success("Document removed.");
+        setSupportingDocuments((prev) => prev.filter((doc) => doc.id !== docId));
+      })
+      .catch(() => {
+        toast.error("Could not remove the document.");
+      });
   };
 
   const onSubmitTriage = () => {
@@ -777,6 +912,9 @@ const ReboundDetailView = () => {
 
   useEffect(() => {
     if (!currentClaim) return;
+    setSupportingDocuments(
+      Array.isArray(currentClaim.SupportingDocuments) ? currentClaim.SupportingDocuments : []
+    );
     setOptumRequest(buildOptumRequestFromClaim(currentClaim));
     setOptumResponse(null);
     setOptumError("");
@@ -1686,8 +1824,10 @@ const ReboundDetailView = () => {
                     )}
                   </div>
                 </div>
-                <div className={`p-4 border-t ${isDark ? 'bg-[#27282D] border-[#CDCDCD]' : 'bg-gray-50 border-gray-200'}`}>
-                  <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
+                  <div className={`p-4 rounded-xl border ${isDark ? 'bg-[#27282D] border-[#CDCDCD]' : 'bg-gray-50 border-gray-200'}`}>
+                    <p className="text-sm font-semibold mb-3">Actions</p>
+                    <div className="flex flex-col gap-3">
                     {isEligibility && (
                       <button
                         type="button"
@@ -1846,29 +1986,169 @@ const ReboundDetailView = () => {
                         </div>
                       );
                     })}
+                    </div>
+                  </div>
+
+                  <div className={`flex flex-col gap-2 p-4 rounded-xl border ${isDark ? 'bg-[#27282D] border-[#CDCDCD]' : 'bg-gray-50 border-gray-200'}`}>
+                    <p className="text-sm font-semibold">Notes</p>
+                    <textarea
+                      rows={8}
+                      className={`w-full rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-gray-500 resize-y ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                      value={triageNotes}
+                      onChange={(e) => setTriageNotes(e.target.value)}
+                      placeholder="Add notes for this claim..."
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={onSubmitTriage}
+                        disabled={triageSaving}
+                        className="px-6 py-3 text-sm font-medium text-[#F4F4F4] rounded-lg transition-all duration-200 bg-[#1f3025] hover:bg-[#353639] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {triageSaving ? "Saving..." : "Save Actions"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <p className="text-lg font-semibold">Notes</p>
-                <textarea
-                  rows={5}
-                  className={`w-full rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-gray-500 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
-                  value={triageNotes}
-                  onChange={(e) => setTriageNotes(e.target.value)}
-                  placeholder="Add notes for this claim..."
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={onSubmitTriage}
-                    disabled={triageSaving}
-                    className="px-6 py-3 text-sm font-medium text-[#F4F4F4] rounded-lg transition-all duration-200 bg-[#1f3025] hover:bg-[#353639] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {triageSaving ? "Saving..." : "Save Actions"}
-                  </button>
+              <div className={`flex flex-col gap-3 p-4 rounded-xl border ${isDark ? 'bg-[#27282D] border-[#CDCDCD]' : 'bg-gray-50 border-gray-200'}`}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="text-lg font-semibold">Documents</p>
+                    <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Upload clinical documentation to support the appeal. Uploaded files will be included in the appeal packet.
+                    </p>
+                  </div>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Maximum file size: 50 MB per document.
+                  </p>
                 </div>
+
+                <div className={`hidden sm:grid grid-cols-12 gap-2 px-1 text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <div className="col-span-4">File Name</div>
+                  <div className="col-span-4">File Type</div>
+                  <div className="col-span-4">Upload</div>
+                </div>
+
+                {triageDocRows.map((row) => (
+                  <div
+                    key={row.id}
+                    className={`grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-3 rounded-lg border ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}
+                  >
+                    <div className="sm:col-span-4">
+                      <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File Name</label>
+                      <input
+                        type="text"
+                        value={row.fileName}
+                        onChange={(e) =>
+                          setTriageDocRows((prev) =>
+                            prev.map((item) =>
+                              item.id === row.id ? { ...item, fileName: e.target.value } : item
+                            )
+                          )
+                        }
+                        placeholder="Document name"
+                        className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                      />
+                    </div>
+                    <div className="sm:col-span-4">
+                      <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File Type</label>
+                      <select
+                        value={row.fileType}
+                        onChange={(e) =>
+                          setTriageDocRows((prev) =>
+                            prev.map((item) =>
+                              item.id === row.id ? { ...item, fileType: e.target.value } : item
+                            )
+                          )
+                        }
+                        className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                      >
+                        {TRIAGE_DOC_FILE_TYPES.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="sm:col-span-4 flex flex-wrap items-center gap-2">
+                      <span className={`sm:hidden text-xs font-medium w-full ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Upload</span>
+                      <input
+                        ref={(el) => {
+                          if (el) triageFileInputRefs.current[row.id] = el;
+                        }}
+                        type="file"
+                        tabIndex={-1}
+                        aria-hidden="true"
+                        className="hidden"
+                        accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.tif,.tiff"
+                        onChange={(e) => handleTriageDocFileChange(row.id, e)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openTriageFilePicker(row.id)}
+                        className={`flex-1 min-w-0 rounded-lg border px-3 py-2 text-sm truncate text-left ${isDark ? 'border-[#1f2433] bg-[#3C3D42] text-gray-200 hover:bg-[#454850]' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        {row.file ? row.file.name : "Choose file..."}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => uploadTriageDocument(row.id)}
+                        disabled={triageDocUploadingId === row.id || !row.file}
+                        className="shrink-0 px-4 py-2 text-sm font-medium text-[#F4F4F4] rounded-lg bg-[#1f3025] hover:bg-[#353639] disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {triageDocUploadingId === row.id ? "Uploading..." : "Upload"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setTriageDocRows((prev) => [...prev, createTriageDocRow()])}
+                  className={`self-start text-sm font-medium ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                >
+                  + Add another document
+                </button>
+
+                {supportingDocuments.length > 0 && (
+                  <div className="flex flex-col gap-2 pt-2 border-t border-dashed border-gray-300 dark:border-[#3c4661]">
+                    <p className="text-sm font-semibold">Uploaded</p>
+                    {supportingDocuments.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className={`flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm ${isDark ? 'bg-[#1f2025] text-gray-200' : 'bg-white text-gray-800 border border-gray-200'}`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{doc.file_name}</p>
+                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {getTriageDocTypeLabel(doc.file_type)}
+                            {doc.file_size ? ` · ${formatFileSize(doc.file_size)}` : ""}
+                            {doc.uploaded_at ? ` · ${new Date(doc.uploaded_at).toLocaleString()}` : ""}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <a
+                            href={`${apiUrl}/appeal_documents/${doc.id}/download`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`text-xs font-semibold underline ${isDark ? 'text-gray-300' : 'text-slate-700'}`}
+                          >
+                            Download
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => removeSupportingDocument(doc.id)}
+                            className={`text-xs font-semibold ${isDark ? 'text-red-300 hover:text-red-200' : 'text-red-600 hover:text-red-700'}`}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
