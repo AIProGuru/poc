@@ -209,6 +209,11 @@ const ReboundDetailView = () => {
   const workflowTitle = `${routeTitle || appTitle || ""}`.toLowerCase();
   const showTriageDocumentUpload =
     workflowTitle.includes("denials") || workflowTitle.includes("payment variance");
+  const triageGlassPanelClass = `p-4 rounded-xl border-0 backdrop-blur-xl ${
+    isDark
+      ? "bg-white/10 shadow-[0_18px_45px_rgba(0,0,0,0.38)]"
+      : "bg-white/70 shadow-[0_18px_45px_rgba(15,23,42,0.14)]"
+  }`;
 
   let { token } = useParams()
   useEffect(() => {
@@ -2008,7 +2013,7 @@ const ReboundDetailView = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
-                  <div className={`p-4 rounded-xl border ${isDark ? 'bg-[#27282D] border-[#CDCDCD]' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={triageGlassPanelClass}>
                     <p className="text-sm font-semibold mb-3">Actions</p>
                     <div className="flex flex-col gap-3">
                     {isEligibility && (
@@ -2172,7 +2177,7 @@ const ReboundDetailView = () => {
                     </div>
                   </div>
 
-                  <div className={`flex flex-col gap-2 p-4 rounded-xl border ${isDark ? 'bg-[#27282D] border-[#CDCDCD]' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={`flex flex-col gap-2 ${triageGlassPanelClass}`}>
                     <p className="text-sm font-semibold">Notes</p>
                     <textarea
                       rows={8}
@@ -2216,7 +2221,7 @@ const ReboundDetailView = () => {
               </div>
 
               {showTriageDocumentUpload && (
-              <div className={`flex flex-col gap-3 p-4 rounded-xl border ${isDark ? 'bg-[#27282D] border-[#CDCDCD]' : 'bg-gray-50 border-gray-200'}`}>
+              <div className={`flex flex-col gap-3 ${triageGlassPanelClass}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="text-lg font-semibold">Documents</p>
@@ -2300,7 +2305,11 @@ const ReboundDetailView = () => {
                         type="button"
                         onClick={() => uploadTriageDocument(row.id)}
                         disabled={triageDocUploadingId === row.id || !row.file}
-                        className="shrink-0 px-4 py-2 text-sm font-medium text-[#F4F4F4] rounded-lg bg-[#1f3025] hover:bg-[#353639] disabled:opacity-60 disabled:cursor-not-allowed"
+                        className={`shrink-0 px-4 py-2 text-sm font-medium rounded-lg border-0 backdrop-blur-md shadow-[0_10px_24px_rgba(0,0,0,0.22)] disabled:opacity-60 disabled:cursor-not-allowed ${
+                          isDark
+                            ? 'bg-white/14 text-[#F4F4F4] hover:bg-white/22'
+                            : 'bg-[#3b3f46] text-white hover:bg-[#2f3339]'
+                        }`}
                       >
                         {triageDocUploadingId === row.id ? "Uploading..." : "Upload"}
                       </button>
