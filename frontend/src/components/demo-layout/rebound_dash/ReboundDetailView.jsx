@@ -21,6 +21,86 @@ import { useSelector } from "react-redux";
 import { IconButton } from "@mui/material";
 import "./dashboard.css"
 
+const TRIAGE_DRAFT_PREFIX = "triage-draft:";
+
+const getTriageDraftKey = (claimNoValue, user) =>
+  `${TRIAGE_DRAFT_PREFIX}${claimNoValue || "unknown"}:${user || "anonymous"}`;
+
+const readTriageDraft = (key) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeTriageDraft = (key, draft) => {
+  try {
+    localStorage.setItem(
+      key,
+      JSON.stringify({ ...draft, savedAt: new Date().toISOString() })
+    );
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const clearTriageDraft = (key) => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const formatDraftTime = (iso) => {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+};
+
+const mergeDraftOntoActions = (actions, draft) => {
+  if (!draft?.triageActions?.length) return actions;
+  const draftByLabel = new Map(
+    draft.triageActions.map((item) => [`${item.label}`.toLowerCase(), item])
+  );
+  return actions.map((action) => {
+    const draftAction = draftByLabel.get(`${action.label}`.toLowerCase());
+    if (!draftAction) return action;
+    return {
+      ...action,
+      checked: Boolean(draftAction.checked),
+      transactionCode: draftAction.transactionCode || "",
+    };
+  });
+};
+
+const triageGlassButtonClass = (variant, isDark, disabled = false) => {
+  const base =
+    "px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.14)] active:scale-[0.98] focus:outline-none focus-visible:ring-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  if (variant === "submit") {
+    return `${base} ${isDark
+      ? "bg-white/20 hover:bg-white/30 text-white focus-visible:ring-white/35"
+      : "bg-slate-700/90 hover:bg-slate-800 text-white focus-visible:ring-slate-400/40"
+      }`;
+  }
+  if (variant === "upload") {
+    return `${base} shrink-0 ${isDark
+      ? "bg-white/18 hover:bg-white/26 text-white focus-visible:ring-white/30"
+      : "bg-slate-600/90 hover:bg-slate-700 text-white focus-visible:ring-slate-400/40"
+      }`;
+  }
+  return `${base} ${isDark
+    ? "bg-white/10 hover:bg-white/16 text-white/90 focus-visible:ring-white/20"
+    : "bg-white/55 hover:bg-white/75 text-slate-700 focus-visible:ring-slate-300/40"
+    }`;
+};
+
 
 const ReboundDetailView = () => {
   const apiUrl = useApiEndpoint();
@@ -58,13 +138,16 @@ const ReboundDetailView = () => {
   const [triageActions, setTriageActions] = useState([]);
   const [triageOtherText, setTriageOtherText] = useState("");
   const [triageNotes, setTriageNotes] = useState("");
-  const [triageSaving, setTriageSaving] = useState(false);
+  const [triageSubmitting, setTriageSubmitting] = useState(false);
+  const [triageDraftStatus, setTriageDraftStatus] = useState("idle");
+  const [lastDraftSavedAt, setLastDraftSavedAt] = useState(null);
   const [generatingAppeal, setGeneratingAppeal] = useState(false);
   const [openTriageDropdown, setOpenTriageDropdown] = useState(null);
   const type = useSelector((state) => state.app.type)
   const claimStatus = useRef(null);
   const triageDropdownRefs = useRef({});
   const triageFileInputRefs = useRef({});
+  const triageHydratedRef = useRef(false);
   const [originalComment, setOriginalComment] = useState({
     Additional: "",
     CPT: "",
@@ -123,6 +206,9 @@ const ReboundDetailView = () => {
   const [triageDocRows, setTriageDocRows] = useState([createTriageDocRow()]);
   const [supportingDocuments, setSupportingDocuments] = useState([]);
   const [triageDocUploadingId, setTriageDocUploadingId] = useState(null);
+  const workflowTitle = `${routeTitle || appTitle || ""}`.toLowerCase();
+  const showTriageDocumentUpload =
+    workflowTitle.includes("denials") || workflowTitle.includes("payment variance");
 
   let { token } = useParams()
   useEffect(() => {
@@ -456,50 +542,147 @@ const ReboundDetailView = () => {
       });
   };
 
+  const getTriageClaimNoValue = () =>
+    currentClaim?.Claim?.Data?.ClaimNo || currentClaim?.ClaimNo || claimNo || "";
+
+  const onSaveTriageDraft = (mode = "manual") => {
+    if (!currentClaim) return false;
+    const claimNoValue = getTriageClaimNoValue();
+    if (!claimNoValue) return false;
+
+    const draftKey = getTriageDraftKey(claimNoValue, username);
+    const draft = {
+      triageActions: triageActions.map((a) => ({
+        label: a.label,
+        checked: Boolean(a.checked),
+        transactionCode: a.transactionCode || "",
+      })),
+      triageOtherText,
+      triageNotes,
+    };
+
+    const ok = writeTriageDraft(draftKey, draft);
+    if (!ok) return false;
+
+    setLastDraftSavedAt(new Date().toISOString());
+    setTriageDraftStatus(mode === "manual" ? "saved" : "auto-saved");
+    if (mode === "manual") toast.success("Draft saved locally (not submitted yet).");
+    return true;
+  };
+
   const onSubmitTriage = () => {
     if (!currentClaim) return;
-    const selected = triageActions.filter((item) => item.checked).map((item) => item.label);
+    const selected = triageActions
+      .filter((item) => item.checked)
+      .map((item) => item.label);
+
     const transactionCodes = triageActions.reduce((acc, item) => {
       if (item.checked && item.transactionCode) {
         acc[item.label] = item.transactionCode;
       }
       return acc;
     }, {});
+
     const otherText = triageOtherText.trim();
     if (otherText && !selected.some((label) => `${label}`.toLowerCase() === "other")) {
       selected.push("Other");
     }
+
     if (selected.length === 0 && triageNotes.trim() === "" && otherText === "") {
-      toast.info("Please select an action or add notes before saving.");
+      toast.info("Please select an action or add notes before submitting.");
       return;
     }
-    toast.info("Saving triage actions...");
-    setTriageSaving(true);
+
+    const claimNoValue = getTriageClaimNoValue();
+    const draftKey = getTriageDraftKey(claimNoValue, username);
+
+    toast.info("Submitting triage actions...");
+    setTriageSubmitting(true);
+    setTriageDraftStatus("submitting");
+
     const actionPayload = JSON.stringify({ selected, otherText, transactionCodes });
     axios
       .post(`${apiUrl}/save_action`, {
         claimno: currentClaim.Claim.Data.ClaimNo,
-        action_date: new Date(Date.now()).toLocaleDateString('en-US', {
-          month: 'numeric',
-          day: 'numeric',
-          year: 'numeric'
+        action_date: new Date(Date.now()).toLocaleDateString("en-US", {
+          month: "numeric",
+          day: "numeric",
+          year: "numeric",
         }),
         action: actionPayload,
         claim_status: "triage",
         thumb: null,
         notes: triageNotes,
-        username: username
+        username: username,
       })
       .then(() => {
-        toast.success("Triage actions saved.");
+        clearTriageDraft(draftKey);
+        setTriageDraftStatus("submitted");
+        setLastDraftSavedAt(null);
+        toast.success("Triage submitted.");
       })
       .catch(() => {
-        toast.error("Error occurred while saving triage actions.");
+        toast.error("Error occurred while submitting triage actions.");
       })
       .finally(() => {
-        setTriageSaving(false);
+        setTriageSubmitting(false);
       });
   };
+
+  // Restore a local draft (if one exists) after server triage actions have loaded.
+  useEffect(() => {
+    // If the user switches claims, allow draft hydration again.
+    triageHydratedRef.current = false;
+    setTriageDraftStatus("idle");
+    setLastDraftSavedAt(null);
+  }, [currentClaim?.Claim?.Data?.ClaimNo, username]);
+
+  useEffect(() => {
+    if (!currentClaim || !apiUrl) return;
+    if (triageHydratedRef.current) return;
+    if (!triageActions || triageActions.length === 0) return;
+
+    const claimNoValue = getTriageClaimNoValue();
+    if (!claimNoValue) return;
+
+    const draftKey = getTriageDraftKey(claimNoValue, username);
+    const draft = readTriageDraft(draftKey);
+    if (!draft) {
+      triageHydratedRef.current = true;
+      return;
+    }
+
+    setTriageActions((prev) => mergeDraftOntoActions(prev, draft));
+    if (typeof draft.triageOtherText === "string") setTriageOtherText(draft.triageOtherText);
+    if (typeof draft.triageNotes === "string") setTriageNotes(draft.triageNotes);
+    setTriageDraftStatus("draft-loaded");
+    setLastDraftSavedAt(draft.savedAt || null);
+    triageHydratedRef.current = true;
+  }, [apiUrl, currentClaim, triageActions, username]);
+
+  // Debounced auto-save for triage draft (local only, until the user submits).
+  useEffect(() => {
+    if (!currentClaim || !apiUrl) return;
+    if (!triageHydratedRef.current) return;
+    if (triageSubmitting) return;
+
+    const claimNoValue = getTriageClaimNoValue();
+    if (!claimNoValue) return;
+
+    const timeout = setTimeout(() => {
+      onSaveTriageDraft("auto");
+    }, 1200);
+
+    return () => clearTimeout(timeout);
+  }, [
+    apiUrl,
+    currentClaim,
+    triageActions,
+    triageOtherText,
+    triageNotes,
+    triageSubmitting,
+    username,
+  ]);
 
 
   const makeWordBold = (text, word) => {
@@ -1998,20 +2181,41 @@ const ReboundDetailView = () => {
                       onChange={(e) => setTriageNotes(e.target.value)}
                       placeholder="Add notes for this claim..."
                     />
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={onSubmitTriage}
-                        disabled={triageSaving}
-                        className="px-6 py-3 text-sm font-medium text-[#F4F4F4] rounded-lg transition-all duration-200 bg-[#1f3025] hover:bg-[#353639] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {triageSaving ? "Saving..." : "Save Actions"}
-                      </button>
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                        {triageDraftStatus === "auto-saved" && (
+                          <>Auto-saved{lastDraftSavedAt ? ` at ${formatDraftTime(lastDraftSavedAt)}` : ""}</>
+                        )}
+                        {triageDraftStatus === "saved" && <>Draft saved locally.</>}
+                        {triageDraftStatus === "draft-loaded" && <>Draft restored.</>}
+                        {triageDraftStatus === "submitting" && <>Submitting…</>}
+                        {triageDraftStatus === "submitted" && <>Submitted.</>}
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => onSaveTriageDraft("manual")}
+                          disabled={triageSubmitting}
+                          className={triageGlassButtonClass("draft", isDark, triageSubmitting)}
+                        >
+                          {triageSubmitting ? "Saving…" : "Save Draft"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={onSubmitTriage}
+                          disabled={triageSubmitting}
+                          className={triageGlassButtonClass("submit", isDark, triageSubmitting)}
+                        >
+                          {triageSubmitting ? "Submitting…" : "Submit"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
+              {showTriageDocumentUpload && (
               <div className={`flex flex-col gap-3 p-4 rounded-xl border ${isDark ? 'bg-[#27282D] border-[#CDCDCD]' : 'bg-gray-50 border-gray-200'}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
@@ -2150,6 +2354,7 @@ const ReboundDetailView = () => {
                   </div>
                 )}
               </div>
+              )}
             </div>
           )}
 
