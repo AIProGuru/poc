@@ -80,27 +80,6 @@ const mergeDraftOntoActions = (actions, draft) => {
   });
 };
 
-const triageGlassButtonClass = (variant, isDark, disabled = false) => {
-  const base =
-    "px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.14)] active:scale-[0.98] focus:outline-none focus-visible:ring-2 disabled:opacity-50 disabled:cursor-not-allowed";
-  if (variant === "submit") {
-    return `${base} ${isDark
-      ? "bg-white/20 hover:bg-white/30 text-white focus-visible:ring-white/35"
-      : "bg-slate-700/90 hover:bg-slate-800 text-white focus-visible:ring-slate-400/40"
-      }`;
-  }
-  if (variant === "upload") {
-    return `${base} shrink-0 ${isDark
-      ? "bg-white/18 hover:bg-white/26 text-white focus-visible:ring-white/30"
-      : "bg-slate-600/90 hover:bg-slate-700 text-white focus-visible:ring-slate-400/40"
-      }`;
-  }
-  return `${base} ${isDark
-    ? "bg-white/10 hover:bg-white/16 text-white/90 focus-visible:ring-white/20"
-    : "bg-white/55 hover:bg-white/75 text-slate-700 focus-visible:ring-slate-300/40"
-    }`;
-};
-
 
 const ReboundDetailView = () => {
   const apiUrl = useApiEndpoint();
@@ -205,7 +184,6 @@ const ReboundDetailView = () => {
   });
   const [triageDocRows, setTriageDocRows] = useState([createTriageDocRow()]);
   const [supportingDocuments, setSupportingDocuments] = useState([]);
-  const [triageDocUploadingId, setTriageDocUploadingId] = useState(null);
   const workflowTitle = `${routeTitle || appTitle || ""}`.toLowerCase();
   const showTriageDocumentUpload =
     workflowTitle.includes("denials") || workflowTitle.includes("payment variance");
@@ -213,6 +191,16 @@ const ReboundDetailView = () => {
     isDark
       ? "bg-white/10 shadow-[0_18px_45px_rgba(0,0,0,0.38)]"
       : "bg-white/70 shadow-[0_18px_45px_rgba(15,23,42,0.14)]"
+  }`;
+  const triageFieldClass = `w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] ${
+    isDark
+      ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100'
+      : 'bg-gray-100 border-gray-200 text-gray-800'
+  }`;
+  const saveAndSubmitButtonClass = `px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 shadow-[0_12px_30px_rgba(0,0,0,0.22)] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44BFAB]/40 disabled:opacity-60 disabled:cursor-not-allowed ${
+    isDark
+      ? 'bg-[#44BFAB] text-[#061816] hover:bg-[#54d7c3]'
+      : 'bg-[#44BFAB] text-[#06211e] hover:bg-[#35b7a5]'
   }`;
 
   let { token } = useParams()
@@ -491,47 +479,43 @@ const ReboundDetailView = () => {
     requestAnimationFrame(() => restoreContentScroll(savedScrollTop));
   };
 
-  const uploadTriageDocument = (rowId) => {
-    if (!currentClaim) return;
-    const row = triageDocRows.find((item) => item.id === rowId);
-    if (!row?.file) {
-      toast.info("Select a file before uploading.");
-      return;
-    }
-    if (row.file.size > TRIAGE_DOC_MAX_BYTES) {
-      toast.error("File exceeds the maximum size of 50 MB.");
-      return;
-    }
-    const claimNoValue =
-      currentClaim?.Claim?.Data?.ClaimNo || currentClaim?.ClaimNo || claimNo;
-    const formData = new FormData();
-    formData.append("file", row.file);
-    formData.append("claimno", claimNoValue);
-    formData.append("file_name", row.fileName.trim() || row.file.name);
-    formData.append("file_type", row.fileType);
-    formData.append("username", username);
+  const uploadPendingTriageDocuments = async () => {
+    if (!currentClaim) return [];
+    const rowsToUpload = triageDocRows.filter((row) => row.file);
+    if (rowsToUpload.length === 0) return [];
 
-    setTriageDocUploadingId(rowId);
-    axios
-      .post(`${apiUrl}/upload_appeal_document`, formData, {
+    const oversized = rowsToUpload.find((row) => row.file.size > TRIAGE_DOC_MAX_BYTES);
+    if (oversized) {
+      throw new Error(`${oversized.file.name} exceeds the maximum size of 50 MB.`);
+    }
+
+    const claimNoValue = getTriageClaimNoValue();
+    const uploadedDocs = [];
+
+    for (const row of rowsToUpload) {
+      const formData = new FormData();
+      formData.append("file", row.file);
+      formData.append("claimno", claimNoValue);
+      formData.append("file_name", row.fileName.trim() || row.file.name);
+      formData.append("file_type", row.fileType);
+      formData.append("username", username);
+
+      const res = await axios.post(`${apiUrl}/upload_appeal_document`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then((res) => {
-        toast.success("Document uploaded.");
-        setSupportingDocuments((prev) => [res.data, ...prev]);
-        setTriageDocRows((prev) => {
-          const remaining = prev.filter((item) => item.id !== rowId);
-          return remaining.length > 0 ? remaining : [createTriageDocRow()];
-        });
-      })
-      .catch((err) => {
-        const message =
-          err?.response?.data?.error || "Error occurred while uploading the document.";
-        toast.error(message);
-      })
-      .finally(() => {
-        setTriageDocUploadingId(null);
       });
+      uploadedDocs.push(res.data);
+    }
+
+    if (uploadedDocs.length > 0) {
+      const uploadedRowIds = new Set(rowsToUpload.map((row) => row.id));
+      setSupportingDocuments((prev) => [...uploadedDocs, ...prev]);
+      setTriageDocRows((prev) => {
+        const remaining = prev.filter((row) => !uploadedRowIds.has(row.id));
+        return remaining.length > 0 ? remaining : [createTriageDocRow()];
+      });
+    }
+
+    return uploadedDocs;
   };
 
   const removeSupportingDocument = (docId) => {
@@ -575,7 +559,7 @@ const ReboundDetailView = () => {
     return true;
   };
 
-  const onSubmitTriage = () => {
+  const onSubmitTriage = async () => {
     if (!currentClaim) return;
     const selected = triageActions
       .filter((item) => item.checked)
@@ -593,21 +577,23 @@ const ReboundDetailView = () => {
       selected.push("Other");
     }
 
-    if (selected.length === 0 && triageNotes.trim() === "" && otherText === "") {
-      toast.info("Please select an action or add notes before submitting.");
+    const hasPendingDocuments = triageDocRows.some((row) => row.file);
+    if (selected.length === 0 && triageNotes.trim() === "" && otherText === "" && !hasPendingDocuments) {
+      toast.info("Please select an action, add notes, or attach a document before submitting.");
       return;
     }
 
     const claimNoValue = getTriageClaimNoValue();
     const draftKey = getTriageDraftKey(claimNoValue, username);
 
-    toast.info("Submitting triage actions...");
+    toast.info("Saving triage...");
     setTriageSubmitting(true);
     setTriageDraftStatus("submitting");
 
     const actionPayload = JSON.stringify({ selected, otherText, transactionCodes });
-    axios
-      .post(`${apiUrl}/save_action`, {
+    try {
+      await uploadPendingTriageDocuments();
+      await axios.post(`${apiUrl}/save_action`, {
         claimno: currentClaim.Claim.Data.ClaimNo,
         action_date: new Date(Date.now()).toLocaleDateString("en-US", {
           month: "numeric",
@@ -619,19 +605,20 @@ const ReboundDetailView = () => {
         thumb: null,
         notes: triageNotes,
         username: username,
-      })
-      .then(() => {
-        clearTriageDraft(draftKey);
-        setTriageDraftStatus("submitted");
-        setLastDraftSavedAt(null);
-        toast.success("Triage submitted.");
-      })
-      .catch(() => {
-        toast.error("Error occurred while submitting triage actions.");
-      })
-      .finally(() => {
-        setTriageSubmitting(false);
       });
+      clearTriageDraft(draftKey);
+      setTriageDraftStatus("submitted");
+      setLastDraftSavedAt(null);
+      toast.success("Triage saved and submitted.");
+    } catch (err) {
+      const message =
+        err?.response?.data?.error ||
+        err?.message ||
+        "Error occurred while saving triage.";
+      toast.error(message);
+    } finally {
+      setTriageSubmitting(false);
+    }
   };
 
   // Restore a local draft (if one exists) after server triage actions have loaded.
@@ -1986,6 +1973,14 @@ const ReboundDetailView = () => {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-lg font-semibold">Triage</p>
                   <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={onSubmitTriage}
+                      disabled={triageSubmitting}
+                      className={saveAndSubmitButtonClass}
+                    >
+                      {triageSubmitting ? "Saving..." : "Save & Submit"}
+                    </button>
                     {isEligibility && (
                       <button
                         type="button"
@@ -2012,8 +2007,8 @@ const ReboundDetailView = () => {
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
-                  <div className={triageGlassPanelClass}>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+                  <div className={`${triageGlassPanelClass} h-full`}>
                     <p className="text-sm font-semibold mb-3">Actions</p>
                     <div className="flex flex-col gap-3">
                     {isEligibility && (
@@ -2177,11 +2172,11 @@ const ReboundDetailView = () => {
                     </div>
                   </div>
 
-                  <div className={`flex flex-col gap-2 ${triageGlassPanelClass}`}>
+                  <div className={`flex h-full flex-col gap-2 ${triageGlassPanelClass}`}>
                     <p className="text-sm font-semibold">Notes</p>
                     <textarea
                       rows={8}
-                      className={`w-full rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-gray-500 resize-y ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                      className={`min-h-[260px] flex-1 w-full rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-gray-500 resize-none ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-gray-100 border-gray-200 text-gray-800'}`}
                       value={triageNotes}
                       onChange={(e) => setTriageNotes(e.target.value)}
                       placeholder="Add notes for this claim..."
@@ -2197,24 +2192,6 @@ const ReboundDetailView = () => {
                         {triageDraftStatus === "submitted" && <>Submitted.</>}
                       </div>
 
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => onSaveTriageDraft("manual")}
-                          disabled={triageSubmitting}
-                          className={triageGlassButtonClass("draft", isDark, triageSubmitting)}
-                        >
-                          {triageSubmitting ? "Saving…" : "Save Draft"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={onSubmitTriage}
-                          disabled={triageSubmitting}
-                          className={triageGlassButtonClass("submit", isDark, triageSubmitting)}
-                        >
-                          {triageSubmitting ? "Submitting…" : "Submit"}
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -2226,7 +2203,7 @@ const ReboundDetailView = () => {
                   <div>
                     <p className="text-lg font-semibold">Documents</p>
                     <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Upload clinical documentation to support the appeal. Uploaded files will be included in the appeal packet.
+                      Attach clinical documentation to support the appeal. Files upload when you save and submit.
                     </p>
                   </div>
                   <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -2237,7 +2214,7 @@ const ReboundDetailView = () => {
                 <div className={`hidden sm:grid grid-cols-12 gap-2 px-1 text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                   <div className="col-span-4">File Name</div>
                   <div className="col-span-4">File Type</div>
-                  <div className="col-span-4">Upload</div>
+                  <div className="col-span-4">File</div>
                 </div>
 
                 {triageDocRows.map((row) => (
@@ -2258,7 +2235,7 @@ const ReboundDetailView = () => {
                           )
                         }
                         placeholder="Document name"
-                        className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                        className={triageFieldClass}
                       />
                     </div>
                     <div className="sm:col-span-4">
@@ -2272,7 +2249,7 @@ const ReboundDetailView = () => {
                             )
                           )
                         }
-                        className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                        className={triageFieldClass}
                       >
                         {TRIAGE_DOC_FILE_TYPES.map((type) => (
                           <option key={type.value} value={type.value}>
@@ -2282,7 +2259,7 @@ const ReboundDetailView = () => {
                       </select>
                     </div>
                     <div className="sm:col-span-4 flex flex-wrap items-center gap-2">
-                      <span className={`sm:hidden text-xs font-medium w-full ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Upload</span>
+                      <span className={`sm:hidden text-xs font-medium w-full ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File</span>
                       <input
                         ref={(el) => {
                           if (el) triageFileInputRefs.current[row.id] = el;
@@ -2297,21 +2274,9 @@ const ReboundDetailView = () => {
                       <button
                         type="button"
                         onClick={() => openTriageFilePicker(row.id)}
-                        className={`flex-1 min-w-0 rounded-lg border px-3 py-2 text-sm truncate text-left ${isDark ? 'border-[#1f2433] bg-[#3C3D42] text-gray-200 hover:bg-[#454850]' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}`}
+                        className={`flex-1 min-w-0 truncate text-left hover:opacity-90 ${triageFieldClass}`}
                       >
                         {row.file ? row.file.name : "Choose file..."}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => uploadTriageDocument(row.id)}
-                        disabled={triageDocUploadingId === row.id || !row.file}
-                        className={`shrink-0 px-4 py-2 text-sm font-medium rounded-lg border-0 backdrop-blur-md shadow-[0_10px_24px_rgba(0,0,0,0.22)] disabled:opacity-60 disabled:cursor-not-allowed ${
-                          isDark
-                            ? 'bg-white/14 text-[#F4F4F4] hover:bg-white/22'
-                            : 'bg-[#3b3f46] text-white hover:bg-[#2f3339]'
-                        }`}
-                      >
-                        {triageDocUploadingId === row.id ? "Uploading..." : "Upload"}
                       </button>
                     </div>
                   </div>
