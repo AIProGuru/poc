@@ -1979,7 +1979,7 @@ const ReboundDetailView = () => {
                       disabled={triageSubmitting}
                       className={saveAndSubmitButtonClass}
                     >
-                      {triageSubmitting ? "Saving..." : "Save & Submit"}
+                      {triageSubmitting ? "Saving..." : "Submit"}
                     </button>
                     {isEligibility && (
                       <button
