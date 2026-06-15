@@ -114,6 +114,12 @@ from api.platform.claim_status.optum_claim_status import (
 
 from api.platform.demo.demo import demo_api
 from api.client_management import client_management_bp
+from api.appeal_templates import (
+    rebound_api_appeal_templates,
+    medevolve_api_appeal_templates,
+    pilotcustomer_api_appeal_templates,
+    betacustomer_api_appeal_templates,
+)
 
 def create_app():
     app = Flask(__name__)
@@ -234,6 +240,10 @@ def create_app():
     app.register_blueprint(pilotcustomer_api_claim_status)
     app.register_blueprint(betacustomer_api_claim_status)
     app.register_blueprint(client_management_bp)
+    app.register_blueprint(rebound_api_appeal_templates)
+    app.register_blueprint(medevolve_api_appeal_templates)
+    app.register_blueprint(pilotcustomer_api_appeal_templates)
+    app.register_blueprint(betacustomer_api_appeal_templates)
 
 
 

@@ -33,6 +33,7 @@ const EMPTY_PAYER_PLAN_CODE = {
   payerDescription: '',
   payerAddress: '',
   payerPhoneNumber: '',
+  payerFaxNumber: '',
   module: '',
   category: ''
 };
@@ -574,6 +575,7 @@ const TenantDetails = () => {
       payerDescription: code.payerDescription || '',
       payerAddress: code.payerAddress || '',
       payerPhoneNumber: code.payerPhoneNumber || '',
+      payerFaxNumber: code.payerFaxNumber || '',
       module: code.module || '',
       category: code.category || ''
     });
@@ -1345,13 +1347,14 @@ const TenantDetails = () => {
                   {facilityTab === 'payer-plan' && (
                     selectedFacility ? (
                       <form onSubmit={handlePayerPlanCodeSubmit} className="overflow-x-auto">
-                        <table className="min-w-[1320px] w-full bg-transparent">
+                        <table className="min-w-[1460px] w-full bg-transparent">
                           <colgroup>
                             <col className="w-[160px]" />
                             <col className="w-[150px]" />
                             <col className="w-[220px]" />
                             <col className="w-[260px]" />
                             <col className="w-[180px]" />
+                            <col className="w-[170px]" />
                             <col className="w-[180px]" />
                             <col className="w-[170px]" />
                             <col className="w-[190px]" />
@@ -1363,6 +1366,7 @@ const TenantDetails = () => {
                               <th className="px-3 py-3 text-left">Payer Description</th>
                               <th className="px-3 py-3 text-left">Payer Address</th>
                               <th className="px-3 py-3 text-left">Payer Phone Number</th>
+                              <th className="px-3 py-3 text-left">Payer Fax Number</th>
                               <th className="px-3 py-3 text-left">Module</th>
                               <th className="px-3 py-3 text-left">Category</th>
                               <th className="px-3 py-3 text-center">Actions</th>
@@ -1421,6 +1425,15 @@ const TenantDetails = () => {
                                 />
                               </td>
                               <td className="px-3 py-3">
+                                <input
+                                  type="tel"
+                                  value={newPayerPlanCode.payerFaxNumber}
+                                  onChange={(e) => setNewPayerPlanCode(prev => ({ ...prev, payerFaxNumber: e.target.value }))}
+                                  className={rowInputClass}
+                                  placeholder="Fax"
+                                />
+                              </td>
+                              <td className="px-3 py-3">
                                 <select
                                   value={newPayerPlanCode.module}
                                   onChange={(e) => setNewPayerPlanCode(prev => ({ ...prev, module: e.target.value }))}
@@ -1461,7 +1474,7 @@ const TenantDetails = () => {
                             </tr>
                             {(selectedFacility.payerPlanCodes || []).length === 0 && (
                               <tr>
-                                <td colSpan={8} className="px-3 py-6 text-sm text-gray-400">No payer plan codes added for this facility.</td>
+                                <td colSpan={9} className="px-3 py-6 text-sm text-gray-400">No payer plan codes added for this facility.</td>
                               </tr>
                             )}
                             {(selectedFacility.payerPlanCodes || []).map((code) => (
@@ -1509,6 +1522,13 @@ const TenantDetails = () => {
                                     <input type="tel" value={payerPlanCodeEditForm.payerPhoneNumber} onChange={(e) => setPayerPlanCodeEditForm(prev => ({ ...prev, payerPhoneNumber: e.target.value }))} className={rowInputClass} />
                                   ) : (
                                     <span className="text-white">{code.payerPhoneNumber || '-'}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  {editingPayerPlanCodeId === code.id ? (
+                                    <input type="tel" value={payerPlanCodeEditForm.payerFaxNumber} onChange={(e) => setPayerPlanCodeEditForm(prev => ({ ...prev, payerFaxNumber: e.target.value }))} className={rowInputClass} />
+                                  ) : (
+                                    <span className="text-white">{code.payerFaxNumber || '-'}</span>
                                   )}
                                 </td>
                                 <td className="px-3 py-3">

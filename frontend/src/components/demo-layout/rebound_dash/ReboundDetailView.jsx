@@ -184,6 +184,9 @@ const ReboundDetailView = () => {
   });
   const [triageDocRows, setTriageDocRows] = useState([createTriageDocRow()]);
   const [supportingDocuments, setSupportingDocuments] = useState([]);
+  const [matchedAppealTemplate, setMatchedAppealTemplate] = useState(null);
+  const [appealTemplateContact, setAppealTemplateContact] = useState(null);
+  const [appealTemplateLoading, setAppealTemplateLoading] = useState(false);
   const workflowTitle = `${routeTitle || appTitle || ""}`.toLowerCase();
   const showTriageDocumentUpload =
     workflowTitle.includes("denials") || workflowTitle.includes("payment variance");
@@ -533,6 +536,9 @@ const ReboundDetailView = () => {
 
   const getTriageClaimNoValue = () =>
     currentClaim?.Claim?.Data?.ClaimNo || currentClaim?.ClaimNo || claimNo || "";
+
+  const get835PayerIdValue = () =>
+    currentClaim?.Remit?.[0]?.PayerID || "";
 
   const onSaveTriageDraft = (mode = "manual") => {
     if (!currentClaim) return false;
@@ -1097,6 +1103,48 @@ const ReboundDetailView = () => {
     setEligibilityResponse(null);
     setEligibilityError("");
   }, [currentClaim]);
+
+  useEffect(() => {
+    const payerId835 = `${get835PayerIdValue()}`.trim();
+    setMatchedAppealTemplate(null);
+    setAppealTemplateContact(null);
+
+    if (!apiUrl || !payerId835) return;
+
+    let isMounted = true;
+    setAppealTemplateLoading(true);
+
+    Promise.all([
+      axios.get(`${apiUrl}/appeal-templates/match`, {
+        params: { payer_id: payerId835 },
+        withCredentials: true,
+      }),
+      axios.get(`${apiUrl}/payer-appeal-contacts`, {
+        params: { payer_id: payerId835 },
+        withCredentials: true,
+      }),
+    ])
+      .then(([templateRes, contactRes]) => {
+        if (!isMounted) return;
+        setMatchedAppealTemplate(templateRes.data || null);
+        const contacts = Array.isArray(contactRes.data) ? contactRes.data : [];
+        setAppealTemplateContact(contacts[0] || null);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setMatchedAppealTemplate(null);
+        setAppealTemplateContact(null);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setAppealTemplateLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [apiUrl, currentClaim?.Remit?.[0]?.PayerID]);
 
   const handleRequest277 = () => {
     if (!optumRequest) return;
@@ -2209,6 +2257,63 @@ const ReboundDetailView = () => {
                   <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     Maximum file size: 50 MB per document.
                   </p>
+                </div>
+
+                <div className={`rounded-xl border p-4 ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">Appeal template matched by 835 payer ID</p>
+                      <p className={`mt-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        835 Payer ID: {get835PayerIdValue() || "N/A"}
+                      </p>
+                    </div>
+                    {matchedAppealTemplate && (
+                      <a
+                        href={`${apiUrl}/appeal-templates/${matchedAppealTemplate.id}/download`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`text-xs font-semibold underline ${isDark ? 'text-gray-200' : 'text-slate-700'}`}
+                      >
+                        Download template
+                      </a>
+                    )}
+                  </div>
+
+                  {appealTemplateLoading ? (
+                    <p className={`mt-3 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Checking template library...</p>
+                  ) : matchedAppealTemplate ? (
+                    <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Template</p>
+                        <p className="font-semibold">{matchedAppealTemplate.name}</p>
+                        <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {matchedAppealTemplate.originalFileName || "No file name"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Appeal destination</p>
+                        {appealTemplateContact ? (
+                          <div className="space-y-1">
+                            <p className="font-semibold">{appealTemplateContact.payerDescription || appealTemplateContact.payerId}</p>
+                            <p>{appealTemplateContact.payerAddress || "Address not configured"}</p>
+                            <p>
+                              Phone: {appealTemplateContact.payerPhoneNumber || "N/A"}
+                              <span className="px-2">|</span>
+                              Fax: {appealTemplateContact.payerFaxNumber || "N/A"}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>
+                            No client-management contact found for this 835 payer ID.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className={`mt-3 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      No managed appeal template is mapped to this 835 payer ID yet.
+                    </p>
+                  )}
                 </div>
 
                 <div className={`hidden sm:grid grid-cols-12 gap-2 px-1 text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
