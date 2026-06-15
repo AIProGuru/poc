@@ -166,7 +166,7 @@ const AppealTemplates = () => {
   };
 
   return (
-    <div className={`min-h-screen overflow-x-hidden ${isDark ? "bg-[#1e1f24] text-white" : "bg-slate-50 text-slate-900"}`}>
+    <div className={`min-h-screen ${isDark ? "bg-[#1e1f24] text-white" : "bg-slate-50 text-slate-900"}`}>
       <Header />
       <div className="container mx-auto px-4 py-12">
         <div className="flex items-start gap-4 mb-8">
@@ -309,8 +309,86 @@ const AppealTemplates = () => {
             ) : filteredTemplates.length === 0 ? (
               <div className={`py-12 text-center ${mutedText}`}>No appeal templates found.</div>
             ) : (
-              <div className="mt-5 overflow-x-auto">
-                <table className="min-w-[900px] w-full">
+              <>
+                <div className="mt-5 grid grid-cols-1 gap-3 lg:hidden">
+                  {filteredTemplates.map((template) => {
+                    const templatePayerIds = template.payerIds || [];
+                    const hasContact = templatePayerIds.some((payerId) => contactsByPayerId.has(`${payerId}`.toUpperCase()));
+                    return (
+                      <div
+                        key={`card-${template.id}`}
+                        className={`rounded-lg border p-4 ${isDark ? "border-[#ffffff14] bg-[#191a1f]" : "border-slate-200 bg-slate-50"}`}
+                      >
+                        <div className="flex flex-col gap-3">
+                          <div>
+                            <p className="font-semibold break-words">{template.name}</p>
+                            {template.notes && <p className={`mt-1 text-xs break-words ${mutedText}`}>{template.notes}</p>}
+                          </div>
+
+                          <div>
+                            <p className={`text-xs font-semibold uppercase ${mutedText}`}>835 Payer IDs</p>
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {templatePayerIds.length > 0 ? (
+                                templatePayerIds.map((payerId) => (
+                                  <span
+                                    key={payerId}
+                                    className={`rounded-md px-2 py-1 text-xs font-semibold ${isDark ? "bg-[#ffffff10] text-gray-200" : "bg-white text-slate-700 border border-slate-200"}`}
+                                  >
+                                    {payerId}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className={`text-sm ${mutedText}`}>No payer IDs</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className={`text-xs font-semibold uppercase ${mutedText}`}>File</p>
+                              <p className="mt-1 break-words">{template.originalFileName || "-"}</p>
+                              <p className={`text-xs ${mutedText}`}>{formatFileSize(template.fileSize)}</p>
+                            </div>
+                            <div>
+                              <p className={`text-xs font-semibold uppercase ${mutedText}`}>Contact Status</p>
+                              <p className={`mt-1 ${hasContact ? "text-[#44BFAB]" : mutedText}`}>
+                                {hasContact ? "Client contact found" : "No contact match"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
+                            <a
+                              href={`${apiBaseUrl}/appeal-templates/${template.id}/download`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`rounded-lg px-3 py-2 text-xs font-semibold ${isDark ? "bg-[#ffffff10] text-gray-100 hover:bg-[#ffffff20]" : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"}`}
+                            >
+                              Download
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(template.id)}
+                              className={`rounded-lg px-3 py-2 text-xs font-semibold ${isDark ? "bg-red-500/15 text-red-200 hover:bg-red-500/25" : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-100"}`}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-5 hidden lg:block overflow-x-auto">
+                <table className="min-w-[760px] w-full table-fixed">
+                  <colgroup>
+                    <col className="w-[28%]" />
+                    <col className="w-[24%]" />
+                    <col className="w-[20%]" />
+                    <col className="w-[16%]" />
+                    <col className="w-[12%]" />
+                  </colgroup>
                   <thead>
                     <tr className={`border-b text-left text-xs uppercase ${isDark ? "border-[#ffffff14] text-gray-400" : "border-slate-200 text-slate-500"}`}>
                       <th className="px-3 py-3">Template</th>
@@ -326,11 +404,11 @@ const AppealTemplates = () => {
                       const hasContact = templatePayerIds.some((payerId) => contactsByPayerId.has(`${payerId}`.toUpperCase()));
                       return (
                         <tr key={template.id} className={`border-b text-sm ${isDark ? "border-[#ffffff10]" : "border-slate-100"}`}>
-                          <td className="px-3 py-4">
-                            <p className="font-semibold">{template.name}</p>
-                            {template.notes && <p className={`mt-1 text-xs ${mutedText}`}>{template.notes}</p>}
+                          <td className="px-3 py-4 align-top">
+                            <p className="font-semibold break-words">{template.name}</p>
+                            {template.notes && <p className={`mt-1 text-xs break-words ${mutedText}`}>{template.notes}</p>}
                           </td>
-                          <td className="px-3 py-4">
+                          <td className="px-3 py-4 align-top">
                             <div className="flex flex-wrap gap-1">
                               {templatePayerIds.map((payerId) => (
                                 <span
@@ -342,29 +420,29 @@ const AppealTemplates = () => {
                               ))}
                             </div>
                           </td>
-                          <td className="px-3 py-4">
-                            <p>{template.originalFileName || "-"}</p>
+                          <td className="px-3 py-4 align-top">
+                            <p className="break-words">{template.originalFileName || "-"}</p>
                             <p className={`text-xs ${mutedText}`}>{formatFileSize(template.fileSize)}</p>
                           </td>
-                          <td className="px-3 py-4">
+                          <td className="px-3 py-4 align-top">
                             <span className={hasContact ? "text-[#44BFAB]" : mutedText}>
                               {hasContact ? "Client contact found" : "No contact match"}
                             </span>
                           </td>
-                          <td className="px-3 py-4">
-                            <div className="flex items-center justify-center gap-3">
+                          <td className="px-3 py-4 align-top">
+                            <div className="flex flex-col items-center gap-2">
                               <a
                                 href={`${apiBaseUrl}/appeal-templates/${template.id}/download`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`text-xs font-semibold underline ${isDark ? "text-gray-200" : "text-slate-700"}`}
+                                className={`inline-flex min-w-[88px] items-center justify-center rounded-lg px-3 py-1.5 text-center text-xs font-semibold leading-5 whitespace-nowrap ${isDark ? "bg-[#ffffff10] text-gray-100 hover:bg-[#ffffff20]" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                               >
                                 Download
                               </a>
                               <button
                                 type="button"
                                 onClick={() => handleDelete(template.id)}
-                                className={`text-xs font-semibold ${isDark ? "text-red-300 hover:text-red-200" : "text-red-600 hover:text-red-700"}`}
+                                className={`inline-flex min-w-[88px] items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold leading-5 whitespace-nowrap ${isDark ? "bg-red-500/15 text-red-200 hover:bg-red-500/25" : "bg-red-50 text-red-700 hover:bg-red-100"}`}
                               >
                                 Delete
                               </button>
@@ -376,6 +454,7 @@ const AppealTemplates = () => {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </div>
         </div>
