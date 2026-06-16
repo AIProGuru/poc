@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 MAX_TEMPLATE_BYTES = 50 * 1024 * 1024
 ALLOWED_EXTENSIONS = {"pdf", "doc", "docx", "txt"}
+TRANSMISSION_METHODS = {"online_portal", "mail", "fax"}
 
 rebound_api_appeal_templates = Blueprint(
     "rebound_api_appeal_templates", __name__, url_prefix="/api/v1/rebound"
@@ -44,6 +45,18 @@ def _normalize_payer_id(value):
     return re.sub(r"\s+", "", f"{value or ''}").upper()
 
 
+def _parse_transmission_methods(raw_value):
+    values = raw_value if isinstance(raw_value, list) else re.split(r"[\s,;]+", f"{raw_value or ''}")
+    methods = []
+    seen = set()
+    for value in values:
+        normalized = f"{value or ''}".strip().lower()
+        if normalized in TRANSMISSION_METHODS and normalized not in seen:
+            methods.append(normalized)
+            seen.add(normalized)
+    return methods
+
+
 def _parse_payer_ids(raw_value):
     values = raw_value if isinstance(raw_value, list) else re.split(r"[\s,;]+", f"{raw_value or ''}")
     payer_ids = []
@@ -67,12 +80,19 @@ def _ensure_tables(cursor):
           mime_type VARCHAR(128) DEFAULT NULL,
           file_size BIGINT DEFAULT NULL,
           notes TEXT,
+          transmission_method VARCHAR(255) DEFAULT NULL,
           uploaded_by VARCHAR(128) DEFAULT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
         """
     )
+    try:
+        cursor.execute(
+            "ALTER TABLE appeal_templates ADD COLUMN transmission_method VARCHAR(255) DEFAULT NULL"
+        )
+    except Exception:
+        pass
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS appeal_template_payer_ids (
@@ -120,6 +140,7 @@ def _serialize_template(row, payer_ids=None):
         "mimeType": row.get("mime_type"),
         "fileSize": row.get("file_size"),
         "notes": row.get("notes") or "",
+        "transmissionMethod": row.get("transmission_method") or "",
         "uploadedBy": row.get("uploaded_by"),
         "createdAt": created_at,
         "updatedAt": updated_at,
@@ -173,7 +194,7 @@ def list_appeal_templates():
         cursor.execute(
             """
             SELECT id, name, original_file_name, mime_type, file_size, notes,
-                   uploaded_by, created_at, updated_at
+                   transmission_method, uploaded_by, created_at, updated_at
             FROM appeal_templates
             ORDER BY created_at DESC, id DESC
             """
@@ -200,12 +221,17 @@ def create_appeal_template():
         name = (request.form.get("name") or "").strip()
         payer_ids = _parse_payer_ids(request.form.get("payer_ids") or request.form.get("payerIds"))
         notes = (request.form.get("notes") or "").strip()
+        transmission_methods = _parse_transmission_methods(
+            request.form.get("transmission_method") or request.form.get("transmissionMethod")
+        )
         uploaded_by = (request.form.get("uploaded_by") or request.form.get("uploadedBy") or "").strip()
 
         if not name:
             return jsonify({"error": "Template name is required"}), 400
         if not payer_ids:
             return jsonify({"error": "At least one 835 payer ID is required"}), 400
+        if not transmission_methods:
+            return jsonify({"error": "At least one transmission method is required"}), 400
         if upload is None or not upload.filename:
             return jsonify({"error": "Template file is required"}), 400
         if not _allowed_file(upload.filename):
@@ -227,8 +253,8 @@ def create_appeal_template():
         cursor.execute(
             """
             INSERT INTO appeal_templates
-              (name, original_file_name, stored_path, mime_type, file_size, notes, uploaded_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+              (name, original_file_name, stored_path, mime_type, file_size, notes, transmission_method, uploaded_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 name[:255],
@@ -237,6 +263,7 @@ def create_appeal_template():
                 upload.mimetype,
                 file_size,
                 notes or None,
+                ",".join(transmission_methods),
                 uploaded_by[:128] if uploaded_by else None,
             ),
         )
@@ -253,7 +280,7 @@ def create_appeal_template():
         cursor.execute(
             """
             SELECT id, name, original_file_name, mime_type, file_size, notes,
-                   uploaded_by, created_at, updated_at
+                   transmission_method, uploaded_by, created_at, updated_at
             FROM appeal_templates
             WHERE id = %s
             """,
@@ -287,7 +314,7 @@ def match_appeal_template():
         cursor.execute(
             """
             SELECT t.id, t.name, t.original_file_name, t.mime_type, t.file_size,
-                   t.notes, t.uploaded_by, t.created_at, t.updated_at
+                   t.notes, t.transmission_method, t.uploaded_by, t.created_at, t.updated_at
             FROM appeal_template_payer_ids p
             JOIN appeal_templates t ON t.id = p.template_id
             WHERE p.payer_id_835 = %s
