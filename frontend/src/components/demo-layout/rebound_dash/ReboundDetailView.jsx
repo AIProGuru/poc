@@ -2259,7 +2259,7 @@ const ReboundDetailView = () => {
                   </p>
                 </div>
 
-                <div className={`rounded-xl border p-4 ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}>
+                {/* <div className={`rounded-xl border p-4 ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold">Appeal template matched by 835 payer ID</p>
@@ -2314,7 +2314,7 @@ const ReboundDetailView = () => {
                       No managed appeal template is mapped to this 835 payer ID yet.
                     </p>
                   )}
-                </div>
+                </div> */}
 
                 <div className={`hidden sm:grid grid-cols-12 gap-2 px-1 text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                   <div className="col-span-4">File Name</div>
