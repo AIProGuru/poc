@@ -111,7 +111,7 @@ const AppealTemplates = () => {
       ? "border-[#30323a] bg-[#191a1f] text-white placeholder-gray-500"
       : "border-slate-200 bg-white text-slate-900 placeholder-slate-400"
   }`;
-  const panelClass = `rounded-xl border p-5 ${
+  const panelClass = `rounded-xl border p-4 sm:p-5 ${
     isDark ? "border-[#ffffff14] bg-[#23252b]" : "border-slate-200 bg-white"
   }`;
   const mutedText = isDark ? "text-gray-400" : "text-slate-500";
@@ -217,10 +217,16 @@ const AppealTemplates = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#1e1f24] text-white" : "bg-slate-50 text-slate-900"}`}>
-      <Header />
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex items-start gap-4 mb-8">
+    <div
+      className={`min-h-screen w-full overflow-x-hidden ${
+        isDark ? "bg-[#1e1f24] text-white" : "bg-slate-50 text-slate-900"
+      }`}
+    >
+      <div className="px-4 sm:px-6 pt-4 [&>div]:!mt-0 [&>div]:!mb-4">
+        <Header />
+      </div>
+      <div className="container mx-auto w-full max-w-[1440px] px-4 sm:px-6 pb-10 pt-4">
+        <div className="mb-6 flex items-start gap-4">
           <button
             type="button"
             onClick={() => navigate("/governance-management")}
@@ -243,11 +249,9 @@ const AppealTemplates = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
-          <form onSubmit={handleSubmit} className={`${panelClass} flex flex-col gap-4`}>
-            <div>
-              <h2 className="text-lg font-semibold">Upload</h2>
-            </div>
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[400px_minmax(0,1fr)] xl:items-start">
+          <form onSubmit={handleSubmit} className={`${panelClass} flex flex-col gap-3`}>
+            <h2 className="text-lg font-semibold">Upload</h2>
 
             <label className="flex flex-col gap-1">
               <span className="text-sm font-semibold">Template Name</span>
@@ -341,13 +345,13 @@ const AppealTemplates = () => {
             </div>
           </form>
 
-          <div className={panelClass}>
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className={`${panelClass} flex flex-col gap-4`}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-lg font-semibold">Template Library</h2>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={`${inputClass} md:max-w-xs`}
+                className={`${inputClass} w-full sm:max-w-xs`}
                 placeholder="Search templates or Payer IDs"
               />
             </div>
