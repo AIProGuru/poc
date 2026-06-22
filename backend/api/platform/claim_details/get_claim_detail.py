@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from typing import Dict, List, Optional, Tuple
 import json
+import re
 import time
 import logging
 from datetime import date, datetime
@@ -22,6 +23,107 @@ pilotcustomer_api_get_claim.api_name = 'pilotcustomer_api_get_claim'
 
 betacustomer_api_get_claim = Blueprint('betacustomer_api_get_claim', __name__, url_prefix='/api/v1/betacustomer')
 betacustomer_api_get_claim.api_name = 'betacustomer_api_get_claim'
+
+
+def parse_remark_codes(raw_value) -> List[str]:
+    """Parse RARC/remark codes from an EDI RemarkCodes field."""
+    if raw_value is None:
+        return []
+    text = str(raw_value).replace("\r", "").replace("HE:", "").strip()
+    if not text:
+        return []
+    seen = set()
+    result = []
+    for part in re.split(r"[,*\n;]+", text):
+        code = part.strip()
+        if code and code not in seen:
+            seen.add(code)
+            result.append(code)
+    return result
+
+
+def custom_paid_service_remark_has_line_id(cursor, db_name: str) -> bool:
+    try:
+        cursor.execute(
+            """
+            SELECT 1
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = %s
+              AND TABLE_NAME = 'CUSTOM_PAID_SERVICE_REMARK'
+              AND COLUMN_NAME = 'line_id'
+            LIMIT 1
+            """,
+            (db_name,),
+        )
+        return cursor.fetchone() is not None
+    except Exception as exc:
+        logger.warning("Unable to inspect CUSTOM_PAID_SERVICE_REMARK.line_id: %s", exc)
+        return False
+
+
+def fetch_remit_remark_codes(cursor, id_837, id_835) -> List[str]:
+    try:
+        cursor.execute(
+            """
+            SELECT RemarkCode
+            FROM CUSTOM_PAID_SERVICE_REMARK
+            WHERE id_837 = %s AND id_835 = %s
+            """,
+            (id_837, id_835),
+        )
+        seen = set()
+        result = []
+        for row in cursor.fetchall() or []:
+            code = f"{row.get('RemarkCode') or ''}".strip()
+            if code and code not in seen:
+                seen.add(code)
+                result.append(code)
+        return result
+    except Exception as exc:
+        logger.warning("Unable to fetch remit remark codes: %s", exc)
+        return []
+
+
+def fetch_remark_codes_by_line(cursor, id_837, id_835, has_line_id: bool) -> Dict[int, List[str]]:
+    line_remarks: Dict[int, List[str]] = {}
+    if not has_line_id:
+        return line_remarks
+    try:
+        cursor.execute(
+            """
+            SELECT line_id, RemarkCode
+            FROM CUSTOM_PAID_SERVICE_REMARK
+            WHERE id_837 = %s AND id_835 = %s AND line_id IS NOT NULL
+            """,
+            (id_837, id_835),
+        )
+        for row in cursor.fetchall() or []:
+            line_id = row.get("line_id")
+            code = f"{row.get('RemarkCode') or ''}".strip()
+            if line_id is None or not code:
+                continue
+            line_remarks.setdefault(line_id, [])
+            if code not in line_remarks[line_id]:
+                line_remarks[line_id].append(code)
+    except Exception as exc:
+        logger.warning("Unable to fetch line-level remark codes: %s", exc)
+    return line_remarks
+
+
+def attach_service_line_remarks(
+    service_lines: List[dict],
+    remit_remarks: List[str],
+    line_remarks_by_id: Dict[int, List[str]],
+) -> None:
+    line_count = len(service_lines)
+    for service_line in service_lines:
+        line_id = service_line.get("ID")
+        parsed = parse_remark_codes(service_line.get("RemarkCodes"))
+        if not parsed and line_id in line_remarks_by_id:
+            parsed = list(line_remarks_by_id[line_id])
+        if not parsed and line_count == 1 and remit_remarks:
+            parsed = list(remit_remarks)
+        service_line["Remark"] = parsed
 
 
 def get_custom_all_patient_payment_expr(cursor, db_name: str) -> str:
@@ -284,6 +386,7 @@ def get_rebound_claim():
         """
         cursor.execute(q)
         results = cursor.fetchall()
+        remark_has_line_id = custom_paid_service_remark_has_line_id(cursor, db_name)
         overturn = 0
         action_date_value = None
         if len(ret.get('Action', [])) != 0:
@@ -360,6 +463,17 @@ def get_rebound_claim():
                     service_line['Modifiers'] = [
                         modifier for modifier in modifier_data if modifier['id'] == service_line['ID']
                     ]
+
+                remit_remarks = fetch_remit_remark_codes(cursor, id, row['id_835'])
+                line_remarks_by_id = fetch_remark_codes_by_line(
+                    cursor, id, row['id_835'], remark_has_line_id
+                )
+                attach_service_line_remarks(
+                    ret['Remit'][-1]['ServiceLine'],
+                    remit_remarks,
+                    line_remarks_by_id,
+                )
+                ret['Remit'][-1]['Remark'] = remit_remarks
         
         ret['Claim']['Data']['Overturn'] = overturn
         q = f"""
