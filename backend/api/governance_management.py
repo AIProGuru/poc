@@ -391,23 +391,27 @@ def delete_governance_row(dataset: str, row_id: str):
 def register_governance_routes(blueprint: Blueprint):
     blueprint.add_url_rule(
         "/governance/<dataset>",
-        view_func=lambda dataset: list_governance_rows(dataset),
+        view_func=list_governance_rows,
         methods=["GET"],
+        endpoint="list_governance_rows",
     )
     blueprint.add_url_rule(
         "/governance/<dataset>",
-        view_func=lambda dataset: create_governance_row(dataset),
+        view_func=create_governance_row,
         methods=["POST"],
+        endpoint="create_governance_row",
     )
     blueprint.add_url_rule(
         "/governance/<dataset>/<row_id>",
-        view_func=lambda dataset, row_id: update_governance_row(dataset, row_id),
+        view_func=update_governance_row,
         methods=["PUT"],
+        endpoint="update_governance_row",
     )
     blueprint.add_url_rule(
         "/governance/<dataset>/<row_id>",
-        view_func=lambda dataset, row_id: delete_governance_row(dataset, row_id),
+        view_func=delete_governance_row,
         methods=["DELETE"],
+        endpoint="delete_governance_row",
     )
 
 
