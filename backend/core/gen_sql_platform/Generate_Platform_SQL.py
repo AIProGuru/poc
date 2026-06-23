@@ -27,6 +27,8 @@ ADVANCED_FILTER_COLUMNS = {
     "primaryProcedure": "CUSTOM_ALL.PrimaryProcedure",
 }
 
+SERVICE_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
 
 def build_advanced_filter_sql_conditions(advanced_filters: Optional[dict]) -> str:
     if not advanced_filters:
@@ -41,6 +43,11 @@ def build_advanced_filter_sql_conditions(advanced_filters: Optional[dict]) -> st
             continue
         safe = value.replace("'", "''")
         conditions.append(f"{column} LIKE '%{safe}%'")
+    service_date = advanced_filters.get("serviceDate")
+    if service_date:
+        value = str(service_date).strip()
+        if SERVICE_DATE_PATTERN.match(value):
+            conditions.append(f"DATE(CUSTOM_ALL.ServiceDate) = '{value}'")
     return " AND ".join(conditions)
 
 

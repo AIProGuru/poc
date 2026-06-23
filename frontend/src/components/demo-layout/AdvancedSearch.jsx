@@ -170,7 +170,7 @@ const AdvancedSearch = () => {
                     {field.label}
                   </span>
                   <input
-                    type="text"
+                    type={field.inputType || 'text'}
                     value={draft[field.key] || ''}
                     onChange={(e) => handleDraftChange(field.key, e.target.value)}
                     placeholder={field.placeholder}
@@ -227,7 +227,7 @@ const AdvancedSearch = () => {
               }`}
             >
               <span className="font-medium">{entry.label}:</span>
-              <span className="max-w-[140px] truncate">{entry.value}</span>
+              <span className="max-w-[140px] truncate">{entry.displayValue || entry.value}</span>
               <button
                 type="button"
                 onClick={() => handleRemoveChip(entry.key)}
