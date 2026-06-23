@@ -23,6 +23,7 @@ import { setSelectedTags } from "../../../redux/reducers/tag.reducer";
 import { setPart1Count, setPart2Count } from "../../../redux/reducers/count.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { buildAccessExtra } from "../../../utils/accessFilters";
+import { sanitizeAdvancedFilters } from "../../../utils/advancedFilters";
 
 export default function DataTableTags(props) {
   const apiUrl = useApiEndpoint();
@@ -33,6 +34,7 @@ export default function DataTableTags(props) {
   const currentPage = useSelector((state) => state.app.currentPage)
   const perPage = useSelector((state) => state.app.pageSize)
   const keyword = useSelector((state) => state.app.keyword)
+  const advancedFilters = useSelector((state) => state.app.advancedFilters);
   const tabIndex = useSelector((state) => state.app.tabIndex)
   const role = useSelector((state) => state.auth.role);
   const access = useSelector((state) => ({
@@ -93,6 +95,7 @@ export default function DataTableTags(props) {
       procedure: procedure,
       pos: pos,
       extra: accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
       sort: props.order
     }).then(res => {
       dispatch(setTableData(res.data.data));
@@ -109,7 +112,8 @@ export default function DataTableTags(props) {
       remark: remark,
       procedure: procedure,
       pos: pos,
-      extra: accessExtra
+      extra: accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
     }).then(res => {
       dispatch(setPart1Count(res.data));
       // dispatch(decreasePart1Loading())
@@ -125,7 +129,8 @@ export default function DataTableTags(props) {
       remark: remark,
       procedure: procedure,
       pos: pos,
-      extra: accessExtra
+      extra: accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
     }).then(res => {
       dispatch(setPart2Count(res.data));
       dispatch(setPart2Loading(false))

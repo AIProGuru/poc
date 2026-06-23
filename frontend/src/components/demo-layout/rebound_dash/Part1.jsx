@@ -6,6 +6,7 @@ import { setPart1Count } from "../../../redux/reducers/count.reducer";
 import { setPart1Loading } from "../../../redux/reducers/app.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { buildAccessExtra } from "../../../utils/accessFilters";
+import { sanitizeAdvancedFilters } from "../../../utils/advancedFilters";
 
 const Part1 = (props) => {
   const apiUrl = useApiEndpoint();
@@ -21,6 +22,7 @@ const Part1 = (props) => {
   const remark = useSelector((state) => state.app.remark);
   const procedure = useSelector((state) => state.app.procedure);
   const pos = useSelector((state) => state.app.pos);
+  const advancedFilters = useSelector((state) => state.app.advancedFilters);
   const extra = useSelector((state) => state.app.extraFilter);
   const theme = useSelector((state) => state.app.theme);
   const role = useSelector((state) => state.auth.role);
@@ -56,12 +58,13 @@ const Part1 = (props) => {
       remark,
       procedure,
       pos,
-      extra: accessExtra
+      extra: accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
     }).then(res => {
       dispatch(setPart1Count([res.data]));
       dispatch(setPart1Loading(false));
     });
-  }, [part1Loading, selectedTags, extra, access, role]);
+  }, [part1Loading, selectedTags, extra, access, role, keyword, startDate, endDate, code, remark, procedure, pos, advancedFilters, apiUrl, dispatch, tabIndex]);
 
   return (
     <div className="w-full md:w-[60%]">

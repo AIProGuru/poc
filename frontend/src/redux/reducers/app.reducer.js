@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { EMPTY_ADVANCED_FILTERS } from "../../utils/advancedFilters";
 
 const initialState = {
   startDate: null,
@@ -6,6 +7,7 @@ const initialState = {
   currentPage: 1,
   totalPage: null,
   keyword: '',
+  advancedFilters: { ...EMPTY_ADVANCED_FILTERS },
   pageSize: 50,
   tableData: [],
   tabIndex: 0,
@@ -79,6 +81,12 @@ const appReducer = createSlice({
     },
     setKeyword: (state, action) => {
       state.keyword = action.payload;
+    },
+    setAdvancedFilters: (state, action) => {
+      state.advancedFilters = { ...EMPTY_ADVANCED_FILTERS, ...(action.payload || {}) };
+    },
+    clearAdvancedFilters: (state) => {
+      state.advancedFilters = { ...EMPTY_ADVANCED_FILTERS };
     },
     setPageSize: (state, action) => {
       state.pageSize = action.payload;
@@ -157,6 +165,7 @@ const appReducer = createSlice({
       state.tabIndex = tabIndex ?? state.tabIndex;
       state.currentPage = 1;
       state.keyword = '';
+      state.advancedFilters = { ...EMPTY_ADVANCED_FILTERS };
       state.startDate = null;
       state.endDate = null;
       state.code = '';
@@ -175,6 +184,7 @@ const appReducer = createSlice({
       state.currentPage = 1;
       state.totalPage = null;
       state.keyword = '';
+      state.advancedFilters = { ...EMPTY_ADVANCED_FILTERS };
       state.tableData = [];
       state.tabIndex = 0;
       state.extraFilter = { IncludeAllCategories: true };
@@ -215,6 +225,8 @@ export const {
   setCurrentPage,
   setTotalPage,
   setKeyword,
+  setAdvancedFilters,
+  clearAdvancedFilters,
   setPageSize,
   setTableData,
   setTabIndex,

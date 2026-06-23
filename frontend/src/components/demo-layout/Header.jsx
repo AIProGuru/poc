@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { AccountContext } from "../../utils/Account";
 import { setAppTitle, setTheme, setKeyword, setCurrentPage, setPart1Loading, setPart2Loading, setTableLoading, setExtraFilter } from "../../redux/reducers/app.reducer";
+import AdvancedSearch from "./AdvancedSearch";
 import {
   Backdrop,
   Popover,
@@ -95,21 +96,26 @@ const Header = () => {
         </div>
       </div>
       <div />
-      <div className="items-center hidden sm:flex gap-4">
-        <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-            <svg className="block w-[18px] h-[18px]" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7.98913 15.2496C11.6327 15.2496 14.5864 12.2959 14.5864 8.6524C14.5864 5.00885 11.6327 2.05518 7.98913 2.05518C4.34558 2.05518 1.39191 5.00885 1.39191 8.6524C1.39191 12.2959 4.34558 15.2496 7.98913 15.2496Z" stroke="#9598B0" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M15.2808 15.9441L13.8919 14.5552" stroke="#9598B0" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+      <div className="items-center hidden sm:flex gap-3">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+                <svg className="block w-[18px] h-[18px]" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7.98913 15.2496C11.6327 15.2496 14.5864 12.2959 14.5864 8.6524C14.5864 5.00885 11.6327 2.05518 7.98913 2.05518C4.34558 2.05518 1.39191 5.00885 1.39191 8.6524C1.39191 12.2959 4.34558 15.2496 7.98913 15.2496Z" stroke="#9598B0" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M15.2808 15.9441L13.8919 14.5552" stroke="#9598B0" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <input
+                placeholder="Search by Claim ID"
+                className={`text-sm rounded-lg py-2.5 px-10 pl-10 w-72 ${theme === 'dark' ? "bg-[#27282D] text-white border border-gray-600" : "text-black bg-white border border-gray-300"}`}
+                ref={inputKeywordRef}
+                defaultValue={keyword}
+                onKeyDown={handleKeywordKeyDown}
+              />
+            </div>
+            <AdvancedSearch />
           </div>
-          <input
-            placeholder="Search"
-            className={`text-sm rounded-lg py-2.5 px-10 pl-10 w-64 ${theme === 'dark' ? "bg-[#27282D] text-white border border-gray-600" : "text-black bg-white border border-gray-300"}`}
-            ref={inputKeywordRef}
-            defaultValue={keyword}
-            onKeyDown={handleKeywordKeyDown}
-          />
         </div>
         
         <div className="font-inter hidden sm:flex text-[28px] font-semibold relative cursor-pointer select-none">

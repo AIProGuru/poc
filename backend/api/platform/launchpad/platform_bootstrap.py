@@ -146,6 +146,7 @@ def platform_bootstrap():
             facilities = extra_filters.get("AllowedFacilities") or []
             tax_ids = []
             npis = []
+            taxonomy_codes = []
             for item in facilities:
                 if not item:
                     continue
@@ -167,10 +168,20 @@ def platform_bootstrap():
                     or item.get("ProvNPI")
                     or item.get("BillProvNPI")
                 )
+                taxonomy_code = (
+                    item.get("taxonomyCode")
+                    or item.get("taxonomy")
+                    or item.get("TaxonomyCode")
+                    or item.get("facilityTaxonomyCode")
+                    or item.get("BillTaxonomy")
+                    or item.get("RendTaxonomy")
+                )
                 if tax_id:
                     tax_ids.append(str(tax_id))
                 if npi:
                     npis.append(str(npi))
+                if taxonomy_code:
+                    taxonomy_codes.append(str(taxonomy_code))
             facility_conditions = []
             if tax_ids:
                 tax_list = ", ".join(["'{}'".format(str(t).replace("'", "''")) for t in tax_ids])
@@ -178,6 +189,11 @@ def platform_bootstrap():
             if npis:
                 npi_list = ", ".join(["'{}'".format(str(n).replace("'", "''")) for n in npis])
                 facility_conditions.append(f"CUSTOM_ALL.ProvNPI IN ({npi_list})")
+            if taxonomy_codes:
+                taxonomy_list = ", ".join(["'{}'".format(str(t).replace("'", "''")) for t in taxonomy_codes])
+                facility_conditions.append(
+                    f"(CUSTOM_ALL.BillTaxonomy IN ({taxonomy_list}) OR CUSTOM_ALL.RendTaxonomy IN ({taxonomy_list}))"
+                )
             if facility_conditions:
                 conditions.append(f"({' OR '.join(facility_conditions)})")
 

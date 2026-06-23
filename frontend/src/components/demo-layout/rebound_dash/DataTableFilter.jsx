@@ -23,6 +23,7 @@ import { setSelectedTags } from "../../../redux/reducers/tag.reducer";
 import { setPart1Count, setPart2Count } from "../../../redux/reducers/count.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { buildAccessExtra } from "../../../utils/accessFilters";
+import { sanitizeAdvancedFilters } from "../../../utils/advancedFilters";
 import {
   increasePart1Loading, setStartDate, setEndDate, setCurrentPage, setTableData, setTotalPage, setPart1Loading, setPart2Loading, setTableLoading, setCode, setRemark, setProcedure, setPOS, decreasePart1Loading, setExtraFilter
 } from "../../../redux/reducers/app.reducer";
@@ -36,6 +37,7 @@ export default function DataTableFilter(props) {
   const currentPage = useSelector((state) => state.app.currentPage)
   const perPage = useSelector((state) => state.app.pageSize)
   const keyword = useSelector((state) => state.app.keyword)
+  const advancedFilters = useSelector((state) => state.app.advancedFilters);
   const tabIndex = useSelector((state) => state.app.tabIndex)
   const role = useSelector((state) => state.auth.role);
   const access = useSelector((state) => ({
@@ -95,6 +97,7 @@ const theme = useSelector((state) => state.app.theme)
       procedure: procedure,
       pos: pos,
       extra: accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
       sort: props.order
     }).then(res => {
       dispatch(setTableData(res.data.data));
@@ -115,7 +118,8 @@ const theme = useSelector((state) => state.app.theme)
       remark: remark,
       procedure: procedure,
       pos: pos,
-      extra: accessExtra
+      extra: accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
     }).then(res => {
       console.log("rebound_data_part1_all response:", res.data);
       dispatch(setPart1Count(res.data));
@@ -135,7 +139,8 @@ const theme = useSelector((state) => state.app.theme)
       remark,
       procedure,
       pos,
-      extra: accessExtra
+      extra: accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
     }).then(res => {
       console.log("rebound_data_part2_all response:", res.data);
       dispatch(setPart2Count(res.data));

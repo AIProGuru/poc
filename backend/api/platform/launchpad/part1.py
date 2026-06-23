@@ -5,7 +5,7 @@ import logging
 from datetime import date, datetime
 import os
 from db import get_connection, close_connection
-from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL
+from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL, merge_request_extra
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -125,7 +125,7 @@ def get_rebound_data_part1_all():
         remark = request.json.get("remark", "")
         procedure = request.json.get("procedure", "")
         pos = request.json.get("pos", "")
-        extra = request.json.get("extra", {})
+        extra = merge_request_extra(request.json)
         
         # If no tags are selected, return an empty response
         if not selectedTags:
@@ -271,7 +271,7 @@ def get_rebound_data_part1_all_grouped():
         remark = payload.get("remark", "")
         procedure = payload.get("procedure", "")
         pos = payload.get("pos", "")
-        extra = payload.get("extra", {})
+        extra = merge_request_extra(payload)
 
         if isinstance(tab_indexes, list) and len(tab_indexes) > 0:
             target_tabs = list(dict.fromkeys(tab_indexes))

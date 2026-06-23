@@ -18,6 +18,7 @@ import {
   setProcedure,
   setExtraFilter,
   setTabDefaults,
+  clearAdvancedFilters,
 } from "../../../redux/reducers/app.reducer";
 import { setSelectedTags } from "../../../redux/reducers/tag.reducer";
 import { setTableData, setTheme } from '../../../redux/reducers/app.reducer';
@@ -427,6 +428,7 @@ const ReboundDash = () => {
     dispatch(setStartDate(null));
     dispatch(setEndDate(null));
     dispatch(setSelectedTags([]));
+    dispatch(clearAdvancedFilters());
     dispatch(setExtraFilter({ IncludeAllCategories: true }));
     dispatch(setTabIndex(0));
     dispatch(setCurrentPage(1));

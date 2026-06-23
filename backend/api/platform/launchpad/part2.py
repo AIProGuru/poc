@@ -4,7 +4,7 @@ import time
 import logging
 from datetime import date, datetime
 from db import get_connection, close_connection
-from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL
+from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL, merge_request_extra
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -107,7 +107,7 @@ def get_rebound_data_part2_all():
         selectedTags = request.json.get("selectedTags")
         startDate = request.json.get("startDate")
         endDate = request.json.get("endDate")
-        extra = request.json.get("extra", {})
+        extra = merge_request_extra(request.json)
         code = request.json.get("code", "")
         remark = request.json.get("remark", "")
         procedure = request.json.get("procedure", "")

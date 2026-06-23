@@ -33,10 +33,12 @@ const normalizeFacilityEntry = (entry) => {
   if (typeof entry === 'string') {
     const taxMatch = entry.match(/tax\s*id[:\s]*([0-9-]+)/i);
     const npiMatch = entry.match(/npi[:\s]*([0-9-]+)/i);
+    const taxonomyMatch = entry.match(/taxonomy[:\s]*([A-Za-z0-9.]+)/i);
     return {
       name: entry,
       taxId: taxMatch ? taxMatch[1] : '',
       npi: npiMatch ? npiMatch[1] : '',
+      taxonomyCode: taxonomyMatch ? taxonomyMatch[1] : '',
     };
   }
   if (typeof entry === 'object') {
@@ -57,6 +59,14 @@ const normalizeFacilityEntry = (entry) => {
       entry.ProvNPI ||
       entry.BillProvNPI ||
       '';
+    const taxonomyCode =
+      entry.taxonomyCode ||
+      entry.taxonomy ||
+      entry.TaxonomyCode ||
+      entry.facilityTaxonomyCode ||
+      entry.BillTaxonomy ||
+      entry.RendTaxonomy ||
+      '';
     const name =
       entry.name ||
       entry.facilityName ||
@@ -64,7 +74,7 @@ const normalizeFacilityEntry = (entry) => {
       entry.PayerName ||
       entry.label ||
       '';
-    return { name, taxId, npi };
+    return { name, taxId, npi, taxonomyCode };
   }
   return null;
 };
@@ -73,11 +83,11 @@ const normalizeFacilityList = (facilityList) => {
   if (!Array.isArray(facilityList)) return [];
   const normalized = facilityList
     .map((entry) => normalizeFacilityEntry(entry))
-    .filter((entry) => entry && (entry.taxId || entry.npi || entry.name));
+    .filter((entry) => entry && (entry.taxId || entry.npi || entry.taxonomyCode || entry.name));
   if (!normalized.length) return [];
   const seen = new Set();
   return normalized.filter((entry) => {
-    const key = `${entry.taxId || ''}::${entry.npi || ''}::${entry.name || ''}`;
+    const key = `${entry.taxId || ''}::${entry.npi || ''}::${entry.taxonomyCode || ''}::${entry.name || ''}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

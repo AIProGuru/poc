@@ -23,6 +23,7 @@ import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { toast } from "react-toastify";
 import DataTableTags from "./DataTableTags";
 import { buildAccessExtra } from "../../../utils/accessFilters";
+import { sanitizeAdvancedFilters, countActiveAdvancedFilters } from "../../../utils/advancedFilters";
 
 const DataTable = (props) => {
   const apiUrl = useApiEndpoint();
@@ -65,6 +66,7 @@ const DataTable = (props) => {
   const remark = useSelector((state) => state.app.remark)
   const procedure = useSelector((state) => state.app.procedure)
   const pos = useSelector((state) => state.app.pos)
+  const advancedFilters = useSelector((state) => state.app.advancedFilters);
   const extra = useSelector((state) => state.app.extraFilter);
   const selectedClaimIds = useSelector((state) => state.app.selectedClaimIds);
   const navPendCounts = useSelector((state) => state.app.navPendCounts);
@@ -224,6 +226,7 @@ const DataTable = (props) => {
   const isClaimStatusView = (appTitle || "").toLowerCase().startsWith("claim status");
   const hasSummaryFilters = Boolean(
     keyword || startDate || endDate || code || remark || procedure || pos
+      || countActiveAdvancedFilters(advancedFilters)
   );
   const pend277Count = Number(navPendCounts?.pend277 || 0);
   const pend835Count = Number(navPendCounts?.pend835 || 0);
@@ -394,6 +397,7 @@ const DataTable = (props) => {
       procedure: procedure,
       pos: pos,
       extra: accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
       sort: order
     }).then(res => {
       if (requestRef.current !== requestId) return;
@@ -406,7 +410,7 @@ const DataTable = (props) => {
       requestInFlightRef.current = false;
       dispatch(setTableLoading(false));
     });
-  }, [tableLoading, selectedTags, order, accessExtra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate])
+  }, [tableLoading, selectedTags, order, accessExtra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate, advancedFilters])
 
   useEffect(() => {
     if (apiUrl === '') return;
@@ -426,6 +430,7 @@ const DataTable = (props) => {
       procedure,
       pos,
       accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
     });
     if (summarySignatureRef.current === signature) return;
     summarySignatureRef.current = signature;
@@ -442,6 +447,7 @@ const DataTable = (props) => {
       procedure,
       pos,
       extra: accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
     }).then((res) => {
       if (summaryRequestRef.current !== requestId) return;
       setSummaryTotals(res.data);
@@ -449,7 +455,7 @@ const DataTable = (props) => {
       if (summaryRequestRef.current !== requestId) return;
       setSummaryTotals(null);
     });
-  }, [apiUrl, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, accessExtra])
+  }, [apiUrl, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, accessExtra, advancedFilters])
 
   const setOrder = (ord) => {
     const ordName = order[order.length - 1] === '-' ? order.substring(0, order.length - 1) : order;

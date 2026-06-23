@@ -203,13 +203,22 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       facility.ProvNPI ||
       facility.BillProvNPI ||
       "";
-    return { ...facility, name, taxId, npi };
+    const taxonomyCode =
+      facility.taxonomyCode ||
+      facility.taxonomy ||
+      facility.TaxonomyCode ||
+      facility.facilityTaxonomyCode ||
+      facility.BillTaxonomy ||
+      facility.RendTaxonomy ||
+      "";
+    return { ...facility, name, taxId, npi, taxonomyCode };
   };
 
   const buildFacilityLabel = (facility, tenantLabel) => {
     if (!facility) return "";
     const parts = [];
     if (facility.name) parts.push(facility.name);
+    if (facility.taxonomyCode) parts.push(`Taxonomy: ${facility.taxonomyCode}`);
     if (tenantLabel) parts.push(tenantLabel);
     return parts.join(" · ");
   };
@@ -390,13 +399,21 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       return;
     }
     const allowSet = new Set(
-      facilityOptions.map((option) => `${option.taxId || ""}::${option.npi || ""}::${option.label || option.PayerName || ""}`)
+      facilityOptions.map((option) => `${option.taxId || ""}::${option.npi || ""}::${option.taxonomyCode || ""}::${option.label || option.PayerName || ""}`)
     );
     const nextFacilities = user.facility.filter((item) => {
       const taxId = item?.taxId || item?.taxID || item?.facilityTaxId || item?.facilityTaxID || "";
       const npi = item?.npi || item?.NPI || item?.facilityNpi || item?.facilityNPI || "";
+      const taxonomyCode =
+        item?.taxonomyCode ||
+        item?.taxonomy ||
+        item?.TaxonomyCode ||
+        item?.facilityTaxonomyCode ||
+        item?.BillTaxonomy ||
+        item?.RendTaxonomy ||
+        "";
       const label = item?.label || item?.PayerName || item?.name || "";
-      const key = `${taxId || ""}::${npi || ""}::${label}`;
+      const key = `${taxId || ""}::${npi || ""}::${taxonomyCode || ""}::${label}`;
       return allowSet.has(key);
     });
     if (nextFacilities.length !== user.facility.length) {

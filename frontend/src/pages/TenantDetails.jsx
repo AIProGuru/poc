@@ -75,6 +75,7 @@ const TenantDetails = () => {
     address: '',
     taxId: '',
     npi: '',
+    taxonomyCode: '',
     contact: '',
     email: ''
   });
@@ -84,6 +85,7 @@ const TenantDetails = () => {
     address: '',
     taxId: '',
     npi: '',
+    taxonomyCode: '',
     contact: '',
     email: ''
   });
@@ -153,6 +155,7 @@ const TenantDetails = () => {
       address: '',
       taxId: '',
       npi: '',
+      taxonomyCode: '',
       contact: '',
       email: ''
     });
@@ -162,6 +165,7 @@ const TenantDetails = () => {
       address: '',
       taxId: '',
       npi: '',
+      taxonomyCode: '',
       contact: '',
       email: ''
     });
@@ -308,6 +312,7 @@ const TenantDetails = () => {
         address: formData.address,
         taxId: formData.taxId,
         npi: formData.npi,
+        taxonomyCode: formData.taxonomyCode,
         contact: formData.contact,
         email: formData.email
       };
@@ -442,6 +447,7 @@ const TenantDetails = () => {
       address: facility.address || '',
       taxId: facility.taxId || '',
       npi: facility.npi || '',
+      taxonomyCode: facility.taxonomyCode || '',
       contact: facility.contact || '',
       email: facility.email || ''
     });
@@ -455,6 +461,7 @@ const TenantDetails = () => {
       address: '',
       taxId: '',
       npi: '',
+      taxonomyCode: '',
       contact: '',
       email: ''
     });
@@ -475,6 +482,7 @@ const TenantDetails = () => {
       address: '',
       taxId: '',
       npi: '',
+      taxonomyCode: '',
       contact: '',
       email: ''
     });
@@ -490,6 +498,7 @@ const TenantDetails = () => {
       address: '',
       taxId: '',
       npi: '',
+      taxonomyCode: '',
       contact: '',
       email: ''
     });
@@ -506,7 +515,8 @@ const TenantDetails = () => {
           facility.email,
           facility.status,
           facility.taxId,
-          facility.npi
+          facility.npi,
+          facility.taxonomyCode
         ]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(normalizedFacilitySearch))
@@ -1007,7 +1017,7 @@ const TenantDetails = () => {
                       value={facilitySearch}
                       onChange={(e) => setFacilitySearch(e.target.value)}
                       className="w-full sm:w-72 p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]"
-                      placeholder="Search facilities"
+                      placeholder="Search facilities (name, NPI, taxonomy, etc.)"
                     />
                     <select
                       value={selectedFacilityId}
@@ -1056,13 +1066,14 @@ const TenantDetails = () => {
                   )}
                   {facilityTab === 'facilities' && (
                     <form onSubmit={handleNewFacilitySubmit} className="overflow-x-auto">
-                      <table className="min-w-[1100px] w-full bg-transparent">
+                      <table className="min-w-[1260px] w-full bg-transparent">
                         <colgroup>
                           <col className="w-[220px]" />
                           <col className="w-[220px]" />
                           <col className="w-[260px]" />
                           <col className="w-[180px]" />
                           <col className="w-[140px]" />
+                          <col className="w-[160px]" />
                           <col className="w-[200px]" />
                           <col className="w-[240px]" />
                           <col className="w-[160px]" />
@@ -1074,6 +1085,7 @@ const TenantDetails = () => {
                             <th className="px-3 py-3 text-left">Address</th>
                             <th className="px-3 py-3 text-left">Tax ID</th>
                             <th className="px-3 py-3 text-left">NPI</th>
+                            <th className="px-3 py-3 text-left">Taxonomy Code</th>
                             <th className="px-3 py-3 text-left">Contact</th>
                             <th className="px-3 py-3 text-left">Email</th>
                             <th className="px-3 py-3 text-center">Actions</th>
@@ -1144,6 +1156,16 @@ const TenantDetails = () => {
                             <td className="px-3 py-3">
                               <input
                                 type="text"
+                                name="taxonomyCode"
+                                value={newFacility.taxonomyCode}
+                                onChange={handleNewFacilityChange}
+                                className={rowInputClass}
+                                placeholder="Taxonomy Code"
+                              />
+                            </td>
+                            <td className="px-3 py-3">
+                              <input
+                                type="text"
                                 name="contact"
                                 value={newFacility.contact}
                                 onChange={handleNewFacilityChange}
@@ -1183,7 +1205,7 @@ const TenantDetails = () => {
                           </tr>
                           {filteredFacilities.length === 0 && (
                             <tr>
-                              <td colSpan={8} className="px-3 py-6 text-sm text-gray-400">
+                              <td colSpan={9} className="px-3 py-6 text-sm text-gray-400">
                                 {facilities.length === 0 ? 'No facilities added yet.' : 'No facilities match your search.'}
                               </td>
                             </tr>
@@ -1259,6 +1281,18 @@ const TenantDetails = () => {
                                   />
                                 ) : (
                                   <span className="text-white">{facility.npi || '-'}</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-3">
+                                {editingFacilityId === facility.id ? (
+                                  <input
+                                    type="text"
+                                    value={facilityEditForm.taxonomyCode}
+                                    onChange={(e) => setFacilityEditForm(prev => ({ ...prev, taxonomyCode: e.target.value }))}
+                                    className={rowInputClass}
+                                  />
+                                ) : (
+                                  <span className="text-white">{facility.taxonomyCode || '-'}</span>
                                 )}
                               </td>
                               <td className="px-3 py-3">

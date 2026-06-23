@@ -12,6 +12,45 @@ class TabIndex(IntEnum):
     AUTOMATION = 5
     CUSTOM = 6
 
+ADVANCED_FILTER_COLUMNS = {
+    "facilityName": "CUSTOM_ALL.BillProvName",
+    "provTaxId": "CUSTOM_ALL.ProvTaxID",
+    "provNpi": "CUSTOM_ALL.ProvNPI",
+    "payerId": "CUSTOM_ALL.PayerID",
+    "payerName": "CUSTOM_ALL.PayerName",
+    "payerSeq": "CUSTOM_ALL.PayerSeq",
+    "patientName": "CUSTOM_ALL.PatientName",
+    "patientId": "CUSTOM_ALL.PatientID",
+    "category": "CUSTOM_ALL.Category",
+    "placeOfService": "CUSTOM_ALL.PlaceOfService",
+    "primaryDx": "CUSTOM_ALL.PrimaryDX",
+    "primaryProcedure": "CUSTOM_ALL.PrimaryProcedure",
+}
+
+
+def build_advanced_filter_sql_conditions(advanced_filters: Optional[dict]) -> str:
+    if not advanced_filters:
+        return ""
+    conditions = []
+    for key, column in ADVANCED_FILTER_COLUMNS.items():
+        raw = advanced_filters.get(key)
+        if raw is None:
+            continue
+        value = str(raw).strip()
+        if not value:
+            continue
+        safe = value.replace("'", "''")
+        conditions.append(f"{column} LIKE '%{safe}%'")
+    return " AND ".join(conditions)
+
+
+def merge_request_extra(payload: dict) -> dict:
+    extra = dict(payload.get("extra") or {})
+    advanced_filters = payload.get("advancedFilters") or {}
+    if advanced_filters:
+        extra["AdvancedFilters"] = advanced_filters
+    return extra
+
 def generate_sql(
     tab_index,
     keyword,
@@ -191,6 +230,7 @@ def generate_sql(
         facilities = extra.get("AllowedFacilities") or []
         tax_ids = []
         npis = []
+        taxonomy_codes = []
         for item in facilities:
             if not item:
                 continue
@@ -199,10 +239,20 @@ def generate_sql(
                 continue
             tax_id = item.get("taxId") or item.get("taxID") or item.get("facilityTaxId") or item.get("facilityTaxID") or item.get("FedTaxID")
             npi = item.get("npi") or item.get("NPI") or item.get("facilityNpi") or item.get("facilityNPI") or item.get("ProvNPI") or item.get("BillProvNPI")
+            taxonomy_code = (
+                item.get("taxonomyCode")
+                or item.get("taxonomy")
+                or item.get("TaxonomyCode")
+                or item.get("facilityTaxonomyCode")
+                or item.get("BillTaxonomy")
+                or item.get("RendTaxonomy")
+            )
             if tax_id:
                 tax_ids.append(str(tax_id))
             if npi:
                 npis.append(str(npi))
+            if taxonomy_code:
+                taxonomy_codes.append(str(taxonomy_code))
         conditions = []
         if tax_ids:
             safe_tax = ", ".join(["'{}'".format(str(t).replace("'", "''")) for t in tax_ids])
@@ -210,6 +260,11 @@ def generate_sql(
         if npis:
             safe_npi = ", ".join(["'{}'".format(str(n).replace("'", "''")) for n in npis])
             conditions.append(f"CUSTOM_ALL.ProvNPI IN ({safe_npi})")
+        if taxonomy_codes:
+            safe_taxonomy = ", ".join(["'{}'".format(str(t).replace("'", "''")) for t in taxonomy_codes])
+            conditions.append(
+                f"(CUSTOM_ALL.BillTaxonomy IN ({safe_taxonomy}) OR CUSTOM_ALL.RendTaxonomy IN ({safe_taxonomy}))"
+            )
         if conditions:
             query += f" AND ({' OR '.join(conditions)})"
     if extra.get("Missing835"):
@@ -283,6 +338,9 @@ def generate_sql(
                     query += f"AND CUSTOM_ALL.Automation=0"
     if extra.get("ExcludeAutomationZero"):
         query += " AND (CUSTOM_ALL.Automation IS NULL OR CUSTOM_ALL.Automation != 0)"
+    advanced_filter_sql = build_advanced_filter_sql_conditions(extra.get("AdvancedFilters"))
+    if advanced_filter_sql:
+        query += f" AND {advanced_filter_sql}"
     if sort != "":
         if sort[-1] == '-':
             query += f" ORDER BY CUSTOM_ALL.{sort[:-1]} DESC"
