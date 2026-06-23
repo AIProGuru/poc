@@ -120,6 +120,12 @@ from api.appeal_templates import (
     pilotcustomer_api_appeal_templates,
     betacustomer_api_appeal_templates,
 )
+from api.governance_management import (
+    rebound_api_governance,
+    medevolve_api_governance,
+    pilotcustomer_api_governance,
+    betacustomer_api_governance,
+)
 
 def create_app():
     app = Flask(__name__)
@@ -244,6 +250,10 @@ def create_app():
     app.register_blueprint(medevolve_api_appeal_templates)
     app.register_blueprint(pilotcustomer_api_appeal_templates)
     app.register_blueprint(betacustomer_api_appeal_templates)
+    app.register_blueprint(rebound_api_governance)
+    app.register_blueprint(medevolve_api_governance)
+    app.register_blueprint(pilotcustomer_api_governance)
+    app.register_blueprint(betacustomer_api_governance)
 
 
 

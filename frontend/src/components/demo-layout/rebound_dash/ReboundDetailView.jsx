@@ -190,21 +190,18 @@ const ReboundDetailView = () => {
   const workflowTitle = `${routeTitle || appTitle || ""}`.toLowerCase();
   const showTriageDocumentUpload =
     workflowTitle.includes("denials") || workflowTitle.includes("payment variance");
-  const triageGlassPanelClass = `p-4 rounded-xl border-0 backdrop-blur-xl ${
-    isDark
+  const triageGlassPanelClass = `p-4 rounded-xl border-0 backdrop-blur-xl ${isDark
       ? "bg-white/10 shadow-[0_18px_45px_rgba(0,0,0,0.38)]"
       : "bg-white/70 shadow-[0_18px_45px_rgba(15,23,42,0.14)]"
-  }`;
-  const triageFieldClass = `w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] ${
-    isDark
+    }`;
+  const triageFieldClass = `w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] ${isDark
       ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100'
       : 'bg-gray-100 border-gray-200 text-gray-800'
-  }`;
-  const saveAndSubmitButtonClass = `px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 shadow-[0_12px_30px_rgba(0,0,0,0.22)] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44BFAB]/40 disabled:opacity-60 disabled:cursor-not-allowed ${
-    isDark
+    }`;
+  const saveAndSubmitButtonClass = `px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 shadow-[0_12px_30px_rgba(0,0,0,0.22)] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44BFAB]/40 disabled:opacity-60 disabled:cursor-not-allowed ${isDark
       ? 'bg-[#44BFAB] text-[#061816] hover:bg-[#54d7c3]'
       : 'bg-[#44BFAB] text-[#06211e] hover:bg-[#35b7a5]'
-  }`;
+    }`;
 
   let { token } = useParams()
   useEffect(() => {
@@ -1090,9 +1087,8 @@ const ReboundDetailView = () => {
       {fields.map((field, index) => (
         <div
           key={`${field.label}-${index}`}
-          className={`flex items-start gap-2 text-sm leading-6 min-w-[260px] ${
-            field.colSpan === 2 ? 'md:col-span-2 xl:col-span-2' : ''
-          }`}
+          className={`flex items-start gap-2 text-sm leading-6 min-w-[260px] ${field.colSpan === 2 ? 'md:col-span-2 xl:col-span-2' : ''
+            }`}
         >
           <span className={`font-semibold whitespace-nowrap ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
             {field.label}:
@@ -1499,8 +1495,8 @@ const ReboundDetailView = () => {
                       label: "Claim Number",
                       value: formatValue(
                         currentClaim?.Claim?.Data?.ClaimNo ||
-                          currentClaim?.ClaimNo ||
-                          currentClaim?.Claim?.Data?.ClaimID
+                        currentClaim?.ClaimNo ||
+                        currentClaim?.Claim?.Data?.ClaimID
                       ),
                     },
                     { label: "Patient Name", value: formatValue(currentClaim?.Claim?.Data?.PatientName || currentClaim?.Claim?.Data?.Patient) },
@@ -1767,19 +1763,19 @@ const ReboundDetailView = () => {
                           </SectionCard>
 
                           <SectionCard title="Claim Information" showBorder={false}>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-6 text-sm">
-                                {[
-                                  {
-                                    label: "Claim Number",
-                                    value: formatValue(
-                                      row.ClaimID ||
-                                        currentClaim?.Claim?.Data?.ClaimNo ||
-                                        currentClaim?.ClaimNo ||
-                                        row.PayerClaimNumber
-                                    ),
-                                  },
-                                  { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.BillProvName || currentClaim?.Claim?.Data?.ProviderName) },
-                                  { label: "Tax ID", value: formatValue(currentClaim?.Claim?.Data?.ProvTaxID) },
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-6 text-sm">
+                              {[
+                                {
+                                  label: "Claim Number",
+                                  value: formatValue(
+                                    row.ClaimID ||
+                                    currentClaim?.Claim?.Data?.ClaimNo ||
+                                    currentClaim?.ClaimNo ||
+                                    row.PayerClaimNumber
+                                  ),
+                                },
+                                { label: "Facility", value: formatValue(currentClaim?.Claim?.Data?.BillProvName || currentClaim?.Claim?.Data?.ProviderName) },
+                                { label: "Tax ID", value: formatValue(currentClaim?.Claim?.Data?.ProvTaxID) },
                                 { label: "NPI", value: formatValue(currentClaim?.Claim?.Data?.ProvNPI || row.NPI) },
                                 { label: "Date of Service", value: formatDateValue(currentClaim?.Claim?.Data?.ServiceDate) },
                                 { label: "Patient Control #", value: formatValue(currentClaim?.Claim?.Data?.PatientControl || currentClaim?.Claim?.Data?.ControlNumber) },
@@ -1816,18 +1812,18 @@ const ReboundDetailView = () => {
                               <table className="w-full min-w-[960px] text-sm border-separate border-spacing-0">
                                 <thead>
                                   <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
-                                      {[
-                                        'Service Line #',
-                                        'Service Date',
-                                        'Proc Code',
-                                        'Units',
-                                        'Charge $',
-                                        'Allowed $',
-                                        'Contractual $',
-                                        'Deductible $',
-                                        'CARC',
-                                        'RARC',
-                                      ].map((col, idx, arr) => (
+                                    {[
+                                      'Service Line #',
+                                      'Service Date',
+                                      'Proc Code',
+                                      'Units',
+                                      'Charge $',
+                                      'Allowed $',
+                                      'Contractual $',
+                                      'Deductible $',
+                                      'CARC',
+                                      'RARC',
+                                    ].map((col, idx, arr) => (
                                       <th
                                         key={col}
                                         className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b whitespace-nowrap ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''} ${idx >= 8 ? 'min-w-[120px]' : ''}`}
@@ -1981,65 +1977,65 @@ const ReboundDetailView = () => {
               <div className={`rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
                 <div className="max-h-[360px] overflow-auto datatable-scroll">
                   <table className="w-full text-sm border-separate border-spacing-0">
-                  <thead>
-                    <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
-                      {[
-                        '#',
-                        'Claim No',
-                        'Service Date',
-                        'Transaction Date',
-                        'Transaction Type',
-                        'Payer ID',
-                        'Payer Name',
-                        'Payer Sequence',
-                        'Claim Frequency',
-                        'Patient ID',
-                        'Patient Name',
-                      ].map((col, idx, arr) => (
-                        <th
-                          key={col}
-                          className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
-                        >
-                          {col}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentClaim.RelatedEncounters.map((row, index) => (
-                      <tr
-                        key={index}
-                        onClick={() => showDetail(row.ClaimNo)}
-                        className={`${isDark ? (index % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')} transition-colors cursor-pointer`}
-                      >
+                    <thead>
+                      <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
                         {[
-                          index + 1,
-                          row.ClaimNo,
-                          formatDate(row.ServiceDate),
-                          formatDate(row.TransactionDate),
-                          samplifyString(row.TransactionType),
-                          samplifyString(row.PayerID),
-                          samplifyString(row.PayerName),
-                          row.PayerSeq == 'P' ? 'Primary' : (row.PayerSeq == 'S' ? 'Secondary' : '-'),
-                          row.Frequency,
-                          samplifyString(""),
-                          samplifyString(""),
-                        ].map((val, idx, arr) => (
-                          <td
-                            key={`${index}-${idx}`}
-                            className={`whitespace-nowrap px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${index === currentClaim.RelatedEncounters.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                          '#',
+                          'Claim No',
+                          'Service Date',
+                          'Transaction Date',
+                          'Transaction Type',
+                          'Payer ID',
+                          'Payer Name',
+                          'Payer Sequence',
+                          'Claim Frequency',
+                          'Patient ID',
+                          'Patient Name',
+                        ].map((col, idx, arr) => (
+                          <th
+                            key={col}
+                            className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
                           >
-                            {renderTruncated(val, ['64px', '140px', '120px', '140px', '160px', '120px', '160px', '140px', '140px', '120px', '160px'][idx] || '160px')}
-                          </td>
+                            {col}
+                          </th>
                         ))}
                       </tr>
-                    ))}
-                    {currentClaim.RelatedEncounters.length === 0 && (
-                      <tr>
-                        <td colSpan={11} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No related encounters.</td>
-                      </tr>
-                    )}
-                  </tbody>
+                    </thead>
+                    <tbody>
+                      {currentClaim.RelatedEncounters.map((row, index) => (
+                        <tr
+                          key={index}
+                          onClick={() => showDetail(row.ClaimNo)}
+                          className={`${isDark ? (index % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')} transition-colors cursor-pointer`}
+                        >
+                          {[
+                            index + 1,
+                            row.ClaimNo,
+                            formatDate(row.ServiceDate),
+                            formatDate(row.TransactionDate),
+                            samplifyString(row.TransactionType),
+                            samplifyString(row.PayerID),
+                            samplifyString(row.PayerName),
+                            row.PayerSeq == 'P' ? 'Primary' : (row.PayerSeq == 'S' ? 'Secondary' : '-'),
+                            row.Frequency,
+                            samplifyString(""),
+                            samplifyString(""),
+                          ].map((val, idx, arr) => (
+                            <td
+                              key={`${index}-${idx}`}
+                              className={`whitespace-nowrap px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${index === currentClaim.RelatedEncounters.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                            >
+                              {renderTruncated(val, ['64px', '140px', '120px', '140px', '160px', '120px', '160px', '140px', '140px', '120px', '160px'][idx] || '160px')}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                      {currentClaim.RelatedEncounters.length === 0 && (
+                        <tr>
+                          <td colSpan={11} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No related encounters.</td>
+                        </tr>
+                      )}
+                    </tbody>
                   </table>
                 </div>
               </div>
@@ -2096,164 +2092,164 @@ const ReboundDetailView = () => {
                   <div className={`${triageGlassPanelClass} h-full`}>
                     <p className="text-sm font-semibold mb-3">Actions</p>
                     <div className="flex flex-col gap-3">
-                    {isEligibility && (
-                      <button
-                        type="button"
-                        onClick={handleRequest270}
-                        disabled={eligibilityLoading || !eligibilityRequest}
-                        className={`self-start px-4 py-2 rounded-xl text-xs font-semibold transition ${eligibilityLoading || !eligibilityRequest
-                          ? 'bg-gray-400 text-white cursor-not-allowed'
-                          : isDark
-                            ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
-                            : 'bg-slate-900 text-white hover:bg-slate-800'
-                          }`}
-                      >
-                        {eligibilityLoading ? 'Requesting 270...' : 'Request 270'}
-                      </button>
-                    )}
-                    {isPend277 && (
-                      <button
-                        type="button"
-                        onClick={handleRequest277}
-                        disabled={optumLoading || !optumRequest}
-                        className={`self-start px-4 py-2 rounded-xl text-xs font-semibold transition ${optumLoading || !optumRequest
-                          ? 'bg-gray-400 text-white cursor-not-allowed'
-                          : isDark
-                            ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
-                            : 'bg-slate-900 text-white hover:bg-slate-800'
-                          }`}
-                      >
-                        {optumLoading ? 'Requesting 277...' : 'Request 277'}
-                      </button>
-                    )}
-                    {triageActions.map((action, idx) => {
-                      const isOther =
-                        action.allowFreeText ||
-                        `${action.label || ""}`.trim().toLowerCase() === "other";
-                      const transactionOptions = Array.isArray(action.transactionOptions)
-                        ? action.transactionOptions
-                        : [];
-                      const selectedOption = transactionOptions.find(
-                        (option) => option.value === action.transactionCode
-                      );
-                      return (
-                        <div key={`triage-${idx}`} className="flex flex-col gap-2">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none min-w-0 sm:flex-1">
-                              <input
-                                type="checkbox"
-                                className="sr-only peer"
-                                checked={action.checked}
-                                onChange={() =>
-                                  setTriageActions((prev) =>
-                                    prev.map((item, i) =>
-                                      i === idx
-                                        ? {
-                                          ...item,
-                                          checked: !item.checked,
-                                          transactionCode: item.checked ? "" : item.transactionCode,
-                                        }
-                                        : item
+                      {isEligibility && (
+                        <button
+                          type="button"
+                          onClick={handleRequest270}
+                          disabled={eligibilityLoading || !eligibilityRequest}
+                          className={`self-start px-4 py-2 rounded-xl text-xs font-semibold transition ${eligibilityLoading || !eligibilityRequest
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : isDark
+                              ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                              : 'bg-slate-900 text-white hover:bg-slate-800'
+                            }`}
+                        >
+                          {eligibilityLoading ? 'Requesting 270...' : 'Request 270'}
+                        </button>
+                      )}
+                      {isPend277 && (
+                        <button
+                          type="button"
+                          onClick={handleRequest277}
+                          disabled={optumLoading || !optumRequest}
+                          className={`self-start px-4 py-2 rounded-xl text-xs font-semibold transition ${optumLoading || !optumRequest
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : isDark
+                              ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                              : 'bg-slate-900 text-white hover:bg-slate-800'
+                            }`}
+                        >
+                          {optumLoading ? 'Requesting 277...' : 'Request 277'}
+                        </button>
+                      )}
+                      {triageActions.map((action, idx) => {
+                        const isOther =
+                          action.allowFreeText ||
+                          `${action.label || ""}`.trim().toLowerCase() === "other";
+                        const transactionOptions = Array.isArray(action.transactionOptions)
+                          ? action.transactionOptions
+                          : [];
+                        const selectedOption = transactionOptions.find(
+                          (option) => option.value === action.transactionCode
+                        );
+                        return (
+                          <div key={`triage-${idx}`} className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none min-w-0 sm:flex-1">
+                                <input
+                                  type="checkbox"
+                                  className="sr-only peer"
+                                  checked={action.checked}
+                                  onChange={() =>
+                                    setTriageActions((prev) =>
+                                      prev.map((item, i) =>
+                                        i === idx
+                                          ? {
+                                            ...item,
+                                            checked: !item.checked,
+                                            transactionCode: item.checked ? "" : item.transactionCode,
+                                          }
+                                          : item
+                                      )
                                     )
-                                  )
-                                }
-                              />
-                              <span
-                                className={`relative h-7 w-7 rounded-lg border transition-all duration-200
+                                  }
+                                />
+                                <span
+                                  className={`relative h-7 w-7 rounded-lg border transition-all duration-200
                                   ${isDark ? 'border-[#4B4F5A] bg-[#2B2F36]' : 'border-gray-300 bg-white'}
                                   peer-checked:border-[#6f7074] peer-checked:bg-[#24252a] peer-checked:shadow-[0_2px_6px_rgba(0,0,0,0.35)]
                                   peer-checked:[&>svg]:opacity-100
                                   `}
-                              >
-                                <svg
-                                  className="absolute inset-0 m-auto h-4 w-4 opacity-0 transition-opacity duration-150"
-                                  viewBox="0 0 16 16"
-                                  fill="none"
-                                  stroke="#F4F4F4"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
                                 >
-                                  <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
-                                </svg>
-                              </span>
-                              <span className={isDark ? 'text-gray-200' : 'text-gray-700'}>{action.label}</span>
-                            </label>
-                            {transactionOptions.length > 0 && action.checked && (
-                              <div
-                                ref={(el) => {
-                                  if (el) {
-                                    triageDropdownRefs.current[idx] = el;
-                                  }
-                                }}
-                                className="relative w-full sm:w-[260px] shrink-0"
-                              >
-                                <button
-                                  type="button"
-                                  disabled={!action.checked}
-                                  onClick={() =>
-                                    setOpenTriageDropdown((prev) =>
-                                      prev === idx ? null : idx
-                                    )
-                                  }
-                                  className={`w-full rounded-lg border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#6f7074] focus:border-[#6f7074] disabled:opacity-60 flex items-center justify-between gap-2 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
-                                >
-                                  <span className="truncate">
-                                    {selectedOption?.label || "Select transaction code..."}
-                                  </span>
                                   <svg
-                                    className={`h-4 w-4 transition-transform ${openTriageDropdown === idx ? 'rotate-180' : ''} ${isDark ? 'text-gray-300' : 'text-gray-500'}`}
-                                    viewBox="0 0 20 20"
+                                    className="absolute inset-0 m-auto h-4 w-4 opacity-0 transition-opacity duration-150"
+                                    viewBox="0 0 16 16"
                                     fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="1.6"
+                                    stroke="#F4F4F4"
+                                    strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                   >
-                                    <path d="M6 8l4 4 4-4" />
+                                    <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
                                   </svg>
-                                </button>
-                                {openTriageDropdown === idx && action.checked && (
-                                  <div
-                                    className={`triage-dropdown absolute z-20 mt-2 max-h-48 w-full overflow-y-auto rounded-lg border shadow-lg ${isDark ? 'border-[#1f2433] bg-[#24252a]' : 'border-gray-200 bg-white'}`}
+                                </span>
+                                <span className={isDark ? 'text-gray-200' : 'text-gray-700'}>{action.label}</span>
+                              </label>
+                              {transactionOptions.length > 0 && action.checked && (
+                                <div
+                                  ref={(el) => {
+                                    if (el) {
+                                      triageDropdownRefs.current[idx] = el;
+                                    }
+                                  }}
+                                  className="relative w-full sm:w-[260px] shrink-0"
+                                >
+                                  <button
+                                    type="button"
+                                    disabled={!action.checked}
+                                    onClick={() =>
+                                      setOpenTriageDropdown((prev) =>
+                                        prev === idx ? null : idx
+                                      )
+                                    }
+                                    className={`w-full rounded-lg border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#6f7074] focus:border-[#6f7074] disabled:opacity-60 flex items-center justify-between gap-2 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
                                   >
-                                    {transactionOptions.map((option) => (
-                                      <button
-                                        key={option.value}
-                                        type="button"
-                                        onClick={() => {
-                                          setTriageActions((prev) =>
-                                            prev.map((item, i) =>
-                                              i === idx
-                                                ? { ...item, transactionCode: option.value }
-                                                : item
-                                            )
-                                          );
-                                          setOpenTriageDropdown(null);
-                                        }}
-                                        className={`triage-dropdown-item w-full px-3 py-2 text-left text-sm ${isDark ? 'text-[#F4F4F4]' : 'text-gray-800'}`}
-                                      >
-                                        {option.label}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
+                                    <span className="truncate">
+                                      {selectedOption?.label || "Select transaction code..."}
+                                    </span>
+                                    <svg
+                                      className={`h-4 w-4 transition-transform ${openTriageDropdown === idx ? 'rotate-180' : ''} ${isDark ? 'text-gray-300' : 'text-gray-500'}`}
+                                      viewBox="0 0 20 20"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="1.6"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <path d="M6 8l4 4 4-4" />
+                                    </svg>
+                                  </button>
+                                  {openTriageDropdown === idx && action.checked && (
+                                    <div
+                                      className={`triage-dropdown absolute z-20 mt-2 max-h-48 w-full overflow-y-auto rounded-lg border shadow-lg ${isDark ? 'border-[#1f2433] bg-[#24252a]' : 'border-gray-200 bg-white'}`}
+                                    >
+                                      {transactionOptions.map((option) => (
+                                        <button
+                                          key={option.value}
+                                          type="button"
+                                          onClick={() => {
+                                            setTriageActions((prev) =>
+                                              prev.map((item, i) =>
+                                                i === idx
+                                                  ? { ...item, transactionCode: option.value }
+                                                  : item
+                                              )
+                                            );
+                                            setOpenTriageDropdown(null);
+                                          }}
+                                          className={`triage-dropdown-item w-full px-3 py-2 text-left text-sm ${isDark ? 'text-[#F4F4F4]' : 'text-gray-800'}`}
+                                        >
+                                          {option.label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            {isOther && (
+                              <input
+                                type="text"
+                                value={triageOtherText}
+                                onChange={(e) => setTriageOtherText(e.target.value)}
+                                disabled={!action.checked}
+                                placeholder="Enter other action..."
+                                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] focus:border-[#6f7074] disabled:opacity-60 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                              />
                             )}
                           </div>
-                          {isOther && (
-                            <input
-                              type="text"
-                              value={triageOtherText}
-                              onChange={(e) => setTriageOtherText(e.target.value)}
-                              disabled={!action.checked}
-                              placeholder="Enter other action..."
-                              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] focus:border-[#6f7074] disabled:opacity-60 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -2283,20 +2279,20 @@ const ReboundDetailView = () => {
               </div>
 
               {showTriageDocumentUpload && (
-              <div className={`flex flex-col gap-3 ${triageGlassPanelClass}`}>
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="text-lg font-semibold">Documents</p>
-                    <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Attach clinical documentation to support the appeal. Files upload when you save and submit.
+                <div className={`flex flex-col gap-3 ${triageGlassPanelClass}`}>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-lg font-semibold">Documents</p>
+                      <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Attach clinical documentation to support the appeal. Files upload when you save and submit.
+                      </p>
+                    </div>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Maximum file size: 50 MB per document.
                     </p>
                   </div>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Maximum file size: 50 MB per document.
-                  </p>
-                </div>
 
-                {/* <div className={`rounded-xl border p-4 ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}>
+                  {/* <div className={`rounded-xl border p-4 ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold">Appeal template matched by 835 payer ID</p>
@@ -2353,123 +2349,123 @@ const ReboundDetailView = () => {
                   )}
                 </div> */}
 
-                <div className={`hidden sm:grid grid-cols-12 gap-2 px-1 text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                  <div className="col-span-4">File Name</div>
-                  <div className="col-span-4">File Type</div>
-                  <div className="col-span-4">File</div>
-                </div>
-
-                {triageDocRows.map((row) => (
-                  <div
-                    key={row.id}
-                    className={`grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-3 rounded-lg border ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}
-                  >
-                    <div className="sm:col-span-4">
-                      <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File Name</label>
-                      <input
-                        type="text"
-                        value={row.fileName}
-                        onChange={(e) =>
-                          setTriageDocRows((prev) =>
-                            prev.map((item) =>
-                              item.id === row.id ? { ...item, fileName: e.target.value } : item
-                            )
-                          )
-                        }
-                        placeholder="Document name"
-                        className={triageFieldClass}
-                      />
-                    </div>
-                    <div className="sm:col-span-4">
-                      <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File Type</label>
-                      <select
-                        value={row.fileType}
-                        onChange={(e) =>
-                          setTriageDocRows((prev) =>
-                            prev.map((item) =>
-                              item.id === row.id ? { ...item, fileType: e.target.value } : item
-                            )
-                          )
-                        }
-                        className={triageFieldClass}
-                      >
-                        {TRIAGE_DOC_FILE_TYPES.map((type) => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="sm:col-span-4 flex flex-wrap items-center gap-2">
-                      <span className={`sm:hidden text-xs font-medium w-full ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File</span>
-                      <input
-                        ref={(el) => {
-                          if (el) triageFileInputRefs.current[row.id] = el;
-                        }}
-                        type="file"
-                        tabIndex={-1}
-                        aria-hidden="true"
-                        className="hidden"
-                        accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.tif,.tiff"
-                        onChange={(e) => handleTriageDocFileChange(row.id, e)}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => openTriageFilePicker(row.id)}
-                        className={`flex-1 min-w-0 truncate text-left hover:opacity-90 ${triageFieldClass}`}
-                      >
-                        {row.file ? row.file.name : "Choose file..."}
-                      </button>
-                    </div>
+                  <div className={`hidden sm:grid grid-cols-12 gap-2 px-1 text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <div className="col-span-4">File Name</div>
+                    <div className="col-span-4">File Type</div>
+                    <div className="col-span-4">File</div>
                   </div>
-                ))}
 
-                <button
-                  type="button"
-                  onClick={() => setTriageDocRows((prev) => [...prev, createTriageDocRow()])}
-                  className={`self-start text-sm font-medium ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
-                >
-                  + Add another document
-                </button>
-
-                {supportingDocuments.length > 0 && (
-                  <div className="flex flex-col gap-2 pt-2 border-t border-dashed border-gray-300 dark:border-[#3c4661]">
-                    <p className="text-sm font-semibold">Uploaded</p>
-                    {supportingDocuments.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className={`flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm ${isDark ? 'bg-[#1f2025] text-gray-200' : 'bg-white text-gray-800 border border-gray-200'}`}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate">{doc.file_name}</p>
-                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {getTriageDocTypeLabel(doc.file_type)}
-                            {doc.file_size ? ` · ${formatFileSize(doc.file_size)}` : ""}
-                            {doc.uploaded_at ? ` · ${new Date(doc.uploaded_at).toLocaleString()}` : ""}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <a
-                            href={`${apiUrl}/appeal_documents/${doc.id}/download`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`text-xs font-semibold underline ${isDark ? 'text-gray-300' : 'text-slate-700'}`}
-                          >
-                            Download
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => removeSupportingDocument(doc.id)}
-                            className={`text-xs font-semibold ${isDark ? 'text-red-300 hover:text-red-200' : 'text-red-600 hover:text-red-700'}`}
-                          >
-                            Remove
-                          </button>
-                        </div>
+                  {triageDocRows.map((row) => (
+                    <div
+                      key={row.id}
+                      className={`grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-3 rounded-lg border ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}
+                    >
+                      <div className="sm:col-span-4">
+                        <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File Name</label>
+                        <input
+                          type="text"
+                          value={row.fileName}
+                          onChange={(e) =>
+                            setTriageDocRows((prev) =>
+                              prev.map((item) =>
+                                item.id === row.id ? { ...item, fileName: e.target.value } : item
+                              )
+                            )
+                          }
+                          placeholder="Document name"
+                          className={triageFieldClass}
+                        />
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      <div className="sm:col-span-4">
+                        <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File Type</label>
+                        <select
+                          value={row.fileType}
+                          onChange={(e) =>
+                            setTriageDocRows((prev) =>
+                              prev.map((item) =>
+                                item.id === row.id ? { ...item, fileType: e.target.value } : item
+                              )
+                            )
+                          }
+                          className={triageFieldClass}
+                        >
+                          {TRIAGE_DOC_FILE_TYPES.map((type) => (
+                            <option key={type.value} value={type.value}>
+                              {type.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="sm:col-span-4 flex flex-wrap items-center gap-2">
+                        <span className={`sm:hidden text-xs font-medium w-full ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File</span>
+                        <input
+                          ref={(el) => {
+                            if (el) triageFileInputRefs.current[row.id] = el;
+                          }}
+                          type="file"
+                          tabIndex={-1}
+                          aria-hidden="true"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.tif,.tiff"
+                          onChange={(e) => handleTriageDocFileChange(row.id, e)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => openTriageFilePicker(row.id)}
+                          className={`flex-1 min-w-0 truncate text-left hover:opacity-90 ${triageFieldClass}`}
+                        >
+                          {row.file ? row.file.name : "Choose file..."}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setTriageDocRows((prev) => [...prev, createTriageDocRow()])}
+                    className={`self-start text-sm font-medium ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                  >
+                    + Add another document
+                  </button>
+
+                  {supportingDocuments.length > 0 && (
+                    <div className="flex flex-col gap-2 pt-2 border-t border-dashed border-gray-300 dark:border-[#3c4661]">
+                      <p className="text-sm font-semibold">Uploaded</p>
+                      {supportingDocuments.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className={`flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm ${isDark ? 'bg-[#1f2025] text-gray-200' : 'bg-white text-gray-800 border border-gray-200'}`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{doc.file_name}</p>
+                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {getTriageDocTypeLabel(doc.file_type)}
+                              {doc.file_size ? ` · ${formatFileSize(doc.file_size)}` : ""}
+                              {doc.uploaded_at ? ` · ${new Date(doc.uploaded_at).toLocaleString()}` : ""}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <a
+                              href={`${apiUrl}/appeal_documents/${doc.id}/download`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`text-xs font-semibold underline ${isDark ? 'text-gray-300' : 'text-slate-700'}`}
+                            >
+                              Download
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => removeSupportingDocument(doc.id)}
+                              className={`text-xs font-semibold ${isDark ? 'text-red-300 hover:text-red-200' : 'text-red-600 hover:text-red-700'}`}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -2615,7 +2611,7 @@ const ReboundDetailView = () => {
                             currentClaim.Claim.Data.Category == '' ? 'Delinquent' : (
                               currentClaim.Claim.Data.Category == 'Patient Resp' ? 'Patient Resp' : 'Recoverable'
                             )
-          )}
+                          )}
 
                         </p>
                       </div>

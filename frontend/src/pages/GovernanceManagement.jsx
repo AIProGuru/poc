@@ -1,9 +1,11 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import axios from "axios";
 import Papa from "papaparse";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Header from "../components/demo-layout/Header";
+import { useApiEndpoint } from "../ApiEndpointContext";
 
 const CONFIG_TABS = [
   {
@@ -46,10 +48,21 @@ const normalizeHeader = (value) =>
 
 const normalizeValue = (value) => String(value ?? "").trim();
 
-const buildRowWithId = (tabId, row) => ({
-  id: `${tabId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+const buildDraftRow = (tabId, row = {}) => ({
+  id: `draft-${tabId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  isDraft: true,
+  isDirty: true,
+  saving: false,
   ...row,
 });
+
+const rowPayload = (config, row) => {
+  const payload = {};
+  config.columns.forEach(({ key }) => {
+    payload[key] = normalizeValue(row[key]);
+  });
+  return payload;
+};
 
 const parseDelimitedFile = (file) =>
   new Promise((resolve, reject) => {
@@ -95,12 +108,14 @@ const mapUploadedRows = (records, config) =>
 
 const GovernanceManagement = () => {
   const navigate = useNavigate();
+  const apiUrl = useApiEndpoint();
   const theme = useSelector((state) => state.app.theme);
   const isDark = theme === "dark";
   const fileInputRefs = useRef({});
 
   const [activeTab, setActiveTab] = useState(CONFIG_TABS[0].id);
   const [datasets, setDatasets] = useState(buildEmptyDatasetState);
+  const [loadingTab, setLoadingTab] = useState("");
   const [uploadingTab, setUploadingTab] = useState("");
 
   const activeConfig = useMemo(
@@ -115,31 +130,136 @@ const GovernanceManagement = () => {
     ? "border-[#ffffff14] bg-[#1b1d22] text-white placeholder:text-[#6b7280] focus:border-cyan-400/60"
     : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-cyan-600";
 
+  const loadTabData = useCallback(
+    async (tabId) => {
+      if (!apiUrl) return;
+      setLoadingTab(tabId);
+      try {
+        const response = await axios.get(`${apiUrl}/governance/${tabId}`, { withCredentials: true });
+        const rows = Array.isArray(response.data) ? response.data : [];
+        setDatasets((current) => ({
+          ...current,
+          [tabId]: rows.map((row) => ({
+            ...row,
+            id: `${row.id}`,
+            isDraft: false,
+            isDirty: false,
+            saving: false,
+          })),
+        }));
+      } catch (error) {
+        toast.error(error?.response?.data?.error || `Could not load ${tabId} mappings.`);
+        setDatasets((current) => ({ ...current, [tabId]: [] }));
+      } finally {
+        setLoadingTab("");
+      }
+    },
+    [apiUrl]
+  );
+
+  useEffect(() => {
+    loadTabData(activeTab);
+  }, [activeTab, loadTabData]);
+
   const handleAddRow = (tabId) => {
     const config = CONFIG_TABS.find((tab) => tab.id === tabId);
     const emptyRow = Object.fromEntries(config.columns.map((column) => [column.key, ""]));
     setDatasets((current) => ({
       ...current,
-      [tabId]: [...current[tabId], buildRowWithId(tabId, emptyRow)],
+      [tabId]: [...current[tabId], buildDraftRow(tabId, emptyRow)],
     }));
   };
 
   const handleRowChange = (tabId, rowId, field, value) => {
     setDatasets((current) => ({
       ...current,
-      [tabId]: current[tabId].map((row) => (row.id === rowId ? { ...row, [field]: value } : row)),
+      [tabId]: current[tabId].map((row) =>
+        row.id === rowId ? { ...row, [field]: value, isDirty: true } : row
+      ),
     }));
   };
 
-  const handleDeleteRow = (tabId, rowId) => {
+  const handleSaveRow = async (tabId, row) => {
+    if (!apiUrl) return;
+    const config = CONFIG_TABS.find((tab) => tab.id === tabId);
+    const payload = rowPayload(config, row);
+
     setDatasets((current) => ({
       ...current,
-      [tabId]: current[tabId].filter((row) => row.id !== rowId),
+      [tabId]: current[tabId].map((item) =>
+        item.id === row.id ? { ...item, saving: true } : item
+      ),
     }));
+
+    try {
+      let savedRow = null;
+      if (row.isDraft) {
+        const response = await axios.post(`${apiUrl}/governance/${tabId}`, payload, {
+          withCredentials: true,
+        });
+        savedRow = response.data;
+      } else {
+        const response = await axios.put(`${apiUrl}/governance/${tabId}/${encodeURIComponent(row.id)}`, payload, {
+          withCredentials: true,
+        });
+        savedRow = response.data;
+      }
+
+      setDatasets((current) => ({
+        ...current,
+        [tabId]: current[tabId].map((item) =>
+          item.id === row.id
+            ? {
+                ...savedRow,
+                id: `${savedRow.id}`,
+                isDraft: false,
+                isDirty: false,
+                saving: false,
+              }
+            : item
+        ),
+      }));
+      toast.success("Row saved.");
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Could not save row.");
+      setDatasets((current) => ({
+        ...current,
+        [tabId]: current[tabId].map((item) =>
+          item.id === row.id ? { ...item, saving: false } : item
+        ),
+      }));
+    }
+  };
+
+  const handleDeleteRow = async (tabId, row) => {
+    if (row.isDraft) {
+      setDatasets((current) => ({
+        ...current,
+        [tabId]: current[tabId].filter((item) => item.id !== row.id),
+      }));
+      return;
+    }
+
+    if (!apiUrl) return;
+    const confirmed = window.confirm("Remove this row?");
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`${apiUrl}/governance/${tabId}/${encodeURIComponent(row.id)}`, {
+        withCredentials: true,
+      });
+      setDatasets((current) => ({
+        ...current,
+        [tabId]: current[tabId].filter((item) => item.id !== row.id),
+      }));
+      toast.success("Row removed.");
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Could not remove row.");
+    }
   };
 
   const handleFileUpload = async (tabId, file) => {
-    if (!file) return;
+    if (!file || !apiUrl) return;
 
     const config = CONFIG_TABS.find((tab) => tab.id === tabId);
     setUploadingTab(tabId);
@@ -153,13 +273,27 @@ const GovernanceManagement = () => {
         return;
       }
 
+      const savedRows = [];
+      for (const mappedRow of mappedRows) {
+        const response = await axios.post(`${apiUrl}/governance/${tabId}`, mappedRow, {
+          withCredentials: true,
+        });
+        savedRows.push({
+          ...response.data,
+          id: `${response.data.id}`,
+          isDraft: false,
+          isDirty: false,
+          saving: false,
+        });
+      }
+
       setDatasets((current) => ({
         ...current,
-        [tabId]: [...current[tabId], ...mappedRows.map((row) => buildRowWithId(tabId, row))],
+        [tabId]: [...current[tabId], ...savedRows],
       }));
-      toast.success(`Imported ${mappedRows.length} row${mappedRows.length === 1 ? "" : "s"}.`);
+      toast.success(`Imported ${savedRows.length} row${savedRows.length === 1 ? "" : "s"}.`);
     } catch (error) {
-      toast.error(error.message || "Upload failed.");
+      toast.error(error?.response?.data?.error || error.message || "Upload failed.");
     } finally {
       setUploadingTab("");
       if (fileInputRefs.current[tabId]) {
@@ -200,7 +334,9 @@ const GovernanceManagement = () => {
           </button>
           <div>
             <h1 className="mb-2 text-2xl font-bold">Governance Management</h1>
-            <p className={subduedText}>A standardized framework for rules, processes, and CMS codes to ensure consistency and compliance across all clients.</p>
+            <p className={subduedText}>
+              A standardized framework for rules, processes, and CMS codes to ensure consistency and compliance across all clients.
+            </p>
           </div>
         </div>
 
@@ -232,7 +368,12 @@ const GovernanceManagement = () => {
 
         <section className={`rounded-2xl border p-6 ${containerClasses}`}>
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold">{activeConfig.label}</h2>
+            <div>
+              <h2 className="text-xl font-semibold">{activeConfig.label}</h2>
+              {loadingTab === activeTab && (
+                <p className={`mt-1 text-sm ${subduedText}`}>Loading saved rows...</p>
+              )}
+            </div>
             <div className="flex flex-wrap gap-3">
               <input
                 ref={(node) => {
@@ -246,10 +387,11 @@ const GovernanceManagement = () => {
               <button
                 type="button"
                 onClick={() => handleAddRow(activeTab)}
+                disabled={!apiUrl || loadingTab === activeTab}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
                   isDark
-                    ? "bg-[#ffffff12] text-white hover:bg-[#ffffff1f]"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    ? "bg-[#ffffff12] text-white hover:bg-[#ffffff1f] disabled:opacity-50"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50"
                 }`}
               >
                 Add Row
@@ -257,17 +399,29 @@ const GovernanceManagement = () => {
               <button
                 type="button"
                 onClick={() => fileInputRefs.current[activeTab]?.click()}
-                disabled={uploadingTab === activeTab}
+                disabled={!apiUrl || uploadingTab === activeTab || loadingTab === activeTab}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
                   isDark
-                    ? "bg-cyan-500 text-slate-950 hover:bg-cyan-400"
-                    : "bg-slate-900 text-white hover:bg-slate-800"
+                    ? "bg-cyan-500 text-slate-950 hover:bg-cyan-400 disabled:opacity-50"
+                    : "bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50"
                 }`}
               >
                 {uploadingTab === activeTab ? "Uploading..." : "Upload File"}
               </button>
             </div>
           </div>
+
+          {!apiUrl && (
+            <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${isDark ? "border-amber-500/30 bg-amber-500/10 text-amber-100" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
+              Select a tenant context before editing governance mappings.
+            </div>
+          )}
+
+          {activeTab === "actionCodes" && (
+            <p className={`mb-4 text-sm ${subduedText}`}>
+              Action codes are saved to the tenant database and used by claim triage workflows.
+            </p>
+          )}
 
           {activeRows.length ? (
             <div className="overflow-x-auto">
@@ -309,17 +463,32 @@ const GovernanceManagement = () => {
                         </td>
                       ))}
                       <td className="px-3 py-2 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteRow(activeTab, row.id)}
-                          className={`rounded-lg px-3 py-2 text-sm transition ${
-                            isDark
-                              ? "bg-rose-500/15 text-rose-200 hover:bg-rose-500/25"
-                              : "bg-rose-50 text-rose-700 hover:bg-rose-100"
-                          }`}
-                        >
-                          Remove
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveRow(activeTab, row)}
+                            disabled={!apiUrl || row.saving || (!row.isDraft && !row.isDirty)}
+                            className={`rounded-lg px-3 py-2 text-sm transition disabled:opacity-50 ${
+                              isDark
+                                ? "bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30"
+                                : "bg-cyan-50 text-cyan-700 hover:bg-cyan-100"
+                            }`}
+                          >
+                            {row.saving ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRow(activeTab, row)}
+                            disabled={row.saving}
+                            className={`rounded-lg px-3 py-2 text-sm transition ${
+                              isDark
+                                ? "bg-rose-500/15 text-rose-200 hover:bg-rose-500/25"
+                                : "bg-rose-50 text-rose-700 hover:bg-rose-100"
+                            }`}
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -332,7 +501,14 @@ const GovernanceManagement = () => {
                 isDark ? "border-[#ffffff14] bg-[#1b1d22]" : "border-slate-300 bg-slate-50"
               }`}
             >
-              <p className="text-sm font-medium">No rows yet.</p>
+              <p className="text-sm font-medium">
+                {loadingTab === activeTab ? "Loading rows..." : "No rows yet."}
+              </p>
+              {!loadingTab && (
+                <p className={`mt-2 text-sm ${subduedText}`}>
+                  Add a row, enter values, then click Save to persist it.
+                </p>
+              )}
             </div>
           )}
         </section>
