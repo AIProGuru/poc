@@ -101,7 +101,7 @@ def get_connection(request_or_url):
         # Set SQL mode to be more permissive with dates
         cursor.execute("SET SESSION sql_mode = '';")
         return conn, cursor, "betacustomer"
-    if "medevolve" in hint or "pilotcustomer" in hint:
+    if "rebound" in hint or "medevolve" in hint or "pilotcustomer" in hint or "demo" in hint:
         conn = medevolve_conn.get_connection()
         cursor = conn.cursor(dictionary=True)
         # Set SQL mode to be more permissive with dates

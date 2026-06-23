@@ -7,6 +7,11 @@ import { toast } from "react-toastify";
 import Header from "../components/demo-layout/Header";
 import { useApiEndpoint } from "../ApiEndpointContext";
 
+const LIFECYCLE_COLUMNS = [
+  { key: "effectiveYear", label: "Effective Year", aliases: ["effective year", "year"], inputType: "number", placeholder: "2026" },
+  { key: "expiresOn", label: "Expires On", aliases: ["expires on", "expiry", "expiration"], inputType: "date" },
+];
+
 const CONFIG_TABS = [
   {
     id: "carc",
@@ -15,6 +20,7 @@ const CONFIG_TABS = [
       { key: "carcCode", label: "CARC Code", aliases: ["code", "carc", "carc code"] },
       { key: "carcDescription", label: "CARC Description", aliases: ["description", "carc description"] },
       { key: "category", label: "Category", aliases: ["category"] },
+      ...LIFECYCLE_COLUMNS,
     ],
   },
   {
@@ -24,6 +30,7 @@ const CONFIG_TABS = [
       { key: "rarcCode", label: "RARC Code", aliases: ["code", "rarc", "rarc code"] },
       { key: "rarcDescription", label: "RARC Description", aliases: ["description", "rarc description"] },
       { key: "category", label: "Category", aliases: ["category"] },
+      ...LIFECYCLE_COLUMNS,
     ],
   },
   {
@@ -33,6 +40,7 @@ const CONFIG_TABS = [
       { key: "actionCode", label: "Action Code", aliases: ["action code", "action codes", "code"] },
       { key: "category", label: "Category", aliases: ["category"] },
       { key: "tickleTime", label: "Tickle Time", aliases: ["tickle time"] },
+      ...LIFECYCLE_COLUMNS,
     ],
   },
 ];
@@ -117,6 +125,7 @@ const GovernanceManagement = () => {
   const [datasets, setDatasets] = useState(buildEmptyDatasetState);
   const [loadingTab, setLoadingTab] = useState("");
   const [uploadingTab, setUploadingTab] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
 
   const activeConfig = useMemo(
     () => CONFIG_TABS.find((tab) => tab.id === activeTab) || CONFIG_TABS[0],
@@ -131,11 +140,14 @@ const GovernanceManagement = () => {
     : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-cyan-600";
 
   const loadTabData = useCallback(
-    async (tabId) => {
+    async (tabId, includeInactive = showInactive) => {
       if (!apiUrl) return;
       setLoadingTab(tabId);
       try {
-        const response = await axios.get(`${apiUrl}/governance/${tabId}`, { withCredentials: true });
+        const response = await axios.get(`${apiUrl}/governance/${tabId}`, {
+          withCredentials: true,
+          params: includeInactive ? { includeInactive: 1 } : {},
+        });
         const rows = Array.isArray(response.data) ? response.data : [];
         setDatasets((current) => ({
           ...current,
@@ -154,12 +166,12 @@ const GovernanceManagement = () => {
         setLoadingTab("");
       }
     },
-    [apiUrl]
+    [apiUrl, showInactive]
   );
 
   useEffect(() => {
-    loadTabData(activeTab);
-  }, [activeTab, loadTabData]);
+    loadTabData(activeTab, showInactive);
+  }, [activeTab, showInactive, loadTabData]);
 
   const handleAddRow = (tabId) => {
     const config = CONFIG_TABS.find((tab) => tab.id === tabId);
@@ -241,7 +253,9 @@ const GovernanceManagement = () => {
     }
 
     if (!apiUrl) return;
-    const confirmed = window.confirm("Remove this row?");
+    const confirmed = window.confirm(
+      "Retire this code? It will be hidden from active use but kept for history."
+    );
     if (!confirmed) return;
 
     try {
@@ -252,7 +266,7 @@ const GovernanceManagement = () => {
         ...current,
         [tabId]: current[tabId].filter((item) => item.id !== row.id),
       }));
-      toast.success("Row removed.");
+      toast.success("Row retired.");
     } catch (error) {
       toast.error(error?.response?.data?.error || "Could not remove row.");
     }
@@ -417,11 +431,31 @@ const GovernanceManagement = () => {
             </div>
           )}
 
-          {activeTab === "actionCodes" && (
-            <p className={`mb-4 text-sm ${subduedText}`}>
-              Action codes are saved to the tenant database and used by claim triage workflows.
+          <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${isDark ? "border-[#ffffff14] bg-[#1b1d22]" : "border-slate-200 bg-slate-50"}`}>
+            <p className="font-medium">Annual code maintenance</p>
+            <p className={`mt-1 ${subduedText}`}>
+              When CMS publishes updates each year, use <strong>Add Row</strong> for new codes and <strong>Retire</strong> for expired codes.
+              Set <strong>Effective Year</strong> and <strong>Expires On</strong> to track when a code becomes valid or should stop being used.
             </p>
-          )}
+          </div>
+
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            {activeTab === "actionCodes" && (
+              <p className={`text-sm ${subduedText}`}>
+                Saved to the <code className="text-xs">claim_action_items</code> table and used by claim triage workflows.
+              </p>
+            )}
+            {activeTab !== "actionCodes" && <span />}
+            <label className={`inline-flex items-center gap-2 text-sm ${subduedText}`}>
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(event) => setShowInactive(event.target.checked)}
+                className="rounded border-gray-400"
+              />
+              Show retired codes
+            </label>
+          </div>
 
           {activeRows.length ? (
             <div className="overflow-x-auto">
@@ -449,21 +483,38 @@ const GovernanceManagement = () => {
                 </thead>
                 <tbody>
                   {activeRows.map((row) => (
-                    <tr key={row.id}>
+                    <tr
+                      key={row.id}
+                      className={row.isActive === false ? (isDark ? "opacity-60" : "opacity-70") : ""}
+                    >
                       {activeConfig.columns.map((column) => (
                         <td key={`${row.id}-${column.key}`} className="px-3 py-2">
                           <input
-                            type="text"
+                            type={column.inputType || "text"}
                             value={row[column.key] || ""}
                             onChange={(event) =>
                               handleRowChange(activeTab, row.id, column.key, event.target.value)
                             }
-                            className={`w-full rounded-lg border px-3 py-2 outline-none transition ${inputClasses} ${column.key === "tickleTime" ? "min-w-[72px] max-w-[72px]" : "min-w-[220px]"}`}
+                            placeholder={column.placeholder}
+                            className={`w-full rounded-lg border px-3 py-2 outline-none transition ${inputClasses} ${
+                              column.key === "tickleTime"
+                                ? "min-w-[72px] max-w-[96px]"
+                                : column.inputType === "date"
+                                  ? "min-w-[150px] max-w-[170px]"
+                                  : column.key === "effectiveYear"
+                                    ? "min-w-[96px] max-w-[110px]"
+                                    : "min-w-[180px]"
+                            }`}
                           />
                         </td>
                       ))}
                       <td className="px-3 py-2 text-right">
                         <div className="flex justify-end gap-2">
+                          {row.isActive === false && (
+                            <span className={`self-center rounded-full px-2 py-1 text-[11px] ${isDark ? "bg-white/10 text-gray-300" : "bg-slate-200 text-slate-600"}`}>
+                              Retired
+                            </span>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleSaveRow(activeTab, row)}
@@ -486,7 +537,7 @@ const GovernanceManagement = () => {
                                 : "bg-rose-50 text-rose-700 hover:bg-rose-100"
                             }`}
                           >
-                            Remove
+                            {row.isDraft ? "Remove" : "Retire"}
                           </button>
                         </div>
                       </td>
