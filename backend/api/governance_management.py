@@ -290,6 +290,14 @@ def _build_dataset_context(cursor, conn, db_name: str, dataset: str) -> Dict[str
     }
 
 
+def _natural_code_order_sql(column: str) -> str:
+    """Sort numeric codes as numbers (1, 2, 10) instead of lexically (1, 10, 2)."""
+    return (
+        f"CASE WHEN `{column}` REGEXP '^[0-9]+$' THEN 0 ELSE 1 END, "
+        f"CAST(`{column}` AS UNSIGNED), `{column}`"
+    )
+
+
 def _next_action_sort_order(cursor, table_name: str, category: str) -> int:
     cursor.execute(
         f"""
@@ -311,17 +319,19 @@ def _load_dataset(cursor, conn, db_name: str, dataset: str) -> List[Dict[str, An
     columns = ctx["columns"]
 
     order_parts = []
+    col_map = {name.lower(): name for name in columns}
     if dataset == "actionCodes":
-        col_map = {name.lower(): name for name in columns}
         if "sort_order" in col_map:
             order_parts.append(f"`{col_map['sort_order']}`")
         if "actionCode" in field_columns:
             order_parts.append(f"`{field_columns['actionCode']}`")
     else:
-        order_parts.append(f"`{primary_key}`")
+        code_column = field_columns.get("carcCode") or field_columns.get("rarcCode") or primary_key
+        order_parts.append(_natural_code_order_sql(code_column))
+        if "category" in field_columns:
+            order_parts.append(f"`{field_columns['category']}`")
 
     where_sql = ""
-    col_map = {name.lower(): name for name in columns}
     if not _include_inactive_requested() and "is_active" in col_map:
         where_sql = f" WHERE `{col_map['is_active']}` = 1"
 

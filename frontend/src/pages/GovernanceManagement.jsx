@@ -114,6 +114,41 @@ const mapUploadedRows = (records, config) =>
     })
     .filter((row) => config.columns.some((column) => row[column.key]));
 
+const CODE_FIELD_BY_TAB = {
+  carc: "carcCode",
+  rarc: "rarcCode",
+  actionCodes: "actionCode",
+};
+
+const usesNumericCodeSort = (tabId) => tabId === "carc" || tabId === "rarc";
+
+const compareCodeValues = (left, right) => {
+  const a = normalizeValue(left);
+  const b = normalizeValue(right);
+  const aNumeric = /^\d+$/.test(a);
+  const bNumeric = /^\d+$/.test(b);
+  if (aNumeric && bNumeric) {
+    return Number(a) - Number(b);
+  }
+  if (aNumeric !== bNumeric) {
+    return aNumeric ? -1 : 1;
+  }
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+};
+
+const compareTextValues = (left, right) =>
+  normalizeValue(left).localeCompare(normalizeValue(right), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+
+const SortIndicator = ({ active, direction }) => {
+  if (!active) {
+    return <span className="ml-1 opacity-40">↕</span>;
+  }
+  return <span className="ml-1">{direction === "asc" ? "↑" : "↓"}</span>;
+};
+
 const GovernanceManagement = () => {
   const navigate = useNavigate();
   const apiUrl = useApiEndpoint();
@@ -126,12 +161,66 @@ const GovernanceManagement = () => {
   const [loadingTab, setLoadingTab] = useState("");
   const [uploadingTab, setUploadingTab] = useState("");
   const [showInactive, setShowInactive] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ field: "code", direction: "asc" });
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   const activeConfig = useMemo(
     () => CONFIG_TABS.find((tab) => tab.id === activeTab) || CONFIG_TABS[0],
     [activeTab]
   );
   const activeRows = datasets[activeTab] || [];
+  const codeField = CODE_FIELD_BY_TAB[activeTab];
+  const supportsTableSorting = Boolean(codeField);
+
+  const categoryOptions = useMemo(() => {
+    if (activeTab !== "actionCodes") return [];
+    const categories = new Set();
+    activeRows.forEach((row) => {
+      const value = normalizeValue(row.category);
+      if (value) categories.add(value);
+    });
+    return Array.from(categories).sort((left, right) => compareTextValues(left, right));
+  }, [activeRows, activeTab]);
+
+  const sortedActiveRows = useMemo(() => {
+    let draftRows = activeRows.filter((row) => row.isDraft);
+    let savedRows = activeRows.filter((row) => !row.isDraft);
+
+    if (activeTab === "actionCodes" && categoryFilter) {
+      const matchesCategory = (row) =>
+        normalizeValue(row.category).toLowerCase() === categoryFilter.toLowerCase();
+      draftRows = draftRows.filter(matchesCategory);
+      savedRows = savedRows.filter(matchesCategory);
+    }
+
+    if (!supportsTableSorting || !codeField) {
+      return [...draftRows, ...savedRows];
+    }
+
+    const compareCodes = usesNumericCodeSort(activeTab) ? compareCodeValues : compareTextValues;
+    const directionMultiplier = sortConfig.direction === "asc" ? 1 : -1;
+    const sortedSavedRows = [...savedRows].sort((left, right) => {
+      let result = 0;
+      if (sortConfig.field === "category") {
+        result = compareTextValues(left.category, right.category);
+        if (result === 0) {
+          result = compareCodes(left[codeField], right[codeField]);
+        }
+      } else {
+        result = compareCodes(left[codeField], right[codeField]);
+        if (result === 0) {
+          result = compareTextValues(left.category, right.category);
+        }
+      }
+      return result * directionMultiplier;
+    });
+    return [...draftRows, ...sortedSavedRows];
+  }, [activeRows, activeTab, categoryFilter, codeField, sortConfig, supportsTableSorting]);
+
+  useEffect(() => {
+    setSortConfig({ field: "code", direction: "asc" });
+    setCategoryFilter("");
+  }, [activeTab]);
 
   const containerClasses = isDark ? "border-[#ffffff14] bg-[#23252b]" : "border-slate-200 bg-white";
   const subduedText = isDark ? "text-[#9ca3af]" : "text-slate-500";
@@ -176,9 +265,12 @@ const GovernanceManagement = () => {
   const handleAddRow = (tabId) => {
     const config = CONFIG_TABS.find((tab) => tab.id === tabId);
     const emptyRow = Object.fromEntries(config.columns.map((column) => [column.key, ""]));
+    if (tabId === "actionCodes" && categoryFilter) {
+      emptyRow.category = categoryFilter;
+    }
     setDatasets((current) => ({
       ...current,
-      [tabId]: [...current[tabId], buildDraftRow(tabId, emptyRow)],
+      [tabId]: [buildDraftRow(tabId, emptyRow), ...current[tabId]],
     }));
   };
 
@@ -270,6 +362,14 @@ const GovernanceManagement = () => {
     } catch (error) {
       toast.error(error?.response?.data?.error || "Could not remove row.");
     }
+  };
+
+  const handleSort = (field) => {
+    setSortConfig((current) =>
+      current.field === field
+        ? { field, direction: current.direction === "asc" ? "desc" : "asc" }
+        : { field, direction: "asc" }
+    );
   };
 
   const handleFileUpload = async (tabId, file) => {
@@ -440,12 +540,30 @@ const GovernanceManagement = () => {
           </div>
 
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            {activeTab === "actionCodes" && (
-              <p className={`text-sm ${subduedText}`}>
-                Saved to the <code className="text-xs">claim_action_items</code> table and used by claim triage workflows.
-              </p>
-            )}
-            {activeTab !== "actionCodes" && <span />}
+            <div className="flex flex-wrap items-center gap-3">
+              {activeTab === "actionCodes" && (
+                <>
+                  <p className={`text-sm ${subduedText}`}>
+                    Saved to the <code className="text-xs">claim_action_items</code> table and used by claim triage workflows.
+                  </p>
+                  <label className={`inline-flex items-center gap-2 text-sm ${subduedText}`}>
+                    <span>Filter by category</span>
+                    <select
+                      value={categoryFilter}
+                      onChange={(event) => setCategoryFilter(event.target.value)}
+                      className={`rounded-lg border px-3 py-2 text-sm outline-none transition ${inputClasses}`}
+                    >
+                      <option value="">All categories</option>
+                      {categoryOptions.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </>
+              )}
+            </div>
             <label className={`inline-flex items-center gap-2 text-sm ${subduedText}`}>
               <input
                 type="checkbox"
@@ -457,21 +575,44 @@ const GovernanceManagement = () => {
             </label>
           </div>
 
-          {activeRows.length ? (
+          {sortedActiveRows.length ? (
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
                   <tr>
-                    {activeConfig.columns.map((column) => (
-                      <th
-                        key={column.key}
-                        className={`px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] ${
-                          isDark ? "text-[#9ca3af]" : "text-slate-500"
-                        }`}
-                      >
-                        {column.label}
-                      </th>
-                    ))}
+                    {activeConfig.columns.map((column) => {
+                      const isCodeColumn = column.key === codeField;
+                      const isCategoryColumn = column.key === "category";
+                      const isSortable = supportsTableSorting && (isCodeColumn || isCategoryColumn);
+                      const sortField = isCategoryColumn ? "category" : "code";
+
+                      return (
+                        <th
+                          key={column.key}
+                          className={`px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] ${
+                            isDark ? "text-[#9ca3af]" : "text-slate-500"
+                          }`}
+                        >
+                          {isSortable ? (
+                            <button
+                              type="button"
+                              onClick={() => handleSort(sortField)}
+                              className={`inline-flex items-center transition ${
+                                isDark ? "hover:text-white" : "hover:text-slate-800"
+                              }`}
+                            >
+                              {column.label}
+                              <SortIndicator
+                                active={sortConfig.field === sortField}
+                                direction={sortConfig.direction}
+                              />
+                            </button>
+                          ) : (
+                            column.label
+                          )}
+                        </th>
+                      );
+                    })}
                     <th
                       className={`px-3 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em] ${
                         isDark ? "text-[#9ca3af]" : "text-slate-500"
@@ -482,7 +623,7 @@ const GovernanceManagement = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {activeRows.map((row) => (
+                  {sortedActiveRows.map((row) => (
                     <tr
                       key={row.id}
                       className={row.isActive === false ? (isDark ? "opacity-60" : "opacity-70") : ""}
@@ -553,7 +694,11 @@ const GovernanceManagement = () => {
               }`}
             >
               <p className="text-sm font-medium">
-                {loadingTab === activeTab ? "Loading rows..." : "No rows yet."}
+                {loadingTab === activeTab
+                  ? "Loading rows..."
+                  : activeRows.length && categoryFilter
+                    ? "No action codes match the selected category."
+                    : "No rows yet."}
               </p>
               {!loadingTab && (
                 <p className={`mt-2 text-sm ${subduedText}`}>
