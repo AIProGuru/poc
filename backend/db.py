@@ -80,6 +80,19 @@ def _extract_tenant_hint(request_or_url):
     return str(request_or_url).lower()
 
 
+def _current_database_name(cursor, fallback: str) -> str:
+    """Return the schema name for the active connection (not the API tenant label)."""
+    try:
+        cursor.execute("SELECT DATABASE() AS db_name")
+        row = cursor.fetchone() or {}
+        db_name = row.get("db_name")
+        if db_name:
+            return db_name
+    except Exception as exc:
+        logger.warning("Unable to resolve active database name: %s", exc)
+    return fallback
+
+
 def get_connection(request_or_url):
     _ensure_pools()
     if medevolve_conn is None and betacustomer_conn is None:
@@ -100,14 +113,14 @@ def get_connection(request_or_url):
         cursor = conn.cursor(dictionary=True)
         # Set SQL mode to be more permissive with dates
         cursor.execute("SET SESSION sql_mode = '';")
-        return conn, cursor, "betacustomer"
+        return conn, cursor, _current_database_name(cursor, "betacustomer")
     if "rebound" in hint or "medevolve" in hint or "pilotcustomer" in hint or "demo" in hint:
         conn = medevolve_conn.get_connection()
         cursor = conn.cursor(dictionary=True)
         # Set SQL mode to be more permissive with dates
         cursor.execute("SET SESSION sql_mode = '';")
-        database_name = "pilotcustomer" if "pilotcustomer" in hint else "medevolve"
-        return conn, cursor, database_name
+        # pilotcustomer/rebound/demo API routes share the medevolve pool in this environment.
+        return conn, cursor, _current_database_name(cursor, "medevolve")
     raise ValueError("Invalid base URL")
 
 def close_connection(cursor, conn):
