@@ -531,21 +531,10 @@ const GovernanceManagement = () => {
             </div>
           )}
 
-          <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${isDark ? "border-[#ffffff14] bg-[#1b1d22]" : "border-slate-200 bg-slate-50"}`}>
-            <p className="font-medium">Annual code maintenance</p>
-            <p className={`mt-1 ${subduedText}`}>
-              When CMS publishes updates each year, use <strong>Add Row</strong> for new codes and <strong>Retire</strong> for expired codes.
-              Set <strong>Effective Year</strong> and <strong>Expires On</strong> to track when a code becomes valid or should stop being used.
-            </p>
-          </div>
-
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               {activeTab === "actionCodes" && (
                 <>
-                  <p className={`text-sm ${subduedText}`}>
-                    Saved to the <code className="text-xs">claim_action_items</code> table and used by claim triage workflows.
-                  </p>
                   <label className={`inline-flex items-center gap-2 text-sm ${subduedText}`}>
                     <span>Filter by category</span>
                     <select
