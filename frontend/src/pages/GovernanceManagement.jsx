@@ -37,10 +37,9 @@ const CONFIG_TABS = [
     id: "actionCodes",
     label: "Action Codes",
     columns: [
-      { key: "actionCode", label: "Action Code", aliases: ["action code", "action codes", "code"] },
+      { key: "actionCode", label: "Action", aliases: ["action", "action code", "action codes", "code"] },
       { key: "category", label: "Category", aliases: ["category"] },
       { key: "tickleTime", label: "Tickle Time", aliases: ["tickle time"] },
-      ...LIFECYCLE_COLUMNS,
     ],
   },
 ];
@@ -147,6 +146,72 @@ const SortIndicator = ({ active, direction }) => {
     return <span className="ml-1 opacity-40">↕</span>;
   }
   return <span className="ml-1">{direction === "asc" ? "↑" : "↓"}</span>;
+};
+
+const getColumnCellClass = (columnKey, tabId) => {
+  if (tabId === "actionCodes") {
+    switch (columnKey) {
+      case "actionCode":
+        return "w-[44%]";
+      case "category":
+        return "w-[26%]";
+      case "tickleTime":
+        return "w-[10%]";
+      default:
+        break;
+    }
+  }
+
+  switch (columnKey) {
+    case "carcCode":
+    case "rarcCode":
+      return "w-[88px]";
+    case "carcDescription":
+    case "rarcDescription":
+      return "min-w-[320px] w-[36%] max-w-[440px]";
+    case "category":
+      return "w-[168px] max-w-[180px]";
+    case "expiresOn":
+      return "w-[150px] max-w-[170px]";
+    case "effectiveYear":
+      return "w-[96px] max-w-[108px]";
+    case "actionCode":
+      return "w-[180px] max-w-[200px]";
+    case "tickleTime":
+      return "w-[88px] max-w-[88px]";
+    default:
+      return "min-w-[140px]";
+  }
+};
+
+const getActionsColumnClass = (tabId) =>
+  tabId === "actionCodes" ? "w-[20%] whitespace-nowrap" : "w-[1%] whitespace-nowrap";
+
+const getColumnInputWidthClass = (columnKey, tabId) => {
+  if (tabId === "actionCodes") {
+    return "w-full";
+  }
+
+  switch (columnKey) {
+    case "carcCode":
+    case "rarcCode":
+      return "w-full max-w-[80px]";
+    case "carcDescription":
+    case "rarcDescription":
+      return "w-full min-w-[300px] max-w-[440px]";
+    case "category":
+      return "w-full max-w-[176px]";
+    case "expiresOn":
+      return "w-full min-w-[150px] max-w-[170px]";
+    case "effectiveYear":
+      return "w-full max-w-[96px]";
+    case "actionCode":
+      return "w-full max-w-[200px]";
+    case "tickleTime":
+      return "w-[72px] max-w-[72px] shrink-0";
+    default:
+      return "w-full min-w-[140px]";
+  }
 };
 
 const GovernanceManagement = () => {
@@ -565,8 +630,8 @@ const GovernanceManagement = () => {
           </div>
 
           {sortedActiveRows.length ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
+            <div className="w-full overflow-x-auto">
+              <table className={`w-full ${activeTab === "actionCodes" ? "table-fixed" : "table-auto"}`}>
                 <thead>
                   <tr>
                     {activeConfig.columns.map((column) => {
@@ -578,7 +643,7 @@ const GovernanceManagement = () => {
                       return (
                         <th
                           key={column.key}
-                          className={`px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] ${
+                          className={`px-2 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] ${getColumnCellClass(column.key, activeTab)} ${
                             isDark ? "text-[#9ca3af]" : "text-slate-500"
                           }`}
                         >
@@ -603,7 +668,7 @@ const GovernanceManagement = () => {
                       );
                     })}
                     <th
-                      className={`px-3 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em] ${
+                      className={`px-2 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em] ${getActionsColumnClass(activeTab)} ${
                         isDark ? "text-[#9ca3af]" : "text-slate-500"
                       }`}
                     >
@@ -618,7 +683,7 @@ const GovernanceManagement = () => {
                       className={row.isActive === false ? (isDark ? "opacity-60" : "opacity-70") : ""}
                     >
                       {activeConfig.columns.map((column) => (
-                        <td key={`${row.id}-${column.key}`} className="px-3 py-2">
+                        <td key={`${row.id}-${column.key}`} className={`px-2 py-2 ${getColumnCellClass(column.key, activeTab)}`}>
                           <input
                             type={column.inputType || "text"}
                             value={row[column.key] || ""}
@@ -626,19 +691,11 @@ const GovernanceManagement = () => {
                               handleRowChange(activeTab, row.id, column.key, event.target.value)
                             }
                             placeholder={column.placeholder}
-                            className={`w-full rounded-lg border px-3 py-2 outline-none transition ${inputClasses} ${
-                              column.key === "tickleTime"
-                                ? "min-w-[72px] max-w-[96px]"
-                                : column.inputType === "date"
-                                  ? "min-w-[150px] max-w-[170px]"
-                                  : column.key === "effectiveYear"
-                                    ? "min-w-[96px] max-w-[110px]"
-                                    : "min-w-[180px]"
-                            }`}
+                            className={`w-full rounded-lg border px-2 py-2 outline-none transition ${inputClasses} ${getColumnInputWidthClass(column.key, activeTab)}`}
                           />
                         </td>
                       ))}
-                      <td className="px-3 py-2 text-right">
+                      <td className={`px-2 py-2 text-right ${getActionsColumnClass(activeTab)}`}>
                         <div className="flex justify-end gap-2">
                           {row.isActive === false && (
                             <span className={`self-center rounded-full px-2 py-1 text-[11px] ${isDark ? "bg-white/10 text-gray-300" : "bg-slate-200 text-slate-600"}`}>
