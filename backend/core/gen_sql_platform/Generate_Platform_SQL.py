@@ -17,7 +17,6 @@ ADVANCED_FILTER_COLUMNS = {
     "provTaxId": "CUSTOM_ALL.ProvTaxID",
     "provNpi": "CUSTOM_ALL.ProvNPI",
     "payerId": "CUSTOM_ALL.PayerID",
-    "payerName": "CUSTOM_ALL.PayerName",
     "payerSeq": "CUSTOM_ALL.PayerSeq",
     "patientName": "CUSTOM_ALL.PatientName",
     "patientId": "CUSTOM_ALL.PatientID",
@@ -27,21 +26,53 @@ ADVANCED_FILTER_COLUMNS = {
     "primaryProcedure": "CUSTOM_ALL.PrimaryProcedure",
 }
 
+PAYER_NAME_SEARCH_EXPR = (
+    "TRIM(CONCAT_WS(' ', COALESCE(CUSTOM_ALL.PayerName, ''), COALESCE(CUSTOM_ALL.PayerID, '')))"
+)
+
 SERVICE_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def normalize_search_text(value: str) -> str:
+    return re.sub(r"[\s\u00a0\u2000-\u200b]+", " ", str(value or "").strip())
+
+
+def escape_sql_like(value: str) -> str:
+    return value.replace("'", "''")
+
+
+def build_tokenized_like_condition(column_expr: str, value: str) -> str:
+    normalized = normalize_search_text(value)
+    tokens = [token for token in normalized.split(" ") if token]
+    if not tokens:
+        return ""
+    if len(tokens) == 1:
+        safe = escape_sql_like(tokens[0])
+        return f"{column_expr} LIKE '%{safe}%'"
+    parts = []
+    for token in tokens:
+        safe = escape_sql_like(token)
+        parts.append(f"{column_expr} LIKE '%{safe}%'")
+    return f"({' AND '.join(parts)})"
 
 
 def build_advanced_filter_sql_conditions(advanced_filters: Optional[dict]) -> str:
     if not advanced_filters:
         return ""
     conditions = []
+    payer_name = advanced_filters.get("payerName")
+    if payer_name:
+        payer_condition = build_tokenized_like_condition(PAYER_NAME_SEARCH_EXPR, payer_name)
+        if payer_condition:
+            conditions.append(payer_condition)
     for key, column in ADVANCED_FILTER_COLUMNS.items():
         raw = advanced_filters.get(key)
         if raw is None:
             continue
-        value = str(raw).strip()
+        value = normalize_search_text(raw)
         if not value:
             continue
-        safe = value.replace("'", "''")
+        safe = escape_sql_like(value)
         conditions.append(f"{column} LIKE '%{safe}%'")
     service_date = advanced_filters.get("serviceDate")
     if service_date:

@@ -3,7 +3,7 @@ export const ADVANCED_FILTER_FIELDS = [
   { key: 'provTaxId', label: 'Provider Tax ID', placeholder: 'e.g. 12-3456789' },
   { key: 'provNpi', label: 'Provider NPI', placeholder: 'e.g. 1234567890' },
   { key: 'payerId', label: 'Payer ID', placeholder: 'e.g. 87726' },
-  { key: 'payerName', label: 'Payer Name', placeholder: 'e.g. Aetna' },
+  { key: 'payerName', label: 'Payer Name', placeholder: 'e.g. DSHS or DSHS 13 P1' },
   { key: 'payerSeq', label: 'Payer Seq', placeholder: 'P, S, or T' },
   { key: 'patientName', label: 'Patient Name', placeholder: 'e.g. Smith' },
   { key: 'patientId', label: 'Patient ID', placeholder: 'Member / patient ID' },
@@ -21,10 +21,13 @@ export const EMPTY_ADVANCED_FILTERS = ADVANCED_FILTER_FIELDS.reduce((acc, field)
 
 const SERVICE_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
+const normalizeFilterText = (value) =>
+  `${value ?? ''}`.replace(/[\s\u00a0\u2000-\u200b]+/g, ' ').trim();
+
 export const sanitizeAdvancedFilters = (filters = {}) => {
   const cleaned = {};
   ADVANCED_FILTER_FIELDS.forEach(({ key }) => {
-    const value = `${filters[key] ?? ''}`.trim();
+    const value = normalizeFilterText(filters[key]);
     if (!value) return;
     if (key === 'serviceDate' && !SERVICE_DATE_PATTERN.test(value)) return;
     cleaned[key] = value;
