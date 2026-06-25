@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import AgentAvatar from "./AgentAvatar";
 
 const formatCurrency = (value) => `$${Number(value || 0).toLocaleString("en-US")}`;
 
@@ -119,7 +120,10 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
                       : (isDark ? "hover:bg-white/5" : "hover:bg-slate-100")
                   }`}
                 >
-                  <span className={selectedAgent === name ? "text-white" : muted}>{name}</span>
+                  <span className={`flex items-center gap-2 ${selectedAgent === name ? "text-white" : muted}`}>
+                    <AgentAvatar name={name} size={28} />
+                    {name}
+                  </span>
                   <span className={`font-semibold ${selectedAgent === name ? "text-white" : "text-gray-200"}`}>{value}</span>
                 </button>
               ))

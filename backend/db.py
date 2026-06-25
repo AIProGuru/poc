@@ -20,7 +20,7 @@ config = {
     "user": os.getenv('RDS_USER', 'root'),
     "password": os.getenv('RDS_PASSWORD', ''),
     "port": int(os.getenv('RDS_PORT', '3306')),
-    "pool_size": 5,
+    "pool_size": 15,
     "connection_timeout": 20,
     "buffered": True
 }

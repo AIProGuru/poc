@@ -328,9 +328,6 @@ export const ApiEndpointProvider = ({ children }) => {
     dispatch(setProcedure(''));
     dispatch(setPOS(''));
     dispatch(setTabIndex(0));
-    dispatch(setTableLoading(true));
-    dispatch(setPart1Loading(true));
-    dispatch(setPart2Loading(true));
   }, [apiUrl, authReady, dispatch]);
 
   useEffect(() => {

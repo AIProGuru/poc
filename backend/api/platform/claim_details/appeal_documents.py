@@ -52,7 +52,13 @@ def _sanitize_claim_no(claim_no):
     return re.sub(r"[^A-Za-z0-9._-]", "", f"{claim_no or ''}")
 
 
+_APPEAL_DOCS_TABLE_READY = False
+
+
 def _ensure_table(cursor):
+    global _APPEAL_DOCS_TABLE_READY
+    if _APPEAL_DOCS_TABLE_READY:
+        return
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS appeal_supporting_documents (
@@ -70,6 +76,7 @@ def _ensure_table(cursor):
         )
         """
     )
+    _APPEAL_DOCS_TABLE_READY = True
 
 
 def _serialize_document(row):

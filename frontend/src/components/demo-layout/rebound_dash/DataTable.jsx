@@ -60,6 +60,7 @@ const DataTable = (props) => {
   const keyword = useSelector((state) => state.app.keyword)
   const tabIndex = useSelector((state) => state.app.tabIndex)
   const tableLoading = useSelector((state) => state.app.tableLoading)
+  const bootstrapLoading = useSelector((state) => state.app.bootstrapLoading)
   const type = useSelector((state) => state.app.type)
   const [downloading, setDownloading] = useState(false);
   const code = useSelector((state) => state.app.code)
@@ -379,6 +380,7 @@ const DataTable = (props) => {
   useEffect(() => {
 
     if (apiUrl === '') return;
+    if (bootstrapLoading) return;
     if (!tableLoading) return;
     const includeAllCategories = accessExtra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) return;
@@ -410,10 +412,11 @@ const DataTable = (props) => {
       requestInFlightRef.current = false;
       dispatch(setTableLoading(false));
     });
-  }, [tableLoading, selectedTags, order, accessExtra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate, advancedFilters])
+  }, [tableLoading, bootstrapLoading, selectedTags, order, accessExtra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate, advancedFilters, apiUrl, tabIndex])
 
   useEffect(() => {
     if (apiUrl === '') return;
+    if (bootstrapLoading) return;
     const includeAllCategories = accessExtra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) {
       setSummaryTotals(null);
@@ -455,7 +458,7 @@ const DataTable = (props) => {
       if (summaryRequestRef.current !== requestId) return;
       setSummaryTotals(null);
     });
-  }, [apiUrl, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, accessExtra, advancedFilters])
+  }, [apiUrl, bootstrapLoading, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, accessExtra, advancedFilters])
 
   const setOrder = (ord) => {
     const ordName = order[order.length - 1] === '-' ? order.substring(0, order.length - 1) : order;

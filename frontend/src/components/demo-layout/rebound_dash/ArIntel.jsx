@@ -18,6 +18,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApiEndpoint } from '../../../ApiEndpointContext';
 import { setSelectedTags } from '../../../redux/reducers/tag.reducer';
+import AgentAvatar from './AgentAvatar';
 
 const ArIntel = ({ onModelSelect }) => {
   const apiUrl = useApiEndpoint();
@@ -263,7 +264,8 @@ const ArIntel = ({ onModelSelect }) => {
                       <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
                     </svg>
                   </span>
-                  <span className={isDark ? 'text-[#F4F4F4]' : 'text-slate-600'}>
+                  <span className={`flex items-center gap-2 ${isDark ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
+                    <AgentAvatar name={filter} size={28} />
                     {filter}
                   </span>
                 </label>
@@ -317,8 +319,9 @@ const ArIntel = ({ onModelSelect }) => {
                   }
                   className="w-full flex items-center justify-between px-6 py-4 text-left"
                 >
-                  <div>
-                    <h3 className={`mt-1 text-lg font-semibold ${isDark ? 'text-[#F4F4F4]' : 'text-slate-900'}`}>
+                  <div className="flex items-center gap-3">
+                    <AgentAvatar name={group.title} size={44} />
+                    <h3 className={`text-lg font-semibold ${isDark ? 'text-[#F4F4F4]' : 'text-slate-900'}`}>
                       {group.title}
                     </h3>
                   </div>

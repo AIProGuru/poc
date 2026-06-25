@@ -445,12 +445,14 @@ const ReboundDash = () => {
     }
   }, [appTitle, selectedNav, applyNavFilters, isManagementRoute]);
 
-  // When tags finish loading, re-apply filters for denials views so data loads.
+  // When tags finish loading, re-apply filters for denials views once (avoid duplicate data_all).
+  const prevTagsLengthRef = useRef(0);
   useEffect(() => {
-    if (!tags || tags.length === 0) return;
-    if (selectedNav === 'denials' || selectedNav.startsWith('denials:')) {
-      applyNavFilters(selectedNav);
-    }
+    const isDenialsNav = selectedNav === 'denials' || selectedNav.startsWith('denials:');
+    const tagsJustLoaded = prevTagsLengthRef.current === 0 && tags.length > 0;
+    prevTagsLengthRef.current = tags.length;
+    if (!isDenialsNav || !tagsJustLoaded) return;
+    applyNavFilters(selectedNav);
   }, [applyNavFilters, selectedNav, tags]);
 
   const aiFilterSignature = useMemo(() => JSON.stringify(aiModelFilters), [aiModelFilters]);

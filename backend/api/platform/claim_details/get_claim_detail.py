@@ -6,6 +6,7 @@ import time
 import logging
 from datetime import date, datetime
 from db import get_connection, close_connection
+from core.schema_cache import get_table_columns, table_has_column
 from api.platform.claim_details.appeal_documents import fetch_supporting_documents
 
 # Configure logging
@@ -44,18 +45,8 @@ def parse_remark_codes(raw_value) -> List[str]:
 
 def custom_paid_service_remark_has_line_id(cursor, db_name: str) -> bool:
     try:
-        cursor.execute(
-            """
-            SELECT 1
-            FROM information_schema.COLUMNS
-            WHERE TABLE_SCHEMA = %s
-              AND TABLE_NAME = 'CUSTOM_PAID_SERVICE_REMARK'
-              AND COLUMN_NAME = 'line_id'
-            LIMIT 1
-            """,
-            (db_name,),
-        )
-        return cursor.fetchone() is not None
+        columns = {name.lower() for name in get_table_columns(cursor, db_name, "CUSTOM_PAID_SERVICE_REMARK")}
+        return "line_id" in columns
     except Exception as exc:
         logger.warning("Unable to inspect CUSTOM_PAID_SERVICE_REMARK.line_id: %s", exc)
         return False
@@ -129,18 +120,9 @@ def attach_service_line_remarks(
 def get_custom_all_patient_payment_expr(cursor, db_name: str) -> str:
     """Use PatientPayment when the column exists; otherwise fall back to 0."""
     try:
-        cursor.execute(
-            """
-            SELECT 1
-            FROM information_schema.COLUMNS
-            WHERE TABLE_SCHEMA = %s
-              AND TABLE_NAME = 'CUSTOM_ALL'
-              AND COLUMN_NAME = 'PatientPayment'
-            LIMIT 1
-            """,
-            (db_name,),
-        )
-        return "COALESCE(CUSTOM_ALL.PatientPayment, 0)" if cursor.fetchone() else "0"
+        if table_has_column(cursor, db_name, "CUSTOM_ALL", "PatientPayment"):
+            return "COALESCE(CUSTOM_ALL.PatientPayment, 0)"
+        return "0"
     except Exception as exc:
         logger.warning("Unable to inspect CUSTOM_ALL.PatientPayment: %s", exc)
         return "0"
@@ -397,13 +379,18 @@ def get_rebound_claim():
                 except ValueError:
                     action_date_value = None
 
-        for row in results:
-            ret['Remit'].append(row)
-            ret['Remit'][-1]['ServiceLine'] = []
-            if row['id_835'] != None:
-                q = f"""
+        remit_claim_ids = [row['id_835'] for row in results if row.get('id_835') is not None]
+        lines_by_claim_id = {}
+        codes_by_line_id = {}
+        modifiers_by_claim_id = {}
+
+        if remit_claim_ids:
+            claim_placeholders = ",".join(["%s"] * len(remit_claim_ids))
+            cursor.execute(
+                f"""
                     SELECT
                         EDI_PaidClaimLines.ID,
+                        EDI_PaidClaimLines.ClaimID,
                         EDI_PaidClaimLines.ServiceDate,
                         EDI_PaidClaimLines.ProcedureCode,
                         EDI_PaidClaimLines.UnitsPaid,
@@ -414,66 +401,92 @@ def get_rebound_claim():
                         cpt.Description
                     FROM EDI_PaidClaimLines
                     LEFT JOIN cpt ON cpt.Code=EDI_PaidClaimLines.ProcedureCode
-                    WHERE EDI_PaidClaimLines.ClaimID={row['id_835']} AND (cpt.Type='CPT' OR cpt.Type='HCPCS')
-                """
-                cursor.execute(q)
-                rows = cursor.fetchall()
-                allowed_after_action = 0
-                if action_date_value:
-                    check_date = row['CheckDate']
-                    if isinstance(check_date, datetime):
-                        check_date = check_date.date()
-                    if check_date > action_date_value:
-                        allowed_after_action = sum(
-                            float(r.get('AllowedAmount') or 0) for r in rows
-                        )
-                        overturn += allowed_after_action
-                for r in rows:
-                    ret['Remit'][-1]['ServiceLine'].append(r)
-                    q = f"""
+                    WHERE EDI_PaidClaimLines.ClaimID IN ({claim_placeholders})
+                      AND (cpt.Type='CPT' OR cpt.Type='HCPCS')
+                """,
+                remit_claim_ids,
+            )
+            all_service_lines = cursor.fetchall() or []
+            all_line_ids = []
+            for line in all_service_lines:
+                claim_id = line.get("ClaimID")
+                lines_by_claim_id.setdefault(claim_id, []).append(line)
+                all_line_ids.append(line["ID"])
+
+            if all_line_ids:
+                line_placeholders = ",".join(["%s"] * len(all_line_ids))
+                cursor.execute(
+                    f"""
                         SELECT
+                            EDI_PaidClaimLineAdj.LineID,
                             EDI_PaidClaimLineAdj.AdjustmentGroup,
                             EDI_PaidClaimLineAdj.AdjustmentReason,
                             EDI_PaidClaimLineAdj.AdjustmentAmount,
                             carc.Description
                         FROM EDI_PaidClaimLineAdj
                         LEFT JOIN carc ON carc.Code=EDI_PaidClaimLineAdj.AdjustmentReason
-                        WHERE LineID={r['ID']}
-                    """
-                    cursor.execute(q)
-                    ret["Remit"][-1]['ServiceLine'][-1]['Codes'] = cursor.fetchall()
-
-                # Debug print statement to check if the code block is reached
-                print(f"Fetching modifiers for ID_835={row['id_835']}")
-
-                # Fetching modifiers from CUSTOM_PAID_SERVICE
-                # q = f"SELECT * FROM CUSTOM_PAID_SERVICE WHERE ID_835={row['id_835']}"
-                # print(f"Executing query: {q}")  # Debug print statement to show the query
-                # cursor.execute(q)
-                # modifier_data = cursor.fetchall()
-                # print(f"Modifier data for ID_835={row['id_835']}: {modifier_data}")  # Debug print statement to show the results
-                # ret['Remit'][-1]['ModifierData'] = modifier_data
-                q = f"SELECT id_835,id,ProcedureCode,ProcedureModifier1,ProcedureModifier2,ProcedureModifier3,ProcedureModifier4 FROM CUSTOM_PAID_SERVICE WHERE ID_835={row['id_835']}"
-                cursor.execute(q)
-                modifier_data = cursor.fetchall()
-                # print(f"Modifier data for ID_835={row['id_835']}: {modifier_data}")  # Debug print statement
-
-                    # Merging ModifierData into ServiceLine
-                for service_line in ret['Remit'][-1]['ServiceLine']:
-                    service_line['Modifiers'] = [
-                        modifier for modifier in modifier_data if modifier['id'] == service_line['ID']
-                    ]
-
-                remit_remarks = fetch_remit_remark_codes(cursor, id, row['id_835'])
-                line_remarks_by_id = fetch_remark_codes_by_line(
-                    cursor, id, row['id_835'], remark_has_line_id
+                        WHERE EDI_PaidClaimLineAdj.LineID IN ({line_placeholders})
+                    """,
+                    all_line_ids,
                 )
-                attach_service_line_remarks(
-                    ret['Remit'][-1]['ServiceLine'],
-                    remit_remarks,
-                    line_remarks_by_id,
-                )
-                ret['Remit'][-1]['Remark'] = remit_remarks
+                for adj in cursor.fetchall() or []:
+                    line_id = adj.get("LineID")
+                    if line_id is None:
+                        continue
+                    codes_by_line_id.setdefault(line_id, []).append(
+                        {
+                            "AdjustmentGroup": adj.get("AdjustmentGroup"),
+                            "AdjustmentReason": adj.get("AdjustmentReason"),
+                            "AdjustmentAmount": adj.get("AdjustmentAmount"),
+                            "Description": adj.get("Description"),
+                        }
+                    )
+
+            cursor.execute(
+                f"""
+                    SELECT id_835, id, ProcedureCode, ProcedureModifier1, ProcedureModifier2,
+                           ProcedureModifier3, ProcedureModifier4
+                    FROM CUSTOM_PAID_SERVICE
+                    WHERE ID_835 IN ({claim_placeholders})
+                """,
+                remit_claim_ids,
+            )
+            for modifier in cursor.fetchall() or []:
+                modifiers_by_claim_id.setdefault(modifier.get("id_835"), []).append(modifier)
+
+        for row in results:
+            ret['Remit'].append(row)
+            ret['Remit'][-1]['ServiceLine'] = []
+            if row['id_835'] is None:
+                continue
+
+            service_lines = lines_by_claim_id.get(row['id_835'], [])
+            if action_date_value:
+                check_date = row['CheckDate']
+                if isinstance(check_date, datetime):
+                    check_date = check_date.date()
+                if check_date > action_date_value:
+                    overturn += sum(float(line.get('AllowedAmount') or 0) for line in service_lines)
+
+            modifier_data = modifiers_by_claim_id.get(row['id_835'], [])
+            for line in service_lines:
+                service_line = dict(line)
+                service_line['Codes'] = codes_by_line_id.get(line['ID'], [])
+                service_line['Modifiers'] = [
+                    modifier for modifier in modifier_data if modifier.get('id') == line['ID']
+                ]
+                ret['Remit'][-1]['ServiceLine'].append(service_line)
+
+            remit_remarks = fetch_remit_remark_codes(cursor, id, row['id_835'])
+            line_remarks_by_id = fetch_remark_codes_by_line(
+                cursor, id, row['id_835'], remark_has_line_id
+            )
+            attach_service_line_remarks(
+                ret['Remit'][-1]['ServiceLine'],
+                remit_remarks,
+                line_remarks_by_id,
+            )
+            ret['Remit'][-1]['Remark'] = remit_remarks
         
         ret['Claim']['Data']['Overturn'] = overturn
         q = f"""

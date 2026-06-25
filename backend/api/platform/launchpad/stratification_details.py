@@ -5,6 +5,7 @@ import logging
 from datetime import date
 import os
 from db import get_connection, close_connection
+from core.schema_cache import get_table_columns, table_has_column
 from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL, merge_request_extra
 
 # Configure logging
@@ -68,18 +69,9 @@ def map_sort_field(sort: str) -> str:
 def get_custom_all_patient_payment_expr(cursor, db_name: str) -> str:
     """Use PatientPayment when the column exists; otherwise fall back to 0."""
     try:
-        cursor.execute(
-            """
-            SELECT 1
-            FROM information_schema.COLUMNS
-            WHERE TABLE_SCHEMA = %s
-              AND TABLE_NAME = 'CUSTOM_ALL'
-              AND COLUMN_NAME = 'PatientPayment'
-            LIMIT 1
-            """,
-            (db_name,),
-        )
-        return "COALESCE(CUSTOM_ALL.PatientPayment, 0)" if cursor.fetchone() else "0"
+        if table_has_column(cursor, db_name, "CUSTOM_ALL", "PatientPayment"):
+            return "COALESCE(CUSTOM_ALL.PatientPayment, 0)"
+        return "0"
     except Exception as exc:
         logger.warning("Unable to inspect CUSTOM_ALL.PatientPayment: %s", exc)
         return "0"
@@ -87,16 +79,7 @@ def get_custom_all_patient_payment_expr(cursor, db_name: str) -> str:
 
 def get_existing_columns(cursor, db_name: str, table_name: str) -> set:
     try:
-        cursor.execute(
-            """
-            SELECT COLUMN_NAME
-            FROM information_schema.COLUMNS
-            WHERE TABLE_SCHEMA = %s
-              AND TABLE_NAME = %s
-            """,
-            (db_name, table_name),
-        )
-        return {row["COLUMN_NAME"] for row in cursor.fetchall() or []}
+        return get_table_columns(cursor, db_name, table_name)
     except Exception as exc:
         logger.warning("Unable to inspect columns for %s: %s", table_name, exc)
         return set()
@@ -324,7 +307,6 @@ def get_rebound_data_all():
         perPage = request.json.get("perPage")
         keyword = request.json.get("keyword")
         selectedTags = request.json.get("selectedTags") or []
-        print(selectedTags)
         startDate = request.json.get("startDate")
         endDate = request.json.get("endDate")
         extra = merge_request_extra(request.json)
@@ -383,8 +365,6 @@ def get_rebound_data_all():
         result = cursor.fetchone()
         total_count = int(result.get("cnt") or 0)
         maxPage = int((total_count - 1) / perPage) + 1 if total_count > 0 else 0
-        print("aaaaaaaaaaaaaaaaaaaaaaa", count_sql)
-        print("bbbbbbbbbbbbbbbbbbbbbbb", total_count)
         # Generate SQL query to fetch the data with pagination
         priority_order_sql = build_priority_order_sql()
         outer_order_sql = build_outer_order_sql(sort)
@@ -429,19 +409,7 @@ def get_rebound_data_all():
                 STR_TO_DATE(CUSTOM_ALL.ActionDate, '%Y-%m-%d'),
                 DATE(CUSTOM_ALL.ActionDate)
             ) AS ActionDateParsed
-            {newGenerateSQL(
-                tab_index,
-                keyword,
-                selectedTags,
-                startDate,
-                endDate,
-                code,
-                remark,
-                procedure,
-                pos,
-                extra,
-                ""
-            )}"""
+            {base_from_sql}"""
         data_sql = f"""
             WITH prioritized_claims AS (
                 SELECT
@@ -494,7 +462,6 @@ def get_rebound_data_all():
             LIMIT {perPage} OFFSET {(currentPage-1)*perPage}
         """
 
-        print("ccccccccccccccccccccc", data_sql)
         cursor.execute(data_sql)
         results = cursor.fetchall()
         
