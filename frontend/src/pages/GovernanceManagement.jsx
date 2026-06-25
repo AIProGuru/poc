@@ -141,6 +141,22 @@ const compareTextValues = (left, right) =>
     sensitivity: "base",
   });
 
+const isOtherActionLabel = (label) => normalizeValue(label).toLowerCase() === "other";
+
+const compareActionCodeRows = (left, right) => {
+  const leftOther = isOtherActionLabel(left.actionCode);
+  const rightOther = isOtherActionLabel(right.actionCode);
+  if (leftOther !== rightOther) {
+    return leftOther ? 1 : -1;
+  }
+  const leftOrder = Number(left.sortOrder) || 0;
+  const rightOrder = Number(right.sortOrder) || 0;
+  if (leftOrder !== rightOrder) {
+    return leftOrder - rightOrder;
+  }
+  return compareTextValues(left.actionCode, right.actionCode);
+};
+
 const SortIndicator = ({ active, direction }) => {
   if (!active) {
     return <span className="ml-1 opacity-40">↕</span>;
@@ -228,6 +244,7 @@ const GovernanceManagement = () => {
   const [showInactive, setShowInactive] = useState(false);
   const [sortConfig, setSortConfig] = useState({ field: "code", direction: "asc" });
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [reordering, setReordering] = useState(false);
 
   const activeConfig = useMemo(
     () => CONFIG_TABS.find((tab) => tab.id === activeTab) || CONFIG_TABS[0],
@@ -256,6 +273,8 @@ const GovernanceManagement = () => {
         normalizeValue(row.category).toLowerCase() === categoryFilter.toLowerCase();
       draftRows = draftRows.filter(matchesCategory);
       savedRows = savedRows.filter(matchesCategory);
+      savedRows = [...savedRows].sort(compareActionCodeRows);
+      return [...draftRows, ...savedRows];
     }
 
     if (!supportsTableSorting || !codeField) {
@@ -430,11 +449,69 @@ const GovernanceManagement = () => {
   };
 
   const handleSort = (field) => {
+    if (activeTab === "actionCodes" && categoryFilter) {
+      return;
+    }
     setSortConfig((current) =>
       current.field === field
         ? { field, direction: current.direction === "asc" ? "desc" : "asc" }
         : { field, direction: "asc" }
     );
+  };
+
+  const reorderableActionRows = useMemo(() => {
+    if (activeTab !== "actionCodes" || !categoryFilter) return [];
+    return sortedActiveRows.filter(
+      (row) => !row.isDraft && row.isActive !== false && !isOtherActionLabel(row.actionCode)
+    );
+  }, [activeTab, categoryFilter, sortedActiveRows]);
+
+  const handleMoveActionRow = async (rowId, direction) => {
+    if (!apiUrl || !categoryFilter || reordering) return;
+
+    const rows = reorderableActionRows;
+    const currentIndex = rows.findIndex((row) => row.id === rowId);
+    if (currentIndex < 0) return;
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= rows.length) return;
+
+    const reordered = [...rows];
+    const [movedRow] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, movedRow);
+
+    const otherRow = sortedActiveRows.find(
+      (row) =>
+        !row.isDraft &&
+        row.isActive !== false &&
+        isOtherActionLabel(row.actionCode) &&
+        normalizeValue(row.category).toLowerCase() === categoryFilter.toLowerCase()
+    );
+    const orderedIds = [...reordered.map((row) => row.id), ...(otherRow ? [otherRow.id] : [])];
+
+    setReordering(true);
+    try {
+      const response = await axios.post(
+        `${apiUrl}/governance/actionCodes/reorder`,
+        { category: categoryFilter, orderedIds },
+        { withCredentials: true }
+      );
+      const rows = Array.isArray(response.data) ? response.data : [];
+      setDatasets((current) => ({
+        ...current,
+        actionCodes: rows.map((row) => ({
+          ...row,
+          id: `${row.id}`,
+          isDraft: false,
+          isDirty: false,
+          saving: false,
+        })),
+      }));
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Could not reorder actions.");
+    } finally {
+      setReordering(false);
+    }
   };
 
   const handleFileUpload = async (tabId, file) => {
@@ -615,6 +692,15 @@ const GovernanceManagement = () => {
                       ))}
                     </select>
                   </label>
+                  {categoryFilter ? (
+                    <p className={`text-sm ${subduedText}`}>
+                      Use the arrows to reorder actions for this category. Other always appears last on Triage.
+                    </p>
+                  ) : (
+                    <p className={`text-sm ${subduedText}`}>
+                      Select a category to reorder actions.
+                    </p>
+                  )}
                 </>
               )}
             </div>
@@ -637,7 +723,10 @@ const GovernanceManagement = () => {
                     {activeConfig.columns.map((column) => {
                       const isCodeColumn = column.key === codeField;
                       const isCategoryColumn = column.key === "category";
-                      const isSortable = supportsTableSorting && (isCodeColumn || isCategoryColumn);
+                      const isSortable =
+                        supportsTableSorting &&
+                        (isCodeColumn || isCategoryColumn) &&
+                        !(activeTab === "actionCodes" && categoryFilter);
                       const sortField = isCategoryColumn ? "category" : "code";
 
                       return (
@@ -677,7 +766,24 @@ const GovernanceManagement = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedActiveRows.map((row) => (
+                  {sortedActiveRows.map((row) => {
+                    const isOtherAction =
+                      activeTab === "actionCodes" && isOtherActionLabel(row.actionCode);
+                    const reorderableIndex = reorderableActionRows.findIndex((item) => item.id === row.id);
+                    const canReorder =
+                      activeTab === "actionCodes" &&
+                      categoryFilter &&
+                      !row.isDraft &&
+                      row.isActive !== false &&
+                      !isOtherAction;
+                    const canMoveUp = canReorder && reorderableIndex > 0 && !reordering;
+                    const canMoveDown =
+                      canReorder &&
+                      reorderableIndex >= 0 &&
+                      reorderableIndex < reorderableActionRows.length - 1 &&
+                      !reordering;
+
+                    return (
                     <tr
                       key={row.id}
                       className={row.isActive === false ? (isDark ? "opacity-60" : "opacity-70") : ""}
@@ -697,6 +803,47 @@ const GovernanceManagement = () => {
                       ))}
                       <td className={`px-2 py-2 text-right ${getActionsColumnClass(activeTab)}`}>
                         <div className="flex justify-end gap-2">
+                          {canReorder && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleMoveActionRow(row.id, "up")}
+                                disabled={!canMoveUp}
+                                title="Move up"
+                                aria-label="Move action up"
+                                className={`rounded-lg px-2 py-2 text-sm transition disabled:opacity-30 ${
+                                  isDark
+                                    ? "bg-[#ffffff12] text-white hover:bg-[#ffffff1f]"
+                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                }`}
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMoveActionRow(row.id, "down")}
+                                disabled={!canMoveDown}
+                                title="Move down"
+                                aria-label="Move action down"
+                                className={`rounded-lg px-2 py-2 text-sm transition disabled:opacity-30 ${
+                                  isDark
+                                    ? "bg-[#ffffff12] text-white hover:bg-[#ffffff1f]"
+                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                }`}
+                              >
+                                ↓
+                              </button>
+                            </div>
+                          )}
+                          {isOtherAction && categoryFilter && (
+                            <span
+                              className={`self-center rounded-full px-2 py-1 text-[11px] ${
+                                isDark ? "bg-white/10 text-gray-300" : "bg-slate-200 text-slate-600"
+                              }`}
+                            >
+                              Always last
+                            </span>
+                          )}
                           {row.isActive === false && (
                             <span className={`self-center rounded-full px-2 py-1 text-[11px] ${isDark ? "bg-white/10 text-gray-300" : "bg-slate-200 text-slate-600"}`}>
                               Retired
@@ -729,7 +876,8 @@ const GovernanceManagement = () => {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

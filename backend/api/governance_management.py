@@ -227,6 +227,13 @@ def _resolve_primary_key(columns: Dict[str, str]) -> Optional[str]:
     return None
 
 
+OTHER_ACTION_SORT_ORDER = 99999
+
+
+def _is_other_action_label(label: str) -> bool:
+    return (label or "").strip().lower() == "other"
+
+
 def _serialize_row(row: Dict[str, Any], field_columns: Dict[str, str], primary_key: str) -> Dict[str, Any]:
     payload = {"id": row.get(primary_key)}
     for ui_key, column in field_columns.items():
@@ -242,6 +249,9 @@ def _serialize_row(row: Dict[str, Any], field_columns: Dict[str, str], primary_k
     is_active_col = next((col for col in row.keys() if col.lower() == "is_active"), None)
     if is_active_col is not None:
         payload["isActive"] = bool(row.get(is_active_col))
+    sort_order_col = next((col for col in row.keys() if col.lower() == "sort_order"), None)
+    if sort_order_col is not None:
+        payload["sortOrder"] = row.get(sort_order_col)
     return payload
 
 
@@ -303,12 +313,25 @@ def _next_action_sort_order(cursor, table_name: str, category: str) -> int:
         f"""
         SELECT COALESCE(MAX(sort_order), 0) AS max_sort
         FROM `{table_name}`
-        WHERE category = %s
+        WHERE category = %s AND LOWER(action_label) <> 'other'
         """,
         (category,),
     )
     row = cursor.fetchone() or {}
     return int(row.get("max_sort") or 0) + 10
+
+
+def _apply_action_code_sort_order(db_values: Dict[str, Any], field_columns: Dict[str, str], col_map: Dict[str, str]):
+    action_col = field_columns.get("actionCode")
+    sort_col = col_map.get("sort_order")
+    if not action_col or not sort_col:
+        return
+    label = (db_values.get(action_col) or "").strip()
+    if _is_other_action_label(label):
+        db_values[sort_col] = OTHER_ACTION_SORT_ORDER
+        free_text_col = col_map.get("allow_free_text")
+        if free_text_col and free_text_col not in db_values:
+            db_values[free_text_col] = 1
 
 
 def _load_dataset(cursor, conn, db_name: str, dataset: str) -> List[Dict[str, Any]]:
@@ -384,6 +407,7 @@ def create_governance_row(dataset: str):
                 return jsonify({"error": "Action Code and Category are required."}), 400
             if "sort_order" in col_map and col_map["sort_order"] not in db_values:
                 db_values[col_map["sort_order"]] = _next_action_sort_order(cursor, table_name, category)
+            _apply_action_code_sort_order(db_values, field_columns, col_map)
             for key, value in (config.get("defaults") or {}).items():
                 actual = col_map.get(key.lower())
                 if actual and actual not in db_values:
@@ -449,6 +473,11 @@ def update_governance_row(dataset: str, row_id: str):
         if not db_values:
             return jsonify({"error": "No values provided."}), 400
 
+        if dataset == "actionCodes":
+            columns = ctx["columns"]
+            col_map = {name.lower(): name for name in columns}
+            _apply_action_code_sort_order(db_values, field_columns, col_map)
+
         set_sql = ", ".join(f"`{col}` = %s" for col in db_values.keys())
         cursor.execute(
             f"UPDATE `{table_name}` SET {set_sql} WHERE `{primary_key}` = %s",
@@ -513,7 +542,72 @@ def delete_governance_row(dataset: str, row_id: str):
         close_connection(cursor, conn)
 
 
+def reorder_governance_action_codes():
+    conn = None
+    cursor = None
+    try:
+        payload = request.get_json(silent=True) or {}
+        category = (payload.get("category") or "").strip()
+        ordered_ids = payload.get("orderedIds") or []
+        if not category:
+            return jsonify({"error": "Category is required."}), 400
+        if not isinstance(ordered_ids, list) or not ordered_ids:
+            return jsonify({"error": "orderedIds must be a non-empty list."}), 400
+
+        conn, cursor, db_name = get_connection(request)
+        ctx = _build_dataset_context(cursor, conn, db_name, "actionCodes")
+        table_name = ctx["table_name"]
+        primary_key = ctx["primary_key"]
+        columns = ctx["columns"]
+        col_map = {name.lower(): name for name in columns}
+        sort_col = col_map.get("sort_order")
+        category_col = ctx["field_columns"].get("category")
+        action_col = ctx["field_columns"].get("actionCode")
+        if not sort_col or not category_col or not action_col:
+            return jsonify({"error": "Action code table is missing required columns."}), 400
+
+        sort_value = 10
+        for row_id in ordered_ids:
+            cursor.execute(
+                f"SELECT `{primary_key}`, `{action_col}`, `{category_col}` FROM `{table_name}` WHERE `{primary_key}` = %s LIMIT 1",
+                (row_id,),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return jsonify({"error": f"Action row '{row_id}' was not found."}), 404
+            if (row.get(category_col) or "").strip() != category:
+                return jsonify({"error": "All reordered actions must belong to the same category."}), 400
+
+            label = (row.get(action_col) or "").strip()
+            next_sort = OTHER_ACTION_SORT_ORDER if _is_other_action_label(label) else sort_value
+            cursor.execute(
+                f"UPDATE `{table_name}` SET `{sort_col}` = %s WHERE `{primary_key}` = %s",
+                (next_sort, row_id),
+            )
+            if not _is_other_action_label(label):
+                sort_value += 10
+
+        conn.commit()
+        rows = _load_dataset(cursor, conn, db_name, "actionCodes")
+        return jsonify(rows), 200
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        logger.error("[GOVERNANCE REORDER ERROR]: %s", exc)
+        if conn:
+            conn.rollback()
+        return jsonify({"error": "Internal server Error"}), 500
+    finally:
+        close_connection(cursor, conn)
+
+
 def register_governance_routes(blueprint: Blueprint):
+    blueprint.add_url_rule(
+        "/governance/actionCodes/reorder",
+        view_func=reorder_governance_action_codes,
+        methods=["POST"],
+        endpoint="reorder_governance_action_codes",
+    )
     blueprint.add_url_rule(
         "/governance/<dataset>",
         view_func=list_governance_rows,
