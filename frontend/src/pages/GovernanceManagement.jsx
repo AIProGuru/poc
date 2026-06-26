@@ -164,6 +164,17 @@ const SortIndicator = ({ active, direction }) => {
   return <span className="ml-1">{direction === "asc" ? "↑" : "↓"}</span>;
 };
 
+const DragHandleIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+    <circle cx="5" cy="4" r="1.2" />
+    <circle cx="11" cy="4" r="1.2" />
+    <circle cx="5" cy="8" r="1.2" />
+    <circle cx="11" cy="8" r="1.2" />
+    <circle cx="5" cy="12" r="1.2" />
+    <circle cx="11" cy="12" r="1.2" />
+  </svg>
+);
+
 const getColumnCellClass = (columnKey, tabId) => {
   if (tabId === "actionCodes") {
     switch (columnKey) {
@@ -245,6 +256,8 @@ const GovernanceManagement = () => {
   const [sortConfig, setSortConfig] = useState({ field: "code", direction: "asc" });
   const [categoryFilter, setCategoryFilter] = useState("");
   const [reordering, setReordering] = useState(false);
+  const [draggedActionId, setDraggedActionId] = useState("");
+  const [dragOverActionId, setDragOverActionId] = useState("");
 
   const activeConfig = useMemo(
     () => CONFIG_TABS.find((tab) => tab.id === activeTab) || CONFIG_TABS[0],
@@ -253,6 +266,7 @@ const GovernanceManagement = () => {
   const activeRows = datasets[activeTab] || [];
   const codeField = CODE_FIELD_BY_TAB[activeTab];
   const supportsTableSorting = Boolean(codeField);
+  const showActionDragColumn = activeTab === "actionCodes" && Boolean(categoryFilter);
 
   const categoryOptions = useMemo(() => {
     if (activeTab !== "actionCodes") return [];
@@ -304,7 +318,14 @@ const GovernanceManagement = () => {
   useEffect(() => {
     setSortConfig({ field: "code", direction: "asc" });
     setCategoryFilter("");
+    setDraggedActionId("");
+    setDragOverActionId("");
   }, [activeTab]);
+
+  useEffect(() => {
+    setDraggedActionId("");
+    setDragOverActionId("");
+  }, [categoryFilter]);
 
   const containerClasses = isDark ? "border-[#ffffff14] bg-[#23252b]" : "border-slate-200 bg-white";
   const subduedText = isDark ? "text-[#9ca3af]" : "text-slate-500";
@@ -466,19 +487,8 @@ const GovernanceManagement = () => {
     );
   }, [activeTab, categoryFilter, sortedActiveRows]);
 
-  const handleMoveActionRow = async (rowId, direction) => {
+  const persistActionOrder = async (reorderedRows) => {
     if (!apiUrl || !categoryFilter || reordering) return;
-
-    const rows = reorderableActionRows;
-    const currentIndex = rows.findIndex((row) => row.id === rowId);
-    if (currentIndex < 0) return;
-
-    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (targetIndex < 0 || targetIndex >= rows.length) return;
-
-    const reordered = [...rows];
-    const [movedRow] = reordered.splice(currentIndex, 1);
-    reordered.splice(targetIndex, 0, movedRow);
 
     const otherRow = sortedActiveRows.find(
       (row) =>
@@ -487,7 +497,7 @@ const GovernanceManagement = () => {
         isOtherActionLabel(row.actionCode) &&
         normalizeValue(row.category).toLowerCase() === categoryFilter.toLowerCase()
     );
-    const orderedIds = [...reordered.map((row) => row.id), ...(otherRow ? [otherRow.id] : [])];
+    const orderedIds = [...reorderedRows.map((row) => row.id), ...(otherRow ? [otherRow.id] : [])];
 
     setReordering(true);
     try {
@@ -512,6 +522,47 @@ const GovernanceManagement = () => {
     } finally {
       setReordering(false);
     }
+  };
+
+  const handleActionDragStart = (rowId) => {
+    if (reordering) return;
+    setDraggedActionId(rowId);
+    setDragOverActionId("");
+  };
+
+  const handleActionDragEnd = () => {
+    setDraggedActionId("");
+    setDragOverActionId("");
+  };
+
+  const handleActionDragOver = (event, rowId) => {
+    if (!draggedActionId || draggedActionId === rowId || reordering) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDragOverActionId(rowId);
+  };
+
+  const handleActionDrop = async (event, targetRowId) => {
+    event.preventDefault();
+    if (!draggedActionId || draggedActionId === targetRowId || reordering) {
+      handleActionDragEnd();
+      return;
+    }
+
+    const rows = reorderableActionRows;
+    const fromIndex = rows.findIndex((row) => row.id === draggedActionId);
+    const toIndex = rows.findIndex((row) => row.id === targetRowId);
+    if (fromIndex < 0 || toIndex < 0) {
+      handleActionDragEnd();
+      return;
+    }
+
+    const reordered = [...rows];
+    const [movedRow] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, movedRow);
+
+    handleActionDragEnd();
+    await persistActionOrder(reordered);
   };
 
   const handleFileUpload = async (tabId, file) => {
@@ -694,7 +745,7 @@ const GovernanceManagement = () => {
                   </label>
                   {categoryFilter ? (
                     <p className={`text-sm ${subduedText}`}>
-                      Use the arrows to reorder actions for this category. Other always appears last on Triage.
+                      Drag and drop rows to reorder actions for this category. Other always appears last on Triage.
                     </p>
                   ) : (
                     <p className={`text-sm ${subduedText}`}>
@@ -720,6 +771,15 @@ const GovernanceManagement = () => {
               <table className={`w-full ${activeTab === "actionCodes" ? "table-fixed" : "table-auto"}`}>
                 <thead>
                   <tr>
+                    {showActionDragColumn && (
+                      <th
+                        className={`w-[44px] px-2 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] ${
+                          isDark ? "text-[#9ca3af]" : "text-slate-500"
+                        }`}
+                      >
+                        Order
+                      </th>
+                    )}
                     {activeConfig.columns.map((column) => {
                       const isCodeColumn = column.key === codeField;
                       const isCategoryColumn = column.key === "category";
@@ -769,25 +829,53 @@ const GovernanceManagement = () => {
                   {sortedActiveRows.map((row) => {
                     const isOtherAction =
                       activeTab === "actionCodes" && isOtherActionLabel(row.actionCode);
-                    const reorderableIndex = reorderableActionRows.findIndex((item) => item.id === row.id);
                     const canReorder =
                       activeTab === "actionCodes" &&
                       categoryFilter &&
                       !row.isDraft &&
                       row.isActive !== false &&
                       !isOtherAction;
-                    const canMoveUp = canReorder && reorderableIndex > 0 && !reordering;
-                    const canMoveDown =
-                      canReorder &&
-                      reorderableIndex >= 0 &&
-                      reorderableIndex < reorderableActionRows.length - 1 &&
-                      !reordering;
+                    const isDragging = draggedActionId === row.id;
+                    const isDragOver =
+                      dragOverActionId === row.id &&
+                      draggedActionId &&
+                      draggedActionId !== row.id;
 
                     return (
                     <tr
                       key={row.id}
-                      className={row.isActive === false ? (isDark ? "opacity-60" : "opacity-70") : ""}
+                      onDragOver={canReorder ? (event) => handleActionDragOver(event, row.id) : undefined}
+                      onDrop={canReorder ? (event) => handleActionDrop(event, row.id) : undefined}
+                      className={`${row.isActive === false ? (isDark ? "opacity-60" : "opacity-70") : ""} ${
+                        isDragging ? "opacity-40" : ""
+                      } ${isDragOver ? (isDark ? "bg-cyan-500/10" : "bg-cyan-50") : ""}`}
                     >
+                      {showActionDragColumn && (
+                        <td className="w-[44px] px-2 py-2 align-middle">
+                          {canReorder ? (
+                            <button
+                              type="button"
+                              draggable={!reordering}
+                              onDragStart={(event) => {
+                                event.dataTransfer.effectAllowed = "move";
+                                event.dataTransfer.setData("text/plain", row.id);
+                                handleActionDragStart(row.id);
+                              }}
+                              onDragEnd={handleActionDragEnd}
+                              disabled={reordering}
+                              title="Drag to reorder"
+                              aria-label={`Drag to reorder ${row.actionCode || "action"}`}
+                              className={`flex cursor-grab items-center justify-center rounded-lg p-2 transition active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 ${
+                                isDark
+                                  ? "text-[#9ca3af] hover:bg-[#ffffff12] hover:text-white"
+                                  : "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                              }`}
+                            >
+                              <DragHandleIcon />
+                            </button>
+                          ) : null}
+                        </td>
+                      )}
                       {activeConfig.columns.map((column) => (
                         <td key={`${row.id}-${column.key}`} className={`px-2 py-2 ${getColumnCellClass(column.key, activeTab)}`}>
                           <input
@@ -803,47 +891,6 @@ const GovernanceManagement = () => {
                       ))}
                       <td className={`px-2 py-2 text-right ${getActionsColumnClass(activeTab)}`}>
                         <div className="flex justify-end gap-2">
-                          {canReorder && (
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => handleMoveActionRow(row.id, "up")}
-                                disabled={!canMoveUp}
-                                title="Move up"
-                                aria-label="Move action up"
-                                className={`rounded-lg px-2 py-2 text-sm transition disabled:opacity-30 ${
-                                  isDark
-                                    ? "bg-[#ffffff12] text-white hover:bg-[#ffffff1f]"
-                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                                }`}
-                              >
-                                ↑
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleMoveActionRow(row.id, "down")}
-                                disabled={!canMoveDown}
-                                title="Move down"
-                                aria-label="Move action down"
-                                className={`rounded-lg px-2 py-2 text-sm transition disabled:opacity-30 ${
-                                  isDark
-                                    ? "bg-[#ffffff12] text-white hover:bg-[#ffffff1f]"
-                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                                }`}
-                              >
-                                ↓
-                              </button>
-                            </div>
-                          )}
-                          {isOtherAction && categoryFilter && (
-                            <span
-                              className={`self-center rounded-full px-2 py-1 text-[11px] ${
-                                isDark ? "bg-white/10 text-gray-300" : "bg-slate-200 text-slate-600"
-                              }`}
-                            >
-                              Always last
-                            </span>
-                          )}
                           {row.isActive === false && (
                             <span className={`self-center rounded-full px-2 py-1 text-[11px] ${isDark ? "bg-white/10 text-gray-300" : "bg-slate-200 text-slate-600"}`}>
                               Retired
