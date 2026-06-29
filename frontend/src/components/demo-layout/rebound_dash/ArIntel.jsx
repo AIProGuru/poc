@@ -19,6 +19,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useApiEndpoint } from '../../../ApiEndpointContext';
 import { setSelectedTags } from '../../../redux/reducers/tag.reducer';
 import AgentAvatar from './AgentAvatar';
+import { formatAgentDisplayTitle } from '../../../utils/aiAgentAvatars';
 
 const ArIntel = ({ onModelSelect }) => {
   const apiUrl = useApiEndpoint();
@@ -196,7 +197,7 @@ const ArIntel = ({ onModelSelect }) => {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
       <div className={`ont-inter font-semibold text-[24px] leading-none tracking-normal ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
-        {`AI Agents${selectedFilters.length ? ` > ${selectedFilters.join(', ')}` : ''}`}
+        {`AI Agents${selectedFilters.length ? ` > ${selectedFilters.map(formatAgentDisplayTitle).join(', ')}` : ''}`}
       </div>
       </div>
 
@@ -266,7 +267,7 @@ const ArIntel = ({ onModelSelect }) => {
                   </span>
                   <span className={`flex items-center gap-2 ${isDark ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
                     <AgentAvatar name={filter} size={28} />
-                    {filter}
+                    {formatAgentDisplayTitle(filter)}
                   </span>
                 </label>
               ))}
@@ -322,7 +323,7 @@ const ArIntel = ({ onModelSelect }) => {
                   <div className="flex items-center gap-3">
                     <AgentAvatar name={group.title} size={44} />
                     <h3 className={`text-lg font-semibold ${isDark ? 'text-[#F4F4F4]' : 'text-slate-900'}`}>
-                      {group.title}
+                      {formatAgentDisplayTitle(group.title)}
                     </h3>
                   </div>
                   <span className={`text-lg leading-none ${isDark ? 'text-white/70' : 'text-slate-500'}`}>

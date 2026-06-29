@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import AgentAvatar from "./AgentAvatar";
+import { formatAgentDisplayTitle } from "../../../utils/aiAgentAvatars";
 
 const formatCurrency = (value) => `$${Number(value || 0).toLocaleString("en-US")}`;
 
@@ -97,7 +98,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
           <h2 className="mt-1 text-xl sm:text-2xl font-semibold">Client Dashboard</h2>
         </div>
         <div className={`text-xs ${subtle}`}>
-          {selectedAgent ? `Filtered: ${selectedAgent}` : "All agents"}
+          {selectedAgent ? `Filtered: ${formatAgentDisplayTitle(selectedAgent)}` : "All agents"}
         </div>
       </div>
 
@@ -122,7 +123,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
                 >
                   <span className={`flex items-center gap-2 ${selectedAgent === name ? "text-white" : muted}`}>
                     <AgentAvatar name={name} size={28} />
-                    {name}
+                    {formatAgentDisplayTitle(name)}
                   </span>
                   <span className={`font-semibold ${selectedAgent === name ? "text-white" : "text-gray-200"}`}>{value}</span>
                 </button>
