@@ -55,7 +55,30 @@ const ArIntel = ({ onModelSelect }) => {
     return `${tag.label || tag.name || tag.value || tag.id || ''}`.trim();
   };
 
+  const getModelSearchText = (row) => {
+    const modelTitle = `${row.ModelTitle || row.model_title || ''}`.trim();
+    return [
+      row.Title,
+      row.title,
+      row.Category,
+      row.Group,
+      row.Code,
+      row.Remark,
+      modelTitle,
+      formatAgentDisplayTitle(modelTitle),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+  };
+
+  const matchesSearchTerm = (text, needle) => {
+    if (!needle) return true;
+    return `${text || ''}`.toLowerCase().includes(needle);
+  };
+
   const availableFilters = useMemo(() => {
+    const needle = searchTerm.trim().toLowerCase();
     const seen = new Set();
     return (models || [])
       .map((row) => `${row.ModelTitle || row.model_title || 'AI Agent'}`.trim())
@@ -64,8 +87,15 @@ const ArIntel = ({ onModelSelect }) => {
         if (seen.has(title)) return false;
         seen.add(title);
         return true;
+      })
+      .filter((title) => {
+        if (!needle) return true;
+        return (
+          matchesSearchTerm(title, needle) ||
+          matchesSearchTerm(formatAgentDisplayTitle(title), needle)
+        );
       });
-  }, [models]);
+  }, [models, searchTerm]);
 
   const filteredModels = useMemo(() => {
     const needle = searchTerm.trim().toLowerCase();
@@ -73,21 +103,12 @@ const ArIntel = ({ onModelSelect }) => {
     const restrictCategories = Array.isArray(allowedCategories) && allowedCategories.length > 0
       && !['admin', 'super-admin', 'manager', 'internal-admin'].includes(role);
     return (models || []).filter((row) => {
-      const title = `${row.Title || ''}`.toLowerCase();
-      const category = `${row.Category || row.Group || ''}`.toLowerCase();
-      const code = `${row.Code || ''}`.toLowerCase();
-      const modelTitle = `${row.ModelTitle || row.model_title || ''}`.toLowerCase();
       const normalizedCategory = row.Category === 'Delinquent' ? 'Pend 835' : row.Category;
       const matchesCategory =
         !restrictCategories ||
         !normalizedCategory ||
         allowedCategories.includes(normalizedCategory);
-      const matchesSearch =
-        !needle ||
-        title.includes(needle) ||
-        category.includes(needle) ||
-        code.includes(needle) ||
-        modelTitle.includes(needle);
+      const matchesSearch = !needle || getModelSearchText(row).includes(needle);
       const categoryLabel = `${row.ModelTitle || row.model_title || ''}`.trim();
       const matchesFilters =
         selectedSet.size === 0 ||
@@ -121,6 +142,27 @@ const ArIntel = ({ onModelSelect }) => {
       return next;
     });
   }, [groupedModels]);
+
+  useEffect(() => {
+    if (!searchTerm.trim()) return;
+    setOpenModelGroups(new Set(groupedModels.map((group) => group.title)));
+  }, [searchTerm, groupedModels]);
+
+  const searchInput = (
+    <div className={`flex items-center gap-2 rounded-2xl border px-4 py-3 ${isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
+      <svg className={`h-4 w-4 ${isDark ? 'text-[#F4F4F4]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="11" cy="11" r="7" />
+        <path d="M21 21l-4.35-4.35" />
+      </svg>
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(event) => setSearchTerm(event.target.value)}
+        placeholder="Search by agent or model title"
+        className={`w-full bg-transparent text-sm outline-none ${isDark ? 'placeholder:text-white/40 text-white' : 'placeholder:text-slate-400 text-slate-700'}`}
+      />
+    </div>
+  );
 
   const toggleFilter = (filter) => {
     setSelectedFilters((prev) => {
@@ -197,7 +239,7 @@ const ArIntel = ({ onModelSelect }) => {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
       <div className={`ont-inter font-semibold text-[24px] leading-none tracking-normal ${isDark ? 'text-[#F4F4F4]' : 'text-slate-500'}`}>
-        {`AI Agents${selectedFilters.length ? ` > ${selectedFilters.map(formatAgentDisplayTitle).join(', ')}` : ''}`}
+        {`AI Agents${selectedFilters.length ? ` > ${selectedFilters.join(', ')}` : ''}`}
       </div>
       </div>
 
@@ -217,19 +259,7 @@ const ArIntel = ({ onModelSelect }) => {
           aria-hidden={!isFilterOpen}
         >
           <div className="px-6 pb-6">
-            <div className={`flex items-center gap-2 rounded-2xl border px-4 py-3 ${isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
-              <svg className={`h-4 w-4 ${isDark ? 'text-[#F4F4F4]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="7" />
-                <path d="M21 21l-4.35-4.35" />
-              </svg>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search"
-                className={`w-full bg-transparent text-sm outline-none ${isDark ? 'placeholder:text-white/40 text-white' : 'placeholder:text-slate-400 text-slate-700'}`}
-              />
-            </div>
+            {searchInput}
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {availableFilters.length === 0 && (
                 <div className={`text-xs ${isDark ? 'text-white/50' : 'text-slate-500'}`}>
@@ -237,7 +267,7 @@ const ArIntel = ({ onModelSelect }) => {
                 </div>
               )}
               {availableFilters.map((filter) => (
-                <label key={filter} className="flex items-center gap-[10px] text-xs font-medium">
+                <label key={filter} className="flex items-start gap-2.5 text-xs font-medium">
                   <input
                     type="checkbox"
                     checked={selectedFilters.includes(filter)}
@@ -245,16 +275,16 @@ const ArIntel = ({ onModelSelect }) => {
                     className="sr-only peer"
                   />
                   <span
-                    className={`relative box-border flex h-[30px] w-[30px] items-center justify-center rounded-[5px] transition-shadow border border-[#9b9ca1]
+                    className={`relative mt-0.5 box-border flex h-5 w-5 shrink-0 flex-none items-center justify-center rounded-[4px] border border-[#9b9ca1] transition-shadow
                       ${isDark ? 'bg-white/10' : 'bg-slate-200'}
-                      shadow-[0_4px_4px_rgba(0,0,0,0.25)]
+                      shadow-[0_2px_2px_rgba(0,0,0,0.2)]
                       peer-checked:bg-[#25262b] peer-checked:border-[#606165]
-                      peer-checked:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.25),inset_-4px_-4px_4px_rgba(0,0,0,0.25)]
+                      peer-checked:shadow-[inset_2px_2px_2px_rgba(0,0,0,0.25),inset_-2px_-2px_2px_rgba(0,0,0,0.25)]
                       peer-checked:[&>svg]:opacity-100
                     `}
                   >
                     <svg
-                      className="h-4 w-4 opacity-0 transition-opacity"
+                      className="h-3 w-3 opacity-0 transition-opacity"
                       viewBox="0 0 16 16"
                       fill="none"
                       stroke="#F4F4F4"
@@ -265,9 +295,9 @@ const ArIntel = ({ onModelSelect }) => {
                       <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
                     </svg>
                   </span>
-                  <span className={`flex items-center gap-2 ${isDark ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
-                    <AgentAvatar name={filter} size={28} />
-                    {formatAgentDisplayTitle(filter)}
+                  <span className={`flex min-w-0 flex-1 items-center gap-2 leading-snug ${isDark ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
+                    <AgentAvatar name={filter} size={24} />
+                    {filter}
                   </span>
                 </label>
               ))}
@@ -293,6 +323,7 @@ const ArIntel = ({ onModelSelect }) => {
           aria-hidden={!isAgentPanelOpen}
         >
           <div className="px-6 pb-6 flex flex-col gap-6">
+          {searchInput}
           {groupedModels.length === 0 && (
             <div className={`rounded-2xl border text-sm text-center py-6 ${isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
               No AI models available.
