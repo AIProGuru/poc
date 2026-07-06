@@ -21,3 +21,11 @@
   background: #353639;
   color: #f4f4f4;
 }
+
+.theme-light .triage-dropdown-item:hover,
+.theme-light .triage-dropdown-item:focus,
+.profile-page.theme-light .triage-dropdown-item:hover,
+.profile-page.theme-light .triage-dropdown-item:focus {
+  background: #f1f5f9;
+  color: #0f172a;
+}

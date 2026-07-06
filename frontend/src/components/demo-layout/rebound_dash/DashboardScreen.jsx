@@ -9,11 +9,39 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
   const [hoveredRecoveryWeek, setHoveredRecoveryWeek] = useState(null);
   const modelsState = useSelector((state) => state.app.models);
   const models = useMemo(() => modelsState ?? [], [modelsState]);
-  const surface = isDark ? "bg-[#1b1c20] border-[#2b2f37] text-gray-100" : "bg-white border-slate-200 text-slate-900";
-  const panel = isDark ? "bg-[#202228] border-[#2b2f37]" : "bg-white border-slate-200";
-  const muted = isDark ? "text-[#b7bcc6]" : "text-slate-500";
-  const subtle = isDark ? "text-[#8f96a3]" : "text-slate-400";
+
+  const surface = isDark
+    ? "bg-[#1b1c20] border-[#2b2f37] text-gray-100"
+    : "bg-white border-slate-200 text-slate-900 shadow-sm";
+  const panel = isDark
+    ? "bg-[#202228] border-[#2b2f37]"
+    : "bg-slate-50 border-slate-200";
+  const inset = isDark
+    ? "border-[#2b2f37] bg-black/30"
+    : "border-slate-200 bg-white";
+  const insetEmphasis = isDark
+    ? "border-[#2b2f37] bg-black/40"
+    : "border-slate-200 bg-slate-100";
+  const mobileCard = isDark
+    ? "border-[#2b2f37] bg-black/20"
+    : "border-slate-200 bg-white";
+  const muted = isDark ? "text-[#b7bcc6]" : "text-slate-600";
+  const subtle = isDark ? "text-[#8f96a3]" : "text-slate-500";
   const divider = isDark ? "border-[#2b2f37]" : "border-slate-200";
+  const rowTitle = isDark ? "text-gray-200" : "text-slate-800";
+  const valueDefault = isDark ? "text-gray-200" : "text-slate-700";
+  const progressTrack = isDark ? "bg-[#2a2d33]" : "bg-slate-200";
+  const progressFill = isDark ? "bg-[#9aa0ab]" : "bg-slate-500";
+  const tooltip = isDark
+    ? "border-[#2b2f37] bg-[#121418] text-white"
+    : "border-slate-200 bg-white text-slate-900 shadow-md";
+  const selectedItem = isDark
+    ? "bg-white/10 text-white"
+    : "bg-white text-slate-900 border border-slate-300 shadow-sm";
+  const helioWeekColors = isDark
+    ? ["#1CB5E0", "#46E5B9", "#2DD5A5", "#22B8CF", "#5C7CFA"]
+    : ["#cbd5e1", "#94a3b8", "#64748b", "#475569", "#334155"];
+
   const productivity = useMemo(() => {
     const grouped = new Map();
     (models || []).forEach((row) => {
@@ -73,7 +101,6 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
       });
   }, [filteredModels]);
 
-  const helioWeekColors = ["#1CB5E0", "#46E5B9", "#2DD5A5", "#22B8CF", "#5C7CFA"];
   const inventoryAccuracy = 82;
 
   const recoveryBars = useMemo(
@@ -109,24 +136,31 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
             {productivity.length === 0 ? (
               <div className={`text-sm ${muted}`}>No AI agents available.</div>
             ) : (
-              productivity.map(([name, value]) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => onSelectAgent?.(selectedAgent === name ? null : name)}
-                  className={`w-full flex items-center justify-between text-sm rounded-lg px-2 py-1 transition ${
-                    selectedAgent === name
-                      ? (isDark ? "bg-white/10 text-white" : "bg-slate-900 text-white")
-                      : (isDark ? "hover:bg-white/5" : "hover:bg-slate-100")
-                  }`}
-                >
-                  <span className={`flex items-center gap-2 ${selectedAgent === name ? "text-white" : muted}`}>
-                    <AgentAvatar name={name} size={28} />
-                    {name}
-                  </span>
-                  <span className={`font-semibold ${selectedAgent === name ? "text-white" : "text-gray-200"}`}>{value}</span>
-                </button>
-              ))
+              productivity.map(([name, value]) => {
+                const isSelected = selectedAgent === name;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => onSelectAgent?.(isSelected ? null : name)}
+                    className={`w-full flex items-center justify-between text-sm rounded-lg px-2 py-1 transition text-left ${
+                      isSelected
+                        ? selectedItem
+                        : isDark
+                          ? "hover:bg-white/5"
+                          : "hover:bg-slate-100"
+                    }`}
+                  >
+                    <span className={`flex items-center gap-2 ${isSelected ? (isDark ? "text-white" : "text-slate-900") : muted}`}>
+                      <AgentAvatar name={name} size={28} />
+                      {name}
+                    </span>
+                    <span className={`font-semibold ${isSelected ? (isDark ? "text-white" : "text-slate-900") : valueDefault}`}>
+                      {value}
+                    </span>
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
@@ -134,7 +168,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           <div className={`rounded-xl border p-4 ${panel}`}>
             <div className="text-sm font-semibold">Current Burn Rate</div>
-            <div className="mt-6 rounded-lg border border-[#2b2f37] bg-black/40 p-6 text-center">
+            <div className={`mt-6 rounded-lg border p-6 text-center ${insetEmphasis}`}>
               <div className="text-5xl font-semibold">75</div>
               <div className={`mt-2 text-xs ${subtle}`}>Days to burn through current inventory</div>
               <div className={`mt-3 text-[11px] leading-5 ${subtle}`}>
@@ -158,8 +192,8 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
             ) : (
               categoryRows.map((row) => (
                 <div key={row[0]} className={`py-3 text-sm ${muted}`}>
-                  <div className="sm:hidden space-y-1 rounded-lg border border-[#2b2f37] bg-black/20 p-3">
-                    <div className="text-gray-200 font-semibold truncate" title={row[0]}>{row[0]}</div>
+                  <div className={`sm:hidden space-y-1 rounded-lg border p-3 ${mobileCard}`}>
+                    <div className={`${rowTitle} font-semibold truncate`} title={row[0]}>{row[0]}</div>
                     <div className="flex items-center justify-between text-xs">
                       <span className={subtle}>Inventory</span>
                       <span className="tabular-nums">{row[1]}</span>
@@ -181,7 +215,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
                     {row.map((cell, i) => (
                       <div
                         key={`${row[0]}-${i}`}
-                        className={i === 0 ? "text-gray-200 truncate pr-2" : "text-right tabular-nums"}
+                        className={i === 0 ? `${rowTitle} truncate pr-2` : "text-right tabular-nums"}
                         title={i === 0 ? row[0] : undefined}
                       >
                         {cell}
@@ -194,67 +228,67 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[280px_1fr] lg:col-span-2">
-          <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">Inventory Accuracy</div>
-            <div className="mt-4 h-32 rounded-lg border border-[#2b2f37] bg-black/30 p-4">
-              <div className="text-xs uppercase text-[#7b808c]">Accuracy trend</div>
-              <div className="mt-4 h-2 w-full rounded-full bg-[#2a2d33]">
-                <div className="h-2 rounded-full bg-[#9aa0ab]" style={{ width: `${inventoryAccuracy}%` }} />
-              </div>
-              <div className={`mt-3 text-2xl font-semibold ${muted}`}>{inventoryAccuracy}%</div>
-            </div>
-          </div>
-
-          <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">Recovery $ Month to Date (MTD)</div>
-            <div className="relative mt-4 h-32 rounded-lg border border-[#2b2f37] bg-black/30 p-4">
-              {hoveredRecoveryWeek ? (
-                <div className="pointer-events-none absolute left-4 top-4 z-10 rounded-lg border border-[#2b2f37] bg-[#121418] px-3 py-2 text-xs text-white shadow-lg">
-                  <div>{`${hoveredRecoveryWeek.week} Claims: ${hoveredRecoveryWeek.claims}`}</div>
-                  <div>{`Recovered: ${formatCurrency(hoveredRecoveryWeek.recovered)}`}</div>
+            <div className={`rounded-xl border p-4 ${panel}`}>
+              <div className="text-sm font-semibold">Inventory Accuracy</div>
+              <div className={`mt-4 h-32 rounded-lg border p-4 ${inset}`}>
+                <div className={`text-xs uppercase ${subtle}`}>Accuracy trend</div>
+                <div className={`mt-4 h-2 w-full rounded-full ${progressTrack}`}>
+                  <div className={`h-2 rounded-full ${progressFill}`} style={{ width: `${inventoryAccuracy}%` }} />
                 </div>
-              ) : null}
-              <div className="flex items-end justify-between gap-1 sm:gap-2">
-                {recoveryBars.map((bar, idx) => (
-                  <div
-                    key={bar.week}
-                    className="flex w-full flex-col items-center"
-                    onMouseEnter={() => setHoveredRecoveryWeek(bar)}
-                    onMouseLeave={() => setHoveredRecoveryWeek(null)}
-                  >
+                <div className={`mt-3 text-2xl font-semibold ${muted}`}>{inventoryAccuracy}%</div>
+              </div>
+            </div>
+
+            <div className={`rounded-xl border p-4 ${panel}`}>
+              <div className="text-sm font-semibold">Recovery $ Month to Date (MTD)</div>
+              <div className={`relative mt-4 h-32 rounded-lg border p-4 ${inset}`}>
+                {hoveredRecoveryWeek ? (
+                  <div className={`pointer-events-none absolute left-4 top-4 z-10 rounded-lg border px-3 py-2 text-xs shadow-lg ${tooltip}`}>
+                    <div>{`${hoveredRecoveryWeek.week} Claims: ${hoveredRecoveryWeek.claims}`}</div>
+                    <div>{`Recovered: ${formatCurrency(hoveredRecoveryWeek.recovered)}`}</div>
+                  </div>
+                ) : null}
+                <div className="flex items-end justify-between gap-1 sm:gap-2">
+                  {recoveryBars.map((bar, idx) => (
                     <div
-                      className="w-full rounded-md transition-transform duration-150 hover:scale-[1.03]"
-                      style={{ height: `${bar.height}px`, backgroundColor: helioWeekColors[idx % helioWeekColors.length] }}
-                    />
-                    <span className={`mt-1 text-[10px] ${subtle}`}>{bar.week}</span>
+                      key={bar.week}
+                      className="flex w-full flex-col items-center"
+                      onMouseEnter={() => setHoveredRecoveryWeek(bar)}
+                      onMouseLeave={() => setHoveredRecoveryWeek(null)}
+                    >
+                      <div
+                        className="w-full rounded-md transition-transform duration-150 hover:scale-[1.03]"
+                        style={{ height: `${bar.height}px`, backgroundColor: helioWeekColors[idx % helioWeekColors.length] }}
+                      />
+                      <span className={`mt-1 text-[10px] ${subtle}`}>{bar.week}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className={`rounded-xl border p-4 ${panel}`}>
+              <div className="text-sm font-semibold">AR Balance</div>
+              <div className="mt-6 text-3xl font-semibold">{`$${Math.round(totals.totalAmount).toLocaleString("en-US")}`}</div>
+              <div className={`mt-2 text-xs ${subtle}`}>Balance across all open claims</div>
+            </div>
+
+            <div className={`rounded-xl border p-4 ${panel}`}>
+              <div className="text-sm font-semibold">Daily Capacity</div>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  ["Active Users", totals.activeUsers.toLocaleString("en-US")],
+                  ["Manual Users", totals.manualUsers.toLocaleString("en-US")],
+                  ["AI Agents", totals.activeAiAgents.toLocaleString("en-US")],
+                  ["Accounts / Day", totals.dailyCapacity.toLocaleString("en-US")],
+                ].map(([label, value]) => (
+                  <div key={label} className={`rounded-lg border p-3 ${inset}`}>
+                    <div className={`text-xs ${subtle}`}>{label}</div>
+                    <div className="mt-1 text-xl font-semibold">{value}</div>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-
-          <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">AR Balance</div>
-            <div className="mt-6 text-3xl font-semibold">{`$${Math.round(totals.totalAmount).toLocaleString("en-US")}`}</div>
-            <div className={`mt-2 text-xs ${subtle}`}>Balance across all open claims</div>
-          </div>
-
-          <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">Daily Capacity</div>
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                ["Active Users", totals.activeUsers.toLocaleString("en-US")],
-                ["Manual Users", totals.manualUsers.toLocaleString("en-US")],
-                ["AI Agents", totals.activeAiAgents.toLocaleString("en-US")],
-                ["Accounts / Day", totals.dailyCapacity.toLocaleString("en-US")],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-lg border border-[#2b2f37] bg-black/30 p-3">
-                  <div className={`text-xs ${subtle}`}>{label}</div>
-                  <div className="mt-1 text-xl font-semibold">{value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
           </div>
         </div>
       </div>

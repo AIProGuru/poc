@@ -3,7 +3,6 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import Header from "../components/demo-layout/Header";
 import { useApiEndpoint } from "../ApiEndpointContext";
 
 const EMPTY_FORM = {
@@ -106,7 +105,9 @@ const AppealTemplates = () => {
     );
   }, [search, templates]);
 
-  const inputClass = `w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#44BFAB] ${
+  const inputClass = `w-full rounded-lg border px-3 py-2 text-sm focus:outline-none ${
+    isDark ? "focus:ring-1 focus:ring-white/20" : "focus:ring-1 focus:ring-slate-300"
+  } ${
     isDark
       ? "border-[#30323a] bg-[#191a1f] text-white placeholder-gray-500"
       : "border-slate-200 bg-white text-slate-900 placeholder-slate-400"
@@ -217,38 +218,8 @@ const AppealTemplates = () => {
   };
 
   return (
-    <div
-      className={`min-h-screen w-full overflow-x-hidden ${
-        isDark ? "bg-[#1e1f24] text-white" : "bg-slate-50 text-slate-900"
-      }`}
-    >
-      <div className="px-4 sm:px-6 pt-4 [&>div]:!mt-0 [&>div]:!mb-4">
-        <Header />
-      </div>
-      <div className="container mx-auto w-full max-w-[1440px] px-4 sm:px-6 pb-10 pt-4">
-        <div className="mb-6 flex items-start gap-4">
-          <button
-            type="button"
-            onClick={() => navigate("/governance-management")}
-            className={`mt-1 rounded-lg p-2 transition ${isDark ? "bg-[#ffffff10] hover:bg-[#ffffff20]" : "bg-white hover:bg-slate-100 border border-slate-200"}`}
-            aria-label="Back to Governance Management"
-            title="Back to Governance Management"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M19 12H5M5 12L12 19M5 12L12 5"
-                stroke={isDark ? "white" : "#0F172A"}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold">Appeal Templates</h1>
-          </div>
-        </div>
-
+    <div className={`w-full overflow-x-hidden ${isDark ? 'text-gray-100' : 'text-slate-900'}`}>
+      <div className="px-6 md:px-10 py-4">
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[400px_minmax(0,1fr)] xl:items-start">
           <form onSubmit={handleSubmit} className={`${panelClass} flex flex-col gap-3`}>
             <h2 className="text-lg font-semibold">Upload</h2>
@@ -331,7 +302,7 @@ const AppealTemplates = () => {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-lg bg-[#44BFAB] px-4 py-2 text-sm font-semibold text-[#06211e] hover:bg-[#35b7a5] disabled:opacity-60"
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${isDark ? "bg-[#3b3f46] text-white hover:bg-[#4a4f57]" : "bg-slate-700 text-white hover:bg-slate-800"}`}
               >
                 {saving ? "Uploading..." : "Upload"}
               </button>
@@ -422,7 +393,7 @@ const AppealTemplates = () => {
                             <button
                               type="button"
                               onClick={() => handleDelete(template.id)}
-                              className={`rounded-lg px-3 py-2 text-xs font-semibold ${isDark ? "bg-red-500/15 text-red-200 hover:bg-red-500/25" : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-100"}`}
+                              className={`rounded-lg px-3 py-2 text-xs font-semibold ${isDark ? "bg-white/10 text-gray-200 hover:bg-white/15 border border-white/10" : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"}`}
                             >
                               Delete
                             </button>
@@ -498,7 +469,7 @@ const AppealTemplates = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleDelete(template.id)}
-                                  className={`inline-flex min-w-[88px] items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold leading-5 whitespace-nowrap ${isDark ? "bg-red-500/15 text-red-200 hover:bg-red-500/25" : "bg-red-50 text-red-700 hover:bg-red-100"}`}
+                                  className={`inline-flex min-w-[88px] items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold leading-5 whitespace-nowrap ${isDark ? "bg-white/10 text-gray-200 hover:bg-white/15 border border-white/10" : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"}`}
                                 >
                                   Delete
                                 </button>

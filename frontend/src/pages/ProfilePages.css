@@ -1,0 +1,198 @@
+/* Shared profile/admin page theming */
+.profile-page.theme-light {
+  color: #0f172a;
+}
+
+.profile-page.theme-light .text-white {
+  color: #0f172a !important;
+}
+
+.profile-page.theme-light .text-gray-100 {
+  color: #1e293b !important;
+}
+
+.profile-page.theme-light .text-gray-200 {
+  color: #334155 !important;
+}
+
+.profile-page.theme-light .text-gray-300 {
+  color: #475569 !important;
+}
+
+.profile-page.theme-light .text-gray-400 {
+  color: #64748b !important;
+}
+
+.profile-page.theme-light [class*="text-[#f4f4f4]"] {
+  color: #334155 !important;
+}
+
+.profile-page.theme-light [class*="text-[#D9D9D9"] {
+  color: #475569 !important;
+}
+
+.profile-page.theme-light [class*="text-[#9ca3af]"] {
+  color: #64748b !important;
+}
+
+.profile-page.theme-light [class*="text-[#6C9BE0]"] {
+  color: #475569 !important;
+}
+
+.profile-page.theme-light .cm-title {
+  color: #0f172a !important;
+}
+
+/* Surfaces and cards */
+.profile-page.theme-light [class*="bg-[#232429]"],
+.profile-page.theme-light [class*="bg-[#2a2b30]"] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+}
+
+.profile-page.theme-light [class*="bg-[#ffffff05]"],
+.profile-page.theme-light [class*="bg-[#ffffff08]"],
+.profile-page.theme-light [class*="bg-[#ffffff10]"],
+.profile-page.theme-light [class*="bg-[#ffffff12]"],
+.profile-page.theme-light [class*="bg-[#ffffff15]"] {
+  background-color: #f8fafc !important;
+}
+
+.profile-page.theme-light [class*="bg-[#1f232a]"] {
+  background-color: #ffffff !important;
+}
+
+.profile-page.theme-light [class*="from-[#121953]"] {
+  background-image: none !important;
+  background-color: #ffffff !important;
+}
+
+.profile-page.theme-light [class*="to-[#0B0C14]"] {
+  background-color: #ffffff !important;
+}
+
+/* Borders */
+.profile-page.theme-light [class*="border-[#ffffff05]"],
+.profile-page.theme-light [class*="border-[#ffffff08]"],
+.profile-page.theme-light [class*="border-[#ffffff10]"],
+.profile-page.theme-light [class*="border-[#ffffff14]"],
+.profile-page.theme-light [class*="border-[#ffffff15]"],
+.profile-page.theme-light [class*="border-[#ffffff20]"],
+.profile-page.theme-light [class*="border-[#ffffff30]"],
+.profile-page.theme-light [class*="border-[#2f333a]"],
+.profile-page.theme-light [class*="border-[#6C9BE050]"],
+.profile-page.theme-light [class*="border-[#f4f4f450]"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Row hover */
+.profile-page.theme-light tr[class*="hover:bg-[#ffffff08]"]:hover,
+.profile-page.theme-light [class*="hover:bg-[#ffffff08]"]:hover,
+.profile-page.theme-light [class*="hover:bg-[#ffffff10]"]:hover,
+.profile-page.theme-light [class*="hover:bg-[#ffffff15]"]:hover,
+.profile-page.theme-light [class*="hover:bg-[#ffffff20]"]:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.profile-page.theme-light [class*="hover:text-white"]:hover {
+  color: #0f172a !important;
+}
+
+.profile-page.theme-light [class*="hover:bg-[#2a2f38]"]:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* Form controls */
+.profile-page.theme-light input,
+.profile-page.theme-light select,
+.profile-page.theme-light textarea {
+  color: #0f172a;
+}
+
+.profile-page.theme-light input[class*="bg-[#ffffff10]"],
+.profile-page.theme-light select[class*="bg-[#ffffff10]"],
+.profile-page.theme-light textarea[class*="bg-[#ffffff10]"],
+.profile-page.theme-light input[class*="bg-[#1f232a]"],
+.profile-page.theme-light select[class*="bg-[#1f232a]"],
+.profile-page.theme-light textarea[class*="bg-[#1f232a]"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.profile-page.theme-light select option,
+.profile-page.theme-light select option[class*="bg-[#1f232a]"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.profile-page.theme-light select,
+.profile-page.theme-light select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.profile-page.theme-light select:focus,
+.profile-page.theme-light select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.45);
+}
+
+/* Keep primary action buttons readable */
+.profile-page.theme-light button[class*="bg-[#3b3f46]"],
+.profile-page.theme-light button[class*="bg-slate-700"] {
+  color: #ffffff !important;
+}
+
+.profile-page.theme-light button[class*="bg-[#ffffff10]"]:not([class*="bg-[#3b3f46]"]) {
+  color: #334155 !important;
+}
+
+/* Dropdown / portal menus */
+.profile-page.theme-light [class*="bg-[#1f232a]"][class*="shadow-lg"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.profile-page.theme-light [class*="bg-[#1f232a]"][class*="shadow-lg"] button[class*="text-white"],
+.profile-page.theme-light [class*="bg-[#1f232a]"][class*="shadow-lg"] button[class*="text-gray-200"] {
+  color: #0f172a !important;
+}
+
+/* Client management card helpers */
+.client-management.theme-light .client-card {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08) !important;
+}
+
+.client-management.theme-light .client-card:hover {
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12) !important;
+}
+
+.client-management.theme-light .client-modal {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+  color: #0f172a !important;
+}
+
+.client-management.theme-light .client-modal input,
+.client-management.theme-light .client-modal select,
+.client-management.theme-light .client-modal textarea {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #d1d5db !important;
+}
+
+/* Scrollbars */
+.profile-page.theme-light .overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.profile-page.theme-light .overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+}
+
+.profile-page.theme-light .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}

@@ -6,27 +6,12 @@ import './ClientManagement.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { SERVER_URL } from '../utils/config';
-import Header from '../components/demo-layout/Header';
-
-const readStoredTenantBase = () => {
-  try {
-    const value = localStorage.getItem('lastTenantBase');
-    return ['rebound', 'pilotcustomer', 'betacustomer', 'demo'].includes(value || '')
-      ? value
-      : '';
-  } catch (err) {
-    return '';
-  }
-};
 
 const ClientManagement = () => {
   const navigate = useNavigate();
   const platformApiUrl = `${SERVER_URL}/api`;
   const resolvedApiUrl = platformApiUrl;
   const theme = useSelector((state) => state.app.theme);
-  const appType = useSelector((state) => state.auth.appType);
-  const appTypeFallback = useSelector((state) => state.app.type);
-  const tenant = useSelector((state) => state.auth.tenant);
   const isDark = theme === 'dark';
 
   const [clients, setClients] = useState([]);
@@ -42,35 +27,6 @@ const ClientManagement = () => {
     email: '',
   });
 
-  const resolveHomePath = (userData = {}) => {
-    const rawTenant = `${userData.tenant || userData.product || userData.basePath || ""}`.toLowerCase();
-    if (rawTenant === "rebound" || rawTenant === "pilotcustomer" || rawTenant === "betacustomer" || rawTenant === "demo") {
-      return `/${rawTenant}`;
-    }
-    const rawType = userData.appType ?? userData.type;
-    if (rawType === 0) return "/rebound";
-    if (rawType === 1) return "/pilotcustomer";
-    if (rawType === 3) return "/betacustomer";
-    if (rawType === 2) return "/demo";
-    return "";
-  };
-
-  const handleHomeNavigation = () => {
-    const path = resolveHomePath({ tenant, appType });
-    if (path) {
-      navigate(path);
-      return;
-    }
-    const storedTenantBase = readStoredTenantBase();
-    if (storedTenantBase) {
-      navigate(`/${storedTenantBase}`);
-      return;
-    }
-    const fallbackPath = resolveHomePath({ appType: appTypeFallback });
-    if (fallbackPath) {
-      navigate(fallbackPath);
-    }
-  };
   const [isClientTypeOpen, setIsClientTypeOpen] = useState(false);
   const [logoUploadingId, setLogoUploadingId] = useState(null);
   const clientTypeButtonRef = useRef(null);
@@ -389,6 +345,16 @@ const ClientManagement = () => {
   const rowInputClass = `w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none ${
     isDark ? 'bg-[#ffffff10] text-white border-[#ffffff20]' : 'bg-white text-slate-900 border-slate-200'
   }`;
+  const tableHeadClass = isDark ? 'text-[#9ca3af] border-b border-[#ffffff20]' : 'text-slate-500 border-b border-slate-200';
+  const newRowClass = isDark
+    ? 'border-b border-[#ffffff20] text-[#D9D9D9CC] bg-[#ffffff05]'
+    : 'border-b border-slate-200 text-slate-600 bg-slate-50';
+  const dataRowClass = isDark
+    ? 'border-b border-[#ffffff10] text-[#D9D9D9CC] hover:bg-[#ffffff08] transition-colors'
+    : 'border-b border-slate-100 text-slate-600 hover:bg-slate-50 transition-colors';
+  const portalMenuClass = isDark
+    ? 'z-50 rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg'
+    : 'z-50 rounded-md border bg-white border-slate-200 shadow-lg';
   const sortArrow = (key) => {
     if (sortConfig.key !== key) return null;
     return <span className="ml-1">{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>;
@@ -406,7 +372,7 @@ const ClientManagement = () => {
           <col className="w-[140px]" />
         </colgroup>
         <thead>
-          <tr className="text-[#9ca3af] border-b border-[#ffffff20]">
+          <tr className={tableHeadClass}>
             <th className="px-3 py-3 text-left" onClick={() => handleSort('name')}>
               Client
               {sortArrow('name')}
@@ -432,7 +398,7 @@ const ClientManagement = () => {
         </thead>
         <motion.tbody variants={containerVariants} initial="hidden" animate="show">
           <motion.tr
-            className="border-b border-[#ffffff20] text-[#D9D9D9CC] bg-[#ffffff05]"
+            className={newRowClass}
             variants={itemVariants}
           >
             <td className="px-3 py-3">
@@ -503,7 +469,7 @@ const ClientManagement = () => {
                   <div
                     ref={clientTypeMenuRef}
                     style={clientTypeMenuStyle}
-                    className={`z-50 rounded-md border ${isDark ? 'bg-[#1f232a] border-[#ffffff20]' : 'bg-white border-slate-200'} shadow-lg`}
+                    className={portalMenuClass}
                   >
                     {CLIENT_TYPE_OPTIONS.map((option) => (
                       <button
@@ -573,7 +539,7 @@ const ClientManagement = () => {
           {filteredClients.map(client => (
             <motion.tr
               key={client.id}
-              className="border-b border-[#ffffff10] text-[#D9D9D9CC] hover:bg-[#ffffff08] transition-colors"
+              className={dataRowClass}
               variants={itemVariants}
             >
               <td className="px-3 py-4 text-white">
@@ -634,7 +600,7 @@ const ClientManagement = () => {
                   <button
                     type="button"
                     onClick={() => handleDeleteClient(client.id, client.name || 'Client')}
-                    className="px-3 py-1.5 bg-red-500/80 hover:bg-red-500 text-white text-xs font-medium rounded-md transition-all"
+                    className="px-3 py-1.5 bg-white/10 hover:bg-white/15 text-gray-200 text-xs font-medium rounded-md border border-white/10 transition-all"
                   >
                     Delete
                   </button>
@@ -649,29 +615,8 @@ const ClientManagement = () => {
 
   // Main component render
   return (
-    <div className={`client-management min-h-screen overflow-x-hidden ${isDark ? 'theme-dark bg-[#1e1f24] text-white' : 'theme-light bg-slate-50 text-slate-900'}`}>
-      <Header />
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex items-start gap-4 mb-8">
-          <button
-            type="button"
-            onClick={handleHomeNavigation}
-            className="p-2 bg-[#ffffff10] rounded-lg hover:bg-[#ffffff20] transition mt-1"
-            aria-label="Back to Home"
-            title="Back to Home"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <div>
-            <h1 className="mb-2 text-2xl font-bold">Client Management</h1>
-            <p className={isDark ? "text-[#9ca3af]" : "text-slate-500"}>
-              Add clients, then manage tenants and facilities from each client dashboard.
-            </p>
-          </div>
-        </div>
-
+    <div className={`profile-page client-management w-full overflow-x-hidden ${isDark ? 'theme-dark text-white' : 'theme-light text-slate-900'}`}>
+      <div className="px-6 md:px-10 py-4">
         {/* Filters and Controls */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
           <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
@@ -690,9 +635,6 @@ const ClientManagement = () => {
               />
             </div>
           </div>
-          <p className={`text-sm ${isDark ? 'text-[#9ca3af]' : 'text-slate-500'}`}>
-            Client Type options: Service Provider, Hospital System, Ambulatory Provider.
-          </p>
         </div>
         
         {/* Loading State */}

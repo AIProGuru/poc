@@ -1,9 +1,10 @@
 import { Suspense, lazy } from "react";
 import reboundRoutes from "./rebound";
 import managementRoutes from "./management";
+import profileRoutes from "./profile";
 import PrivateRoute from "../components/private-routes/PrivateRoutes";
 import demoRoutes from "./demo";
-import { ALL_ROLES, CLIENT_MANAGEMENT_ROLES, GOVERNANCE_MANAGEMENT_ROLES, USER_MANAGEMENT_ROLES } from "../utils/roles";
+import { ALL_ROLES, USER_MANAGEMENT_ROLES } from "../utils/roles";
 
 const Demo = lazy(() => import("../pages/Demo"));
 const Home = lazy(() => import("../pages/Home"));
@@ -33,13 +34,6 @@ const Physicians = lazy(() => import("../pages/Physicians"));
 const RCM = lazy(() => import("../pages/RCM"));
 const PracticeManagement = lazy(() => import("../pages/PracticeManagement"));
 const BillingAgencies = lazy(() => import("../pages/BillingAgencies"));
-const ClientManagement = lazy(() => import("../pages/ClientManagement"));
-const ClientDashboard = lazy(() => import("../pages/ClientDashboard"));
-const TenantDetails = lazy(() => import("../pages/TenantDetails"));
-const Edit_client = lazy(() => import("../pages/Client/Edit_client"));
-const AccountSettings = lazy(() => import("../pages/AccountSettings"));
-const AppealTemplates = lazy(() => import("../pages/AppealTemplates"));
-const GovernanceManagement = lazy(() => import("../pages/GovernanceManagement"));
 
 const AUTH_ROLES = ALL_ROLES;
 const suspense = (element) => <Suspense fallback={null}>{element}</Suspense>;
@@ -116,30 +110,6 @@ const routesConfig = [
   {
     path: "/train",
     element: suspense(<PrivateRoute role={USER_MANAGEMENT_ROLES} element={NormalChat} />),
-  },
-  {
-    path: "/clientmanagement",
-    element: suspense(<PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={ClientManagement} />),
-  },
-  {
-    path: "/client/:clientId",
-    element: suspense(<PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={ClientDashboard} />),
-  },
-  {
-    path: "/client/:clientId/tenant/:tenantId",
-    element: suspense(<PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={TenantDetails} />),
-  },
-  {
-    path: "/client/:id/edit",
-    element: suspense(<PrivateRoute role={CLIENT_MANAGEMENT_ROLES} element={Edit_client} />),
-  },
-  {
-    path: "/governance-management",
-    element: suspense(<PrivateRoute role={GOVERNANCE_MANAGEMENT_ROLES} element={GovernanceManagement} />),
-  },
-  {
-    path: "/appeal-templates",
-    element: suspense(<PrivateRoute role={GOVERNANCE_MANAGEMENT_ROLES} element={AppealTemplates} />),
   },
   {
     // path: "/home",
@@ -237,10 +207,7 @@ const routesConfig = [
     path: "/verify_error",
     element: suspense(<Error404 message={"Verify error"} />),
   },
-  {
-    path: "/account-settings",
-    element: suspense(<PrivateRoute role={AUTH_ROLES} element={AccountSettings} />),
-  },
+  ...profileRoutes,
   {
     path: "*",
     element: suspense(<PrivateRoute role={AUTH_ROLES} element={Notfound} />),

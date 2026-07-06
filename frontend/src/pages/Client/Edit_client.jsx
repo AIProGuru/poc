@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { doc, getDoc, updateDoc } from 'firebase/firestore/lite';
 import { db } from '../../FirebaseConfig';
+import '../ProfilePages.css';
 
 const Edit_client = () => {
   // Extract ID from URL parameters
   const params = useParams();
   const id = params.id;
   const navigate = useNavigate();
+  const theme = useSelector((state) => state.app.theme);
+  const isDark = theme === 'dark';
+  const pageClass = `profile-page w-full ${isDark ? 'theme-dark text-white' : 'theme-light text-slate-900'}`;
+  const cardClass = isDark
+    ? 'border border-[#6C9BE050] bg-gradient-to-br from-[#121953] to-[#0B0C14] shadow-2xl'
+    : 'border border-slate-200 bg-white shadow-sm';
+  const labelClass = isDark ? 'text-[#6C9BE0]' : 'text-slate-600';
+  const inputClass = isDark
+    ? 'w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none'
+    : 'w-full p-2.5 bg-white rounded-lg text-slate-900 border border-slate-200 focus:ring-gray-500 focus:border-gray-500 focus:outline-none';
+  const secondaryButtonClass = isDark
+    ? 'px-5 py-2.5 bg-[#ffffff10] hover:bg-[#ffffff20] text-white rounded-lg transition-colors'
+    : 'px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors border border-slate-200';
   
   console.log("Firebase DB instance:", db);
   console.log("Received ID from URL params:", id);
@@ -199,91 +213,70 @@ const Edit_client = () => {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[#121953] bg-opacity-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#6C9BE0]"></div>
+      <div className="w-full px-6 md:px-10 py-4">
+        <div className="flex items-center justify-center py-24">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#6C9BE0]"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <motion.div
-      className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70 p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <motion.div 
-        className="bg-gradient-to-br from-[#121953] to-[#0B0C14] rounded-xl w-full max-w-4xl overflow-hidden border border-[#6C9BE050] shadow-2xl"
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: "spring", damping: 20 }}
-      >
-        <div className="flex justify-between items-center border-b border-[#ffffff20] p-6">
-          <h2 className="text-xl font-semibold text-white">Edit Client</h2>
-          <button 
-            onClick={() => navigate('/clientmanagement')}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-        
+    <div className={`${pageClass} px-6 md:px-10 py-4`}>
+      <div className={`mx-auto w-full max-w-4xl overflow-hidden rounded-xl ${cardClass}`}>
         <form onSubmit={handleSubmit} className="p-6 max-h-[80vh] overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Client Name</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Client Name</label>
               <input 
                 type="text" 
                 name="name" 
                 value={formData.name || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               />
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Contact Person</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Contact Person</label>
               <input 
                 type="text" 
                 name="contact" 
                 value={formData.contact || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               />
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Email</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Email</label>
               <input 
                 type="email" 
                 name="email" 
                 value={formData.email || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               />
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Phone</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Phone</label>
               <input 
                 type="tel" 
                 name="phone" 
                 value={formData.phone || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               />
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Status</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Status</label>
               <select 
                 name="status" 
                 value={formData.status || 'Pending'}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               >
                 <option value="Active">Active</option>
                 <option value="Pending">Pending</option>
@@ -293,68 +286,68 @@ const Edit_client = () => {
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Tenant Name</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Tenant Name</label>
               <input 
                 type="text" 
                 name="tenantName" 
                 value={formData.tenantName || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               />
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Facility Name</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Facility Name</label>
               <input 
                 type="text" 
                 name="facilityName" 
                 value={formData.facilityName || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               />
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Facility Type</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Facility Type</label>
               <input
                 type="text" 
                 name="facilityType" 
                 value={formData.facilityType || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               />
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Facility Address</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Facility Address</label>
               <input 
                 type="text" 
                 name="facilityAddress" 
                 value={formData.facilityAddress || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               />
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Facility Tax ID</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Facility Tax ID</label>
               <input 
                 type="text" 
                 name="facilityTaxID" 
                 value={formData.facilityTaxID || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               />
             </div>
             
             <div>
-              <label className="block text-[#6C9BE0] mb-2 text-sm">Facility NPI</label>
+              <label className={`block ${labelClass} mb-2 text-sm`}>Facility NPI</label>
               <input 
                 type="text" 
                 name="facilityNPI" 
                 value={formData.facilityNPI || ''}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#ffffff10] rounded-lg text-white border border-[#ffffff20] focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                className={inputClass}
               />
             </div>
           </div>
@@ -363,7 +356,7 @@ const Edit_client = () => {
             <button
               type="button"
               onClick={() => navigate('/clientmanagement')}
-              className="px-5 py-2.5 bg-[#ffffff10] hover:bg-[#ffffff20] text-white rounded-lg transition-colors"
+              className={secondaryButtonClass}
             >
               Cancel
             </button>
@@ -403,8 +396,8 @@ const Edit_client = () => {
             </div>
           </div>
         )}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 

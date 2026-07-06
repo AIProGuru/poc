@@ -98,7 +98,7 @@ const SupportWidget = () => {
               <button
                 type="submit"
                 className={`px-4 py-2 rounded-md text-sm font-semibold transition ${
-                  isDark ? "bg-[#3b3f46] text-white hover:bg-gray-700" : "bg-[#151619] text-white hover:bg-gray-800"
+                  isDark ? "bg-[#3b3f46] text-white hover:bg-[#4a4f57]" : "bg-[#3b3f46] text-white hover:bg-[#4a4f57]"
                 }`}
               >
                 Send
@@ -112,8 +112,8 @@ const SupportWidget = () => {
         type="button"
         className={`flex items-center gap-2 rounded-md px-4 py-3 shadow-lg transition ${
           isDark
-            ? "bg-[#3b3f46] text-white hover:bg-gray-700"
-            : "bg-[#151619] text-white hover:bg-gray-800"
+            ? "bg-[#3b3f46] text-white hover:bg-[#4a4f57]"
+            : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
         }`}
         onClick={() => setIsOpen((prev) => !prev)}
         aria-label="Open support"

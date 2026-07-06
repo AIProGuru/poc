@@ -90,6 +90,15 @@ const ReboundDetailView = () => {
   const theme = useSelector((state) => state.app.theme);
   const appTitle = useSelector((state) => state.app.title);
   const isDark = theme === 'dark';
+  const detailTabActiveClass = isDark
+    ? 'bg-white/10 text-white border border-white/20'
+    : 'bg-slate-100 text-slate-900 border border-slate-300 shadow-sm';
+  const detailTabInactiveClass = isDark
+    ? 'text-gray-400 border border-transparent hover:border-[#2e364a] hover:bg-[#141824]'
+    : 'text-slate-600 border border-transparent hover:bg-slate-100';
+  const mutedLabelClass = isDark ? 'text-gray-400' : 'text-slate-600';
+  const bodyTextClass = isDark ? 'text-gray-300' : 'text-slate-700';
+  const emphasisTextClass = isDark ? 'text-gray-200' : 'text-slate-800';
   const navigate = useNavigate();
   const username = useSelector((state) => state.auth.username);
   const [detailShowStatus, setDetailShowStatus] = useState(0);
@@ -198,9 +207,9 @@ const ReboundDetailView = () => {
       ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100'
       : 'bg-gray-100 border-gray-200 text-gray-800'
     }`;
-  const saveAndSubmitButtonClass = `px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 shadow-[0_12px_30px_rgba(0,0,0,0.22)] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44BFAB]/40 disabled:opacity-60 disabled:cursor-not-allowed ${isDark
-      ? 'bg-[#44BFAB] text-[#061816] hover:bg-[#54d7c3]'
-      : 'bg-[#44BFAB] text-[#06211e] hover:bg-[#35b7a5]'
+  const saveAndSubmitButtonClass = `px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${isDark
+      ? 'bg-[#3b3f46] text-white hover:bg-[#4a4f57] focus-visible:ring-2 focus-visible:ring-white/20 shadow-[0_8px_20px_rgba(0,0,0,0.25)]'
+      : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57] focus-visible:ring-2 focus-visible:ring-slate-300 shadow-sm'
     }`;
 
   let { token } = useParams()
@@ -869,7 +878,7 @@ const ReboundDetailView = () => {
 
   const renderCodeChipList = (entries) => {
     if (!entries.length) {
-      return <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>N/A</span>;
+      return <span className={isDark ? 'text-gray-400' : 'text-slate-600'}>N/A</span>;
     }
     return (
       <div className="flex flex-col gap-1.5">
@@ -1093,7 +1102,7 @@ const ReboundDetailView = () => {
           <span className={`font-semibold whitespace-nowrap ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
             {field.label}:
           </span>
-          <span className={`break-words ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+          <span className={`break-words ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
             {field.value}
           </span>
         </div>
@@ -1326,8 +1335,8 @@ const ReboundDetailView = () => {
       {currentClaim && (
         <div
           className={`flex flex-col gap-4 p-4 rounded-lg border m-4 ${isDark
-            ? 'bg-[#26272c]/20 border-white/5 shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
-            : 'bg-white border-gray-200 shadow-[0_8px_18px_rgba(0,0,0,0.08)]'
+            ? 'bg-[#26272c]/20 border-white/5 shadow-[0_4px_4px_rgba(0,0,0,0.25)] text-gray-100'
+            : 'bg-white border-gray-200 shadow-[0_8px_18px_rgba(0,0,0,0.08)] text-slate-900'
             }`}
         >
 
@@ -1337,19 +1346,19 @@ const ReboundDetailView = () => {
 
           {/* <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 p-3 rounded-2xl border ${isDark ? 'bg-[#0b0f16] border-[#1f2433] shadow-[0_12px_30px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 shadow-[0_10px_28px_rgba(0,0,0,0.08)]'}`}>
           <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
-            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Service Date(s)</div>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Service Date(s)</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
               {formatDateValue(currentClaim.Claim.Data.ServiceDate)}
             </div>
           </div>
 
           <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
-            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Charges</div>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Charges</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.Amount)}</div>
           </div>
 
           <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
-            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Allowed Amt</div>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Allowed Amt</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
               {formatCurrency(
                 currentClaim.Remit.length === 0
@@ -1360,17 +1369,17 @@ const ReboundDetailView = () => {
           </div>
 
           <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
-            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Paid Amt</div>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Paid Amt</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.PaidAmount)}</div>
           </div>
 
           <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
-            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Patient Resp</div>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Patient Resp</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.PatientResp)}</div>
           </div>
 
           <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
-            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Contractual Adj</div>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Contractual Adj</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
               {formatCurrency(
                 currentClaim.Remit.length === 0
@@ -1384,7 +1393,7 @@ const ReboundDetailView = () => {
           </div>
 
           <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
-            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Denied Amt</div>
+            <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Denied Amt</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.DeniedAmount)}</div>
           </div>
         </div> */}
@@ -1418,12 +1427,8 @@ const ReboundDetailView = () => {
                     key={tab.id}
                     onClick={() => onDetailShowStatusChange(tab.id)}
                     className={`flex-1 text-center px-4 py-2 text-sm font-semibold rounded-xl transition ${active
-                      ? isDark
-                        ? 'bg-[#ffffff]/10 text-white border border-[#3c4661]'
-                        : 'bg-slate-900 text-white border border-slate-800'
-                      : isDark
-                        ? 'text-gray-400 border border-transparent hover:border-[#2e364a] hover:bg-[#141824]'
-                        : 'text-gray-600 border border-transparent hover:bg-gray-100'
+                      ? detailTabActiveClass
+                      : detailTabInactiveClass
                       }`}
                   >
                     {tab.label}
@@ -1434,23 +1439,23 @@ const ReboundDetailView = () => {
           </div>
 
           {detailShowStatus == 0 && (
-            <div className={`rounded-2xl border p-6 ${isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-100 shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 text-gray-900 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
-              <p className="text-lg font-semibold">Insights</p>
+            <div className={`rounded-2xl border p-6 ${isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-100 shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 text-slate-900 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
+              <p className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-slate-900'}`}>Insights</p>
               <div className={`mt-3 h-px w-full ${isDark ? 'bg-white/20' : 'bg-gray-200'}`} />
               {isPend277 ? (
                 <>
-                  <p className={`mt-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <p className={`mt-4 text-sm ${bodyTextClass}`}>
                     This requires <span className="text-[#FF5C5C] font-semibold">REVIEW</span> for:
                   </p>
                   <ul className="mt-3 space-y-2 text-sm">
-                    <li className={isDark ? 'text-gray-200' : 'text-gray-700'}>
+                    <li className={emphasisTextClass}>
                       - 277 pending from Payer
                     </li>
                   </ul>
                 </>
               ) : (
                 <>
-                  <p className={`mt-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <p className={`mt-4 text-sm ${bodyTextClass}`}>
                     This was <span className="text-[#FF5C5C] font-semibold">DENIED</span> for:
                   </p>
                   <ul className="mt-3 space-y-2 text-sm">
@@ -1470,12 +1475,12 @@ const ReboundDetailView = () => {
 
                       if (uniqueReasons.length === 0) {
                         return (
-                          <li className={isDark ? 'text-gray-400' : 'text-gray-500'}>- No adjustment details available.</li>
+                          <li className={isDark ? 'text-gray-400' : 'text-slate-600'}>- No adjustment details available.</li>
                         );
                       }
 
                       return uniqueReasons.map((reason, idx) => (
-                        <li key={`insight-${idx}`} className={isDark ? 'text-gray-200' : 'text-gray-700'}>
+                        <li key={`insight-${idx}`} className={emphasisTextClass}>
                           - {reason}
                         </li>
                       ));
@@ -1598,7 +1603,7 @@ const ReboundDetailView = () => {
                       ))}
                       {(currentClaim?.Claim?.Diagnosis || []).length === 0 && (
                         <tr>
-                          <td colSpan={2} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No diagnosis data.</td>
+                          <td colSpan={2} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>No diagnosis data.</td>
                         </tr>
                       )}
                     </tbody>
@@ -1668,7 +1673,7 @@ const ReboundDetailView = () => {
                       })}
                       {(currentClaim?.Claim?.ServiceLine || []).length === 0 && (
                         <tr>
-                          <td colSpan={7} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No service line detail.</td>
+                          <td colSpan={7} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>No service line detail.</td>
                         </tr>
                       )}
                     </tbody>
@@ -1879,7 +1884,7 @@ const ReboundDetailView = () => {
                                   })}
                                   {(row.ServiceLine || []).length === 0 && (
                                     <tr>
-                                      <td colSpan={10} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No service line detail.</td>
+                                      <td colSpan={10} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>No service line detail.</td>
                                     </tr>
                                   )}
                                 </tbody>
@@ -1955,7 +1960,7 @@ const ReboundDetailView = () => {
                                   })}
                                   {(row.ServiceLine || []).length === 0 && (
                                     <tr>
-                                      <td colSpan={4} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No supplemental data.</td>
+                                      <td colSpan={4} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>No supplemental data.</td>
                                     </tr>
                                   )}
                                 </tbody>
@@ -1972,7 +1977,7 @@ const ReboundDetailView = () => {
           )}
           {detailShowStatus == 3 && (
 
-            <div className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark ? 'text-gray-100 bg-[#27282D] border-[#1f2433] shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'text-gray-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
+            <div className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark ? 'text-gray-100 bg-[#27282D] border-[#1f2433] shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'text-slate-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
 
               <div className={`rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
                 <div className="max-h-[360px] overflow-auto datatable-scroll">
@@ -2032,7 +2037,7 @@ const ReboundDetailView = () => {
                       ))}
                       {currentClaim.RelatedEncounters.length === 0 && (
                         <tr>
-                          <td colSpan={11} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No related encounters.</td>
+                          <td colSpan={11} className={`px-4 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>No related encounters.</td>
                         </tr>
                       )}
                     </tbody>
@@ -2045,9 +2050,9 @@ const ReboundDetailView = () => {
 
           {detailShowStatus == 4 && (
             <div
-              className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl ${isDark
-                ? 'text-[#F4F4F4] bg-[#27282D] border-[#1f2433]]'
-                : 'text-gray-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'
+              className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark
+                ? 'text-[#F4F4F4] bg-[#27282D] border-[#1f2433]'
+                : 'text-slate-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'
                 }`}
             >
               <div className="flex flex-col gap-3">
@@ -2068,7 +2073,7 @@ const ReboundDetailView = () => {
                         onClick={showRaw270}
                         className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${isDark
                           ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
-                          : 'bg-slate-900 text-white hover:bg-slate-800'
+                          : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                           }`}
                       >
                         Raw 270
@@ -2080,7 +2085,7 @@ const ReboundDetailView = () => {
                         onClick={showRaw277}
                         className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${isDark
                           ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
-                          : 'bg-slate-900 text-white hover:bg-slate-800'
+                          : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                           }`}
                       >
                         Raw 277
@@ -2101,7 +2106,7 @@ const ReboundDetailView = () => {
                             ? 'bg-gray-400 text-white cursor-not-allowed'
                             : isDark
                               ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
-                              : 'bg-slate-900 text-white hover:bg-slate-800'
+                              : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                             }`}
                         >
                           {eligibilityLoading ? 'Requesting 270...' : 'Request 270'}
@@ -2116,7 +2121,7 @@ const ReboundDetailView = () => {
                             ? 'bg-gray-400 text-white cursor-not-allowed'
                             : isDark
                               ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
-                              : 'bg-slate-900 text-white hover:bg-slate-800'
+                              : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                             }`}
                         >
                           {optumLoading ? 'Requesting 277...' : 'Request 277'}
@@ -2283,11 +2288,11 @@ const ReboundDetailView = () => {
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="text-lg font-semibold">Documents</p>
-                      <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                         Attach clinical documentation to support the appeal. Files upload when you save and submit.
                       </p>
                     </div>
-                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                       Maximum file size: 50 MB per document.
                     </p>
                   </div>
@@ -2296,7 +2301,7 @@ const ReboundDetailView = () => {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold">Appeal template matched by 835 payer ID</p>
-                      <p className={`mt-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <p className={`mt-1 text-xs ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                         835 Payer ID: {get835PayerIdValue() || "N/A"}
                       </p>
                     </div>
@@ -2313,18 +2318,18 @@ const ReboundDetailView = () => {
                   </div>
 
                   {appealTemplateLoading ? (
-                    <p className={`mt-3 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Checking template library...</p>
+                    <p className={`mt-3 text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Checking template library...</p>
                   ) : matchedAppealTemplate ? (
                     <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm">
                       <div>
-                        <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Template</p>
+                        <p className={isDark ? 'text-gray-400' : 'text-slate-600'}>Template</p>
                         <p className="font-semibold">{matchedAppealTemplate.name}</p>
-                        <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                           {matchedAppealTemplate.originalFileName || "No file name"}
                         </p>
                       </div>
                       <div>
-                        <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Appeal destination</p>
+                        <p className={isDark ? 'text-gray-400' : 'text-slate-600'}>Appeal destination</p>
                         {appealTemplateContact ? (
                           <div className="space-y-1">
                             <p className="font-semibold">{appealTemplateContact.payerDescription || appealTemplateContact.payerId}</p>
@@ -2336,20 +2341,20 @@ const ReboundDetailView = () => {
                             </p>
                           </div>
                         ) : (
-                          <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>
+                          <p className={isDark ? 'text-gray-400' : 'text-slate-600'}>
                             No client-management contact found for this 835 payer ID.
                           </p>
                         )}
                       </div>
                     </div>
                   ) : (
-                    <p className={`mt-3 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <p className={`mt-3 text-sm ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                       No managed appeal template is mapped to this 835 payer ID yet.
                     </p>
                   )}
                 </div> */}
 
-                  <div className={`hidden sm:grid grid-cols-12 gap-2 px-1 text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <div className={`hidden sm:grid grid-cols-12 gap-2 px-1 text-xs font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                     <div className="col-span-4">File Name</div>
                     <div className="col-span-4">File Type</div>
                     <div className="col-span-4">File</div>
@@ -2361,7 +2366,7 @@ const ReboundDetailView = () => {
                       className={`grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-3 rounded-lg border ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}
                     >
                       <div className="sm:col-span-4">
-                        <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File Name</label>
+                        <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>File Name</label>
                         <input
                           type="text"
                           value={row.fileName}
@@ -2377,7 +2382,7 @@ const ReboundDetailView = () => {
                         />
                       </div>
                       <div className="sm:col-span-4">
-                        <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File Type</label>
+                        <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>File Type</label>
                         <select
                           value={row.fileType}
                           onChange={(e) =>
@@ -2397,7 +2402,7 @@ const ReboundDetailView = () => {
                         </select>
                       </div>
                       <div className="sm:col-span-4 flex flex-wrap items-center gap-2">
-                        <span className={`sm:hidden text-xs font-medium w-full ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>File</span>
+                        <span className={`sm:hidden text-xs font-medium w-full ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>File</span>
                         <input
                           ref={(el) => {
                             if (el) triageFileInputRefs.current[row.id] = el;
@@ -2438,7 +2443,7 @@ const ReboundDetailView = () => {
                         >
                           <div className="min-w-0 flex-1">
                             <p className="font-medium truncate">{doc.file_name}</p>
-                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                               {getTriageDocTypeLabel(doc.file_type)}
                               {doc.file_size ? ` · ${formatFileSize(doc.file_size)}` : ""}
                               {doc.uploaded_at ? ` · ${new Date(doc.uploaded_at).toLocaleString()}` : ""}
@@ -2485,7 +2490,7 @@ const ReboundDetailView = () => {
                 >   <div className='flex sm:flex-row flex-col w-full gap-x-2  justify-evenly'>
                     <div className={` p-6 flex flex-col w-full rounded-xl ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Root Cause</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Root Cause</h2>
                         <div className="text-[14px] mt-3">
                           {appeal[4]}
                         </div>
@@ -2494,7 +2499,7 @@ const ReboundDetailView = () => {
 
                     <div className={` p-6 sm:mt-0 mt-2 flex flex-col w-full rounded-xl ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Rationale</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Rationale</h2>
                         <div className="text-[14px] mt-3">
                           {appeal[2].split('\n').map((i, key) => <div key={`rationale-${key}`}>{i}</div>)}
                         </div>
@@ -2506,7 +2511,7 @@ const ReboundDetailView = () => {
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Evidence</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Evidence</h2>
                         <div className="text-[14px] mt-3">
                           {appeal.length == 0 ? "Loading..." : (<> {currentClaim.Claim.Data.PrimaryCode === '109' ? <>
                             <div className="overflow-x-auto p-2 rounded-lg">
@@ -2561,13 +2566,13 @@ const ReboundDetailView = () => {
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Prediction Score</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Prediction Score</h2>
                         <p className="text-[14px] mt-3">98%</p>
                       </div>
                     </div>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Procedure Code</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Procedure Code</h2>
                         <p className="text-[14px] mt-3">
                           {currentClaim.Claim.ServiceLine.map((row, index) => row.Code).join(", ")}
                         </p>
@@ -2578,7 +2583,7 @@ const ReboundDetailView = () => {
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Diagnosis Code</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Diagnosis Code</h2>
                         <p className="text-[14px] mt-3">
                           {currentClaim.Claim.Diagnosis.map((row, index) => row.Code).join(", ")}
                         </p>
@@ -2586,7 +2591,7 @@ const ReboundDetailView = () => {
                     </div>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Reason Code</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Reason Code</h2>
                         <p className="text-[14px] mt-3">
                           {`${currentClaim.Claim.Data.PrimaryGroup} ${currentClaim.Claim.Data.PrimaryCode}`}
                         </p>
@@ -2597,7 +2602,7 @@ const ReboundDetailView = () => {
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Payer ID</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Payer ID</h2>
                         <p className="text-[14px] mt-3">
                           {currentClaim.Claim.Data.PayerID}
                         </p>
@@ -2605,7 +2610,7 @@ const ReboundDetailView = () => {
                     </div>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Claim State</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Claim State</h2>
                         <p className="text-[14px] mt-3">
                           {currentClaim.Claim.Data.Category == 'Contractual Adj' ? 'Non-Recoverable' : (
                             currentClaim.Claim.Data.Category == '' ? 'Delinquent' : (
@@ -2621,7 +2626,7 @@ const ReboundDetailView = () => {
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Category</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Category</h2>
                         <p className="text-[14px] mt-3">
                           {currentClaim.Claim.Data.Category}
                         </p>
@@ -2629,7 +2634,7 @@ const ReboundDetailView = () => {
                     </div>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Remark Code</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Remark Code</h2>
                         <p className="text-[14px] mt-3">
                           {currentClaim.Claim.Data.Remark.join(", ")}
                         </p>
@@ -2646,7 +2651,7 @@ const ReboundDetailView = () => {
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Action Date</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Action Date</h2>
                         <p className="text-[14px] mt-3">
                           {actionDate || (currentClaim.Action.length > 0 && currentClaim.Action[0].action_date)}
                         </p>
@@ -2654,7 +2659,7 @@ const ReboundDetailView = () => {
                     </div>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Charges</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Charges</h2>
                         <p className="text-[14px] mt-3">
                           ${currentClaim.Claim.Data.Amount}
                         </p>
@@ -2666,7 +2671,7 @@ const ReboundDetailView = () => {
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Original Allowed Amt</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Original Allowed Amt</h2>
                         <p className="text-[14px] mt-3">
                           ${samplifyDouble(
                             currentClaim.Action.length === 0
@@ -2683,7 +2688,7 @@ const ReboundDetailView = () => {
                     </div>
                     <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
-                        <h2 className="text-[14px] text-gray-400">Overturned Allowed Amt</h2>
+                        <h2 className={`text-[14px] ${mutedLabelClass}`}>Overturned Allowed Amt</h2>
                         <p className="text-[14px] mt-3">
                           ${samplifyDouble(
                             currentClaim.Action.length === 0
@@ -2712,7 +2717,7 @@ const ReboundDetailView = () => {
                   style={{ display: 'flex', flexDirection: 'column' }}
                 >
                   <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6  w-full rounded-lg`}>
-                    <h2 className="text-[14px] text-gray-400">Recommendation</h2>
+                    <h2 className={`text-[14px] ${mutedLabelClass}`}>Recommendation</h2>
                     <p className="text-[14px] mt-3">{appeal[5]}</p>
                     <div className="flex flex-row mt-3 justify-evenly gap-x-3">
                       <div className={`cursor-pointer flex gap-2 rounded-lg text-white w-full p-2 border-[1px] border-[#44BFAB] ${thumb == 1 ? 'bg-[#F5FCFB]' : 'bg-[#F5FCFB] '}`} onClick={() => setThumb(1)}>
@@ -2735,13 +2740,13 @@ const ReboundDetailView = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="w-[70%] text-[12px] mt-2 text-gray-400">
+                    <div className={`w-[70%] text-[12px] mt-2 ${mutedLabelClass}`}>
                       <h1> Please let us know if this recommendation was useful in addressing the claim. </h1>
                     </div>
                   </div>
 
                   <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
-                    <h2 className="text-[14px] mb-2 text-gray-400">Add Action</h2>
+                    <h2 className={`text-[14px] mb-2 ${mutedLabelClass}`}>Add Action</h2>
                     <div className="relative mt-3">
                       <label
                         htmlFor="action-dropdown"
@@ -2765,11 +2770,11 @@ const ReboundDetailView = () => {
 
                   <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                     <div className='flex justify-between items-center'>
-                      <h2 className="text-[14px] mb-2 text-gray-400">Notes</h2>
+                      <h2 className={`text-[14px] mb-2 ${mutedLabelClass}`}>Notes</h2>
                       <button className='text-[14px] text-gray-500' onClick={handleOpenNotesHistory}>View Notes</button>
                     </div>
                     <div className="relative mt-5">
-                      <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} absolute -top-2.5 left-2  px-1 text-[12px] text-gray-400`}>
+                      <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} absolute -top-2.5 left-2 px-1 text-[12px] ${mutedLabelClass}`}>
                         Leave Note
                       </div>
                       <textarea
@@ -2806,7 +2811,7 @@ const ReboundDetailView = () => {
                   {showComment && (
                     <div className={`${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} rounded-xl p-2`}>
                       <div className={`flex flex-col w-full gap-4  p-6 rounded-xl shadow-sm ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} `}>
-                        <h1 className="mb-4 text-gray-400">Comments</h1>
+                        <h1 className={`mb-4 ${mutedLabelClass}`}>Comments</h1>
                         <div className="space-y-4">
                           {/* Additional Info */}
                           <div className="relative">
@@ -3235,7 +3240,7 @@ const ReboundDetailView = () => {
                     ? 'bg-gray-400 text-white cursor-not-allowed'
                     : isDark
                       ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
-                      : 'bg-slate-900 text-white hover:bg-slate-800'
+                      : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                     }`}
                 >
                   {optumLoading ? 'Requesting...' : 'Request 277'}
@@ -3376,7 +3381,7 @@ const ReboundDetailView = () => {
             {optumResponse && (
               <div className={`mt-4 rounded-xl border p-4 ${isDark ? 'border-[#30354a] bg-[#10131b]' : 'border-gray-200 bg-white'}`}>
                 <p className={`text-sm font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Latest 277 Response</p>
-                <div className={`mt-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                <div className={`mt-2 text-xs ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                   Control Number: {optumResponse.controlNumber || "N/A"}
                 </div>
                 {(optumResponse.claims || []).map((claim, idx) => {
@@ -3423,7 +3428,7 @@ const ReboundDetailView = () => {
                     ? 'bg-gray-400 text-white cursor-not-allowed'
                     : isDark
                       ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
-                      : 'bg-slate-900 text-white hover:bg-slate-800'
+                      : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                     }`}
                 >
                   {eligibilityLoading ? 'Requesting 270...' : 'Request 270'}

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
@@ -33,41 +34,129 @@ const getRoleValue = (role) => {
 
 const UserRoleCell = ({ row, onUpdateRole, theme }) => {
   const [selectedRole, setSelectedRole] = useState(getRoleValue(row.role));
+  const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState(null);
+  const buttonRef = useRef(null);
+  const menuRef = useRef(null);
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     setSelectedRole(getRoleValue(row.role));
   }, [row.role]);
 
-  const handleRoleChange = (event) => {
-    const newRole = event.target.value;
-    setSelectedRole(newRole);
-    onUpdateRole(row.id, newRole);
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuStyle(null);
+      return undefined;
+    }
+
+    const updateMenuPosition = () => {
+      const button = buttonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 4)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        zIndex: 1200,
+      });
+    };
+
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleClickOutside = (event) => {
+      if (
+        !buttonRef.current?.contains(event.target) &&
+        !menuRef.current?.contains(event.target)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const selectedLabel =
+    ROLE_OPTIONS.find((option) => option.value === selectedRole)?.label || selectedRole;
+
+  const handleSelect = (value) => {
+    setSelectedRole(value);
+    onUpdateRole(row.id, value);
+    setOpen(false);
   };
+
+  const triggerClass = isDark
+    ? 'bg-[#27282D]/70 text-[#e5e7eb] border-white/10 hover:border-white/20'
+    : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300';
+
+  const menuClass = isDark
+    ? 'bg-[#2f3035] border-white/10 shadow-xl'
+    : 'bg-white border-slate-200 shadow-lg';
+
+  const optionClass = (isActive) => {
+    if (isDark) {
+      return isActive
+        ? 'bg-white/12 text-white'
+        : 'text-[#d1d5db] hover:bg-white/8 hover:text-white';
+    }
+    return isActive
+      ? 'bg-slate-200 text-slate-900'
+      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
+  };
+
   return (
-    <div className="flex items-center space-x-2">
-      <select
-        value={selectedRole}
-        onChange={handleRoleChange}
-        name="user-role"
-        className={`border border-gray-600 w-[159px] px-2 py-1 rounded-lg appearance-none cursor-pointer ${theme === 'dark'
-          ? "bg-[#151619] text-white"
-          : "bg-white text-gray-500"
-          }`}
-        style={{
-          WebkitAppearance: 'none',
-          MozAppearance: 'none'
-        }}
+    <div className="relative">
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={`flex items-center justify-between gap-2 w-[159px] px-3 py-1.5 rounded-lg border text-sm transition-colors ${triggerClass}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
       >
-        {ROLE_OPTIONS.map((option) => (
-          <option
-            key={option.value}
-            value={option.value}
-            className={`${theme === 'dark' ? "bg-[#151619]" : "bg-white"}`}
-          >
-            {option.label}
-          </option>
-        ))}
-      </select>
+        <span className="truncate text-left">{selectedLabel}</span>
+        <svg
+          className={`w-4 h-4 shrink-0 opacity-60 transition-transform ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
+          <path d="M6 8L10 12L14 8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && menuStyle && createPortal(
+        <div
+          ref={menuRef}
+          role="listbox"
+          style={menuStyle}
+          className={`rounded-lg border overflow-hidden py-1 max-h-56 overflow-y-auto ${menuClass}`}
+        >
+          {ROLE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="option"
+              aria-selected={selectedRole === option.value}
+              onClick={() => handleSelect(option.value)}
+              className={`w-full text-left px-3 py-2 text-sm transition-colors ${optionClass(selectedRole === option.value)}`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
@@ -560,7 +649,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
             }`}>
             <div className="sm:flex sm:items-start flex-col">
               <div className='flex flex-row justify-between gap-x-3'>
-                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <h3 className={`text-lg font-medium leading-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'
@@ -581,7 +670,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
           <div className={`px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 `}>
             <button
               type="button"
-              className="inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+              className={`inline-flex w-full justify-center rounded-md border px-4 py-2 text-base font-medium shadow-sm sm:ml-3 sm:w-auto sm:text-sm ${theme === 'dark' ? 'bg-[#3b3f46] text-white hover:bg-[#4a4f57] border-transparent' : 'bg-slate-700 text-white hover:bg-slate-800 border-transparent'}`}
               onClick={() => {
                 handleDeleteUser(userToDelete.id, userToDelete.email);
                 setShowDeleteModal(false);
@@ -713,8 +802,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       onClose={() => setShowFilterModal(false)}
       aria-labelledby="filter-modal"
     >
-      <Box className={`absolute rounded-xl border-none w-[400px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}>
-        <div className={`p-6 rounded-xl ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-600'}`}>
+      <Box className={`absolute rounded-xl border-none w-[400px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 ${theme === 'dark' ? 'bg-[#27282D]' : 'bg-white'}`}>
+        <div className={`p-6 rounded-xl ${theme === 'dark' ? 'bg-[#2a2b30] text-[#e5e7eb] border border-white/10' : 'bg-white text-slate-600 border border-slate-200'}`}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Filter Users</h2>
             <button onClick={() => setShowFilterModal(false)}>
@@ -736,7 +825,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                       value={status}
                       checked={activeFilter === status}
                       onChange={() => setActiveFilter(status)}
-                      className="form-radio text-gray-600"
+                      className={`form-radio ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}
                     />
                     <span className="capitalize">{status}</span>
                   </label>
@@ -753,13 +842,13 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                 setActiveFilter('all');
                 setShowFilterModal(false);
               }}
-              className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200"
+              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${theme === 'dark' ? 'bg-white/5 text-[#cbd5e1] hover:bg-white/10' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
             >
               Reset
             </button>
             <button
               onClick={() => setShowFilterModal(false)}
-              className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gray-600 text-white hover:bg-gray-700"
+              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${theme === 'dark' ? 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]' : 'bg-slate-700 text-white hover:bg-slate-800'}`}
             >
               Apply
             </button>
@@ -781,22 +870,44 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     ? "w-full"
     : "px-3 sm:px-8 py-8 w-full";
 
-  const panelClasses = `flex flex-col gap-6 rounded-[12px] px-[30px] pt-[40px] py-[30px] sm:p-6 ${theme === 'dark'
-    ? 'bg-[#26272C]/20 text-[#F4F4F4] border border-white/5 shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
-    : 'bg-white text-slate-900'
-    }`;
+  const panelClasses = embedded
+    ? `flex flex-col gap-4 w-full ${theme === 'dark' ? 'text-[#F4F4F4]' : 'text-slate-900'}`
+    : `flex flex-col gap-6 rounded-[12px] px-[30px] pt-[40px] py-[30px] sm:p-6 ${theme === 'dark'
+      ? 'bg-[#26272C]/20 text-[#F4F4F4] border border-white/5 shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
+      : 'bg-white text-slate-900'
+      }`;
+
+  const tableCardClass = theme === 'dark'
+    ? 'border-white/[0.08] bg-[#27282D]/40'
+    : 'border-slate-200/80 bg-white';
+  const tableHeaderClass = theme === 'dark'
+    ? 'bg-[#2a2b30]/60 text-[#9ca3af]'
+    : 'bg-slate-50 text-slate-500';
+  const tableCellClass = theme === 'dark'
+    ? 'text-[#e5e7eb]'
+    : 'text-slate-600';
+  const tableDividerClass = theme === 'dark'
+    ? 'divide-white/[0.05]'
+    : 'divide-slate-100';
+  const tableFooterClass = theme === 'dark'
+    ? 'border-white/[0.06] text-[#cbd5e1]'
+    : 'border-slate-100 text-slate-500';
+  const paginationButtonClass = theme === 'dark'
+    ? 'p-1 rounded-md cursor-pointer hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed'
+    : 'p-1 rounded-md cursor-pointer hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed';
+  const controlClass = theme === 'dark'
+    ? 'bg-[#27282D]/60 text-[#e5e7eb] border-white/10 focus:border-white/25'
+    : 'bg-slate-50 text-slate-700 border-slate-200 focus:border-slate-400';
+  const filterButtonClass = theme === 'dark'
+    ? 'bg-[#27282D]/60 text-[#e5e7eb] border-white/10 hover:border-white/20 hover:bg-white/5'
+    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50';
 
   return (
     <div className={shellClasses} style={{ fontFamily: 'Inter, sans-serif' }}>
       <div className={panelClasses}>
-        <div className={`mt-2 ${isAddView ? `pb-3 ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}` : ''}`}>
-          <h1 className="font-inter font-semibold text-2xl leading-none tracking-normal text-[#F4F4F4]">
-            {isAddView ? 'User Management > Add New User' : 'User Management'}
-          </h1>
-        </div>
         {isTableView && (
           <>
-            <div className="flex flex-col gap-4 px-4 sm:px-6 pt-4">
+            <div className="flex flex-col gap-4 px-0 pt-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="w-full sm:w-auto order-2 sm:order-1">
                   {/* Filter pills can render here if needed */}
@@ -818,26 +929,20 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                       }}
                       id="user-search"
                       name="user-search"
-                      className={`text-sm rounded-lg block w-full py-2.5 px-4 pl-10 text-gray-700 ${theme === 'dark'
-                        ? "bg-[#151619] text-white border border-gray-600"
-                        : "text-black bg-white border border-gray-300"
-                        }`}
+                      className={`text-sm rounded-lg block w-full py-2.5 px-4 pl-10 border transition-colors focus:outline-none ${controlClass}`}
                     />
                   </div>
                   <div className="relative">
                     <button
                       onClick={() => setShowFilterModal(true)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg ${theme === 'dark'
-                        ? 'bg-[#191a1d] text-white hover:bg-[#1e1f23]'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                        } border border-gray-300`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${filterButtonClass}`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                       </svg>
                       <span className="text-sm font-medium">Filter</span>
                       {activeFilter !== 'all' && (
-                        <span className="w-2 h-2 rounded-full bg-gray-600"></span>
+                        <span className="w-2 h-2 rounded-full bg-gray-400"></span>
                       )}
                     </button>
                   </div>
@@ -857,13 +962,13 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
             {showFilterModal && <FilterModal />}
             <div
               ref={tableRef}
-              className={`flex flex-col rounded-3xl border ${theme === 'dark' ? 'border-[#1F2231] bg-[#111525]' : 'border-slate-200 bg-white'} p-2`}
+              className={`flex flex-col rounded-2xl border ${tableCardClass} overflow-hidden`}
             >
-              <div className="w-full overflow-x-auto rounded-2xl" style={{ maxHeight: '500px' }}>
-                <table className="min-w-full  font-inter">
-                  <thead className=" sticky top-0 z-10">
+              <div className="w-full overflow-x-auto overflow-y-auto" style={{ maxHeight: '500px' }}>
+                <table className="min-w-full w-full font-inter">
+                  <thead className="sticky top-0 z-10">
                     <tr>
-                      <th scope="col" className={` ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[50px]`}>
+                      <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[50px]`}>
                         <div className="flex items-center gap-2">
                           #
                           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -871,53 +976,53 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                           </svg>
                         </div>
                       </th>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[130px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'}`}>
+                      <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[130px]`}>
                         <div className="flex items-center gap-2">
                           First Name
 
                         </div>
                       </th>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[130px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'}`}>
+                      <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[130px]`}>
                         <div className="flex items-center gap-2">
                           Last Name
 
                         </div>
                       </th>
-                      <th scope="col" className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[200px] `}>
+                      <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[200px]`}>
                         <div className="flex items-center gap-2">
                           Email
 
                         </div>
                       </th>
-                      <th scope="col" className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[200px] `}>
+                      <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[200px]`}>
                         <div className="flex items-center gap-2">
                           Role
 
                         </div>
                       </th>
-                      <th scope="col" className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[120px] `}>
+                      <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[120px]`}>
                         <div className="flex items-center gap-2">
                           Status
 
                         </div>
                       </th>
-                      <th scope="col" className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[10px] `}>
+                      <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[10px]`}>
                         <div className="flex items-center gap-2">
                           Access
                         </div>
                       </th>
-                      <th scope="col" className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider min-w-[120px] `}>
+                      <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[120px]`}>
                         <div className="flex items-center gap-2">
                           Actions
                         </div>
                       </th>
                     </tr>
                   </thead>
-                  <tbody className={`relative ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}`}>
+                  <tbody className={`relative divide-y ${tableDividerClass}`}>
                     {searchKeyword.length > 0 && users.length === 0 && (
                       <tr className="w-full">
                         <td colSpan="7" className="w-full">
-                          <div className=" w-full text-white text-center py-2">
+                          <div className={`w-full text-center py-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                             <div className="px-6 py-8 animate-fade-in flex items-center justify-center space-x-3">
                               <div className="text-center animate-bounce-slow">
                                 <svg
@@ -947,30 +1052,42 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     )}
                     {users.slice((currentPage - 1) * currentPageSize, currentPage * currentPageSize).map((row, index) => (
                       <tr key={index} className="">
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} `}>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
                           {(currentPage - 1) * currentPageSize + index + 1}
                         </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} `}>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
                           {row.firstname}
                         </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} `}>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
                           {row.lastname}
                         </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} `}>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
                           {row.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <UserRoleCell theme={theme} row={row} onUpdateRole={handleUpdateRole} />
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
-                          <div className='flex'>
+                          <div className="flex">
                             {row.status === 0 && (
-                              <div className=' text-[#027A48] border-[#44bfab] border-[2px] flex items-center px-3 py-1 rounded-xl gap-2'>
+                              <div
+                                className={`flex items-center px-3 py-1 rounded-lg border gap-2 text-sm ${
+                                  theme === 'dark'
+                                    ? 'text-gray-200 border-white/20 bg-white/10'
+                                    : 'text-slate-700 border-slate-300 bg-slate-100'
+                                }`}
+                              >
                                 <span>Active</span>
                               </div>
                             )}
                             {row.status === 1 && (
-                              <div className=' text-[#B54708] border-[#f12622] border-[2px] flex items-center px-3 py-1 rounded-full gap-2'>
+                              <div
+                                className={`flex items-center px-3 py-1 rounded-lg border gap-2 text-sm ${
+                                  theme === 'dark'
+                                    ? 'text-gray-400 border-white/10 bg-white/5'
+                                    : 'text-slate-500 border-slate-200 bg-slate-50'
+                                }`}
+                              >
                                 <span>Inactive</span>
                               </div>
                             )}
@@ -1041,7 +1158,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                           <div className="flex items-center justify-center gap-2">
                             {/* Permissions Button */}
                             <div
-                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
+                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-white/[0.06] hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'}`}
                               onClick={() => {
                                 const currentUser = users.find(u => u.id === row.id) || row;
                                 setUpdate_user_id(row.id);
@@ -1071,7 +1188,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
                             {/* Reset Password Button */}
                             <div
-                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
+                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-white/[0.06] hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'}`}
                               onClick={() => handleResetPassword(row.email)}
                               title="Reset Password"
                             >
@@ -1083,7 +1200,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
                             {/* Delete Button */}
                             <div
-                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
+                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-white/[0.06] hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'}`}
                               onClick={() => {
                                 setUserToDelete(row);
                                 setShowDeleteModal(true);
@@ -1103,18 +1220,18 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     ))}
                   </tbody>
                 </table>
+              </div>
 
-
-                <div className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-500'} px-6 py-3 flex items-center justify-between rounded-lg`}>
+              <div className={`w-full px-6 py-3 flex items-center justify-between border-t ${tableFooterClass}`}>
                   {/* Left side - Rows per page */}
                   <div className="flex items-center gap-2">
                     <span className="text-sm ">Rows per page:</span>
                     <select
                       value={currentPageSize}
                       onChange={(e) => setCurrentPageSize(Number(e.target.value))}
-                      className={`border-none rounded-md text-sm mr-[-10px] appearance-none cursor-pointer ${theme === 'dark'
-                        ? "bg-[#151619] text-white"
-                        : "bg-white text-gray-500"
+                      className={`border-none rounded-md text-sm appearance-none cursor-pointer ${theme === 'dark'
+                        ? "bg-transparent text-[#cbd5e1]"
+                        : "bg-transparent text-slate-500"
                         }`}
                       style={{
                         WebkitAppearance: 'none',
@@ -1133,14 +1250,14 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     <button
                       onClick={() => setCurrentPage(1)}
                       disabled={currentPage === 1}
-                      className="p-1 rounded-md cursor-pointer hover:bg-gray-100 disabled:opacity-50"
+                      className={paginationButtonClass}
                     >
                       {'<<'}
                     </button>
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="p-1 rounded-md cursor-pointer hover:bg-gray-100 disabled:opacity-50"
+                      className={paginationButtonClass}
                     >
                       {'<'}
                     </button>
@@ -1157,8 +1274,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                             <button
                               onClick={() => setCurrentPage(page)}
                               className={`w-8 h-8 rounded-md ${currentPage === page
-                                ? ' text-gray-600'
-                                : 'hover:bg-gray-100'
+                                ? (theme === 'dark' ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-700')
+                                : (theme === 'dark' ? 'hover:bg-white/5 text-[#cbd5e1]' : 'hover:bg-slate-100 text-slate-500')
                                 }`}
                             >
                               {page}
@@ -1170,20 +1287,19 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(totalPage, prev + 1))}
                       disabled={currentPage === totalPage}
-                      className="p-1 rounded-md cursor-pointer hover:bg-gray-100 disabled:opacity-50"
+                      className={paginationButtonClass}
                     >
                       {'>'}
                     </button>
                     <button
                       onClick={() => setCurrentPage(totalPage)}
                       disabled={currentPage === totalPage}
-                      className="p-1 rounded-md cursor-pointer hover:bg-gray-100 disabled:opacity-50"
+                      className={paginationButtonClass}
                     >
                       {'>>'}
                     </button>
                   </div>
                 </div>
-              </div>
             </div>
           </>
         )}

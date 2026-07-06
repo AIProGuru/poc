@@ -1,9 +1,10 @@
-
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { SERVER_URL } from '../utils/config';
+import './ProfilePages.css';
 
 const CLIENT_TYPE_OPTIONS = [
   'Service Provider',
@@ -102,8 +103,26 @@ const TenantDetails = () => {
   const [editTenantTypeMenuStyle, setEditTenantTypeMenuStyle] = useState(null);
   const [editTenantStatusMenuStyle, setEditTenantStatusMenuStyle] = useState(null);
 
-  const editInputClass = "w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none bg-[#ffffff10] text-white border-[#ffffff20]";
+  const theme = useSelector((state) => state.app.theme);
+  const isDark = theme === 'dark';
+  const pageClass = `profile-page w-full overflow-x-hidden ${isDark ? 'theme-dark text-white' : 'theme-light text-slate-900'}`;
+
+  const editInputClass = `w-full p-2 text-sm rounded-md border focus:ring-gray-500 focus:border-gray-500 focus:outline-none ${
+    isDark ? 'bg-[#ffffff10] text-white border-[#ffffff20]' : 'bg-white text-slate-900 border-slate-200'
+  }`;
   const rowInputClass = editInputClass;
+  const portalMenuClass = isDark
+    ? 'z-50 rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg'
+    : 'z-50 rounded-md border bg-white border-slate-200 shadow-lg';
+  const portalMenuItemClass = isDark
+    ? 'w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2a2f38]'
+    : 'w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-slate-100';
+  const tabActiveClass = isDark
+    ? 'bg-[#ffffff15] text-white border border-[#ffffff30]'
+    : 'bg-white text-slate-900 border border-slate-300 shadow-sm';
+  const tabInactiveClass = isDark
+    ? 'bg-[#1f232a] text-gray-300 hover:text-white hover:bg-[#2a2f38] border border-[#ffffff10]'
+    : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border border-slate-200';
 
   useEffect(() => {
     let isMounted = true;
@@ -739,8 +758,8 @@ const TenantDetails = () => {
   };
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#1e1f24] text-white">
-        <div className="container mx-auto px-4">
+      <div className={pageClass}>
+        <div className="px-6 md:px-10 py-4">
           <div className="flex flex-col items-center justify-center py-24">
             <div className="w-12 h-12 border-4 border-gray-600 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-[#f4f4f4]">Loading tenant...</p>
@@ -752,14 +771,8 @@ const TenantDetails = () => {
 
   if (!selectedTenant) {
     return (
-      <div className="min-h-screen bg-[#1e1f24] text-white">
-        <div className="container mx-auto px-4 py-8">
-          <button
-            onClick={() => navigate(`/client/${clientId}`)}
-            className="mb-6 px-4 py-2 bg-[#ffffff10] rounded-lg hover:bg-[#ffffff20] transition"
-          >
-            Back to Client
-          </button>
+      <div className={pageClass}>
+        <div className="px-6 md:px-10 py-4">
           <div className="text-center py-24 border border-dashed border-[#f4f4f450] rounded-lg">
             <p className="text-lg text-white">Tenant not found.</p>
           </div>
@@ -769,59 +782,18 @@ const TenantDetails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#1e1f24] text-white">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center mb-6">
-          <button
-            onClick={() => navigate(`/client/${clientId}`)}
-            className="mr-4 p-2 bg-[#ffffff10] rounded-lg hover:bg-[#ffffff20] transition"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <h1 className="text-2xl font-bold">Tenant Details</h1>
-          <div className="ml-auto">
-            {isEditingTenant ? (
-              <div className="flex gap-3">
-                <button
-                  className="px-4 py-2 bg-[#ffffff10] text-white text-sm rounded-lg hover:bg-[#ffffff20] transition"
-                  onClick={() => {
-                    setIsEditingTenant(false);
-                    setEditTenantForm({
-                      name: selectedTenant.name || '',
-                      clientType: selectedTenant.clientType || '',
-                      address: selectedTenant.address || '',
-                      contact: selectedTenant.contact || '',
-                      email: selectedTenant.email || '',
-                      status: selectedTenant.status || 'Active'
-                    });
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-4 py-2 bg-[#3b3f46] text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition shadow-lg hover:shadow-gray-500/30"
-                  onClick={async () => {
-                    const updated = await handleTenantUpdate(editTenantForm);
-                    if (updated) {
-                      setIsEditingTenant(false);
-                    }
-                  }}
-                >
-                  Save Changes
-                </button>
-              </div>
-            ) : (
-              <button
-                className="px-4 py-2 bg-[#3b3f46] text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition shadow-lg hover:shadow-gray-500/30"
-                onClick={() => setIsEditingTenant(true)}
-              >
-                Edit Tenant
-              </button>
-            )}
+    <div className={pageClass}>
+      <div className="px-6 md:px-10 py-4">
+        {/* {!isEditingTenant && (
+          <div className="flex items-center justify-end mb-6">
+            <button
+              className="px-4 py-2 bg-[#3b3f46] text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition shadow-lg hover:shadow-gray-500/30"
+              onClick={() => setIsEditingTenant(true)}
+            >
+              Edit Tenant
+            </button>
           </div>
-        </div>
+        )} */}
 
         <div className="bg-[#232429] rounded-xl border border-[#2f333a] shadow-2xl overflow-hidden">
           <div className="border-b border-[#ffffff20] p-6">
@@ -912,7 +884,7 @@ const TenantDetails = () => {
                           <div
                             ref={editTenantTypeMenuRef}
                             style={editTenantTypeMenuStyle}
-                            className="z-50 rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg"
+                            className={portalMenuClass}
                           >
                             {CLIENT_TYPE_OPTIONS.map((option) => (
                               <button
@@ -923,7 +895,7 @@ const TenantDetails = () => {
                                   setEditTenantForm(prev => ({ ...prev, clientType: option }));
                                   setIsEditTenantTypeOpen(false);
                                 }}
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2a2f38]"
+                                className={portalMenuItemClass}
                               >
                                 {option}
                               </button>
@@ -957,7 +929,7 @@ const TenantDetails = () => {
                           <div
                             ref={editTenantStatusMenuRef}
                             style={editTenantStatusMenuStyle}
-                            className="z-50 rounded-md border bg-[#1f232a] border-[#ffffff20] shadow-lg"
+                            className={portalMenuClass}
                           >
                             {STATUS_OPTIONS.map((option) => (
                               <button
@@ -968,7 +940,7 @@ const TenantDetails = () => {
                                   setEditTenantForm(prev => ({ ...prev, status: option }));
                                   setIsEditTenantStatusOpen(false);
                                 }}
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2a2f38]"
+                                className={portalMenuItemClass}
                               >
                                 {option}
                               </button>
@@ -989,6 +961,39 @@ const TenantDetails = () => {
                   </div>
                 </div>
               </div>
+              {isEditingTenant && (
+                <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-[#ffffff10] text-white text-sm rounded-lg hover:bg-[#ffffff20] transition"
+                    onClick={() => {
+                      setIsEditingTenant(false);
+                      setEditTenantForm({
+                        name: selectedTenant.name || '',
+                        clientType: selectedTenant.clientType || '',
+                        address: selectedTenant.address || '',
+                        contact: selectedTenant.contact || '',
+                        email: selectedTenant.email || '',
+                        status: selectedTenant.status || 'Active'
+                      });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-[#3b3f46] text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition shadow-lg hover:shadow-gray-500/30"
+                    onClick={async () => {
+                      const updated = await handleTenantUpdate(editTenantForm);
+                      if (updated) {
+                        setIsEditingTenant(false);
+                      }
+                    }}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              )}
               <div className="md:col-span-2">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -1002,9 +1007,7 @@ const TenantDetails = () => {
                         type="button"
                         onClick={() => setFacilityTab(tab.id)}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
-                          facilityTab === tab.id
-                            ? 'bg-[#ffffff15] text-white border border-[#ffffff30]'
-                            : 'bg-[#1f232a] text-gray-300 hover:text-white hover:bg-[#2a2f38] border border-[#ffffff10]'
+                          facilityTab === tab.id ? tabActiveClass : tabInactiveClass
                         }`}
                       >
                         {tab.label}
@@ -1365,7 +1368,7 @@ const TenantDetails = () => {
                                     <button
                                       type="button"
                                       onClick={() => handleFacilityDelete(facility.id)}
-                                      className="px-3 py-2 bg-red-500/20 text-red-300 text-xs font-medium rounded-md hover:bg-red-500/30 transition"
+                                      className="px-3 py-2 bg-white/10 text-gray-200 text-xs font-medium rounded-md border border-white/10 hover:bg-white/15 transition"
                                     >
                                       Delete
                                     </button>
@@ -1598,7 +1601,7 @@ const TenantDetails = () => {
                                   ) : (
                                     <div className="flex items-center justify-center gap-2">
                                       <button type="button" onClick={() => beginPayerPlanCodeEdit(code)} className="px-3 py-2 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition">Edit</button>
-                                      <button type="button" onClick={() => handlePayerPlanCodeDelete(code.id)} className="px-3 py-2 bg-red-500/20 text-red-300 text-xs font-medium rounded-md hover:bg-red-500/30 transition">Delete</button>
+                                      <button type="button" onClick={() => handlePayerPlanCodeDelete(code.id)} className="px-3 py-2 bg-white/10 text-gray-200 text-xs font-medium rounded-md border border-white/10 hover:bg-white/15 transition">Delete</button>
                                     </div>
                                   )}
                                 </td>
@@ -1721,7 +1724,7 @@ const TenantDetails = () => {
                                   ) : (
                                     <div className="flex items-center justify-center gap-2">
                                       <button type="button" onClick={() => beginTransactionCodeEdit(code)} className="px-3 py-2 bg-[#ffffff10] text-white text-xs font-medium rounded-md hover:bg-[#ffffff20] transition">Edit</button>
-                                      <button type="button" onClick={() => handleTransactionCodeDelete(code.id)} className="px-3 py-2 bg-red-500/20 text-red-300 text-xs font-medium rounded-md hover:bg-red-500/30 transition">Delete</button>
+                                      <button type="button" onClick={() => handleTransactionCodeDelete(code.id)} className="px-3 py-2 bg-white/10 text-gray-200 text-xs font-medium rounded-md border border-white/10 hover:bg-white/15 transition">Delete</button>
                                     </div>
                                   )}
                                 </td>

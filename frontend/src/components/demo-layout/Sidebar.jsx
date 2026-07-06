@@ -19,6 +19,7 @@ import {
 } from "../../redux/reducers/app.reducer";
 import { setSelectedTags } from "../../redux/reducers/tag.reducer";
 import { canAccessWorklists } from "../../utils/roles";
+import { setToggleMenu } from "../../redux/reducers/menu.reducer";
 
 const readStoredTenantBase = () => {
   try {
@@ -63,6 +64,8 @@ const Sidebar = () => {
   const [expandedNav, setExpandedNav] = useState(() => new Set());
   const [mobileExpanded, setMobileExpanded] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
+  const sidebarExpanded = useSelector((state) => state.menu.menuState);
+  const showLabels = isMobileView ? mobileExpanded : sidebarExpanded;
 
   const tenantValue = `${tenant || ""}`.toLowerCase();
   const pathBase = (location.pathname.split("/")[1] || "").toLowerCase();
@@ -304,8 +307,14 @@ const Sidebar = () => {
   };
 
   const renderIcon = (name, active) => {
-    const stroke = active ? "#ffffff" : "#8A8FB1";
-    const fill = active ? "#ffffff" : "none";
+    const stroke = active
+      ? isDark
+        ? "#ffffff"
+        : "#334155"
+      : isDark
+        ? "#8A8FB1"
+        : "#64748b";
+    const fill = active && isDark ? "#ffffff" : "none";
     switch (name) {
       case "home":
         return (
@@ -698,6 +707,14 @@ const Sidebar = () => {
     dispatch(setAppTitle(current.title));
   }, [selectedNav, navItems, dispatch]);
 
+  const handleSidebarToggle = () => {
+    if (isMobileView) {
+      setMobileExpanded((prev) => !prev);
+      return;
+    }
+    dispatch(setToggleMenu(!sidebarExpanded));
+  };
+
   const activeId = selectedNav;
 
   return (
@@ -711,31 +728,36 @@ const Sidebar = () => {
         />
       )}
       <aside
-        className={`flex flex-col h-screen border-r px-2 md:px-3 py-6 top-0 left-0 ${mobileExpanded ? "w-[308px]" : "w-[72px]"
-          } md:w-[308px] ${isMobileView ? (mobileExpanded ? "fixed z-50" : "sticky") : "sticky"
-          } ${isDark
+        className={`flex flex-col h-full min-h-screen border-r top-0 left-0 overflow-x-hidden ${
+          isMobileView
+            ? mobileExpanded
+              ? "fixed z-50 w-[308px] px-3 py-6"
+              : "sticky w-full px-1.5 py-4"
+            : `sticky w-full ${showLabels ? "px-3 py-6" : "px-1.5 py-4"}`
+        } ${isDark
             ? "bg-[#1F2024] border-r-[#3f4045] text-white"
             : "bg-white border-slate-200 text-slate-900"
           }`}
       >
         <div
-          className={`flex items-center justify-center gap-3 pb-6 ${isDark ? "bg-[#1F2024]" : "bg-white"
-            } sticky top-0 z-10`}
+          className={`flex items-center justify-center sticky top-0 z-10 ${
+            showLabels ? "gap-3 pb-6" : "pb-4"
+          } ${isDark ? "bg-[#1F2024]" : "bg-white"}`}
         >
           <img
-            src="/logo_sm.svg"
-            alt="Helio RCM logo"
-            className={`h-12 w-12 ${mobileExpanded ? "hidden md:hidden" : "md:hidden"}`}
+            src="/favicon.png"
+            alt="Helio RCM"
+            className={`object-contain ${showLabels ? "hidden" : "block h-9 w-9"}`}
             loading="lazy"
           />
           <img
             src="/helio-logo.svg"
             alt="Helio RCM logo"
-            className={`${mobileExpanded ? "block" : "hidden"} h-16 w-auto md:block`}
+            className={`${showLabels ? "block h-16 w-auto" : "hidden"}`}
             loading="lazy"
           />
         </div>
-        <nav className="flex-1 space-y-1 overflow-y-auto sidebar-scrollbar pr-1">
+        <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden sidebar-scrollbar ${showLabels ? "pr-1" : "pr-0"}`}>
           {navItems.map((item) => {
             const hasChildren = Array.isArray(item.children) && item.children.length > 0;
             const childActive = hasChildren && activeId.startsWith(`${item.id}:`);
@@ -755,43 +777,50 @@ const Sidebar = () => {
                     : null;
             const navStateClass = isActive
               ? isDark
-                ? "bg-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
-                : "bg-slate-900 text-white shadow-lg"
+                ? `bg-white/10 text-white${showLabels ? " shadow-[0_10px_30px_rgba(0,0,0,0.35)]" : ""}`
+                : `bg-slate-100 text-slate-900 border border-slate-200${showLabels ? " shadow-sm" : ""}`
               : isDark
                 ? "text-[rgba(244,244,244,0.5)] hover:bg-white/5"
                 : "text-slate-500 hover:bg-slate-100";
             const iconWrapperClass = isActive
               ? isDark
                 ? "border-white/20 bg-white/10"
-                : "border-slate-700 bg-slate-800"
+                : "border-slate-300 bg-white"
               : isDark
                 ? "border-white/5 bg-white/5"
                 : "border-slate-200 bg-white";
             const badgeClass = isActive
               ? isDark
                 ? "bg-white/20 text-white"
-                : "bg-white text-slate-900"
+                : "bg-slate-200 text-slate-800"
               : isDark
                 ? "bg-[#1F2231] text-[rgba(244,244,244,0.5)]"
                 : "bg-slate-200 text-slate-700";
             return (
               <div key={item.id}>
-                <div className={`w-full flex items-center rounded-2xl px-2 py-2 transition-colors ${navStateClass}`}>
+                <div
+                  className={`w-full flex items-center rounded-2xl transition-colors ${
+                    showLabels ? "px-2 py-2" : "px-0 py-1.5 justify-center"
+                  } ${navStateClass}`}
+                >
                   <button
                     type="button"
                     aria-label={item.title}
-                    className={`flex-1 flex items-center justify-center gap-2 text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 ${mobileExpanded ? "justify-between" : "md:justify-between"
-                      }`}
+                    className={`flex items-center text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 ${
+                      showLabels ? "flex-1 justify-between gap-2" : "justify-center"
+                    }`}
                     onClick={() => handleClick(item)}
                   >
-                    <span className="flex items-center gap-3 min-w-0">
+                    <span className={`flex items-center min-w-0 ${showLabels ? "gap-3" : "justify-center"}`}>
                       <span
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center border ${iconWrapperClass}`}
+                        className={`rounded-xl flex items-center justify-center border shrink-0 ${
+                          showLabels ? "w-9 h-9" : "w-10 h-10"
+                        } ${iconWrapperClass}`}
                       >
                         {renderIcon(item.icon, isActive)}
                       </span>
                       <span
-                        className={`${mobileExpanded ? "inline" : "hidden"} md:inline text-sm font-medium truncate max-w-[100px]`}
+                        className={`${showLabels ? "inline" : "hidden"} text-sm font-medium truncate max-w-[100px]`}
                         title={item.title}
                       >
                         {item.title}
@@ -799,7 +828,7 @@ const Sidebar = () => {
                     </span>
                     {computedBadge !== null && computedBadge !== undefined && (
                       <span
-                        className={`${mobileExpanded ? "inline-flex" : "hidden"} md:inline-flex text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}
+                        className={`${showLabels ? "inline-flex" : "hidden"} text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}
                       >
                         {formatCount(computedBadge)}
                       </span>
@@ -808,7 +837,7 @@ const Sidebar = () => {
                   {hasChildren && (
                     <button
                       type="button"
-                      className={`${mobileExpanded ? "flex" : "hidden"} md:flex p-1 rounded-full ml-2 ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
+                      className={`${showLabels ? "flex" : "hidden"} p-1 rounded-full ml-2 ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -827,7 +856,7 @@ const Sidebar = () => {
                 </div>
                 {hasChildren && (
                   <div
-                    className={`${mobileExpanded ? "block" : "hidden"} md:block ml-14 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'mt-1 mb-2 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'}`}
+                    className={`${showLabels ? "block" : "hidden"} ml-14 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'mt-1 mb-2 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'}`}
                     style={{
                       maxHeight: isExpanded ? `${(item.children?.length || 1) * 44}px` : 0,
                     }}
@@ -843,7 +872,7 @@ const Sidebar = () => {
                           type="button"
                           key={child.id}
                           className={`w-full flex items-center justify-between text-left text-xs font-medium px-3 py-2 rounded-xl transition-colors ${childIsActive
-                              ? (isDark ? 'bg-white/10 text-white' : 'bg-slate-900 text-white')
+                              ? (isDark ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-900 border border-slate-200')
                               : (isDark ? 'text-[rgba(244,244,244,0.5)] hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100')
                             }`}
                           onClick={() => handleChildClick(item, child)}
@@ -852,7 +881,7 @@ const Sidebar = () => {
                           {childBadge !== null && childBadge !== undefined && (
                             <span
                               className={`ml-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${childIsActive
-                                  ? (isDark ? 'bg-white/20 text-white' : 'bg-white text-slate-900')
+                                  ? (isDark ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800')
                                   : (isDark ? 'bg-[#1F2231] text-[rgba(244,244,244,0.5)]' : 'bg-slate-200 text-slate-700')
                                 }`}
                             >
@@ -868,6 +897,28 @@ const Sidebar = () => {
             );
           })}
         </nav>
+        <button
+          type="button"
+          onClick={handleSidebarToggle}
+          aria-label={showLabels ? "Collapse sidebar" : "Expand sidebar"}
+          title={showLabels ? "Collapse sidebar" : "Expand sidebar"}
+          className={`mt-3 flex items-center justify-center transition-colors shrink-0 ${
+            showLabels ? "gap-2 rounded-2xl px-2 py-2 mx-1" : "rounded-xl p-2 mx-auto"
+          } ${isDark ? "text-white/60 hover:bg-white/10" : "text-slate-500 hover:bg-slate-100"}`}
+        >
+          <svg
+            className={`h-5 w-5 transition-transform ${showLabels ? "" : "rotate-180"}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M15 18L9 12L15 6" />
+          </svg>
+          {showLabels && <span className="text-sm font-medium">Collapse</span>}
+        </button>
         {/* <div className="mt-6 flex items-center justify-between px-3">
         <span className="text-sm font-semibold">Theme</span>
         <label className="relative inline-flex items-center cursor-pointer">

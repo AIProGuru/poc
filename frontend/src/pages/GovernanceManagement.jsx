@@ -4,7 +4,6 @@ import Papa from "papaparse";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import Header from "../components/demo-layout/Header";
 import { useApiEndpoint } from "../ApiEndpointContext";
 
 const LIFECYCLE_COLUMNS = [
@@ -330,8 +329,14 @@ const GovernanceManagement = () => {
   const containerClasses = isDark ? "border-[#ffffff14] bg-[#23252b]" : "border-slate-200 bg-white";
   const subduedText = isDark ? "text-[#9ca3af]" : "text-slate-500";
   const inputClasses = isDark
-    ? "border-[#ffffff14] bg-[#1b1d22] text-white placeholder:text-[#6b7280] focus:border-cyan-400/60"
-    : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-cyan-600";
+    ? "border-[#ffffff14] bg-[#1b1d22] text-white placeholder:text-[#6b7280] focus:border-white/25"
+    : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-slate-400";
+  const primaryButtonClass = isDark
+    ? "bg-[#3b3f46] text-white hover:bg-[#4a4f57] disabled:opacity-50"
+    : "bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-50";
+  const secondaryButtonClass = isDark
+    ? "bg-white/10 text-gray-200 hover:bg-white/15 border border-white/10"
+    : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200";
 
   const loadTabData = useCallback(
     async (tabId, includeInactive = showInactive) => {
@@ -610,43 +615,8 @@ const GovernanceManagement = () => {
   };
 
   return (
-    <div
-      className={`min-h-screen overflow-x-hidden ${
-        isDark ? "bg-[#1e1f24] text-white" : "bg-slate-50 text-slate-900"
-      }`}
-    >
-      <Header />
-      <div className="container mx-auto px-4 py-12">
-        <div className="mb-8 flex items-start gap-4">
-          <button
-            type="button"
-            onClick={() => navigate("/clientmanagement")}
-            className={`mt-1 rounded-lg p-2 transition ${
-              isDark
-                ? "bg-[#ffffff10] hover:bg-[#ffffff20]"
-                : "border border-slate-200 bg-white hover:bg-slate-100"
-            }`}
-            aria-label="Back to Client Management"
-            title="Back to Client Management"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M19 12H5M5 12L12 19M5 12L12 5"
-                stroke={isDark ? "white" : "#0F172A"}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <div>
-            <h1 className="mb-2 text-2xl font-bold">Governance Management</h1>
-            <p className={subduedText}>
-              A standardized framework for rules, processes, and CMS codes to ensure consistency and compliance across all clients.
-            </p>
-          </div>
-        </div>
-
+    <div className={`w-full overflow-x-hidden ${isDark ? 'text-gray-100' : 'text-slate-900'}`}>
+      <div className="px-6 md:px-10 py-4">
         <div className={`mb-6 rounded-2xl border p-3 ${containerClasses}`}>
           <div className="grid gap-3 md:grid-cols-3">
             {CONFIG_TABS.map((tab) => {
@@ -659,8 +629,8 @@ const GovernanceManagement = () => {
                   className={`rounded-xl border px-4 py-3 text-left transition ${
                     isActive
                       ? isDark
-                        ? "border-cyan-400/60 bg-cyan-500/10"
-                        : "border-cyan-600 bg-cyan-50"
+                        ? "border-white/20 bg-white/10"
+                        : "border-slate-300 bg-slate-100"
                       : isDark
                         ? "border-[#ffffff10] bg-[#1b1d22] hover:border-[#ffffff24]"
                         : "border-slate-200 bg-slate-50 hover:border-slate-300"
@@ -707,11 +677,7 @@ const GovernanceManagement = () => {
                 type="button"
                 onClick={() => fileInputRefs.current[activeTab]?.click()}
                 disabled={!apiUrl || uploadingTab === activeTab || loadingTab === activeTab}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                  isDark
-                    ? "bg-cyan-500 text-slate-950 hover:bg-cyan-400 disabled:opacity-50"
-                    : "bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50"
-                }`}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${primaryButtonClass}`}
               >
                 {uploadingTab === activeTab ? "Uploading..." : "Upload File"}
               </button>
@@ -848,7 +814,7 @@ const GovernanceManagement = () => {
                       onDrop={canReorder ? (event) => handleActionDrop(event, row.id) : undefined}
                       className={`${row.isActive === false ? (isDark ? "opacity-60" : "opacity-70") : ""} ${
                         isDragging ? "opacity-40" : ""
-                      } ${isDragOver ? (isDark ? "bg-cyan-500/10" : "bg-cyan-50") : ""}`}
+                      } ${isDragOver ? (isDark ? "bg-white/5" : "bg-slate-100") : ""}`}
                     >
                       {showActionDragColumn && (
                         <td className="w-[44px] px-2 py-2 align-middle">
@@ -900,11 +866,7 @@ const GovernanceManagement = () => {
                             type="button"
                             onClick={() => handleSaveRow(activeTab, row)}
                             disabled={!apiUrl || row.saving || (!row.isDraft && !row.isDirty)}
-                            className={`rounded-lg px-3 py-2 text-sm transition disabled:opacity-50 ${
-                              isDark
-                                ? "bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30"
-                                : "bg-cyan-50 text-cyan-700 hover:bg-cyan-100"
-                            }`}
+                            className={`rounded-lg px-3 py-2 text-sm transition disabled:opacity-50 ${primaryButtonClass}`}
                           >
                             {row.saving ? "Saving..." : "Save"}
                           </button>
@@ -912,11 +874,7 @@ const GovernanceManagement = () => {
                             type="button"
                             onClick={() => handleDeleteRow(activeTab, row)}
                             disabled={row.saving}
-                            className={`rounded-lg px-3 py-2 text-sm transition ${
-                              isDark
-                                ? "bg-rose-500/15 text-rose-200 hover:bg-rose-500/25"
-                                : "bg-rose-50 text-rose-700 hover:bg-rose-100"
-                            }`}
+                            className={`rounded-lg px-3 py-2 text-sm transition ${secondaryButtonClass}`}
                           >
                             {row.isDraft ? "Remove" : "Retire"}
                           </button>
