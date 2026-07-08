@@ -219,24 +219,25 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     payer: [],
     value: [],
   });
+  const createEmptyUserForm = (password = '') => ({
+    user_id: '',
+    firstname: '',
+    lastname: '',
+    email: '',
+    role: ROLE_STANDARD,
+    password,
+    status: 0,
+    access_level: 0,
+    tenant: '',
+    client: [],
+    facility: [],
+    clientState: [],
+    denialCategory: [],
+    payer: [],
+    value: [],
+  });
   const resetUserForm = () => {
-    setUser({
-      user_id: '',
-      firstname: '',
-      lastname: '',
-      email: '',
-      role: ROLE_STANDARD,
-      password: '',
-      status: 0,
-      access_level: 0,
-      tenant: '',
-      client: [],
-      facility: [],
-      clientState: [],
-      denialCategory: [],
-      payer: [],
-      value: [],
-    });
+    setUser(createEmptyUserForm());
   };
 
   useEffect(() => {
@@ -557,7 +558,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     }
   };
 
-  const generatePassword = (length) => {
+  const generatePasswordValue = (length) => {
     const numbers = '0123456789';
     const upperCase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const lowerCase = 'abcdefghijklmnopqrstuvwxyz';
@@ -565,7 +566,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
     let password = '';
 
-    // Ensure at least two of each required type
     for (let i = 0; i < 2; i++) {
       password += numbers[Math.floor(Math.random() * numbers.length)];
       password += upperCase[Math.floor(Math.random() * upperCase.length)];
@@ -573,17 +573,34 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       password += specialChars[Math.floor(Math.random() * specialChars.length)];
     }
 
-    // Add random characters to meet the desired length
     const allChars = numbers + upperCase + lowerCase + specialChars;
     while (password.length < length) {
       password += allChars[Math.floor(Math.random() * allChars.length)];
     }
 
-    // Shuffle the password to ensure random order
-    password = password.split('').sort(() => Math.random() - 0.5).join('');
+    return password.split('').sort(() => Math.random() - 0.5).join('');
+  };
 
-    setUser({ ...user, password: password });
-  }
+  const generatePassword = (length) => {
+    const password = generatePasswordValue(length);
+    setUser((prev) => ({ ...prev, password }));
+    return password;
+  };
+
+  const buildAddUserPayload = (formUser) => ({
+    email: `${formUser.email || ''}`.trim(),
+    password: formUser.password,
+    firstname: `${formUser.firstname || ''}`.trim(),
+    lastname: `${formUser.lastname || ''}`.trim(),
+    role: formUser.role || ROLE_STANDARD,
+    status: Number.isFinite(Number(formUser.status)) ? Number(formUser.status) : 0,
+    tenant: formUser.tenant || '',
+    client: Array.isArray(formUser.client) ? formUser.client : [],
+    facility: Array.isArray(formUser.facility) ? formUser.facility : [],
+    denialCategory: Array.isArray(formUser.denialCategory) ? formUser.denialCategory : [],
+    payer: Array.isArray(formUser.payer) ? formUser.payer : [],
+    value: Array.isArray(formUser.value) ? formUser.value : [],
+  });
 
   const handleUpdateRole = (userId, newRole) => {
     patchUserProfile(userId, { role: newRole }, 'Role updated successfully').catch((error) => {
@@ -603,6 +620,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   const addUser_backend = async (e) => {
     e.preventDefault();
     const token = await auth.currentUser.getIdToken()
+    const payload = buildAddUserPayload(user);
     const data = await fetch(`${SERVER_URL}/api/v1/user`, {
       method: "POST",
       headers: {
@@ -610,20 +628,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
         "Authorization": token
 
       },
-      body: JSON.stringify({
-        email: user.email,
-        password: user.password,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        role: user.role,
-        status: user.status,
-        tenant: user.tenant,
-        client: user.client,
-        facility: user.facility,
-        denialCategory: user.denialCategory,
-        payer: user.payer,
-        value: user.value,
-      })
+      body: JSON.stringify(payload)
     })
     const res = await data.json().catch(() => ({}));
     if (data.status === 200) {
@@ -862,8 +867,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
   useEffect(() => {
     if (!isAddView) return;
-    resetUserForm();
-    generatePassword(12);
+    setUser(createEmptyUserForm(generatePasswordValue(12)));
   }, [isAddView]);
 
   const shellClasses = embedded
@@ -1162,7 +1166,8 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                               onClick={() => {
                                 const currentUser = users.find(u => u.id === row.id) || row;
                                 setUpdate_user_id(row.id);
-                                setUser({
+                                setUser((prev) => ({
+                                  ...prev,
                                   tenant: currentUser.tenant || "",
                                   client: currentUser.client || [],
                                   facility: currentUser.facility || [],
@@ -1170,7 +1175,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                                   denialCategory: currentUser.denialCategory || [],
                                   payer: currentUser.payer || [],
                                   value: currentUser.value || [],
-                                });
+                                }));
                                 setShowPermissionModal(true);
                               }}
                               title="Edit Permissions"

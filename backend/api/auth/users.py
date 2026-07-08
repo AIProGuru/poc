@@ -53,6 +53,15 @@ def add_user():
         data = request.get_json()
         decoded_token = auth.verify_id_token(token)
         _assert_admin(decoded_token["uid"])
+        if not isinstance(data, dict):
+            return jsonify({"error": "Request body must be a JSON object"}), 400
+        if "status" not in data or data.get("status") is None:
+            data["status"] = 0
+        else:
+            try:
+                data["status"] = int(data["status"])
+            except (TypeError, ValueError):
+                return jsonify({"error": "status must be an integer"}), 400
         validate(instance=data, schema=addUserSchema)
 
         decoded_user = auth.create_user(email=data["email"], password=data["password"])
