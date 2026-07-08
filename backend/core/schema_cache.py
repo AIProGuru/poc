@@ -7,6 +7,12 @@ _columns_cache = {}
 _lock = Lock()
 
 
+def invalidate_table_columns(db_name: str, table_name: str) -> None:
+    cache_key = (db_name, table_name.lower())
+    with _lock:
+        _columns_cache.pop(cache_key, None)
+
+
 def get_table_columns(cursor, db_name: str, table_name: str) -> Set[str]:
     cache_key = (db_name, table_name.lower())
     now = time.time()

@@ -269,6 +269,61 @@ const ReboundDetailView = () => {
     })
   }, [showAppealModal])
 
+  const getSavedTriageEntry = (claim) => {
+    const actions = claim?.Action || [];
+    return (
+      actions.find((item) => `${item.claim_status || ""}`.toLowerCase() === "triage") ||
+      null
+    );
+  };
+
+  const parseTriageActionValue = (value) => {
+    if (!value) return { selected: [], otherText: "", transactionCodes: {} };
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return { selected: parsed.filter(Boolean), otherText: "", transactionCodes: {} };
+      }
+      if (parsed && typeof parsed === "object") {
+        return {
+          selected: Array.isArray(parsed.selected) ? parsed.selected.filter(Boolean) : [],
+          otherText: parsed.otherText ? `${parsed.otherText}` : "",
+          transactionCodes:
+            parsed.transactionCodes && typeof parsed.transactionCodes === "object"
+              ? parsed.transactionCodes
+              : {},
+        };
+      }
+    } catch (err) {
+      // Fall back to comma-delimited list.
+    }
+    return {
+      selected: `${value}`
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      otherText: "",
+      transactionCodes: {},
+    };
+  };
+
+  const savedTriageEntry = useMemo(
+    () => (currentClaim ? getSavedTriageEntry(currentClaim) : null),
+    [currentClaim]
+  );
+
+  const savedTriageSummary = useMemo(() => {
+    if (!savedTriageEntry) return null;
+    const parsed = parseTriageActionValue(savedTriageEntry.action);
+    return {
+      labels: parsed.selected || [],
+      otherText: parsed.otherText || "",
+      notes: savedTriageEntry.notes || "",
+      actionDate: savedTriageEntry.action_date || "",
+      user: savedTriageEntry.user || "",
+    };
+  }, [savedTriageEntry]);
+
   useEffect(() => {
     if (!apiUrl || !currentClaim) return;
     const denialCategory =
@@ -277,9 +332,8 @@ const ReboundDetailView = () => {
       currentClaim?.Claim?.Data?.ClaimCategory ||
       "";
 
-    const savedTriage = getSavedTriageEntry(currentClaim);
-    const savedTriageValue = parseTriageActionValue(savedTriage?.action);
-    setTriageNotes(savedTriage?.notes || "");
+    const savedTriageValue = parseTriageActionValue(savedTriageEntry?.action);
+    setTriageNotes(savedTriageEntry?.notes || "");
     setTriageOtherText(savedTriageValue.otherText || "");
 
     if (!denialCategory) {
@@ -312,7 +366,7 @@ const ReboundDetailView = () => {
       .catch(() => {
         setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
       });
-  }, [apiUrl, currentClaim])
+  }, [apiUrl, currentClaim, savedTriageEntry])
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -345,41 +399,6 @@ const ReboundDetailView = () => {
 
 
   const [notes, setNotes] = useState('')
-
-  const getSavedTriageEntry = (claim) => {
-    const actions = claim?.Action || [];
-    return actions.find((item) => `${item.claim_status || ""}`.toLowerCase() === "triage") || null;
-  };
-
-  const parseTriageActionValue = (value) => {
-    if (!value) return { selected: [], otherText: "", transactionCodes: {} };
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) {
-        return { selected: parsed.filter(Boolean), otherText: "", transactionCodes: {} };
-      }
-      if (parsed && typeof parsed === "object") {
-        return {
-          selected: Array.isArray(parsed.selected) ? parsed.selected.filter(Boolean) : [],
-          otherText: parsed.otherText ? `${parsed.otherText}` : "",
-          transactionCodes:
-            parsed.transactionCodes && typeof parsed.transactionCodes === "object"
-              ? parsed.transactionCodes
-              : {},
-        };
-      }
-    } catch (err) {
-      // Fall back to comma-delimited list.
-    }
-    return {
-      selected: `${value}`
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      otherText: "",
-      transactionCodes: {},
-    };
-  };
 
   const applySavedTriageSelection = (items, saved) => {
     const savedSet = new Set(saved.selected.map((item) => `${item}`.toLowerCase()));
@@ -649,6 +668,12 @@ const ReboundDetailView = () => {
     const claimNoValue = getTriageClaimNoValue();
     if (!claimNoValue) return;
 
+    const savedTriage = savedTriageEntry;
+    if (savedTriage && (savedTriage.action || savedTriage.notes)) {
+      triageHydratedRef.current = true;
+      return;
+    }
+
     const draftKey = getTriageDraftKey(claimNoValue, username);
     const draft = readTriageDraft(draftKey);
     if (!draft) {
@@ -662,7 +687,7 @@ const ReboundDetailView = () => {
     setTriageDraftStatus("draft-loaded");
     setLastDraftSavedAt(draft.savedAt || null);
     triageHydratedRef.current = true;
-  }, [apiUrl, currentClaim, triageActions, username]);
+  }, [apiUrl, currentClaim, triageActions, username, savedTriageEntry]);
 
   // Debounced auto-save for triage draft (local only, until the user submits).
   useEffect(() => {
@@ -2056,6 +2081,30 @@ const ReboundDetailView = () => {
                 }`}
             >
               <div className="flex flex-col gap-3">
+                {savedTriageSummary ? (
+                  <div
+                    className={`rounded-xl border px-4 py-3 text-sm ${isDark
+                      ? "border-[#2d3348] bg-[#1f2433] text-gray-200"
+                      : "border-gray-200 bg-slate-50 text-slate-700"
+                      }`}
+                  >
+                    <p className="font-semibold">Last saved triage</p>
+                    {savedTriageSummary.labels.length > 0 ? (
+                      <p className="mt-1">
+                        Actions: {savedTriageSummary.labels.join(", ")}
+                      </p>
+                    ) : null}
+                    {savedTriageSummary.notes ? (
+                      <p className="mt-1">Notes: {savedTriageSummary.notes}</p>
+                    ) : null}
+                    {savedTriageSummary.actionDate ? (
+                      <p className={`mt-1 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                        Saved {savedTriageSummary.actionDate}
+                        {savedTriageSummary.user ? ` by ${savedTriageSummary.user}` : ""}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-lg font-semibold">Triage</p>
                   <div className="flex flex-wrap items-center gap-2">

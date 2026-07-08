@@ -179,9 +179,10 @@ def build_active_queue_filter_sql() -> str:
     """Exclude triaged claims with a future tickler date from the active worklist."""
     return """
         AND NOT (
-            TickleDate IS NOT NULL
-            AND CURRENT_DATE() < TickleDate
-            AND LOWER(COALESCE(ActionTaken, '')) = 'triage'
+            ActionTaken IS NOT NULL
+            AND LOWER(TRIM(CAST(ActionTaken AS CHAR))) = 'triage'
+            AND TickleDate IS NOT NULL
+            AND CURRENT_DATE() < DATE(TickleDate)
         )
     """
 

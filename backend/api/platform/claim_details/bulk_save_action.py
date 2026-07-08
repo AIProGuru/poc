@@ -7,10 +7,7 @@ from typing import Any, Dict, Optional
 
 from flask import Blueprint, jsonify, request
 
-from api.platform.launchpad.stratification_details import (
-    first_existing_column,
-    get_existing_columns,
-)
+from api.platform.claim_details.action_worklist_sync import default_tickle_date, sync_custom_all_after_action
 from db import close_connection, get_connection
 
 logging.basicConfig(level=logging.INFO)
@@ -100,26 +97,8 @@ def _update_custom_all(
     claim_status: str,
     tickle_date: Optional[str],
 ) -> None:
-    custom_all_columns = get_existing_columns(cursor, db_name, "CUSTOM_ALL")
-    tickle_column = first_existing_column(
-        custom_all_columns,
-        ["TickleDate", "TickleTime", "TickleAt", "FollowUpDate", "NextActionDate", "NextWorkDate"],
-    )
-
-    set_clauses = []
-    if "ActionDate" in custom_all_columns:
-        set_clauses.append(f"ActionDate = '{_escape_sql(action_date)}'")
-    if "ActionTaken" in custom_all_columns:
-        set_clauses.append(f"ActionTaken = '{_escape_sql(claim_status)}'")
-    if tickle_column and tickle_date:
-        set_clauses.append(f"`{tickle_column}` = '{_escape_sql(tickle_date)}'")
-
-    if not set_clauses:
-        return
-
-    cursor.execute(
-        f"UPDATE CUSTOM_ALL SET {', '.join(set_clauses)} WHERE ClaimNo = %s",
-        (claimno,),
+    sync_custom_all_after_action(
+        cursor, db_name, claimno, action_date, claim_status, tickle_date
     )
 
 
@@ -215,6 +194,8 @@ def bulk_save_action():
             cursor, selected_actions
         )
         tickle_date = _compute_tickle_date(tickle_time, explicit_tickle_date)
+        if not tickle_date:
+            tickle_date = default_tickle_date(7)
 
         for idx, raw_claim_no in enumerate(claim_nos):
             claimno = str(raw_claim_no or "").strip()
