@@ -206,10 +206,12 @@ const BulkDenialsPanel = ({
       } else {
         toast.success(`Bulk update applied to ${successCount} account(s).`);
         onClearSelection?.();
+        await onComplete?.();
         handleClose();
+        return;
       }
 
-      onComplete?.();
+      await onComplete?.();
     } catch (err) {
       const detail =
         err?.response?.data?.detail ||

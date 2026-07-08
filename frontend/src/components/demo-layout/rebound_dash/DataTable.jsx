@@ -339,12 +339,29 @@ const DataTable = (props) => {
     [selectedClaimIds]
   );
 
-  const refreshWorklistCounts = () => {
+  const buildSummarySignature = () => JSON.stringify({
+    selectedTags,
+    keyword,
+    tabIndex,
+    startDate,
+    endDate,
+    code,
+    remark,
+    procedure,
+    pos,
+    accessExtra,
+    advancedFilters: sanitizeAdvancedFilters(advancedFilters),
+  });
+
+  const refreshWorklistCounts = async () => {
     if (!apiUrl) return;
     dispatch(setTableLoading(true));
     dispatch(setPart1Loading(true));
     dispatch(setPart2Loading(true));
-    axios.post(`${apiUrl}/part1_all_grouped`, {
+
+    const includeAllCategories = accessExtra?.IncludeAllCategories;
+    const canFetchSummary = includeAllCategories || selectedTags.length > 0;
+    const groupedPayload = {
       tabIndexes: [6, 2, 1, 4],
       keyword: keyword || "",
       startDate: startDate ? startDate.toISOString().substr(0, 10) : null,
@@ -354,9 +371,35 @@ const DataTable = (props) => {
       procedure,
       pos,
       extra: accessExtra,
-    }).then((res) => {
-      dispatch(setNavGrouped(res.data?.grouped || {}));
-    }).catch(() => {});
+    };
+    const summaryPayload = {
+      selectedTags,
+      keyword,
+      tabIndex,
+      startDate: startDate ? startDate.toISOString().substr(0, 10) : null,
+      endDate: endDate ? endDate.toISOString().substr(0, 10) : null,
+      code,
+      remark,
+      procedure,
+      pos,
+      extra: accessExtra,
+      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
+    };
+
+    try {
+      const requests = [axios.post(`${apiUrl}/part1_all_grouped`, groupedPayload)];
+      if (canFetchSummary) {
+        requests.push(axios.post(`${apiUrl}/data_summary`, summaryPayload));
+      }
+      const [groupedRes, summaryRes] = await Promise.all(requests);
+      dispatch(setNavGrouped(groupedRes.data?.grouped || {}));
+      if (canFetchSummary && summaryRes?.data) {
+        setSummaryTotals(summaryRes.data);
+        summarySignatureRef.current = buildSummarySignature();
+      }
+    } catch {
+      // Table/part1/part2 loading flags will still refresh visible rows via existing effects.
+    }
   };
 
   const handleBulk277 = async () => {
