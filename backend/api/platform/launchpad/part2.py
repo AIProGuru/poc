@@ -5,6 +5,12 @@ import logging
 from datetime import date, datetime
 from db import get_connection, close_connection
 from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL, merge_request_extra
+from api.platform.launchpad.stratification_details import (
+    build_priority_helpers,
+    get_custom_all_patient_payment_expr,
+    get_existing_columns,
+)
+from api.platform.launchpad.worklist_queue import build_part2_grouped_sql
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -116,28 +122,25 @@ def get_rebound_data_part2_all():
         # If no tags are selected, return an empty response
         if not selectedTags:
             return jsonify([]), 200
-        
-        # Generate SQL query
-        generatedSQL = f"""select
-            count(CUSTOM_ALL.ID) AS Count,
-            CUSTOM_ALL.PrimaryCode,
-            CUSTOM_ALL.Category,
-            SUM(CUSTOM_ALL.Amount) AS Charge,
-            SUM(CUSTOM_ALL.DeniedAmt) AS DeniedAmt,
-            AVG(datediff(current_date(), CUSTOM_ALL.ServiceDate)) Days
-            {newGenerateSQL(
-                tab_index,
-                keyword,
-                selectedTags,
-                startDate,
-                endDate,
-                code,
-                remark,
-                procedure,
-                pos,
-                extra,
-                ""
-            )} GROUP BY PrimaryCode, Category ORDER BY PrimaryCode"""
+
+        patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name)
+        custom_all_columns = get_existing_columns(cursor, db_name, "CUSTOM_ALL")
+        actions_columns = get_existing_columns(cursor, db_name, "actions")
+        priority_helpers = build_priority_helpers(custom_all_columns, actions_columns, patient_payment_expr)
+        base_from_sql = newGenerateSQL(
+            tab_index,
+            keyword,
+            selectedTags,
+            startDate,
+            endDate,
+            code,
+            remark,
+            procedure,
+            pos,
+            extra,
+            "",
+        )
+        generatedSQL = build_part2_grouped_sql(base_from_sql, priority_helpers)
         
         cursor.execute(generatedSQL)
         ret = cursor.fetchall()

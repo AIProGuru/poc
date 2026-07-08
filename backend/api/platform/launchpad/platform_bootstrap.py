@@ -6,6 +6,12 @@ import re
 import os
 from db import get_connection, close_connection
 from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL
+from api.platform.launchpad.stratification_details import (
+    build_priority_helpers,
+    get_custom_all_patient_payment_expr,
+    get_existing_columns,
+)
+from api.platform.launchpad.worklist_queue import build_category_grouped_count_sql
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -444,40 +450,33 @@ def platform_bootstrap():
 
         allowed_categories = extra.get("AllowedCategories") or []
         allowed_set = [str(item).strip() for item in allowed_categories if item]
+        patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name)
+        custom_all_columns = get_existing_columns(cursor, db_name, "CUSTOM_ALL")
+        actions_columns = get_existing_columns(cursor, db_name, "actions")
+        priority_helpers = build_priority_helpers(custom_all_columns, actions_columns, patient_payment_expr)
 
         for tab in target_tabs:
-            generatedSQL = f"""select
-                CASE
-                    WHEN CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = '' THEN '{delinquent_safe}'
-                    ELSE CUSTOM_ALL.Category
-                END AS Category,
-                count(CUSTOM_ALL.ID) AS Count,
-                SUM(CUSTOM_ALL.Amount) AS Charge,
-                SUM(CUSTOM_ALL.AllowedAmt) AS AllowedAmt,
-                SUM(CUSTOM_ALL.DeniedAmt) AS DeniedAmt,
-                AVG(datediff(current_date(), CUSTOM_ALL.ServiceDate)) Days
-                {newGenerateSQL(
-                    tab,
-                    keyword,
-                    [],
-                    startDate,
-                    endDate,
-                    code,
-                    remark,
-                    procedure,
-                    pos,
-                    extra,
-                    "",
-                    False
-                )}
-            """
+            base_from_sql = newGenerateSQL(
+                tab,
+                keyword,
+                [],
+                startDate,
+                endDate,
+                code,
+                remark,
+                procedure,
+                pos,
+                extra,
+                "",
+                False,
+            )
             if allowed_set:
                 allowed_list = ", ".join(
                     ["'{}'".format(str(item).replace("'", "''")) for item in allowed_set]
                 )
                 allow_delinquent = delinquent_label in allowed_set
                 if allow_delinquent:
-                    generatedSQL += f"""
+                    base_from_sql += f"""
                         AND (
                             CUSTOM_ALL.Category IN ({allowed_list})
                             OR CUSTOM_ALL.Category IS NULL
@@ -485,10 +484,14 @@ def platform_bootstrap():
                         )
                     """
                 else:
-                    generatedSQL += f"""
+                    base_from_sql += f"""
                         AND CUSTOM_ALL.Category IN ({allowed_list})
                     """
-            generatedSQL += " GROUP BY Category"
+            generatedSQL = build_category_grouped_count_sql(
+                delinquent_safe,
+                base_from_sql,
+                priority_helpers,
+            )
 
             cursor.execute(generatedSQL)
             rows = cursor.fetchall() or []

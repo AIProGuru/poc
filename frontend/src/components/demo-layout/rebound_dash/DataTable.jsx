@@ -18,7 +18,7 @@ import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
 import { samplifyDouble, samplifyInteger, samplifyString } from "../../../utils/config";
 
 import DataTableFilter from "./DataTableFilter";
-import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, setPart1Loading, setPart2Loading, setTableLoading, setExtraFilter, setSelectedClaimIds } from "../../../redux/reducers/app.reducer";
+import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, setPart1Loading, setPart2Loading, setTableLoading, setExtraFilter, setSelectedClaimIds, setNavGrouped } from "../../../redux/reducers/app.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { toast } from "react-toastify";
 import DataTableTags from "./DataTableTags";
@@ -338,6 +338,26 @@ const DataTable = (props) => {
     () => (selectedClaimIds || []).filter((id) => id && `${id}`.trim() !== ""),
     [selectedClaimIds]
   );
+
+  const refreshWorklistCounts = () => {
+    if (!apiUrl) return;
+    dispatch(setTableLoading(true));
+    dispatch(setPart1Loading(true));
+    dispatch(setPart2Loading(true));
+    axios.post(`${apiUrl}/part1_all_grouped`, {
+      tabIndexes: [6, 2, 1, 4],
+      keyword: keyword || "",
+      startDate: startDate ? startDate.toISOString().substr(0, 10) : null,
+      endDate: endDate ? endDate.toISOString().substr(0, 10) : null,
+      code,
+      remark,
+      procedure,
+      pos,
+      extra: accessExtra,
+    }).then((res) => {
+      dispatch(setNavGrouped(res.data?.grouped || {}));
+    }).catch(() => {});
+  };
 
   const handleBulk277 = async () => {
     if (bulk277Loading) return;
@@ -735,7 +755,7 @@ const DataTable = (props) => {
           selectedClaimIds={selectedIds}
           denialCategory={denialCategory}
           isDarkMode={isDarkMode}
-          onComplete={() => dispatch(setTableLoading(true))}
+          onComplete={refreshWorklistCounts}
           onClearSelection={() => dispatch(setSelectedClaimIds([]))}
         />
       )}

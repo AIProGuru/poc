@@ -7,6 +7,12 @@ import os
 from db import get_connection, close_connection
 from core.schema_cache import get_table_columns, table_has_column
 from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL, merge_request_extra
+from api.platform.launchpad.worklist_queue import (
+    build_active_queue_where_sql,
+    build_is_overdue_sql,
+    build_part1_summary_sql,
+    build_priority_order_sql,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -175,42 +181,6 @@ def build_priority_helpers(custom_all_columns: set, actions_columns: set, patien
     }
 
 
-def build_active_queue_filter_sql() -> str:
-    """Exclude triaged claims with a future tickler date from the active worklist."""
-    return """
-        AND NOT (
-            ActionTaken IS NOT NULL
-            AND LOWER(TRIM(CAST(ActionTaken AS CHAR))) = 'triage'
-            AND TickleDate IS NOT NULL
-            AND CURRENT_DATE() < DATE(TickleDate)
-        )
-    """
-
-
-def build_priority_order_sql() -> str:
-    return """
-        HandoffFlag DESC,
-        CASE WHEN HandoffFlag = 1 THEN COALESCE(ActionDateParsed, LoadDate, ServiceDate, '9999-12-31') END ASC,
-        IsOverdue DESC,
-        CASE WHEN IsOverdue = 1 THEN TickleDate END ASC,
-        CASE
-            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance >= 25000 THEN 1
-            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance >= 10000 THEN 2
-            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance >= 5000 THEN 3
-            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance >= 1000 THEN 4
-            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance >= 100 THEN 5
-            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance > 0 THEN 6
-            WHEN HandoffFlag = 0 AND IsOverdue = 0 AND Balance < 0 THEN 7
-            ELSE 8
-        END ASC,
-        CASE WHEN HandoffFlag = 0 AND IsOverdue = 0 THEN PayerName END ASC,
-        CASE WHEN HandoffFlag = 0 AND IsOverdue = 0 THEN ROUND(Balance, 2) END DESC,
-        CASE WHEN HandoffFlag = 0 AND IsOverdue = 0 THEN PrimaryProcedure END ASC,
-        COALESCE(DischargeDate, ServiceDate, LoadDate, '9999-12-31') ASC,
-        ClaimNo ASC
-    """
-
-
 def build_outer_order_sql(sort: str) -> str:
     priority_order = build_priority_order_sql()
     if not sort or sort == "Priority":
@@ -353,7 +323,8 @@ def get_rebound_data_all():
             ""
         )
 
-        active_queue_filter = build_active_queue_filter_sql()
+        active_queue_where = build_active_queue_where_sql()
+        is_overdue_sql = build_is_overdue_sql(priority_helpers["tickle_date"])
 
         # Generate SQL query to count the total number of eligible queue records.
         count_sql = f"""
@@ -364,18 +335,10 @@ def get_rebound_data_all():
                     {priority_helpers["handoff"]} AS HandoffFlag,
                     {priority_helpers["tickle_date"]} AS TickleDate,
                     CUSTOM_ALL.ActionTaken AS ActionTaken,
-                    CASE
-                        WHEN {priority_helpers["tickle_date"]} IS NOT NULL
-                         AND CURRENT_DATE() >= {priority_helpers["tickle_date"]}
-                            THEN 1
-                        ELSE 0
-                    END AS IsOverdue
+                    {is_overdue_sql} AS IsOverdue
                 {base_from_sql}
             ) queue_claims
-            WHERE (queue_claims.HandoffFlag = 1
-               OR queue_claims.IsOverdue = 1
-               OR queue_claims.Balance <> 0)
-            {active_queue_filter}
+            {active_queue_where}
         """
 
         cursor.execute(count_sql)
@@ -414,12 +377,7 @@ def get_rebound_data_all():
             CUSTOM_ALL.ActionTaken,
             {priority_helpers["handoff"]} AS HandoffFlag,
             {priority_helpers["tickle_date"]} AS TickleDate,
-            CASE
-                WHEN {priority_helpers["tickle_date"]} IS NOT NULL
-                 AND CURRENT_DATE() >= {priority_helpers["tickle_date"]}
-                    THEN 1
-                ELSE 0
-            END AS IsOverdue,
+            {is_overdue_sql} AS IsOverdue,
             {priority_helpers["discharge_date"]} AS DischargeDate,
             COALESCE(
                 STR_TO_DATE(CUSTOM_ALL.ActionDate, '%m/%d/%Y'),
@@ -438,10 +396,7 @@ def get_rebound_data_all():
                 FROM (
                     {base_sql}
                 ) base_claims
-                WHERE (base_claims.HandoffFlag = 1
-                   OR base_claims.IsOverdue = 1
-                   OR base_claims.Balance <> 0)
-                {active_queue_filter}
+                {active_queue_where}
             )
             SELECT
                 Priority,
@@ -549,46 +504,63 @@ def get_rebound_data_summary():
                 }
             ), 200
         patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name)
-
-        summary_sql = f"""select
-            count(ID) AS cnt,
-            COALESCE(sum(CUSTOM_ALL.Amount), 0) AS total_amount,
-            COALESCE(sum(CUSTOM_ALL.AllowedAmt), 0) AS total_allowed,
-            COALESCE(sum(CUSTOM_ALL.PaidAmt), 0) AS total_payer_paid,
-            COALESCE(sum({patient_payment_expr}), 0) AS total_patient_payment,
-            COALESCE(sum(CUSTOM_ALL.PatientResp), 0) AS total_patient_resp,
-            COALESCE(sum(CUSTOM_ALL.Adjustment45Amount), 0) AS total_adjustment45
-            {newGenerateSQL(
-                tab_index,
-                keyword,
-                selectedTags,
-                startDate,
-                endDate,
-                code,
-                remark,
-                procedure,
-                pos,
-                extra,
-                ""
-            )}"""
+        custom_all_columns = get_existing_columns(cursor, db_name, "CUSTOM_ALL")
+        actions_columns = get_existing_columns(cursor, db_name, "actions")
+        priority_helpers = build_priority_helpers(custom_all_columns, actions_columns, patient_payment_expr)
+        base_from_sql = newGenerateSQL(
+            tab_index,
+            keyword,
+            selectedTags,
+            startDate,
+            endDate,
+            code,
+            remark,
+            procedure,
+            pos,
+            extra,
+            "",
+        )
+        summary_sql = build_part1_summary_sql(base_from_sql, priority_helpers)
         cursor.execute(summary_sql)
         result = cursor.fetchone() or {}
-        charges = result.get("total_amount") or 0
-        allowed = result.get("total_allowed") or 0
-        payer_paid = result.get("total_payer_paid") or 0
-        patient_payment = result.get("total_patient_payment") or 0
-        patient_resp = result.get("total_patient_resp") or 0
-        adjustment45 = result.get("total_adjustment45") or 0
-        charges = float(charges or 0)
-        allowed = float(allowed or 0)
-        payer_paid = float(payer_paid or 0)
-        patient_payment = float(patient_payment or 0)
-        patient_resp = float(patient_resp or 0)
-        adjustment45 = float(adjustment45 or 0)
-        balance = float(charges) - float(adjustment45) - float(payer_paid) - float(patient_payment)
+        active_count = int(result.get("Count") or 0)
+        # Recompute financial summary from active queue rows only.
+        balance_sql = f"""
+            SELECT
+                COALESCE(SUM(Amount), 0) AS total_amount,
+                COALESCE(SUM(AllowedAmt), 0) AS total_allowed,
+                COALESCE(SUM(PaidAmt), 0) AS total_payer_paid,
+                COALESCE(SUM(PatientPayment), 0) AS total_patient_payment,
+                COALESCE(SUM(PatientResp), 0) AS total_patient_resp,
+                COALESCE(SUM(Adjustment45Amount), 0) AS total_adjustment45,
+                COALESCE(SUM(Balance), 0) AS total_balance
+            FROM (
+                SELECT
+                    CUSTOM_ALL.Amount AS Amount,
+                    CUSTOM_ALL.AllowedAmt AS AllowedAmt,
+                    CUSTOM_ALL.PaidAmt AS PaidAmt,
+                    CUSTOM_ALL.PatientResp AS PatientResp,
+                    CUSTOM_ALL.Adjustment45Amount AS Adjustment45Amount,
+                    {patient_payment_expr} AS PatientPayment,
+                    {priority_helpers["balance"]} AS Balance,
+                    {priority_helpers["tickle_date"]} AS TickleDate,
+                    CUSTOM_ALL.ActionTaken AS ActionTaken
+                {base_from_sql}
+            ) active_queue
+            {build_active_queue_where_sql()}
+        """
+        cursor.execute(balance_sql)
+        totals = cursor.fetchone() or {}
+        charges = float(totals.get("total_amount") or 0)
+        allowed = float(totals.get("total_allowed") or 0)
+        payer_paid = float(totals.get("total_payer_paid") or 0)
+        patient_payment = float(totals.get("total_patient_payment") or 0)
+        patient_resp = float(totals.get("total_patient_resp") or 0)
+        adjustment45 = float(totals.get("total_adjustment45") or 0)
+        balance = float(totals.get("total_balance") or 0)
         return jsonify(
             {
-                "count": result.get("cnt") or 0,
+                "count": active_count,
                 "charges": float(charges),
                 "allowed": float(allowed),
                 "payerPayments": float(payer_paid),
