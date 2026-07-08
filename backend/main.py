@@ -42,6 +42,12 @@ from api.platform.claim_details.save_action import (
     pilotcustomer_api_action,
     betacustomer_api_action,
 )
+from api.platform.claim_details.bulk_save_action import (
+    rebound_api_bulk_action,
+    medevolve_api_bulk_action,
+    pilotcustomer_api_bulk_action,
+    betacustomer_api_bulk_action,
+)
 from api.platform.claim_details.save_comment import rebound_api_comment, medevolve_api_comment
 from api.platform.claim_details.add_document import rebound_api_add_doc, medevolve_api_add_doc
 from api.platform.claim_details.appeal_documents import (
@@ -207,6 +213,10 @@ def create_app():
     app.register_blueprint(medevolve_api_action)
     app.register_blueprint(pilotcustomer_api_action)
     app.register_blueprint(betacustomer_api_action)
+    app.register_blueprint(rebound_api_bulk_action)
+    app.register_blueprint(medevolve_api_bulk_action)
+    app.register_blueprint(pilotcustomer_api_bulk_action)
+    app.register_blueprint(betacustomer_api_bulk_action)
     app.register_blueprint(rebound_api_comment)
     app.register_blueprint(medevolve_api_comment)
     app.register_blueprint(rebound_api_add_doc)

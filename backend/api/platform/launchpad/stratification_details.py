@@ -175,6 +175,17 @@ def build_priority_helpers(custom_all_columns: set, actions_columns: set, patien
     }
 
 
+def build_active_queue_filter_sql() -> str:
+    """Exclude triaged claims with a future tickler date from the active worklist."""
+    return """
+        AND NOT (
+            TickleDate IS NOT NULL
+            AND CURRENT_DATE() < TickleDate
+            AND LOWER(COALESCE(ActionTaken, '')) = 'triage'
+        )
+    """
+
+
 def build_priority_order_sql() -> str:
     return """
         HandoffFlag DESC,
@@ -341,6 +352,8 @@ def get_rebound_data_all():
             ""
         )
 
+        active_queue_filter = build_active_queue_filter_sql()
+
         # Generate SQL query to count the total number of eligible queue records.
         count_sql = f"""
             SELECT COUNT(1) AS cnt
@@ -348,6 +361,8 @@ def get_rebound_data_all():
                 SELECT
                     {priority_helpers["balance"]} AS Balance,
                     {priority_helpers["handoff"]} AS HandoffFlag,
+                    {priority_helpers["tickle_date"]} AS TickleDate,
+                    CUSTOM_ALL.ActionTaken AS ActionTaken,
                     CASE
                         WHEN {priority_helpers["tickle_date"]} IS NOT NULL
                          AND CURRENT_DATE() >= {priority_helpers["tickle_date"]}
@@ -356,9 +371,10 @@ def get_rebound_data_all():
                     END AS IsOverdue
                 {base_from_sql}
             ) queue_claims
-            WHERE queue_claims.HandoffFlag = 1
+            WHERE (queue_claims.HandoffFlag = 1
                OR queue_claims.IsOverdue = 1
-               OR queue_claims.Balance <> 0
+               OR queue_claims.Balance <> 0)
+            {active_queue_filter}
         """
 
         cursor.execute(count_sql)
@@ -421,9 +437,10 @@ def get_rebound_data_all():
                 FROM (
                     {base_sql}
                 ) base_claims
-                WHERE base_claims.HandoffFlag = 1
+                WHERE (base_claims.HandoffFlag = 1
                    OR base_claims.IsOverdue = 1
-                   OR base_claims.Balance <> 0
+                   OR base_claims.Balance <> 0)
+                {active_queue_filter}
             )
             SELECT
                 Priority,

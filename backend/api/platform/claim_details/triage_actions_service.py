@@ -32,6 +32,7 @@ def _serialize_triage_row(row: Dict[str, Any]) -> Dict[str, Any]:
         "label": row.get("action_label") or "",
         "allowFreeText": bool(row.get("allow_free_text", 0)),
         "transactionOptions": _parse_transaction_options(row.get("transaction_options")),
+        "tickleTime": row.get("tickle_time") or "",
     }
 
 
@@ -61,7 +62,7 @@ def fetch_triage_actions_for_category(cursor, denial_category: str) -> List[Dict
 
     cursor.execute(
         """
-        SELECT action_label, allow_free_text, sort_order, transaction_options
+        SELECT action_label, allow_free_text, sort_order, transaction_options, tickle_time
         FROM claim_action_items
         WHERE category = %s AND is_active = 1
         ORDER BY

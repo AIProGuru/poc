@@ -22,6 +22,7 @@ import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, s
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { toast } from "react-toastify";
 import DataTableTags from "./DataTableTags";
+import BulkDenialsPanel from "./BulkDenialsPanel";
 import { buildAccessExtra } from "../../../utils/accessFilters";
 import { sanitizeAdvancedFilters, countActiveAdvancedFilters } from "../../../utils/advancedFilters";
 
@@ -326,6 +327,13 @@ const DataTable = (props) => {
   };
 
   const showBulk277 = (appTitle || "").toLowerCase().includes("pend 277");
+  const showBulkDenials =
+    location.pathname.includes("/denials") ||
+    (appTitle || "").toLowerCase().startsWith("denials");
+  const denialCategory = useMemo(() => {
+    const tags = (selectedTags || []).filter(Boolean);
+    return tags.length === 1 ? tags[0] : "";
+  }, [selectedTags]);
   const selectedIds = useMemo(
     () => (selectedClaimIds || []).filter((id) => id && `${id}`.trim() !== ""),
     [selectedClaimIds]
@@ -678,7 +686,7 @@ const DataTable = (props) => {
           ))}
         </div>
       </div>
-      {showBulk277 && !((appTitle || "").toLowerCase().includes("pend 277")) && (
+      {showBulk277 && (
         <div className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? 'border-[#2d3348] bg-[#1b1f29] text-white' : 'bg-white border-gray-200 text-slate-900'}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -719,6 +727,17 @@ const DataTable = (props) => {
             </div>
           )}
         </div>
+      )}
+      {showBulkDenials && (
+        <BulkDenialsPanel
+          apiUrl={apiUrl}
+          username={username}
+          selectedClaimIds={selectedIds}
+          denialCategory={denialCategory}
+          isDarkMode={isDarkMode}
+          onComplete={() => dispatch(setTableLoading(true))}
+          onClearSelection={() => dispatch(setSelectedClaimIds([]))}
+        />
       )}
       <div className={`rounded-[32px] border ${isDarkMode ? 'bg-[#27282D] border-[#1F2231] text-white' : 'bg-white border-[#E4E7EF] text-[#0f172a]'} p-6 flex flex-col h-full`}>
         <div className={`mb-3 text-sm font-semibold ${isDarkMode ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
