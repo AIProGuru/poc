@@ -4,8 +4,6 @@ FROM python:3.9-slim
 # Set the working directory
 WORKDIR /app
 
-COPY gabeo-poc-ca4ac93f6fd1.json .
-
 # Copy the requirements file to the working directory
 COPY requirements.txt ./
 
@@ -14,6 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code
 COPY . .
+
+# Firebase Admin credentials must be provided at runtime via
+# FIREBASE_CREDENTIALS_PATH or by mounting the service-account JSON.
 
 # Expose port 5000 for the Flask app
 EXPOSE 5000

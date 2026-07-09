@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 
 users_bp = Blueprint('users', __name__)
 
-# Web API key for the same Firebase project as the Admin SDK (heliorcm-46d2b).
+# Web API key for the same Firebase project as the Admin SDK (heliorcm-e8d7a).
 FIREBASE_WEB_API_KEY = os.environ.get(
     "FIREBASE_WEB_API_KEY",
-    "AIzaSyAgc1FYHNse7kW4QC4jlSt8jTLdoVd5hxw",
+    "AIzaSyBNAzDL2b5g0TaXTZVocilayMP59sbufR4",
 )
 
 

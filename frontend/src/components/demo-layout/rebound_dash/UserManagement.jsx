@@ -618,26 +618,30 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
   const addUser_backend = async (e) => {
     e.preventDefault();
-    const token = await auth.currentUser.getIdToken()
-    const payload = buildAddUserPayload(user);
-    const data = await fetch(`${SERVER_URL}/api/v1/user`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": token
-
-      },
-      body: JSON.stringify(payload)
-    })
-    const res = await data.json().catch(() => ({}));
-    if (data.status === 200) {
-      toast.success("User created!")
-      resetUserForm();
-      fetchUsers();
-    } else {
-      toast.error(res?.error || 'Failed to create user');
+    try {
+      const token = await requireAuthToken();
+      const payload = buildAddUserPayload(user);
+      const response = await fetch(`${SERVER_URL}/api/v1/user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify(payload),
+      });
+      const res = await response.json().catch(() => ({}));
+      if (response.ok) {
+        toast.success("User created!");
+        resetUserForm();
+        fetchUsers();
+      } else {
+        toast.error(res?.error || 'Failed to create user');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast.error(error?.message || 'Failed to create user');
     }
-  }
+  };
 
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
