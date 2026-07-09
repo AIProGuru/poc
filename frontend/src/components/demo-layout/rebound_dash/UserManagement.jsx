@@ -633,6 +633,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       if (response.ok) {
         toast.success("User created!");
         resetUserForm();
+        navigate('/management');
         fetchUsers();
       } else {
         toast.error(res?.error || 'Failed to create user');
