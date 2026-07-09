@@ -1,13 +1,16 @@
 import json
 import logging
-import re
 import uuid
-from datetime import date, datetime, timedelta
-from typing import Any, Dict, Optional
+from datetime import date
+from typing import Optional
 
 from flask import Blueprint, jsonify, request
 
-from api.platform.claim_details.action_worklist_sync import default_tickle_date, sync_custom_all_after_action
+from api.platform.claim_details.action_worklist_sync import (
+    extract_selected_actions,
+    resolve_tickle_date_for_triage,
+    sync_custom_all_after_action,
+)
 from db import close_connection, get_connection
 
 logging.basicConfig(level=logging.INFO)
@@ -25,68 +28,6 @@ pilotcustomer_api_bulk_action = Blueprint(
 betacustomer_api_bulk_action = Blueprint(
     "betacustomer_api_bulk_action", __name__, url_prefix="/api/v1/betacustomer"
 )
-
-def _escape_sql(value: Any) -> str:
-    if value is None:
-        return ""
-    return str(value).replace("\\", "\\\\").replace('"', '\\"').replace("'", "''")
-
-
-def _parse_tickle_days(tickle_time: str) -> Optional[int]:
-    if not tickle_time:
-        return None
-    raw = str(tickle_time).strip().lower()
-    if not raw:
-        return None
-    match = re.search(r"(\d+)", raw)
-    if not match:
-        return None
-    days = int(match.group(1))
-    return days if days > 0 else None
-
-
-def _compute_tickle_date(tickle_time: str, explicit_date: Optional[str]) -> Optional[str]:
-    if explicit_date:
-        parsed = str(explicit_date).strip()
-        if parsed:
-            for fmt in ("%Y-%m-%d", "%m/%d/%Y"):
-                try:
-                    return datetime.strptime(parsed, fmt).strftime("%Y-%m-%d")
-                except ValueError:
-                    continue
-            return parsed[:10]
-    days = _parse_tickle_days(tickle_time)
-    if days is None:
-        return None
-    return (date.today() + timedelta(days=days)).strftime("%Y-%m-%d")
-
-
-def _resolve_tickle_time_for_actions(cursor, selected_actions) -> str:
-    """Return the tickle_time with the longest interval among selected action codes."""
-    if not selected_actions:
-        return ""
-    placeholders = ", ".join(["%s"] * len(selected_actions))
-    cursor.execute(
-        f"""
-        SELECT tickle_time
-        FROM claim_action_items
-        WHERE is_active = 1
-          AND action_label IN ({placeholders})
-          AND tickle_time IS NOT NULL
-          AND TRIM(tickle_time) <> ''
-        """,
-        tuple(selected_actions),
-    )
-    rows = cursor.fetchall() or []
-    best_time = ""
-    best_days = -1
-    for row in rows:
-        tickle_time = (row.get("tickle_time") or "").strip()
-        days = _parse_tickle_days(tickle_time)
-        if days is not None and days > best_days:
-            best_days = days
-            best_time = tickle_time
-    return best_time
 
 
 def _update_custom_all(
@@ -149,14 +90,10 @@ def bulk_save_action():
 
     if isinstance(action_payload, dict):
         action_str = json.dumps(action_payload)
-        selected_actions = action_payload.get("selected") or []
+        selected_actions = extract_selected_actions(action_payload)
     else:
         action_str = str(action_payload or "")
-        try:
-            parsed = json.loads(action_str) if action_str else {}
-            selected_actions = parsed.get("selected") or [] if isinstance(parsed, dict) else []
-        except json.JSONDecodeError:
-            selected_actions = []
+        selected_actions = extract_selected_actions(action_str)
 
     bulk_operation_id = str(uuid.uuid4())
     audit_notes = notes.strip()
@@ -190,12 +127,12 @@ def bulk_save_action():
 
     try:
         conn, cursor, db_name = get_connection(request)
-        tickle_time = payload.get("tickleTime") or _resolve_tickle_time_for_actions(
-            cursor, selected_actions
+        tickle_date = resolve_tickle_date_for_triage(
+            cursor,
+            action_str,
+            explicit_date=explicit_tickle_date,
+            explicit_tickle_time=payload.get("tickleTime"),
         )
-        tickle_date = _compute_tickle_date(tickle_time, explicit_tickle_date)
-        if not tickle_date:
-            tickle_date = default_tickle_date(7)
 
         for idx, raw_claim_no in enumerate(claim_nos):
             claimno = str(raw_claim_no or "").strip()

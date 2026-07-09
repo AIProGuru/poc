@@ -17,7 +17,8 @@ import DetailSection from "./DetailSection";
 import Recommendation from "./Recommendation";
 import { samplifyDouble, samplifyString, samplifyInteger, SERVER_URL } from "../../../utils/config";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setPart1Loading, setPart2Loading, setTableLoading } from "../../../redux/reducers/app.reducer";
 import { IconButton } from "@mui/material";
 import "./dashboard.css"
 
@@ -100,6 +101,7 @@ const ReboundDetailView = () => {
   const bodyTextClass = isDark ? 'text-gray-300' : 'text-slate-700';
   const emphasisTextClass = isDark ? 'text-gray-200' : 'text-slate-800';
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const username = useSelector((state) => state.auth.username);
   const [detailShowStatus, setDetailShowStatus] = useState(0);
   const [routeTitle, setRouteTitle] = useState('');
@@ -590,6 +592,12 @@ const ReboundDetailView = () => {
     return true;
   };
 
+  const refreshWorklistAfterTriage = () => {
+    dispatch(setTableLoading(true));
+    dispatch(setPart1Loading(true));
+    dispatch(setPart2Loading(true));
+  };
+
   const onSubmitTriage = async () => {
     if (!currentClaim) return;
     const selected = triageActions
@@ -640,6 +648,7 @@ const ReboundDetailView = () => {
       clearTriageDraft(draftKey);
       setTriageDraftStatus("submitted");
       setLastDraftSavedAt(null);
+      refreshWorklistAfterTriage();
       toast.success("Triage saved and submitted.");
     } catch (err) {
       const message =

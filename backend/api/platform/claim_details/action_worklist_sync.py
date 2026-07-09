@@ -1,6 +1,8 @@
+import json
 import logging
-from datetime import date, timedelta
-from typing import Optional
+import re
+from datetime import date, datetime, timedelta
+from typing import Any, List, Optional
 
 from api.platform.launchpad.stratification_details import first_existing_column, get_existing_columns
 from core.schema_cache import invalidate_table_columns
@@ -44,6 +46,92 @@ def ensure_tickle_column(cursor, db_name: str) -> Optional[str]:
 
 def default_tickle_date(days: int = 7) -> str:
     return (date.today() + timedelta(days=max(days, 1))).strftime("%Y-%m-%d")
+
+
+def parse_tickle_days(tickle_time: str) -> Optional[int]:
+    if not tickle_time:
+        return None
+    raw = str(tickle_time).strip().lower()
+    if not raw:
+        return None
+    match = re.search(r"(\d+)", raw)
+    if not match:
+        return None
+    days = int(match.group(1))
+    return days if days > 0 else None
+
+
+def compute_tickle_date(tickle_time: str, explicit_date: Optional[str] = None) -> Optional[str]:
+    if explicit_date:
+        parsed = str(explicit_date).strip()
+        if parsed:
+            for fmt in ("%Y-%m-%d", "%m/%d/%Y"):
+                try:
+                    return datetime.strptime(parsed, fmt).strftime("%Y-%m-%d")
+                except ValueError:
+                    continue
+            return parsed[:10]
+    days = parse_tickle_days(tickle_time)
+    if days is None:
+        return None
+    return (date.today() + timedelta(days=days)).strftime("%Y-%m-%d")
+
+
+def extract_selected_actions(action_payload: Any) -> List[str]:
+    if isinstance(action_payload, dict):
+        selected = action_payload.get("selected") or []
+        return [str(item).strip() for item in selected if str(item).strip()]
+    raw = str(action_payload or "").strip()
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+    if isinstance(parsed, dict):
+        selected = parsed.get("selected") or []
+        return [str(item).strip() for item in selected if str(item).strip()]
+    return []
+
+
+def resolve_tickle_time_for_actions(cursor, selected_actions: List[str]) -> str:
+    """Return the tickle_time with the longest interval among selected action codes."""
+    if not selected_actions:
+        return ""
+    placeholders = ", ".join(["%s"] * len(selected_actions))
+    cursor.execute(
+        f"""
+        SELECT tickle_time
+        FROM claim_action_items
+        WHERE is_active = 1
+          AND action_label IN ({placeholders})
+          AND tickle_time IS NOT NULL
+          AND TRIM(tickle_time) <> ''
+        """,
+        tuple(selected_actions),
+    )
+    rows = cursor.fetchall() or []
+    best_time = ""
+    best_days = -1
+    for row in rows:
+        tickle_time = (row.get("tickle_time") or "").strip()
+        days = parse_tickle_days(tickle_time)
+        if days is not None and days > best_days:
+            best_days = days
+            best_time = tickle_time
+    return best_time
+
+
+def resolve_tickle_date_for_triage(
+    cursor,
+    action_payload: Any,
+    explicit_date: Optional[str] = None,
+    explicit_tickle_time: Optional[str] = None,
+) -> str:
+    selected_actions = extract_selected_actions(action_payload)
+    tickle_time = explicit_tickle_time or resolve_tickle_time_for_actions(cursor, selected_actions)
+    tickle_date = compute_tickle_date(tickle_time, explicit_date)
+    return tickle_date or default_tickle_date(7)
 
 
 def sync_custom_all_after_action(

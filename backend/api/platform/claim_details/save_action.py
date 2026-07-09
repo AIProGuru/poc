@@ -1,6 +1,13 @@
-from flask import Blueprint, request, jsonify
-from db import get_connection, close_connection
+import json
 import logging
+
+from flask import Blueprint, jsonify, request
+
+from api.platform.claim_details.action_worklist_sync import (
+    resolve_tickle_date_for_triage,
+    sync_custom_all_after_action,
+)
+from db import close_connection, get_connection
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -66,36 +73,68 @@ def save_action():
     conn = None
     cursor = None
     try:
-        conn, cursor ,db_name= get_connection(request)
-        claimno = request.json.get("claimno")
-        action_date = request.json.get("action_date")
-        action = request.json.get("action")
-        claim_status = request.json.get("claim_status")
-        thumb = request.json.get("thumb")
-        notes = request.json.get("notes")
-        username = request.json.get("username")
+        payload = request.get_json(silent=True) or {}
+        conn, cursor, db_name = get_connection(request)
+        claimno = payload.get("claimno")
+        action_date = payload.get("action_date") or payload.get("aaction_date")
+        action = payload.get("action")
+        claim_status = payload.get("claim_status")
+        thumb = payload.get("thumb")
+        notes = payload.get("notes")
+        username = payload.get("username")
+        explicit_tickle_date = payload.get("tickleDate")
+        explicit_tickle_time = payload.get("tickleTime")
+
+        if not claimno:
+            return jsonify({"error": "claimno is required"}), 400
 
         if thumb is not None and str(thumb) != "":
-            q = f"select * from rate where username='{username}' and claimno='{claimno}' limit 1"
-            cursor.execute(q)
+            cursor.execute(
+                "SELECT 1 FROM rate WHERE username = %s AND claimno = %s LIMIT 1",
+                (username, claimno),
+            )
             result = cursor.fetchone()
             if result is not None:
-                q = f"update rate set action={thumb} where username='{username}' and claimno='{claimno}'"
+                cursor.execute(
+                    "UPDATE rate SET action = %s WHERE username = %s AND claimno = %s",
+                    (thumb, username, claimno),
+                )
             else:
-                q = f"insert into rate(username, claimno, action) values('{username}', '{claimno}', {thumb})"
-            cursor.execute(q)
-            conn.commit()
+                cursor.execute(
+                    "INSERT INTO rate(username, claimno, action) VALUES (%s, %s, %s)",
+                    (username, claimno, thumb),
+                )
 
-        q = f"""
-            insert into actions(ClaimNo, action_date, action, claim_status, notes, user) 
-            values('{claimno}', '{action_date}', '{action}', '{claim_status}', "{notes}", "{username}")
-        """
-        cursor.execute(q)
+        cursor.execute(
+            """
+            INSERT INTO actions (ClaimNo, action_date, action, claim_status, notes, user)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (claimno, action_date, action, claim_status, notes, username),
+        )
+
+        if str(claim_status or "").strip().lower() == "triage":
+            tickle_date = resolve_tickle_date_for_triage(
+                cursor,
+                action,
+                explicit_date=explicit_tickle_date,
+                explicit_tickle_time=explicit_tickle_time,
+            )
+            sync_custom_all_after_action(
+                cursor,
+                db_name,
+                claimno,
+                action_date,
+                claim_status,
+                tickle_date,
+            )
+
         conn.commit()
-
         return jsonify("success"), 200
     except Exception as e:
         logger.error(f"[ERROR]: {e}")
+        if conn:
+            conn.rollback()
         return jsonify({"error": "Internal server Error"}), 500
     finally:
         close_connection(cursor, conn)
