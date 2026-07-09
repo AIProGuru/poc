@@ -18,7 +18,6 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { auth } from '../../../FirebaseConfig';
-import { sendPasswordResetEmail } from 'firebase/auth';
 import { SERVER_URL } from '../../../utils/config';
 import { MODULE_OPTIONS, MODULE_CATEGORY_MAP } from "../../../utils/moduleCatalog";
 import { ROLE_OPTIONS, ROLE_STANDARD, normalizeRole } from "../../../utils/roles";
@@ -730,12 +729,25 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   };
 
   const handleResetPassword = async (email) => {
-    if (!email) {
+    const normalizedEmail = `${email || ''}`.trim().toLowerCase();
+    if (!normalizedEmail) {
       toast.error('User email is missing.');
       return;
     }
     try {
-      await sendPasswordResetEmail(auth, email);
+      const token = await requireAuthToken();
+      const response = await fetch(`${SERVER_URL}/api/v1/admin-reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.error || 'Failed to send reset email.');
+      }
       toast.success('Password reset email sent.');
     } catch (error) {
       console.error('Error sending reset email:', error);

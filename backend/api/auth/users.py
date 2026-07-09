@@ -2,6 +2,8 @@ from flask import Blueprint, jsonify, request
 from core.firebase.firebase_init import db, auth
 from jsonschema import validate
 import logging
+import os
+import requests
 from db import get_connection, close_connection
 
 # Configure logging
@@ -9,6 +11,31 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 users_bp = Blueprint('users', __name__)
+
+# Web API key for the same Firebase project as the Admin SDK (heliorcm-46d2b).
+FIREBASE_WEB_API_KEY = os.environ.get(
+    "FIREBASE_WEB_API_KEY",
+    "AIzaSyAgc1FYHNse7kW4QC4jlSt8jTLdoVd5hxw",
+)
+
+
+def _send_password_reset_email(email: str) -> None:
+    """Send a Firebase password-reset email via the Identity Toolkit REST API."""
+    response = requests.post(
+        f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={FIREBASE_WEB_API_KEY}",
+        json={
+            "requestType": "PASSWORD_RESET",
+            "email": email,
+        },
+        timeout=15,
+    )
+    if response.ok:
+        return
+
+    error_body = response.json().get("error", {}) if response.content else {}
+    message = error_body.get("message") or "Failed to send password reset email."
+    raise RuntimeError(message)
+
 
 # Schema definition
 addUserSchema = {
@@ -143,6 +170,42 @@ def admin_delete_user():
 
     finally:
         close_connection(cursor, conn)
+
+
+@users_bp.route("/admin-reset-password", methods=["POST"])
+def admin_reset_password():
+    if request.content_type != "application/json":
+        return jsonify({"error": "Unsupported Media Type"}), 415
+
+    token = request.headers.get("Authorization")
+    if not token:
+        return jsonify({"error": "Missing Authorization token"}), 401
+
+    try:
+        decoded_token = auth.verify_id_token(token)
+        _assert_admin(decoded_token["uid"])
+
+        data = request.get_json() or {}
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
+
+        try:
+            auth.get_user_by_email(email)
+        except auth.UserNotFoundError:
+            return jsonify({"error": "User not found in authentication system."}), 404
+
+        _send_password_reset_email(email)
+        return jsonify({"message": "Password reset email sent."}), 200
+    except PermissionError as e:
+        logger.error(f"Permission error: {e}")
+        return jsonify({"error": str(e)}), 403
+    except RuntimeError as e:
+        logger.error(f"Password reset error: {e}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logger.error(f"Error sending password reset email: {e}")
+        return jsonify({"error": "Failed to send password reset email."}), 500
 
 
 @users_bp.route("/users", methods=["GET"])
