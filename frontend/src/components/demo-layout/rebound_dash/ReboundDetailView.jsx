@@ -18,7 +18,8 @@ import Recommendation from "./Recommendation";
 import { samplifyDouble, samplifyString, samplifyInteger, SERVER_URL } from "../../../utils/config";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { useSelector, useDispatch } from "react-redux";
-import { setPart1Loading, setPart2Loading, setTableLoading } from "../../../redux/reducers/app.reducer";
+import { buildAccessExtra } from "../../../utils/accessFilters";
+import { refreshWorklistFromAppState } from "../../../utils/worklistRefresh";
 import { IconButton } from "@mui/material";
 import "./dashboard.css"
 
@@ -103,6 +104,37 @@ const ReboundDetailView = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const username = useSelector((state) => state.auth.username);
+  const role = useSelector((state) => state.auth.role);
+  const accessModules = useSelector((state) => state.auth.modules);
+  const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
+  const accessPayer = useSelector((state) => state.auth.payer);
+  const accessValue = useSelector((state) => state.auth.value);
+  const accessFacility = useSelector((state) => state.auth.facility);
+  const startDate = useSelector((state) => state.app.startDate);
+  const endDate = useSelector((state) => state.app.endDate);
+  const selectedTags = useSelector((state) => state.tags.selectedTags);
+  const keyword = useSelector((state) => state.app.keyword);
+  const tabIndex = useSelector((state) => state.app.tabIndex);
+  const code = useSelector((state) => state.app.code);
+  const remark = useSelector((state) => state.app.remark);
+  const procedure = useSelector((state) => state.app.procedure);
+  const pos = useSelector((state) => state.app.pos);
+  const advancedFilters = useSelector((state) => state.app.advancedFilters);
+  const extra = useSelector((state) => state.app.extraFilter);
+  const access = useMemo(
+    () => ({
+      modules: accessModules,
+      denialCategory: accessDenialCategory,
+      payer: accessPayer,
+      value: accessValue,
+      facility: accessFacility,
+    }),
+    [accessModules, accessDenialCategory, accessPayer, accessValue, accessFacility]
+  );
+  const accessExtra = useMemo(
+    () => buildAccessExtra(extra, access, role),
+    [extra, access, role]
+  );
   const [detailShowStatus, setDetailShowStatus] = useState(0);
   const [routeTitle, setRouteTitle] = useState('');
   const [routeCategory, setRouteCategory] = useState('');
@@ -592,10 +624,24 @@ const ReboundDetailView = () => {
     return true;
   };
 
-  const refreshWorklistAfterTriage = () => {
-    dispatch(setTableLoading(true));
-    dispatch(setPart1Loading(true));
-    dispatch(setPart2Loading(true));
+  const refreshWorklistAfterTriage = async () => {
+    await refreshWorklistFromAppState({
+      apiUrl,
+      dispatch,
+      filters: {
+        keyword,
+        startDate,
+        endDate,
+        tabIndex,
+        selectedTags,
+        code,
+        remark,
+        procedure,
+        pos,
+        accessExtra,
+        advancedFilters,
+      },
+    });
   };
 
   const onSubmitTriage = async () => {
@@ -648,7 +694,7 @@ const ReboundDetailView = () => {
       clearTriageDraft(draftKey);
       setTriageDraftStatus("submitted");
       setLastDraftSavedAt(null);
-      refreshWorklistAfterTriage();
+      await refreshWorklistAfterTriage();
       toast.success("Triage saved and submitted.");
     } catch (err) {
       const message =

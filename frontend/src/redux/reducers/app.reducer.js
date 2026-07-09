@@ -32,7 +32,8 @@ const initialState = {
   theme: 'dark',
   selectedClaimIds: [],
   navGrouped: {},
-  navPendCounts: {}
+  navPendCounts: {},
+  worklistSummary: null,
 };
 
 const appReducer = createSlice({
@@ -157,6 +158,9 @@ const appReducer = createSlice({
     setNavPendCounts: (state, action) => {
       state.navPendCounts = action.payload || {};
     },
+    setWorklistSummary: (state, action) => {
+      state.worklistSummary = action.payload || null;
+    },
     clearSelectedClaimIds: (state) => {
       state.selectedClaimIds = [];
     },
@@ -207,6 +211,7 @@ const appReducer = createSlice({
       state.selectedClaimIds = [];
       state.navGrouped = {};
       state.navPendCounts = {};
+      state.worklistSummary = null;
     }
   },
 });
@@ -250,6 +255,7 @@ export const {
   setSelectedClaimIds,
   setNavGrouped,
   setNavPendCounts,
+  setWorklistSummary,
   clearSelectedClaimIds,
   setTabDefaults,
   resetViewState,

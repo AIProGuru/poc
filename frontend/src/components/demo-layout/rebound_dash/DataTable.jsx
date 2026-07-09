@@ -18,13 +18,14 @@ import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
 import { samplifyDouble, samplifyInteger, samplifyString } from "../../../utils/config";
 
 import DataTableFilter from "./DataTableFilter";
-import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, setPart1Loading, setPart2Loading, setTableLoading, setExtraFilter, setSelectedClaimIds, setNavGrouped } from "../../../redux/reducers/app.reducer";
+import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, setPart1Loading, setPart2Loading, setTableLoading, setExtraFilter, setSelectedClaimIds, setWorklistSummary } from "../../../redux/reducers/app.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { toast } from "react-toastify";
 import DataTableTags from "./DataTableTags";
 import BulkDenialsPanel from "./BulkDenialsPanel";
 import { buildAccessExtra } from "../../../utils/accessFilters";
 import { sanitizeAdvancedFilters, countActiveAdvancedFilters } from "../../../utils/advancedFilters";
+import { refreshWorklistFromAppState } from "../../../utils/worklistRefresh";
 
 const DataTable = (props) => {
   const apiUrl = useApiEndpoint();
@@ -72,6 +73,7 @@ const DataTable = (props) => {
   const extra = useSelector((state) => state.app.extraFilter);
   const selectedClaimIds = useSelector((state) => state.app.selectedClaimIds);
   const navPendCounts = useSelector((state) => state.app.navPendCounts);
+  const worklistSummary = useSelector((state) => state.app.worklistSummary);
   const accessExtra = useMemo(
     () => buildAccessExtra(extra, access, role),
     [extra, access, role]
@@ -241,8 +243,8 @@ const DataTable = (props) => {
   const summaryCount =
     isClaimStatusView && !hasSummaryFilters
       ? claimStatusBootstrapCount
-      : summaryTotals?.count ?? emptySummary.count;
-  const displayedSummary = summaryTotals ?? emptySummary;
+      : (worklistSummary ?? summaryTotals)?.count ?? emptySummary.count;
+  const displayedSummary = worklistSummary ?? summaryTotals ?? emptySummary;
   // Mirror the facility value used in the Claim (837) detail view.
   const getFacility = (row) => {
     const claimData =
@@ -354,51 +356,26 @@ const DataTable = (props) => {
   });
 
   const refreshWorklistCounts = async () => {
-    if (!apiUrl) return;
-    dispatch(setTableLoading(true));
-    dispatch(setPart1Loading(true));
-    dispatch(setPart2Loading(true));
-
-    const includeAllCategories = accessExtra?.IncludeAllCategories;
-    const canFetchSummary = includeAllCategories || selectedTags.length > 0;
-    const groupedPayload = {
-      tabIndexes: [6, 2, 1, 4],
-      keyword: keyword || "",
-      startDate: startDate ? startDate.toISOString().substr(0, 10) : null,
-      endDate: endDate ? endDate.toISOString().substr(0, 10) : null,
-      code,
-      remark,
-      procedure,
-      pos,
-      extra: accessExtra,
-    };
-    const summaryPayload = {
-      selectedTags,
-      keyword,
-      tabIndex,
-      startDate: startDate ? startDate.toISOString().substr(0, 10) : null,
-      endDate: endDate ? endDate.toISOString().substr(0, 10) : null,
-      code,
-      remark,
-      procedure,
-      pos,
-      extra: accessExtra,
-      advancedFilters: sanitizeAdvancedFilters(advancedFilters),
-    };
-
-    try {
-      const requests = [axios.post(`${apiUrl}/part1_all_grouped`, groupedPayload)];
-      if (canFetchSummary) {
-        requests.push(axios.post(`${apiUrl}/data_summary`, summaryPayload));
-      }
-      const [groupedRes, summaryRes] = await Promise.all(requests);
-      dispatch(setNavGrouped(groupedRes.data?.grouped || {}));
-      if (canFetchSummary && summaryRes?.data) {
-        setSummaryTotals(summaryRes.data);
-        summarySignatureRef.current = buildSummarySignature();
-      }
-    } catch {
-      // Table/part1/part2 loading flags will still refresh visible rows via existing effects.
+    const result = await refreshWorklistFromAppState({
+      apiUrl,
+      dispatch,
+      filters: {
+        keyword,
+        startDate,
+        endDate,
+        tabIndex,
+        selectedTags,
+        code,
+        remark,
+        procedure,
+        pos,
+        accessExtra,
+        advancedFilters,
+      },
+    });
+    if (result?.summary) {
+      setSummaryTotals(result.summary);
+      summarySignatureRef.current = buildSummarySignature();
     }
   };
 
@@ -525,6 +502,7 @@ const DataTable = (props) => {
     }).then((res) => {
       if (summaryRequestRef.current !== requestId) return;
       setSummaryTotals(res.data);
+      dispatch(setWorklistSummary(res.data));
     }).catch(() => {
       if (summaryRequestRef.current !== requestId) return;
       setSummaryTotals(null);
