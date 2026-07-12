@@ -3,8 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { SERVER_URL } from './utils/config';
 import axios from 'axios';
 import {
-  setPart1Loading,
-  setPart2Loading,
   setTableLoading,
   setType,
   setBootstrapLoading,
@@ -340,8 +338,6 @@ export const ApiEndpointProvider = ({ children }) => {
     const requestId = ++bootstrapRef.current.id;
 
     dispatch(setBootstrapLoading(true));
-    dispatch(setPart1Loading(true));
-    dispatch(setPart2Loading(true));
     dispatch(setTableLoading(true));
     dispatch(setTagLoading(true));
     dispatch(setCountLoading(true));

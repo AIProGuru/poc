@@ -146,6 +146,7 @@ const ReboundDetailView = () => {
   const [showComment, setShowComment] = useState(false)
   const [renderIndex, setRenderIndex] = useState(0)
   const [claimNo, setClaimNo] = useState('')
+  const [claimLoading, setClaimLoading] = useState(false);
   const [thumb, setThumb] = useState(0);
   const [optumRequest, setOptumRequest] = useState(null);
   const [optumResponse, setOptumResponse] = useState(null);
@@ -359,48 +360,87 @@ const ReboundDetailView = () => {
   }, [savedTriageEntry]);
 
   useEffect(() => {
-    if (!apiUrl || !currentClaim) return;
-    const denialCategory =
-      currentClaim?.Claim?.Data?.Category ||
-      currentClaim?.Claim?.Data?.CategoryName ||
-      currentClaim?.Claim?.Data?.ClaimCategory ||
-      "";
+    if (apiUrl === '') return;
+    if (claimNo === '') return;
 
-    const savedTriageValue = parseTriageActionValue(savedTriageEntry?.action);
-    setTriageNotes(savedTriageEntry?.notes || "");
-    setTriageOtherText(savedTriageValue.otherText || "");
+    let cancelled = false;
+    setClaimLoading(true);
+    triageHydratedRef.current = false;
 
-    if (!denialCategory) {
-      setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
-      return;
-    }
+    axios.get(`${apiUrl}/get_claim?id=${claimNo}&username=${username}`).then(async (res) => {
+      if (cancelled) return;
 
-    axios
-      .get(`${apiUrl}/triage_actions`, {
-        params: { denial_category: denialCategory },
-      })
-      .then((res) => {
-        const items = Array.isArray(res.data) ? res.data : [];
+      const claim = res.data;
+      setCurrentClaim(claim);
+      setDetailShowStatus(0);
+      setOriginalComment(claim.Comment);
+      setDocumentForm(claim.Document);
+      setAppeal([...claim.Appeal]);
+      setThumb(claim.rate);
+
+      const savedEntry = getSavedTriageEntry(claim);
+      const savedTriageValue = parseTriageActionValue(savedEntry?.action);
+      setTriageNotes(savedEntry?.notes || "");
+      setTriageOtherText(savedTriageValue.otherText || "");
+
+      const denialCategory =
+        claim?.Claim?.Data?.Category ||
+        claim?.Claim?.Data?.CategoryName ||
+        claim?.Claim?.Data?.ClaimCategory ||
+        routeCategory ||
+        "";
+
+      if (!denialCategory) {
+        setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
+        triageHydratedRef.current = true;
+        return;
+      }
+
+      try {
+        const triageRes = await axios.get(`${apiUrl}/triage_actions`, {
+          params: { denial_category: denialCategory },
+        });
+        if (cancelled) return;
+
+        const items = Array.isArray(triageRes.data) ? triageRes.data : [];
         if (items.length === 0) {
           setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
-          return;
+        } else {
+          setTriageActions(
+            applySavedTriageSelection(items.map((item) => ({
+              label: item.label || item.action || "Action",
+              checked: false,
+              allowFreeText: Boolean(item.allowFreeText || item.allow_free_text),
+              transactionCode: "",
+              transactionOptions: Array.isArray(item.transactionOptions)
+                ? item.transactionOptions
+                : [],
+            })), savedTriageValue)
+          );
         }
-        setTriageActions(
-          applySavedTriageSelection(items.map((item) => ({
-            label: item.label || item.action || "Action",
-            checked: false,
-            allowFreeText: Boolean(item.allowFreeText || item.allow_free_text),
-            transactionCode: "",
-            transactionOptions: Array.isArray(item.transactionOptions)
-              ? item.transactionOptions
-              : [],
-          })), savedTriageValue)
-        );
-      })
-      .catch(() => {
-        setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
-      });
-  }, [apiUrl, currentClaim, savedTriageEntry])
+      } catch {
+        if (!cancelled) {
+          setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
+        }
+      } finally {
+        if (!cancelled) {
+          triageHydratedRef.current = true;
+        }
+      }
+    }).catch(() => {
+      if (!cancelled) {
+        toast.error("Unable to load claim details.");
+      }
+    }).finally(() => {
+      if (!cancelled) {
+        setClaimLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [claimNo, apiUrl, username, routeCategory]);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -628,6 +668,9 @@ const ReboundDetailView = () => {
     await refreshWorklistFromAppState({
       apiUrl,
       dispatch,
+      refreshTable: true,
+      refreshNavBadges: true,
+      refreshSummary: false,
       filters: {
         keyword,
         startDate,
@@ -709,11 +752,9 @@ const ReboundDetailView = () => {
 
   // Restore a local draft (if one exists) after server triage actions have loaded.
   useEffect(() => {
-    // If the user switches claims, allow draft hydration again.
-    triageHydratedRef.current = false;
     setTriageDraftStatus("idle");
     setLastDraftSavedAt(null);
-  }, [currentClaim?.Claim?.Data?.ClaimNo, username]);
+  }, [claimNo, username]);
 
   useEffect(() => {
     if (!currentClaim || !apiUrl) return;
@@ -1213,21 +1254,6 @@ const ReboundDetailView = () => {
 
 
   useEffect(() => {
-    if (apiUrl === '') return;
-    if (claimNo === '') return;
-    setCurrentClaim(null);
-    setDetailShowStatus(0);
-    axios.get(`${apiUrl}/get_claim?id=${claimNo}&username=${username}`).then(res => {
-      console.log("@@@@@@@@@@@@@@", res.data)
-      setCurrentClaim(res.data);
-      setOriginalComment(res.data.Comment);
-      setDocumentForm(res.data.Document);
-      setAppeal([...res.data.Appeal]);
-      setThumb(res.data.rate);
-    })
-  }, [claimNo, apiUrl])
-
-  useEffect(() => {
     if (!currentClaim) return;
     setSupportingDocuments(
       Array.isArray(currentClaim.SupportingDocuments) ? currentClaim.SupportingDocuments : []
@@ -1239,48 +1265,6 @@ const ReboundDetailView = () => {
     setEligibilityResponse(null);
     setEligibilityError("");
   }, [currentClaim]);
-
-  useEffect(() => {
-    const payerId835 = `${get835PayerIdValue()}`.trim();
-    setMatchedAppealTemplate(null);
-    setAppealTemplateContact(null);
-
-    if (!apiUrl || !payerId835) return;
-
-    let isMounted = true;
-    setAppealTemplateLoading(true);
-
-    Promise.all([
-      axios.get(`${apiUrl}/appeal-templates/match`, {
-        params: { payer_id: payerId835 },
-        withCredentials: true,
-      }),
-      axios.get(`${apiUrl}/payer-appeal-contacts`, {
-        params: { payer_id: payerId835 },
-        withCredentials: true,
-      }),
-    ])
-      .then(([templateRes, contactRes]) => {
-        if (!isMounted) return;
-        setMatchedAppealTemplate(templateRes.data || null);
-        const contacts = Array.isArray(contactRes.data) ? contactRes.data : [];
-        setAppealTemplateContact(contacts[0] || null);
-      })
-      .catch(() => {
-        if (!isMounted) return;
-        setMatchedAppealTemplate(null);
-        setAppealTemplateContact(null);
-      })
-      .finally(() => {
-        if (isMounted) {
-          setAppealTemplateLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [apiUrl, currentClaim?.Remit?.[0]?.PayerID]);
 
   const handleRequest277 = () => {
     if (!optumRequest) return;

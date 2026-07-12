@@ -1,11 +1,5 @@
 import axios from "axios";
-import {
-  setNavGrouped,
-  setPart1Loading,
-  setPart2Loading,
-  setTableLoading,
-  setWorklistSummary,
-} from "../redux/reducers/app.reducer";
+import { setNavGrouped, setTableLoading, setWorklistSummary } from "../redux/reducers/app.reducer";
 import { sanitizeAdvancedFilters } from "./advancedFilters";
 
 const formatDateParam = (value) => {
@@ -62,25 +56,44 @@ export function buildWorklistRefreshPayloads(filters = {}) {
   return { groupedPayload, summaryPayload, canFetchSummary };
 }
 
-export async function refreshWorklistFromAppState({ apiUrl, dispatch, filters }) {
+export async function refreshWorklistFromAppState({
+  apiUrl,
+  dispatch,
+  filters,
+  refreshTable = false,
+  refreshNavBadges = true,
+  refreshSummary = true,
+}) {
   if (!apiUrl) return null;
 
-  dispatch(setTableLoading(true));
-  dispatch(setPart1Loading(true));
-  dispatch(setPart2Loading(true));
+  if (refreshTable) {
+    dispatch(setTableLoading(true));
+  }
 
   const { groupedPayload, summaryPayload, canFetchSummary } = buildWorklistRefreshPayloads(filters);
 
   try {
-    const requests = [axios.post(`${apiUrl}/part1_all_grouped`, groupedPayload)];
-    if (canFetchSummary) {
-      requests.push(axios.post(`${apiUrl}/data_summary`, summaryPayload));
+    const requests = [];
+    if (refreshNavBadges) {
+      requests.push({ key: "grouped", promise: axios.post(`${apiUrl}/part1_all_grouped`, groupedPayload) });
     }
-    const [groupedRes, summaryRes] = await Promise.all(requests);
-    const grouped = groupedRes.data?.grouped || {};
-    const summary = canFetchSummary ? summaryRes?.data || null : null;
+    if (refreshSummary && canFetchSummary) {
+      requests.push({ key: "summary", promise: axios.post(`${apiUrl}/data_summary`, summaryPayload) });
+    }
 
-    dispatch(setNavGrouped(grouped));
+    if (requests.length === 0) {
+      return null;
+    }
+
+    const results = await Promise.all(requests.map((entry) => entry.promise));
+    const grouped = refreshNavBadges ? results[0]?.data?.grouped || {} : null;
+    const summary = refreshSummary && canFetchSummary
+      ? results[refreshNavBadges ? 1 : 0]?.data || null
+      : null;
+
+    if (grouped) {
+      dispatch(setNavGrouped(grouped));
+    }
     if (summary) {
       dispatch(setWorklistSummary(summary));
     }

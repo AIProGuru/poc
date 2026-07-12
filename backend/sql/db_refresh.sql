@@ -542,6 +542,10 @@ CREATE INDEX idx_PayerSeq ON CUSTOM_ALL(PayerSeq);
 CREATE INDEX idx_RemarkCode ON CUSTOM_PAID_SERVICE_REMARK(RemarkCode);
 CREATE INDEX idx_ActionDate ON CUSTOM_ALL(ActionDate);
 CREATE INDEX idx_ActionTaken ON CUSTOM_ALL(ActionTaken);
+CREATE INDEX idx_Category ON CUSTOM_ALL(Category);
+CREATE INDEX idx_Automation ON CUSTOM_ALL(Automation);
+CREATE INDEX idx_ServiceDate ON CUSTOM_ALL(ServiceDate);
+CREATE INDEX idx_actions_ClaimNo ON actions(ClaimNo);
 
 
 DROP TABLE IF EXISTS TEMP;

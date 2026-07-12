@@ -4,8 +4,6 @@ import {
   setAdvancedFilters,
   clearAdvancedFilters,
   setCurrentPage,
-  setPart1Loading,
-  setPart2Loading,
   setTableLoading,
 } from '../../redux/reducers/app.reducer';
 import {
@@ -17,8 +15,6 @@ import {
 
 const triggerPlatformReload = (dispatch) => {
   dispatch(setCurrentPage(1));
-  dispatch(setPart1Loading(true));
-  dispatch(setPart2Loading(true));
   dispatch(setTableLoading(true));
 };
 

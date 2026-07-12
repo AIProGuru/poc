@@ -18,7 +18,7 @@ import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
 import { samplifyDouble, samplifyInteger, samplifyString } from "../../../utils/config";
 
 import DataTableFilter from "./DataTableFilter";
-import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, setPart1Loading, setPart2Loading, setTableLoading, setExtraFilter, setSelectedClaimIds, setWorklistSummary } from "../../../redux/reducers/app.reducer";
+import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, setTableLoading, setExtraFilter, setSelectedClaimIds, setWorklistSummary } from "../../../redux/reducers/app.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { toast } from "react-toastify";
 import DataTableTags from "./DataTableTags";
@@ -356,9 +356,12 @@ const DataTable = (props) => {
   });
 
   const refreshWorklistCounts = async () => {
-    const result = await refreshWorklistFromAppState({
+    await refreshWorklistFromAppState({
       apiUrl,
       dispatch,
+      refreshTable: true,
+      refreshNavBadges: true,
+      refreshSummary: false,
       filters: {
         keyword,
         startDate,
@@ -373,10 +376,6 @@ const DataTable = (props) => {
         advancedFilters,
       },
     });
-    if (result?.summary) {
-      setSummaryTotals(result.summary);
-      summarySignatureRef.current = buildSummarySignature();
-    }
   };
 
   const handleBulk277 = async () => {
@@ -434,7 +433,10 @@ const DataTable = (props) => {
     if (!includeAllCategories && selectedTags.length === 0) return;
     requestInFlightRef.current = true;
     const requestId = ++requestRef.current;
-    axios.post(`${apiUrl}/data_all`, {
+    const summarySignature = buildSummarySignature();
+    const shouldFetchSummary = true;
+
+    const tableRequest = axios.post(`${apiUrl}/data_all`, {
       currentPage: currentPage,
       perPage: pageSize,
       selectedTags,
@@ -449,22 +451,46 @@ const DataTable = (props) => {
       extra: accessExtra,
       advancedFilters: sanitizeAdvancedFilters(advancedFilters),
       sort: order
-    }).then(res => {
+    });
+
+    const summaryRequest = shouldFetchSummary
+      ? axios.post(`${apiUrl}/data_summary`, {
+        selectedTags,
+        keyword,
+        tabIndex,
+        startDate: startDate ? startDate.toISOString().substr(0, 10) : null,
+        endDate: endDate ? endDate.toISOString().substr(0, 10) : null,
+        code,
+        remark,
+        procedure,
+        pos,
+        extra: accessExtra,
+        advancedFilters: sanitizeAdvancedFilters(advancedFilters),
+      })
+      : Promise.resolve(null);
+
+    Promise.all([tableRequest, summaryRequest]).then(([tableRes, summaryRes]) => {
       if (requestRef.current !== requestId) return;
       requestInFlightRef.current = false;
-      dispatch(setTableData(res.data.data));
-      dispatch(setTotalPage(res.data.maxPage));
-      dispatch(setTableLoading(false))
+      dispatch(setTableData(tableRes.data.data));
+      dispatch(setTotalPage(tableRes.data.maxPage));
+      if (summaryRes?.data) {
+        setSummaryTotals(summaryRes.data);
+        dispatch(setWorklistSummary(summaryRes.data));
+        summarySignatureRef.current = summarySignature;
+      }
+      dispatch(setTableLoading(false));
     }).catch(() => {
       if (requestRef.current !== requestId) return;
       requestInFlightRef.current = false;
       dispatch(setTableLoading(false));
     });
-  }, [tableLoading, bootstrapLoading, selectedTags, order, accessExtra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate, advancedFilters, apiUrl, tabIndex])
+  }, [tableLoading, bootstrapLoading, selectedTags, order, accessExtra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate, advancedFilters, apiUrl, tabIndex, dispatch])
 
   useEffect(() => {
     if (apiUrl === '') return;
     if (bootstrapLoading) return;
+    if (tableLoading) return;
     const includeAllCategories = accessExtra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) {
       setSummaryTotals(null);

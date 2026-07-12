@@ -8,6 +8,7 @@ from db import get_connection, close_connection
 from core.schema_cache import get_table_columns, table_has_column
 from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL, merge_request_extra
 from api.platform.launchpad.worklist_queue import (
+    build_active_queue_financial_summary_sql,
     build_active_queue_where_sql,
     build_is_overdue_sql,
     build_part1_summary_sql,
@@ -326,26 +327,6 @@ def get_rebound_data_all():
         active_queue_where = build_active_queue_where_sql()
         is_overdue_sql = build_is_overdue_sql(priority_helpers["tickle_date"])
 
-        # Generate SQL query to count the total number of eligible queue records.
-        count_sql = f"""
-            SELECT COUNT(1) AS cnt
-            FROM (
-                SELECT
-                    {priority_helpers["balance"]} AS Balance,
-                    {priority_helpers["handoff"]} AS HandoffFlag,
-                    {priority_helpers["tickle_date"]} AS TickleDate,
-                    CUSTOM_ALL.ActionTaken AS ActionTaken,
-                    {is_overdue_sql} AS IsOverdue
-                {base_from_sql}
-            ) queue_claims
-            {active_queue_where}
-        """
-
-        cursor.execute(count_sql)
-        result = cursor.fetchone()
-        total_count = int(result.get("cnt") or 0)
-        maxPage = int((total_count - 1) / perPage) + 1 if total_count > 0 else 0
-        # Generate SQL query to fetch the data with pagination
         priority_order_sql = build_priority_order_sql()
         outer_order_sql = build_outer_order_sql(sort)
         base_sql = f"""select
@@ -392,7 +373,8 @@ def get_rebound_data_all():
                     ROW_NUMBER() OVER (
                         PARTITION BY base_claims.Category
                         ORDER BY {priority_order_sql}
-                    ) AS Priority
+                    ) AS Priority,
+                    COUNT(*) OVER() AS total_count
                 FROM (
                     {base_sql}
                 ) base_claims
@@ -429,7 +411,8 @@ def get_rebound_data_all():
                 HandoffFlag,
                 TickleDate,
                 IsOverdue,
-                DischargeDate
+                DischargeDate,
+                total_count
             FROM prioritized_claims
             ORDER BY {outer_order_sql}
             LIMIT {perPage} OFFSET {(currentPage-1)*perPage}
@@ -437,6 +420,10 @@ def get_rebound_data_all():
 
         cursor.execute(data_sql)
         results = cursor.fetchall()
+        total_count = int(results[0].get("total_count") or 0) if results else 0
+        maxPage = int((total_count - 1) / perPage) + 1 if total_count > 0 else 0
+        for row in results:
+            row.pop("total_count", None)
         
         # Log the API call details
         logger.info(f"Called from: {request.blueprint}, Database: {db_name}")
@@ -520,37 +507,14 @@ def get_rebound_data_summary():
             extra,
             "",
         )
-        summary_sql = build_part1_summary_sql(base_from_sql, priority_helpers)
+        summary_sql = build_active_queue_financial_summary_sql(
+            base_from_sql,
+            priority_helpers,
+            patient_payment_expr,
+        )
         cursor.execute(summary_sql)
-        result = cursor.fetchone() or {}
-        active_count = int(result.get("Count") or 0)
-        # Recompute financial summary from active queue rows only.
-        balance_sql = f"""
-            SELECT
-                COALESCE(SUM(Amount), 0) AS total_amount,
-                COALESCE(SUM(AllowedAmt), 0) AS total_allowed,
-                COALESCE(SUM(PaidAmt), 0) AS total_payer_paid,
-                COALESCE(SUM(PatientPayment), 0) AS total_patient_payment,
-                COALESCE(SUM(PatientResp), 0) AS total_patient_resp,
-                COALESCE(SUM(Adjustment45Amount), 0) AS total_adjustment45,
-                COALESCE(SUM(Balance), 0) AS total_balance
-            FROM (
-                SELECT
-                    CUSTOM_ALL.Amount AS Amount,
-                    CUSTOM_ALL.AllowedAmt AS AllowedAmt,
-                    CUSTOM_ALL.PaidAmt AS PaidAmt,
-                    CUSTOM_ALL.PatientResp AS PatientResp,
-                    CUSTOM_ALL.Adjustment45Amount AS Adjustment45Amount,
-                    {patient_payment_expr} AS PatientPayment,
-                    {priority_helpers["balance"]} AS Balance,
-                    {priority_helpers["tickle_date"]} AS TickleDate,
-                    CUSTOM_ALL.ActionTaken AS ActionTaken
-                {base_from_sql}
-            ) active_queue
-            {build_active_queue_where_sql()}
-        """
-        cursor.execute(balance_sql)
         totals = cursor.fetchone() or {}
+        active_count = int(totals.get("Count") or 0)
         charges = float(totals.get("total_amount") or 0)
         allowed = float(totals.get("total_allowed") or 0)
         payer_paid = float(totals.get("total_payer_paid") or 0)

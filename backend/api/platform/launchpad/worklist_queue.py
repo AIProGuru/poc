@@ -123,6 +123,40 @@ def build_part1_summary_sql(base_from_sql: str, priority_helpers: Dict[str, str]
     """
 
 
+def build_active_queue_financial_summary_sql(
+    base_from_sql: str,
+    priority_helpers: Dict[str, str],
+    patient_payment_expr: str,
+) -> str:
+    """Single-pass summary for count and financial totals."""
+    return f"""
+        SELECT
+            COUNT(ID) AS Count,
+            COALESCE(SUM(Amount), 0) AS total_amount,
+            COALESCE(SUM(AllowedAmt), 0) AS total_allowed,
+            COALESCE(SUM(PaidAmt), 0) AS total_payer_paid,
+            COALESCE(SUM(PatientPayment), 0) AS total_patient_payment,
+            COALESCE(SUM(PatientResp), 0) AS total_patient_resp,
+            COALESCE(SUM(Adjustment45Amount), 0) AS total_adjustment45,
+            COALESCE(SUM(Balance), 0) AS total_balance
+        FROM (
+            SELECT
+                CUSTOM_ALL.ID AS ID,
+                CUSTOM_ALL.Amount AS Amount,
+                CUSTOM_ALL.AllowedAmt AS AllowedAmt,
+                CUSTOM_ALL.PaidAmt AS PaidAmt,
+                CUSTOM_ALL.PatientResp AS PatientResp,
+                CUSTOM_ALL.Adjustment45Amount AS Adjustment45Amount,
+                {patient_payment_expr} AS PatientPayment,
+                {priority_helpers["balance"]} AS Balance,
+                {priority_helpers["tickle_date"]} AS TickleDate,
+                CUSTOM_ALL.ActionTaken AS ActionTaken
+            {base_from_sql}
+        ) active_queue
+        {build_active_queue_where_sql()}
+    """
+
+
 def build_part2_grouped_sql(base_from_sql: str, priority_helpers: Dict[str, str]) -> str:
     return f"""
         SELECT

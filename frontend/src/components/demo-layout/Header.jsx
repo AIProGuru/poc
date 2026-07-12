@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AccountContext } from "../../utils/Account";
-import { setAppTitle, setTheme, setKeyword, setCurrentPage, setPart1Loading, setPart2Loading, setTableLoading, setExtraFilter } from "../../redux/reducers/app.reducer";
+import { setAppTitle, setTheme, setKeyword, setCurrentPage, setTableLoading, setExtraFilter } from "../../redux/reducers/app.reducer";
 import AdvancedSearch from "./AdvancedSearch";
 import { shouldShowClaimSearch } from "../../utils/claimSearchVisibility";
 import {
@@ -36,8 +36,6 @@ const Header = () => {
 
   const filterByKeyword = () => {
     dispatch(setExtraFilter({}));
-    dispatch(setPart1Loading(true));
-    dispatch(setPart2Loading(true));
     dispatch(setTableLoading(true));
     dispatch(setKeyword(inputKeywordRef.current.value));
     dispatch(setCurrentPage(1));
