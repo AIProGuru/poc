@@ -1,0 +1,1382 @@
+{
+  "description": "Synthetic 837P/835 sample files aligned to platform matching_837_835 logic",
+  "matching_logic": {
+    "source": "backend/sql/db_refresh.sql → matching_837_835",
+    "join_predicates": [
+      {
+        "id": "claim_prefix",
+        "sql": "CUSTOM_EDI_Claims_CLONE.ClaimNoFirst = CUSTOM_EDI_PaidClaims_CLONE.ClaimIDFirst",
+        "edi_837": "SUBSTRING_INDEX(EDI_Claims.ClaimNo, '-', 1) from CLM01",
+        "edi_835": "SUBSTRING_INDEX(EDI_PaidClaims.ClaimID, '-', 1) from CLP01",
+        "note": "Only the segment BEFORE the first dash is matched. Suffixes (ClaimNoLast / ClaimIDLast) are ignored."
+      },
+      {
+        "id": "service_date",
+        "sql": "CUSTOM_EDI_PaidClaims_CLONE.ServiceDate = CUSTOM_EDI_Claims_CLONE.ServiceDate",
+        "edi_837": "MAX(EDI_ClaimDetail.ServiceDateFrom) per claim — latest line date (servicedate_837)",
+        "edi_835": "MAX(COALESCE(STR_TO_DATE(ServiceDate,'%m/%d/%Y'), ServicePeriodStart, ServicePeriodEnd)) per paid claim — latest line date (servicedate_835)",
+        "note": "Not the 835 check/ERA date. Use the same latest service line date on both sides."
+      },
+      {
+        "id": "charge_amount",
+        "sql": "CUSTOM_EDI_PaidClaims_CLONE.ChargeAmount = CUSTOM_EDI_Claims_CLONE.Amount",
+        "edi_837": "EDI_Claims.Amount (CLM02 total billed)",
+        "edi_835": "SUM(EDI_PaidClaimLines.ChargedAmount) — total billed on the remit, NOT CLP04 paid amount",
+        "note": "For multi-line claims, CLM02 must equal the sum of all SV1/SVC line charges."
+      }
+    ],
+    "multiple_835_per_837": "Each 835 that satisfies all three predicates links to the same id_837. matching_837_835.rn=1 (latest CheckDate) is used for CUSTOM_ALL; get_claim_detail returns all linked 835 rows.",
+    "related_837_lookup": "Separate from 835 matching: get_claim_detail Related uses ClaimNoFirst + Amount + PrincipalDiagnosis + ServiceDate to find duplicate 837 submissions."
+  },
+  "claims": [
+    {
+      "claim_no": "CLM202500001",
+      "claim_no_first": "CLM202500001",
+      "837_file": "837_CLM202500001_20251001.edi",
+      "service_date": "2025-10-01",
+      "total_charge": "150.00",
+      "diagnosis": "M25512",
+      "patient": "Emily Johnson",
+      "payer": "Blue Cross Blue Shield of Oregon",
+      "provider": "Summit Orthopedic Associates",
+      "service_lines": [
+        {
+          "code": "99213",
+          "charge": "150.00",
+          "service_date": "2025-10-01"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500001",
+        "service_date": "2025-10-01",
+        "charge_amount": "150.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK100000_CLM202500001.edi",
+          "check_number": "CHK100000",
+          "check_date": "2025-10-17",
+          "claim_status": "1",
+          "paid_amount": "150.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500001",
+            "claim_id_first": "CLM202500001",
+            "service_date": "2025-10-01",
+            "charge_amount": "150.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500002",
+      "claim_no_first": "CLM202500002",
+      "837_file": "837_CLM202500002_20251004.edi",
+      "service_date": "2025-10-04",
+      "total_charge": "210.00",
+      "diagnosis": "M5450",
+      "patient": "Michael Chen",
+      "payer": "Aetna Better Health",
+      "provider": "Cascade Family Medicine",
+      "service_lines": [
+        {
+          "code": "99214",
+          "charge": "210.00",
+          "service_date": "2025-10-04"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500002",
+        "service_date": "2025-10-04",
+        "charge_amount": "210.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK100001_CLM202500002.edi",
+          "check_number": "CHK100001",
+          "check_date": "2025-10-20",
+          "claim_status": "1",
+          "paid_amount": "210.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500002",
+            "claim_id_first": "CLM202500002",
+            "service_date": "2025-10-04",
+            "charge_amount": "210.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500003",
+      "claim_no_first": "CLM202500003",
+      "837_file": "837_CLM202500003_20251007.edi",
+      "service_date": "2025-10-07",
+      "total_charge": "175.00",
+      "diagnosis": "J069",
+      "patient": "Sarah Martinez",
+      "payer": "UnitedHealthcare",
+      "provider": "Pacific Spine & Rehab",
+      "service_lines": [
+        {
+          "code": "99203",
+          "charge": "175.00",
+          "service_date": "2025-10-07"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500003",
+        "service_date": "2025-10-07",
+        "charge_amount": "175.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK100002_CLM202500003.edi",
+          "check_number": "CHK100002",
+          "check_date": "2025-10-23",
+          "claim_status": "1",
+          "paid_amount": "175.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500003",
+            "claim_id_first": "CLM202500003",
+            "service_date": "2025-10-07",
+            "charge_amount": "175.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500004",
+      "claim_no_first": "CLM202500004",
+      "837_file": "837_CLM202500004_20251010.edi",
+      "service_date": "2025-10-10",
+      "total_charge": "265.00",
+      "diagnosis": "E119",
+      "patient": "David Thompson",
+      "payer": "Cigna Healthcare",
+      "provider": "Northwest Urgent Care PLLC",
+      "service_lines": [
+        {
+          "code": "99204",
+          "charge": "265.00",
+          "service_date": "2025-10-10"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500004",
+        "service_date": "2025-10-10",
+        "charge_amount": "265.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK100003_CLM202500004.edi",
+          "check_number": "CHK100003",
+          "check_date": "2025-10-26",
+          "claim_status": "1",
+          "paid_amount": "265.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500004",
+            "claim_id_first": "CLM202500004",
+            "service_date": "2025-10-10",
+            "charge_amount": "265.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500005",
+      "claim_no_first": "CLM202500005",
+      "837_file": "837_CLM202500005_20251013.edi",
+      "service_date": "2025-10-13",
+      "total_charge": "85.00",
+      "diagnosis": "I10",
+      "patient": "Jessica Williams",
+      "payer": "Medicare Part B",
+      "provider": "Summit Orthopedic Associates",
+      "service_lines": [
+        {
+          "code": "97110",
+          "charge": "85.00",
+          "service_date": "2025-10-13"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500005",
+        "service_date": "2025-10-13",
+        "charge_amount": "85.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK100004_CLM202500005.edi",
+          "check_number": "CHK100004",
+          "check_date": "2025-10-29",
+          "claim_status": "1",
+          "paid_amount": "85.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500005",
+            "claim_id_first": "CLM202500005",
+            "service_date": "2025-10-13",
+            "charge_amount": "85.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500006",
+      "claim_no_first": "CLM202500006",
+      "837_file": "837_CLM202500006_20251021.edi",
+      "service_date": "2025-10-21",
+      "total_charge": "75.00",
+      "diagnosis": "E119",
+      "patient": "Robert Anderson",
+      "payer": "Aetna Better Health",
+      "provider": "Cascade Family Medicine",
+      "service_lines": [
+        {
+          "code": "97140",
+          "charge": "75.00",
+          "service_date": "2025-10-21"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500006",
+        "service_date": "2025-10-21",
+        "charge_amount": "75.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK200000_CLM202500006.edi",
+          "check_number": "CHK200000",
+          "check_date": "2025-11-12",
+          "claim_status": "1",
+          "paid_amount": "35.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500006",
+            "claim_id_first": "CLM202500006",
+            "service_date": "2025-10-21",
+            "charge_amount": "75.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500007",
+      "claim_no_first": "CLM202500007",
+      "837_file": "837_CLM202500007_20251023.edi",
+      "service_date": "2025-10-23",
+      "total_charge": "320.00",
+      "diagnosis": "I10",
+      "patient": "Amanda Garcia",
+      "payer": "UnitedHealthcare",
+      "provider": "Pacific Spine & Rehab",
+      "service_lines": [
+        {
+          "code": "20610",
+          "charge": "320.00",
+          "service_date": "2025-10-23"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500007",
+        "service_date": "2025-10-23",
+        "charge_amount": "320.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK200001_CLM202500007.edi",
+          "check_number": "CHK200001",
+          "check_date": "2025-11-14",
+          "claim_status": "1",
+          "paid_amount": "231.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500007",
+            "claim_id_first": "CLM202500007",
+            "service_date": "2025-10-23",
+            "charge_amount": "320.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500008",
+      "claim_no_first": "CLM202500008",
+      "837_file": "837_CLM202500008_20251025.edi",
+      "service_date": "2025-10-25",
+      "total_charge": "95.00",
+      "diagnosis": "S83201A",
+      "patient": "James Wilson",
+      "payer": "Cigna Healthcare",
+      "provider": "Northwest Urgent Care PLLC",
+      "service_lines": [
+        {
+          "code": "73030",
+          "charge": "95.00",
+          "service_date": "2025-10-25"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500008",
+        "service_date": "2025-10-25",
+        "charge_amount": "95.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK200002_CLM202500008.edi",
+          "check_number": "CHK200002",
+          "check_date": "2025-11-16",
+          "claim_status": "1",
+          "paid_amount": "51.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500008",
+            "claim_id_first": "CLM202500008",
+            "service_date": "2025-10-25",
+            "charge_amount": "95.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500009",
+      "claim_no_first": "CLM202500009",
+      "837_file": "837_CLM202500009_20251027.edi",
+      "service_date": "2025-10-27",
+      "total_charge": "850.00",
+      "diagnosis": "M79604",
+      "patient": "Lisa Brown",
+      "payer": "Medicare Part B",
+      "provider": "Summit Orthopedic Associates",
+      "service_lines": [
+        {
+          "code": "73721",
+          "charge": "850.00",
+          "service_date": "2025-10-27"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500009",
+        "service_date": "2025-10-27",
+        "charge_amount": "850.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK200003_CLM202500009.edi",
+          "check_number": "CHK200003",
+          "check_date": "2025-11-18",
+          "claim_status": "1",
+          "paid_amount": "655.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500009",
+            "claim_id_first": "CLM202500009",
+            "service_date": "2025-10-27",
+            "charge_amount": "850.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500010",
+      "claim_no_first": "CLM202500010",
+      "837_file": "837_CLM202500010_20251029.edi",
+      "service_date": "2025-10-29",
+      "total_charge": "450.00",
+      "diagnosis": "R509",
+      "patient": "Daniel Taylor",
+      "payer": "Regence BlueShield",
+      "provider": "Cascade Family Medicine",
+      "service_lines": [
+        {
+          "code": "99285",
+          "charge": "450.00",
+          "service_date": "2025-10-29"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500010",
+        "service_date": "2025-10-29",
+        "charge_amount": "450.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK200004_CLM202500010.edi",
+          "check_number": "CHK200004",
+          "check_date": "2025-11-20",
+          "claim_status": "1",
+          "paid_amount": "335.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500010",
+            "claim_id_first": "CLM202500010",
+            "service_date": "2025-10-29",
+            "charge_amount": "450.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500011",
+      "claim_no_first": "CLM202500011",
+      "837_file": "837_CLM202500011_20251105.edi",
+      "service_date": "2025-11-05",
+      "total_charge": "25.00",
+      "diagnosis": "S83201A",
+      "patient": "Karen Moore",
+      "payer": "UnitedHealthcare",
+      "provider": "Pacific Spine & Rehab",
+      "service_lines": [
+        {
+          "code": "36415",
+          "charge": "25.00",
+          "service_date": "2025-11-05"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500011",
+        "service_date": "2025-11-05",
+        "charge_amount": "25.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK300000_CLM202500011.edi",
+          "check_number": "CHK300000",
+          "check_date": "2025-11-26",
+          "claim_status": "4",
+          "paid_amount": "0.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500011",
+            "claim_id_first": "CLM202500011",
+            "service_date": "2025-11-05",
+            "charge_amount": "25.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500012",
+      "claim_no_first": "CLM202500012",
+      "837_file": "837_CLM202500012_20251109.edi",
+      "service_date": "2025-11-09",
+      "total_charge": "45.00",
+      "diagnosis": "M79604",
+      "patient": "Christopher Lee",
+      "payer": "Cigna Healthcare",
+      "provider": "Northwest Urgent Care PLLC",
+      "service_lines": [
+        {
+          "code": "80053",
+          "charge": "45.00",
+          "service_date": "2025-11-09"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500012",
+        "service_date": "2025-11-09",
+        "charge_amount": "45.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK300001_CLM202500012.edi",
+          "check_number": "CHK300001",
+          "check_date": "2025-11-30",
+          "claim_status": "4",
+          "paid_amount": "0.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500012",
+            "claim_id_first": "CLM202500012",
+            "service_date": "2025-11-09",
+            "charge_amount": "45.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500013",
+      "claim_no_first": "CLM202500013",
+      "837_file": "837_CLM202500013_20251113.edi",
+      "service_date": "2025-11-13",
+      "total_charge": "1850.00",
+      "diagnosis": "R509",
+      "patient": "Michelle Davis",
+      "payer": "Medicare Part B",
+      "provider": "Summit Orthopedic Associates",
+      "service_lines": [
+        {
+          "code": "29881",
+          "charge": "1850.00",
+          "service_date": "2025-11-13"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500013",
+        "service_date": "2025-11-13",
+        "charge_amount": "1850.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK300002_CLM202500013.edi",
+          "check_number": "CHK300002",
+          "check_date": "2025-12-04",
+          "claim_status": "4",
+          "paid_amount": "0.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500013",
+            "claim_id_first": "CLM202500013",
+            "service_date": "2025-11-13",
+            "charge_amount": "1850.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500014",
+      "claim_no_first": "CLM202500014",
+      "837_file": "837_CLM202500014_20251120.edi",
+      "service_date": "2025-11-20",
+      "total_charge": "535.00",
+      "diagnosis": "M25512",
+      "patient": "Kevin Miller",
+      "payer": "Blue Cross Blue Shield of Oregon",
+      "provider": "Summit Orthopedic Associates",
+      "service_lines": [
+        {
+          "code": "99213",
+          "charge": "150.00",
+          "service_date": "2025-11-20"
+        },
+        {
+          "code": "99214",
+          "charge": "210.00",
+          "service_date": "2025-11-20"
+        },
+        {
+          "code": "99203",
+          "charge": "175.00",
+          "service_date": "2025-11-20"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500014",
+        "service_date": "2025-11-20",
+        "charge_amount": "535.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK400000_CLM202500014.edi",
+          "check_number": "CHK400000",
+          "check_date": "2025-12-17",
+          "claim_status": "1",
+          "paid_amount": "409.75",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500014",
+            "claim_id_first": "CLM202500014",
+            "service_date": "2025-11-20",
+            "charge_amount": "535.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500015",
+      "claim_no_first": "CLM202500015",
+      "837_file": "837_CLM202500015_20251125.edi",
+      "service_date": "2025-11-25",
+      "total_charge": "650.00",
+      "diagnosis": "M5450",
+      "patient": "Rachel Jackson",
+      "payer": "Aetna Better Health",
+      "provider": "Cascade Family Medicine",
+      "service_lines": [
+        {
+          "code": "99214",
+          "charge": "210.00",
+          "service_date": "2025-11-25"
+        },
+        {
+          "code": "99203",
+          "charge": "175.00",
+          "service_date": "2025-11-25"
+        },
+        {
+          "code": "99204",
+          "charge": "265.00",
+          "service_date": "2025-11-25"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500015",
+        "service_date": "2025-11-25",
+        "charge_amount": "650.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK400001_CLM202500015.edi",
+          "check_number": "CHK400001",
+          "check_date": "2025-12-22",
+          "claim_status": "1",
+          "paid_amount": "552.50",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500015",
+            "claim_id_first": "CLM202500015",
+            "service_date": "2025-11-25",
+            "charge_amount": "650.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500016",
+      "claim_no_first": "CLM202500016",
+      "837_file": "837_CLM202500016_20251130.edi",
+      "service_date": "2025-11-30",
+      "total_charge": "525.00",
+      "diagnosis": "J069",
+      "patient": "Brian White",
+      "payer": "UnitedHealthcare",
+      "provider": "Pacific Spine & Rehab",
+      "service_lines": [
+        {
+          "code": "99203",
+          "charge": "175.00",
+          "service_date": "2025-11-30"
+        },
+        {
+          "code": "99204",
+          "charge": "265.00",
+          "service_date": "2025-11-30"
+        },
+        {
+          "code": "97110",
+          "charge": "85.00",
+          "service_date": "2025-11-30"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500016",
+        "service_date": "2025-11-30",
+        "charge_amount": "525.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK400002_CLM202500016.edi",
+          "check_number": "CHK400002",
+          "check_date": "2025-12-27",
+          "claim_status": "1",
+          "paid_amount": "401.25",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500016",
+            "claim_id_first": "CLM202500016",
+            "service_date": "2025-11-30",
+            "charge_amount": "525.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500017",
+      "claim_no_first": "CLM202500017",
+      "837_file": "837_CLM202500017_20251205.edi",
+      "service_date": "2025-12-05",
+      "total_charge": "425.00",
+      "diagnosis": "E119",
+      "patient": "Nicole Harris",
+      "payer": "Cigna Healthcare",
+      "provider": "Northwest Urgent Care PLLC",
+      "service_lines": [
+        {
+          "code": "99204",
+          "charge": "265.00",
+          "service_date": "2025-12-05"
+        },
+        {
+          "code": "97110",
+          "charge": "85.00",
+          "service_date": "2025-12-05"
+        },
+        {
+          "code": "97140",
+          "charge": "75.00",
+          "service_date": "2025-12-05"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500017",
+        "service_date": "2025-12-05",
+        "charge_amount": "425.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK400003_CLM202500017.edi",
+          "check_number": "CHK400003",
+          "check_date": "2026-01-01",
+          "claim_status": "1",
+          "paid_amount": "361.25",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500017",
+            "claim_id_first": "CLM202500017",
+            "service_date": "2025-12-05",
+            "charge_amount": "425.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
+    },
+    {
+      "claim_no": "CLM202500018",
+      "claim_no_first": "CLM202500018",
+      "837_file": "837_CLM202500018_20251210.edi",
+      "service_date": "2025-12-10",
+      "total_charge": "265.00",
+      "diagnosis": "J069",
+      "patient": "David Thompson",
+      "payer": "Blue Cross Blue Shield of Oregon",
+      "provider": "Cascade Family Medicine",
+      "service_lines": [
+        {
+          "code": "99204",
+          "charge": "265.00",
+          "service_date": "2025-12-10"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500018",
+        "service_date": "2025-12-10",
+        "charge_amount": "265.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK500000_CLM202500018.edi",
+          "check_number": "CHK500000",
+          "check_date": "2025-12-31",
+          "claim_status": "1",
+          "paid_amount": "168.75",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500018",
+            "claim_id_first": "CLM202500018",
+            "service_date": "2025-12-10",
+            "charge_amount": "265.00",
+            "valid": true,
+            "errors": []
+          }
+        },
+        {
+          "file": "835_CHK600000_CLM202500018.edi",
+          "check_number": "CHK600000",
+          "check_date": "2026-01-15",
+          "claim_status": "2",
+          "paid_amount": "30.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500018",
+            "claim_id_first": "CLM202500018",
+            "service_date": "2025-12-10",
+            "charge_amount": "265.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 2
+    },
+    {
+      "claim_no": "CLM202500019",
+      "claim_no_first": "CLM202500019",
+      "837_file": "837_CLM202500019_20251216.edi",
+      "service_date": "2025-12-16",
+      "total_charge": "85.00",
+      "diagnosis": "E119",
+      "patient": "Jessica Williams",
+      "payer": "Aetna Better Health",
+      "provider": "Pacific Spine & Rehab",
+      "service_lines": [
+        {
+          "code": "97110",
+          "charge": "85.00",
+          "service_date": "2025-12-16"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500019",
+        "service_date": "2025-12-16",
+        "charge_amount": "85.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK500001_CLM202500019.edi",
+          "check_number": "CHK500001",
+          "check_date": "2026-01-06",
+          "claim_status": "1",
+          "paid_amount": "33.75",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500019",
+            "claim_id_first": "CLM202500019",
+            "service_date": "2025-12-16",
+            "charge_amount": "85.00",
+            "valid": true,
+            "errors": []
+          }
+        },
+        {
+          "file": "835_CHK600001_CLM202500019.edi",
+          "check_number": "CHK600001",
+          "check_date": "2026-01-21",
+          "claim_status": "2",
+          "paid_amount": "30.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500019",
+            "claim_id_first": "CLM202500019",
+            "service_date": "2025-12-16",
+            "charge_amount": "85.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 2
+    },
+    {
+      "claim_no": "CLM202500020",
+      "claim_no_first": "CLM202500020",
+      "837_file": "837_CLM202500020_20251222.edi",
+      "service_date": "2025-12-22",
+      "total_charge": "75.00",
+      "diagnosis": "I10",
+      "patient": "Robert Anderson",
+      "payer": "UnitedHealthcare",
+      "provider": "Northwest Urgent Care PLLC",
+      "service_lines": [
+        {
+          "code": "97140",
+          "charge": "75.00",
+          "service_date": "2025-12-22"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500020",
+        "service_date": "2025-12-22",
+        "charge_amount": "75.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK500002_CLM202500020.edi",
+          "check_number": "CHK500002",
+          "check_date": "2026-01-12",
+          "claim_status": "1",
+          "paid_amount": "26.25",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500020",
+            "claim_id_first": "CLM202500020",
+            "service_date": "2025-12-22",
+            "charge_amount": "75.00",
+            "valid": true,
+            "errors": []
+          }
+        },
+        {
+          "file": "835_CHK600002_CLM202500020.edi",
+          "check_number": "CHK600002",
+          "check_date": "2026-01-27",
+          "claim_status": "2",
+          "paid_amount": "30.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500020",
+            "claim_id_first": "CLM202500020",
+            "service_date": "2025-12-22",
+            "charge_amount": "75.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 2
+    },
+    {
+      "claim_no": "CLM202500021",
+      "claim_no_first": "CLM202500021",
+      "837_file": "837_CLM202500021_20251228.edi",
+      "service_date": "2025-12-28",
+      "total_charge": "320.00",
+      "diagnosis": "S83201A",
+      "patient": "Amanda Garcia",
+      "payer": "Cigna Healthcare",
+      "provider": "Summit Orthopedic Associates",
+      "service_lines": [
+        {
+          "code": "20610",
+          "charge": "320.00",
+          "service_date": "2025-12-28"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500021",
+        "service_date": "2025-12-28",
+        "charge_amount": "320.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK500003_CLM202500021.edi",
+          "check_number": "CHK500003",
+          "check_date": "2026-01-18",
+          "claim_status": "1",
+          "paid_amount": "210.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500021",
+            "claim_id_first": "CLM202500021",
+            "service_date": "2025-12-28",
+            "charge_amount": "320.00",
+            "valid": true,
+            "errors": []
+          }
+        },
+        {
+          "file": "835_CHK600003_CLM202500021.edi",
+          "check_number": "CHK600003",
+          "check_date": "2026-02-02",
+          "claim_status": "2",
+          "paid_amount": "30.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500021",
+            "claim_id_first": "CLM202500021",
+            "service_date": "2025-12-28",
+            "charge_amount": "320.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 2
+    },
+    {
+      "claim_no": "CLM202500022-1",
+      "claim_no_first": "CLM202500022",
+      "837_file": "837_CLM202500022-1_20260104.edi",
+      "service_date": "2026-01-04",
+      "total_charge": "850.00",
+      "diagnosis": "R509",
+      "patient": "Nicole Harris",
+      "payer": "Aetna Better Health",
+      "provider": "Summit Orthopedic Associates",
+      "service_lines": [
+        {
+          "code": "73721",
+          "charge": "850.00",
+          "service_date": "2026-01-04"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500022",
+        "service_date": "2026-01-04",
+        "charge_amount": "850.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK700000_CLM202500022-1.edi",
+          "check_number": "CHK700000",
+          "check_date": "2026-01-21",
+          "claim_status": "4",
+          "paid_amount": "0.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500022",
+            "claim_id_first": "CLM202500022",
+            "service_date": "2026-01-04",
+            "charge_amount": "850.00",
+            "valid": true,
+            "errors": []
+          }
+        },
+        {
+          "file": "835_CHK710000_CLM202500022-1.edi",
+          "check_number": "CHK710000",
+          "check_date": "2026-02-05",
+          "claim_status": "1",
+          "paid_amount": "425.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500022",
+            "claim_id_first": "CLM202500022",
+            "service_date": "2026-01-04",
+            "charge_amount": "850.00",
+            "valid": true,
+            "errors": []
+          }
+        },
+        {
+          "file": "835_CHK720000_CLM202500022-1.edi",
+          "check_number": "CHK720000",
+          "check_date": "2026-02-20",
+          "claim_status": "1",
+          "paid_amount": "425.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500022",
+            "claim_id_first": "CLM202500022",
+            "service_date": "2026-01-04",
+            "charge_amount": "850.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 3
+    },
+    {
+      "claim_no": "CLM202500023-1",
+      "claim_no_first": "CLM202500023",
+      "837_file": "837_CLM202500023-1_20260111.edi",
+      "service_date": "2026-01-11",
+      "total_charge": "450.00",
+      "diagnosis": "Z0000",
+      "patient": "Steven Clark",
+      "payer": "UnitedHealthcare",
+      "provider": "Cascade Family Medicine",
+      "service_lines": [
+        {
+          "code": "99285",
+          "charge": "450.00",
+          "service_date": "2026-01-11"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500023",
+        "service_date": "2026-01-11",
+        "charge_amount": "450.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK700001_CLM202500023-1.edi",
+          "check_number": "CHK700001",
+          "check_date": "2026-01-28",
+          "claim_status": "4",
+          "paid_amount": "0.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500023",
+            "claim_id_first": "CLM202500023",
+            "service_date": "2026-01-11",
+            "charge_amount": "450.00",
+            "valid": true,
+            "errors": []
+          }
+        },
+        {
+          "file": "835_CHK710001_CLM202500023-1.edi",
+          "check_number": "CHK710001",
+          "check_date": "2026-02-12",
+          "claim_status": "1",
+          "paid_amount": "225.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500023",
+            "claim_id_first": "CLM202500023",
+            "service_date": "2026-01-11",
+            "charge_amount": "450.00",
+            "valid": true,
+            "errors": []
+          }
+        },
+        {
+          "file": "835_CHK720001_CLM202500023-1.edi",
+          "check_number": "CHK720001",
+          "check_date": "2026-02-27",
+          "claim_status": "1",
+          "paid_amount": "225.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500023",
+            "claim_id_first": "CLM202500023",
+            "service_date": "2026-01-11",
+            "charge_amount": "450.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 3
+    },
+    {
+      "claim_no": "CLM202500024",
+      "claim_no_first": "CLM202500024",
+      "837_file": "837_CLM202500024_20260119.edi",
+      "service_date": "2026-01-19",
+      "total_charge": "1850.00",
+      "diagnosis": "Z0000",
+      "patient": "Steven Clark",
+      "payer": "Cigna Healthcare",
+      "provider": "Northwest Urgent Care PLLC",
+      "service_lines": [
+        {
+          "code": "29881",
+          "charge": "1850.00",
+          "service_date": "2026-01-19"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500024",
+        "service_date": "2026-01-19",
+        "charge_amount": "1850.00"
+      },
+      "835_files": [],
+      "835_count": 0
+    },
+    {
+      "claim_no": "CLM202500025",
+      "claim_no_first": "CLM202500025",
+      "837_file": "837_CLM202500025_20260122.edi",
+      "service_date": "2026-01-22",
+      "total_charge": "4200.00",
+      "diagnosis": "M1711",
+      "patient": "Laura Lewis",
+      "payer": "Medicare Part B",
+      "provider": "Summit Orthopedic Associates",
+      "service_lines": [
+        {
+          "code": "27447",
+          "charge": "4200.00",
+          "service_date": "2026-01-22"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500025",
+        "service_date": "2026-01-22",
+        "charge_amount": "4200.00"
+      },
+      "835_files": [],
+      "835_count": 0
+    },
+    {
+      "claim_no": "CLM202500026",
+      "claim_no_first": "CLM202500026",
+      "837_file": "837_CLM202500026_20260125.edi",
+      "service_date": "2026-01-25",
+      "total_charge": "180.00",
+      "diagnosis": "M25512",
+      "patient": "Jason Walker",
+      "payer": "Regence BlueShield",
+      "provider": "Cascade Family Medicine",
+      "service_lines": [
+        {
+          "code": "99232",
+          "charge": "180.00",
+          "service_date": "2026-01-25"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500026",
+        "service_date": "2026-01-25",
+        "charge_amount": "180.00"
+      },
+      "835_files": [],
+      "835_count": 0
+    },
+    {
+      "claim_no": "CLM202500027",
+      "claim_no_first": "CLM202500027",
+      "837_file": "837_CLM202500027_20260212.edi",
+      "service_date": "2026-02-12",
+      "total_charge": "1075.00",
+      "diagnosis": "I10",
+      "patient": "Karen Moore",
+      "payer": "Medicare Part B",
+      "provider": "Pacific Spine & Rehab",
+      "service_lines": [
+        {
+          "code": "99213",
+          "charge": "150.00",
+          "service_date": "2026-02-03"
+        },
+        {
+          "code": "97140",
+          "charge": "75.00",
+          "service_date": "2026-02-07"
+        },
+        {
+          "code": "73721",
+          "charge": "850.00",
+          "service_date": "2026-02-12"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500027",
+        "service_date": "2026-02-12",
+        "charge_amount": "1075.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK800000_CLM202500027.edi",
+          "check_number": "CHK800000",
+          "check_date": "2026-03-04",
+          "claim_status": "1",
+          "paid_amount": "946.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500027",
+            "claim_id_first": "CLM202500027",
+            "service_date": "2026-02-12",
+            "charge_amount": "1075.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1,
+      "scenario_type": "multi_date_latest_match",
+      "line_service_dates": {
+        "earliest": "2026-02-03",
+        "middle": "2026-02-07",
+        "latest": "2026-02-12",
+        "match_key_date": "2026-02-12",
+        "note": "servicedate_837 and servicedate_835 both use MAX(line dates). CLP DTP*472 must be the latest date, not earliest or middle."
+      }
+    },
+    {
+      "claim_no": "CLM202500028",
+      "claim_no_first": "CLM202500028",
+      "837_file": "837_CLM202500028_20260224.edi",
+      "service_date": "2026-02-24",
+      "total_charge": "980.00",
+      "diagnosis": "S83201A",
+      "patient": "Christopher Lee",
+      "payer": "Regence BlueShield",
+      "provider": "Northwest Urgent Care PLLC",
+      "service_lines": [
+        {
+          "code": "99214",
+          "charge": "210.00",
+          "service_date": "2026-02-15"
+        },
+        {
+          "code": "20610",
+          "charge": "320.00",
+          "service_date": "2026-02-19"
+        },
+        {
+          "code": "99285",
+          "charge": "450.00",
+          "service_date": "2026-02-24"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500028",
+        "service_date": "2026-02-24",
+        "charge_amount": "980.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK800001_CLM202500028.edi",
+          "check_number": "CHK800001",
+          "check_date": "2026-03-16",
+          "claim_status": "1",
+          "paid_amount": "862.40",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500028",
+            "claim_id_first": "CLM202500028",
+            "service_date": "2026-02-24",
+            "charge_amount": "980.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1,
+      "scenario_type": "multi_date_latest_match",
+      "line_service_dates": {
+        "earliest": "2026-02-15",
+        "middle": "2026-02-19",
+        "latest": "2026-02-24",
+        "match_key_date": "2026-02-24",
+        "note": "servicedate_837 and servicedate_835 both use MAX(line dates). CLP DTP*472 must be the latest date, not earliest or middle."
+      }
+    }
+  ],
+  "stats": {
+    "total_837_files": 28,
+    "total_835_files": 34,
+    "multi_date_scenarios": 2,
+    "negative_control_835_files": 1,
+    "claims_with_multiple_835": 6,
+    "claims_without_835": 3
+  },
+  "negative_controls": [
+    {
+      "file": "835_CHK799999_CLM202500027_NOMATCH.edi",
+      "pairs_with_837": "837_CLM202500027_20260212.edi",
+      "claim_no": "CLM202500027",
+      "expected_match": false,
+      "reason": "835 line dates resolve to wrong MAX service date",
+      "wrong_max_service_date": "2026-02-03",
+      "correct_max_service_date": "2026-02-12",
+      "note": "All SVC line DTP*472 dates set to earliest line date — servicedate_835 MAX becomes earliest, so this 835 should NOT match the 837"
+    }
+  ]
+}

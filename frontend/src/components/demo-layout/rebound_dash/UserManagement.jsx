@@ -18,10 +18,12 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { auth } from '../../../FirebaseConfig';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { SERVER_URL } from '../../../utils/config';
+import { getFirebaseAuthErrorMessage } from '../../../utils/firebaseAuthErrors';
 import { MODULE_OPTIONS, MODULE_CATEGORY_MAP } from "../../../utils/moduleCatalog";
 import { ROLE_OPTIONS, ROLE_STANDARD, normalizeRole } from "../../../utils/roles";
-import { setRole } from '../../../redux/reducers/auth.reducer';
+import { setRole, setFirstname, setLastname, setEmail } from '../../../redux/reducers/auth.reducer';
 
 
 const getRoleValue = (role) => {
@@ -29,6 +31,15 @@ const getRoleValue = (role) => {
   return ROLE_OPTIONS.some((option) => option.value === normalized)
     ? normalized
     : ROLE_STANDARD;
+};
+
+const resolveUserId = (row) => row?.id || row?.user_id || '';
+
+const getUserDisplayName = (row) => {
+  const name = `${row?.firstname || ''} ${row?.lastname || ''}`.trim();
+  if (name) return name;
+  if (row?.email) return row.email;
+  return 'Incomplete profile';
 };
 
 const UserRoleCell = ({ row, onUpdateRole, theme }) => {
@@ -535,7 +546,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
       const updatedUser = result?.user ?? { id: userId, ...updates };
       const mergeUsers = (list) =>
-        list.map((row) => (row.id === userId ? { ...row, ...updatedUser } : row));
+        list.map((row) => (resolveUserId(row) === userId ? { ...row, ...updatedUser, id: updatedUser.id || userId } : row));
 
       setUsers((prev) => mergeUsers(prev));
       setTotalUsers((prev) => mergeUsers(prev));
@@ -545,6 +556,17 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
         dispatch(setRole(updates.role));
       } else if (currentUserId && updatedUser?.id === currentUserId && updatedUser?.role) {
         dispatch(setRole(updatedUser.role));
+      }
+      if (currentUserId && updatedUser?.id === currentUserId) {
+        if (updates?.firstname !== undefined || updatedUser?.firstname !== undefined) {
+          dispatch(setFirstname(updatedUser?.firstname ?? updates?.firstname ?? ''));
+        }
+        if (updates?.lastname !== undefined || updatedUser?.lastname !== undefined) {
+          dispatch(setLastname(updatedUser?.lastname ?? updates?.lastname ?? ''));
+        }
+        if (updates?.email !== undefined || updatedUser?.email !== undefined) {
+          dispatch(setEmail(updatedUser?.email ?? updates?.email ?? ''));
+        }
       }
 
       if (successMessage) {
@@ -647,6 +669,13 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [editProfileUser, setEditProfileUser] = useState({
+    id: '',
+    firstname: '',
+    lastname: '',
+    email: '',
+  });
 
   const DeleteConfirmationModal = () => (
     <div className="fixed inset-0 z-50 mt-2 sm:mt-32" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -670,7 +699,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                 <div className="mt-3">
                   <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
                     }`}>
-                    Are you sure you want to delete the user <span className='font-bold'>{userToDelete.firstname} {userToDelete.lastname}</span> from the system? This action cannot be undone, and all user data will be permanently removed.
+                    Are you sure you want to delete the user <span className='font-bold'>{getUserDisplayName(userToDelete)}</span> from the system? This action cannot be undone, and all user data will be permanently removed.
                   </p>
                 </div>
               </div>
@@ -681,7 +710,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
               type="button"
               className={`inline-flex w-full justify-center rounded-md border px-4 py-2 text-base font-medium shadow-sm sm:ml-3 sm:w-auto sm:text-sm ${theme === 'dark' ? 'bg-[#3b3f46] text-white hover:bg-[#4a4f57] border-transparent' : 'bg-slate-700 text-white hover:bg-slate-800 border-transparent'}`}
               onClick={() => {
-                handleDeleteUser(userToDelete.id, userToDelete.email);
+                handleDeleteUser(resolveUserId(userToDelete), userToDelete.email);
                 setShowDeleteModal(false);
               }}
             >
@@ -701,33 +730,35 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   );
 
   const handleDeleteUser = async (userId, email) => {
-    console.log('handleDeleteUser called with userId:', userId);
+    const resolvedId = userId || '';
+    if (!resolvedId) {
+      toast.error('Unable to delete this user because the profile ID is missing.');
+      return;
+    }
+
     setLoading(true);
     try {
-
-      const token = await auth.currentUser.getIdToken()
-
-      const data = await fetch(`${SERVER_URL}/api/v1/admin-delete-user`, {
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(`${SERVER_URL}/api/v1/admin-delete-user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token
-
+          "Authorization": token,
         },
         body: JSON.stringify({
-          user_id: userId,
-          email: email
-        })
-      })
-      console.log(data)
-      if (data.status === 200) {
-        toast.success("User deleted!")
-        setUsers((prev) => prev.filter((user) => user.id !== userId));
-        setTotalUsers((prev) => prev.filter((user) => user.id !== userId));
+          user_id: resolvedId,
+          email: email,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.error || 'Failed to delete user.');
       }
-
+      toast.success("User deleted!");
+      await fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
+      toast.error(error?.message || 'Failed to delete user.');
     } finally {
       setLoading(false);
     }
@@ -740,24 +771,40 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       return;
     }
     try {
-      const token = await requireAuthToken();
-      const response = await fetch(`${SERVER_URL}/api/v1/admin-reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: token,
-        },
-        body: JSON.stringify({ email: normalizedEmail }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(result?.error || 'Failed to send reset email.');
-      }
+      await sendPasswordResetEmail(auth, normalizedEmail);
       toast.success('Password reset email sent.');
     } catch (error) {
       console.error('Error sending reset email:', error);
-      toast.error(error?.message || 'Failed to send reset email.');
+      toast.error(getFirebaseAuthErrorMessage(error, 'Failed to send reset email.'));
     }
+  };
+
+  const openEditProfileModal = (row) => {
+    setEditProfileUser({
+      id: resolveUserId(row),
+      firstname: row.firstname || '',
+      lastname: row.lastname || '',
+      email: row.email || '',
+    });
+    setShowEditProfileModal(true);
+  };
+
+  const handleSaveProfile = async () => {
+    const userId = editProfileUser.id;
+    if (!userId) {
+      toast.error('Unable to update this profile because the user ID is missing.');
+      return;
+    }
+    await patchUserProfile(
+      userId,
+      {
+        firstname: `${editProfileUser.firstname || ''}`.trim(),
+        lastname: `${editProfileUser.lastname || ''}`.trim(),
+        email: `${editProfileUser.email || ''}`.trim().toLowerCase(),
+      },
+      'Profile updated successfully'
+    );
+    setShowEditProfileModal(false);
   };
 
   const fetchUsers = async () => {
@@ -1072,18 +1119,18 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                       </tr>
                     )}
                     {users.slice((currentPage - 1) * currentPageSize, currentPage * currentPageSize).map((row, index) => (
-                      <tr key={index} className="">
+                      <tr key={resolveUserId(row) || index} className="">
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
                           {(currentPage - 1) * currentPageSize + index + 1}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
-                          {row.firstname}
+                          {row.firstname || (row.email ? '—' : '—')}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
-                          {row.lastname}
+                          {row.lastname || (row.email ? '—' : '—')}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
-                          {row.email}
+                          {row.email || <span className="italic opacity-60">Missing email</span>}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <UserRoleCell theme={theme} row={row} onUpdateRole={handleUpdateRole} />
@@ -1177,12 +1224,23 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
 
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
+                            {/* Edit Profile Button */}
+                            <div
+                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-white/[0.06] hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'}`}
+                              onClick={() => openEditProfileModal(row)}
+                              title="Edit Profile"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M4 20h4l10.5-10.5a1.77 1.77 0 0 0 0-2.5l-2-2a1.77 1.77 0 0 0-2.5 0L4 15.5V20z" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+
                             {/* Permissions Button */}
                             <div
                               className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-white/[0.06] hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'}`}
                               onClick={() => {
                                 const currentUser = users.find(u => u.id === row.id) || row;
-                                setUpdate_user_id(row.id);
+                                setUpdate_user_id(resolveUserId(row));
                                 setUser((prev) => ({
                                   ...prev,
                                   tenant: currentUser.tenant || "",
@@ -1326,6 +1384,57 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
           </>
         )}
         {showDeleteModal && <DeleteConfirmationModal />}
+
+        <Modal
+          open={showEditProfileModal}
+          onClose={() => setShowEditProfileModal(false)}
+          aria-labelledby="edit-profile-modal"
+        >
+          <Box className={`absolute rounded-xl border-none w-[520px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 ${theme === 'dark' ? 'bg-[#27282D]' : 'bg-white'}`}>
+            <div className={`p-6 rounded-xl ${theme === 'dark' ? 'bg-[#2a2b30] text-[#e5e7eb] border border-white/10' : 'bg-white text-slate-700 border border-slate-200'}`}>
+              <h2 className="text-xl font-semibold mb-4">Edit User Profile</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <input
+                  type="text"
+                  value={editProfileUser.firstname}
+                  onChange={(e) => setEditProfileUser((prev) => ({ ...prev, firstname: e.target.value }))}
+                  placeholder="First Name"
+                  className={`text-sm rounded-lg px-4 py-2.5 border w-full ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-white/10' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
+                />
+                <input
+                  type="text"
+                  value={editProfileUser.lastname}
+                  onChange={(e) => setEditProfileUser((prev) => ({ ...prev, lastname: e.target.value }))}
+                  placeholder="Last Name"
+                  className={`text-sm rounded-lg px-4 py-2.5 border w-full ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-white/10' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
+                />
+              </div>
+              <input
+                type="email"
+                value={editProfileUser.email}
+                onChange={(e) => setEditProfileUser((prev) => ({ ...prev, email: e.target.value }))}
+                placeholder="Email"
+                className={`mt-4 text-sm rounded-lg px-4 py-2.5 border w-full ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-white/10' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
+              />
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditProfileModal(false)}
+                  className="rounded-lg px-4 py-2 text-sm font-semibold bg-[#d1d5db] text-[#3b3f46]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  className="rounded-lg px-4 py-2 text-sm font-semibold text-white bg-[#3b3f46] hover:bg-[#2f3238]"
+                >
+                  Save Profile
+                </button>
+              </div>
+            </div>
+          </Box>
+        </Modal>
 
         {/* <div className="flex items-center gap-2 justify-start mb-3 pl-3">
         <label
@@ -1675,7 +1784,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                     className="rounded-lg text-[16px] font-semibold px-[33px] py-[10px] border border-solid text-white bg-[#3b3f46] cursor-pointer select-none"
                     onClick={() => {
                       const updatedUser = {
-                        ...user,
                         client: user.client,
                         facility: user.facility,
                         clientState: user.clientState,

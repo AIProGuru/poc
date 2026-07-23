@@ -19,6 +19,24 @@ FIREBASE_WEB_API_KEY = os.environ.get(
 )
 
 
+FIREBASE_AUTH_MESSAGES = {
+    "EMAIL_NOT_FOUND": "No account was found with that email address.",
+    "INVALID_EMAIL": "Please enter a valid email address.",
+    "RESET_PASSWORD_EXCEED_LIMIT": "Too many reset attempts. Please wait and try again.",
+    "USER_NOT_FOUND": "No account was found with that email address.",
+}
+
+
+def _friendly_firebase_error(raw_message: str) -> str:
+    if not raw_message:
+        return "Something went wrong. Please try again."
+    if raw_message in FIREBASE_AUTH_MESSAGES:
+        return FIREBASE_AUTH_MESSAGES[raw_message]
+    if "firebase" in raw_message.lower() or "identitytoolkit" in raw_message.lower():
+        return "Unable to send the reset email right now. Please try again."
+    return raw_message
+
+
 def _send_password_reset_email(email: str) -> None:
     """Send a Firebase password-reset email via the Identity Toolkit REST API."""
     response = requests.post(
@@ -34,7 +52,32 @@ def _send_password_reset_email(email: str) -> None:
 
     error_body = response.json().get("error", {}) if response.content else {}
     message = error_body.get("message") or "Failed to send password reset email."
-    raise RuntimeError(message)
+    raise RuntimeError(_friendly_firebase_error(message))
+
+
+def _resolve_user_document(user_id: str):
+    """Return (doc_ref, doc_snapshot) for a Firestore users document."""
+    doc_ref = db.collection("users").document(user_id)
+    snapshot = doc_ref.get()
+    if snapshot.exists:
+        return doc_ref, snapshot
+
+    query = db.collection("users").where("user_id", "==", user_id).limit(1).stream()
+    for match in query:
+        return match.reference, match
+
+    return doc_ref, snapshot
+
+
+def _is_admin_role(role: str) -> bool:
+    return role in {"admin", "super-admin", "manager", "internal-admin"}
+
+
+def _get_caller_profile(uid: str) -> dict:
+    _, snapshot = _resolve_user_document(uid)
+    if not snapshot.exists:
+        raise PermissionError("User profile not found.")
+    return snapshot.to_dict() or {}
 
 
 # Schema definition
@@ -63,12 +106,8 @@ def _assert_admin(uid: str):
     """
     Ensure the caller has an admin-level role before performing privileged actions.
     """
-    user_doc = db.collection("users").document(uid).get()
-    if not user_doc.exists:
-        raise PermissionError("User profile not found.")
-
-    role = user_doc.to_dict().get("role")
-    if role not in {"admin", "super-admin", "manager", "internal-admin"}:
+    profile = _get_caller_profile(uid)
+    if not _is_admin_role(profile.get("role")):
         raise PermissionError("Admin privileges required.")
 
 
@@ -122,13 +161,17 @@ def admin_delete_user():
         data = request.get_json()
         user_id_to_delete = data.get('user_id')
         deleted_user_email = data.get('email')
-        user_doc = None
         
         if not user_id_to_delete:
             return jsonify({"error": "User ID required"}), 400
 
-        user_doc = db.collection("users").document(user_id_to_delete).get()
-        user_profile = user_doc.to_dict() if user_doc.exists else {}
+        doc_ref, user_doc = _resolve_user_document(user_id_to_delete)
+        if not user_doc.exists:
+            return jsonify({"error": "User profile not found."}), 404
+
+        resolved_user_id = user_doc.id
+        user_profile = user_doc.to_dict() or {}
+        deleted_user_email = deleted_user_email or user_profile.get("email")
         tenant_hint = (
             data.get("tenant")
             or user_profile.get("tenant")
@@ -140,15 +183,18 @@ def admin_delete_user():
 
         # Revoke refresh tokens so existing sessions are forced to re-auth
         try:
-            auth.revoke_refresh_tokens(user_id_to_delete)
+            auth.revoke_refresh_tokens(resolved_user_id)
         except Exception as revoke_err:
-            logger.warning(f"Failed to revoke tokens for {user_id_to_delete}: {revoke_err}")
+            logger.warning(f"Failed to revoke tokens for {resolved_user_id}: {revoke_err}")
 
         # Delete from Firestore
-        db.collection("users").document(user_id_to_delete).delete()
+        doc_ref.delete()
         
-        # Delete from Firebase Auth
-        auth.delete_user(user_id_to_delete)
+        # Delete from Firebase Auth (ignore if already removed)
+        try:
+            auth.delete_user(resolved_user_id)
+        except auth.UserNotFoundError:
+            logger.warning(f"Auth user already deleted: {resolved_user_id}")
 
         # Log deletion
         log_query = """
@@ -170,6 +216,27 @@ def admin_delete_user():
 
     finally:
         close_connection(cursor, conn)
+
+
+@users_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    if request.content_type != "application/json":
+        return jsonify({"error": "Unsupported Media Type"}), 415
+
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        return jsonify({"error": "Email is required."}), 400
+
+    try:
+        _send_password_reset_email(email)
+        return jsonify({"message": "If an account exists for that email, a reset link has been sent."}), 200
+    except RuntimeError as e:
+        logger.error(f"Forgot password error: {e}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logger.error(f"Forgot password error: {e}")
+        return jsonify({"error": "Failed to send password reset email."}), 500
 
 
 @users_bp.route("/admin-reset-password", methods=["POST"])
@@ -224,6 +291,11 @@ def list_users():
             row["id"] = doc.id
             users.append(row)
 
+        users.sort(key=lambda item: (
+            (item.get("firstname") or "").lower(),
+            (item.get("lastname") or "").lower(),
+            (item.get("email") or "").lower(),
+        ))
         return jsonify({"users": users}), 200
     except PermissionError as e:
         return jsonify({"error": str(e)}), 403
@@ -243,18 +315,26 @@ def update_user(user_id):
 
     try:
         decoded_token = auth.verify_id_token(token)
-        _assert_admin(decoded_token["uid"])
+        caller_uid = decoded_token["uid"]
+        caller_profile = _get_caller_profile(caller_uid)
+        caller_is_admin = _is_admin_role(caller_profile.get("role"))
 
         payload = request.get_json()
         if not payload:
             return jsonify({"error": "Request body is required"}), 400
 
-        allowed_fields = {
-            "firstname",
-            "lastname",
-            "email",
-            "role",
-            "status",
+        doc_ref, doc_snapshot = _resolve_user_document(user_id)
+        if not doc_snapshot.exists:
+            return jsonify({"error": "User document not found"}), 404
+
+        resolved_user_id = doc_snapshot.id
+        editing_self = caller_uid == resolved_user_id
+
+        if not caller_is_admin and not editing_self:
+            raise PermissionError("You can only update your own profile.")
+
+        profile_fields = {"firstname", "lastname", "email"}
+        permission_fields = {
             "client",
             "facility",
             "clientState",
@@ -265,29 +345,51 @@ def update_user(user_id):
             "user_id",
             "tenant",
         }
+        admin_only_fields = {"role", "status"}
+
+        if editing_self and not caller_is_admin:
+            allowed_fields = profile_fields
+        elif caller_is_admin:
+            allowed_fields = profile_fields | permission_fields | admin_only_fields
+        else:
+            allowed_fields = set()
 
         sanitized = {k: v for k, v in payload.items() if k in allowed_fields}
         if not sanitized:
             return jsonify({"error": "No valid fields to update"}), 400
 
-        doc_ref = db.collection("users").document(user_id)
-        if not doc_ref.get().exists:
-            return jsonify({"error": "User document not found"}), 404
+        for field in ("firstname", "lastname", "email"):
+            if field in sanitized:
+                sanitized[field] = f"{sanitized[field]}".strip()
+                if not sanitized[field]:
+                    return jsonify({"error": f"{field} cannot be empty."}), 400
+                if field == "email":
+                    sanitized[field] = sanitized[field].lower()
+
+        if resolved_user_id != user_id:
+            doc_ref = db.collection("users").document(resolved_user_id)
 
         doc_ref.set(sanitized, merge=True)
 
         # Update Firebase custom claims if role changes
         if "role" in sanitized:
             auth.set_custom_user_claims(
-                user_id,
+                resolved_user_id,
                 {
                     "admin": sanitized["role"]
                     in {"admin", "super-admin", "manager", "internal-admin"}
                 },
             )
 
+        if "email" in sanitized:
+            try:
+                auth.update_user(resolved_user_id, email=sanitized["email"])
+            except Exception as auth_update_error:
+                logger.error(f"Failed to sync auth email for {resolved_user_id}: {auth_update_error}")
+                return jsonify({"error": "Profile saved, but email could not be updated in authentication."}), 400
+
         updated = doc_ref.get().to_dict()
-        updated["id"] = user_id
+        updated["id"] = resolved_user_id
 
         return jsonify({"message": "User updated successfully", "user": updated}), 200
     except PermissionError as e:

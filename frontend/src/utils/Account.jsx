@@ -23,6 +23,7 @@ import {
 } from '../redux/reducers/auth.reducer';
 import {  doc, getDoc } from 'firebase/firestore/lite'; // Import Firestore methods
 import { db } from '../FirebaseConfig';
+import { getFirebaseAuthErrorMessage } from '../utils/firebaseAuthErrors';
 
 const AccountContext = createContext();
 
@@ -115,7 +116,7 @@ const getSession = () => {
         })
         .catch((error) => {
           console.error('Error sending password reset email:', error);
-          reject(error);
+          reject(getFirebaseAuthErrorMessage(error, 'Failed to send password reset email.'));
         });
     });
 };
