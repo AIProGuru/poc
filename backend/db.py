@@ -80,6 +80,56 @@ def _extract_tenant_hint(request_or_url):
     return str(request_or_url).lower()
 
 
+def normalize_tenant_hint(value, default="pilotcustomer"):
+    """Map assorted tenant labels, app types, and paths to a known DB tenant key."""
+    if value is None:
+        return default
+
+    raw = str(value).strip().lower()
+    if not raw:
+        return default
+
+    compact = raw.replace("\\", "/").strip("/")
+    compact = compact.split("/")[-1] if compact else ""
+    compact = compact.replace(" ", "").replace("-", "").replace("_", "")
+
+    app_type_map = {
+        "0": "rebound",
+        "1": "pilotcustomer",
+        "2": "demo",
+        "3": "betacustomer",
+    }
+    if compact in app_type_map:
+        return app_type_map[compact]
+
+    if "betacustomer" in compact or compact in {"beta", "betacustomer"}:
+        return "betacustomer"
+    if any(token in compact for token in ("rebound", "medevolve", "pilotcustomer", "demo")):
+        if "betacustomer" in raw:
+            return "betacustomer"
+        if "rebound" in compact:
+            return "rebound"
+        if "demo" in compact:
+            return "demo"
+        if "medevolve" in compact:
+            return "medevolve"
+        return "pilotcustomer"
+
+    if "betacustomer" in raw:
+        return "betacustomer"
+    if "rebound" in raw:
+        return "rebound"
+    if "medevolve" in raw:
+        return "medevolve"
+    if "pilotcustomer" in raw or "pilot" in raw:
+        return "pilotcustomer"
+    if "demo" in raw:
+        return "demo"
+
+    logger.warning("Unknown tenant hint %r; defaulting to %s", value, default)
+    return default
+
+
 def _current_database_name(cursor, fallback: str) -> str:
     """Return the schema name for the active connection (not the API tenant label)."""
     try:
@@ -99,6 +149,8 @@ def get_connection(request_or_url):
         raise Exception("Database connection not available. Please check your MySQL configuration.")
 
     hint = _extract_tenant_hint(request_or_url)
+    if not hasattr(request_or_url, "headers"):
+        hint = normalize_tenant_hint(hint)
 
     # if 'rebound' in hint:
     #     conn = rebound_conn.get_connection()
@@ -121,7 +173,12 @@ def get_connection(request_or_url):
         cursor.execute("SET SESSION sql_mode = '';")
         # pilotcustomer/rebound/demo API routes share the medevolve pool in this environment.
         return conn, cursor, _current_database_name(cursor, "medevolve")
-    raise ValueError("Invalid base URL")
+
+    logger.warning("Unrecognized tenant hint %r; using medevolve pool", hint)
+    conn = medevolve_conn.get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SET SESSION sql_mode = '';")
+    return conn, cursor, _current_database_name(cursor, "medevolve")
 
 def close_connection(cursor, conn):
     if cursor:

@@ -4,7 +4,7 @@ from jsonschema import validate
 import logging
 import os
 import requests
-from db import get_connection, close_connection
+from db import get_connection, close_connection, normalize_tenant_hint
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -172,14 +172,6 @@ def admin_delete_user():
         resolved_user_id = user_doc.id
         user_profile = user_doc.to_dict() or {}
         deleted_user_email = deleted_user_email or user_profile.get("email")
-        tenant_hint = (
-            data.get("tenant")
-            or user_profile.get("tenant")
-            or user_profile.get("product")
-            or user_profile.get("basePath")
-            or "pilotcustomer"
-        )
-        conn, cursor, _ = get_connection(tenant_hint)
 
         # Revoke refresh tokens so existing sessions are forced to re-auth
         try:
@@ -196,14 +188,28 @@ def admin_delete_user():
         except auth.UserNotFoundError:
             logger.warning(f"Auth user already deleted: {resolved_user_id}")
 
-        # Log deletion
-        log_query = """
-            INSERT INTO User_management_logs 
-            (deleted_user_email, deleted_by_user_email)
-            VALUES (%s, %s)
-        """
-        cursor.execute(log_query, (deleted_user_email, user_data.get('email')))
-        conn.commit()
+        tenant_hint = normalize_tenant_hint(
+            data.get("tenant")
+            or user_profile.get("tenant")
+            or user_profile.get("product")
+            or user_profile.get("basePath")
+            or user_profile.get("appType")
+            or user_profile.get("type")
+            or "pilotcustomer"
+        )
+
+        # Log deletion (best-effort; do not block user removal on DB issues)
+        try:
+            conn, cursor, _ = get_connection(tenant_hint)
+            log_query = """
+                INSERT INTO User_management_logs 
+                (deleted_user_email, deleted_by_user_email)
+                VALUES (%s, %s)
+            """
+            cursor.execute(log_query, (deleted_user_email, user_data.get('email')))
+            conn.commit()
+        except Exception as log_err:
+            logger.warning(f"Failed to log user deletion for {resolved_user_id}: {log_err}")
 
         return jsonify({"message": "User deleted successfully"}), 200
 
