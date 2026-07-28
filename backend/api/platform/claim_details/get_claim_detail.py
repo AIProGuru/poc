@@ -679,11 +679,16 @@ def get_triage_actions():
     try:
         conn, cursor, db_name = get_connection(request)
         denial_category = (request.args.get("denial_category") or "").strip()
-        if denial_category == "":
+        workflow = (request.args.get("workflow") or "").strip()
+        if denial_category == "" and workflow == "":
             return jsonify([]), 200
 
         try:
-            ret = fetch_triage_actions_for_category(cursor, denial_category)
+            ret = fetch_triage_actions_for_category(
+                cursor,
+                denial_category,
+                workflow=workflow,
+            )
         except Exception as query_error:
             logger.error("[QUERY ERROR]: %s", query_error)
             return jsonify([]), 200

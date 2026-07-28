@@ -155,3 +155,87 @@ export const findNextWorklistClaim = (tableData = [], currentClaimNo = "") => {
   }
   return tableData.find((row) => (row?.ClaimNo || row?.ClaimID) !== currentClaimNo) || null;
 };
+
+const normalizeCategoryToken = (value = "") =>
+  `${value}`.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/** Map claim/workflow context to the governance category used by claim_action_items. */
+export const resolveTriageActionCategory = ({
+  claimCategory = "",
+  routeTitle = "",
+  appTitle = "",
+  routeCategory = "",
+  pend277Flag = false,
+  pend835Flag = false,
+} = {}) => {
+  const sources = [routeTitle, appTitle, routeCategory, claimCategory].filter(Boolean);
+  const sourceNorms = sources.map(normalizeCategoryToken);
+  const claimNorm = normalizeCategoryToken(claimCategory);
+
+  if (
+    pend277Flag ||
+    sourceNorms.some((value) => value.includes("pend277"))
+  ) {
+    return "Pend 277";
+  }
+
+  if (
+    pend835Flag ||
+    sourceNorms.some((value) => value.includes("pend835"))
+  ) {
+    return "Pend 835";
+  }
+
+  if (
+    claimNorm === "patientresp" ||
+    sourceNorms.some(
+      (value) =>
+        value.includes("patientresp") ||
+        value.includes("patientresponsibility") ||
+        value.includes("balduefrompt")
+    )
+  ) {
+    return "Patient Resp";
+  }
+
+  if (
+    claimNorm === "eligibility" ||
+    sourceNorms.some((value) => value.includes("eligibility"))
+  ) {
+    return "Eligibility";
+  }
+
+  return `${claimCategory || routeCategory || ""}`.trim();
+};
+
+export const resolveTriageWorkflowHint = ({
+  routeTitle = "",
+  appTitle = "",
+  routeCategory = "",
+  pend277Flag = false,
+  pend835Flag = false,
+} = {}) => {
+  const sources = [routeTitle, appTitle, routeCategory].filter(Boolean);
+  const sourceNorms = sources.map(normalizeCategoryToken);
+
+  if (pend277Flag || sourceNorms.some((value) => value.includes("pend277"))) {
+    return "pend277";
+  }
+  if (pend835Flag || sourceNorms.some((value) => value.includes("pend835"))) {
+    return "pend835";
+  }
+  if (
+    sourceNorms.some(
+      (value) =>
+        value.includes("patientresp") ||
+        value.includes("patientresponsibility") ||
+        value.includes("balduefrompt")
+    )
+  ) {
+    return "patient-resp";
+  }
+  if (sourceNorms.some((value) => value.includes("eligibility"))) {
+    return "eligibility";
+  }
+  return "";
+};

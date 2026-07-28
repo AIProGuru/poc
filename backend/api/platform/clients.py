@@ -505,26 +505,15 @@ def get_triage_actions():
             return jsonify([]), 200
 
         try:
-            ret = fetch_triage_actions_for_category(cursor, denial_category)
+            ret = fetch_triage_actions_for_category(
+                cursor,
+                denial_category,
+                workflow=(request.args.get("workflow") or "").strip(),
+            )
         except Exception as query_error:
             logger.error("[QUERY ERROR]: %s", query_error)
             return jsonify([]), 200
 
-        # If Pend 277 claims don't have a DB action yet, add a safe default.
-        if denial_category.lower() == "pend 277":
-            has_request = any(
-                (item.get("label") or "").strip().lower() == "request 277"
-                for item in ret
-            )
-            if not has_request:
-                ret.insert(
-                    len(ret) - 1 if ret else 0,
-                    {
-                        "label": "Request 277",
-                        "allowFreeText": False,
-                        "transactionOptions": [],
-                    },
-                )
         return jsonify(ret), 200
     except Exception as e:
         logger.error(f"[ERROR]: {e}")

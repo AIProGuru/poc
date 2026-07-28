@@ -78,7 +78,18 @@ const BulkDenialsPanel = ({
     if (!open || !apiUrl || !denialCategory) return;
     setActionsLoading(true);
     axios
-      .get(`${apiUrl}/triage_actions`, { params: { denial_category: denialCategory } })
+      .get(`${apiUrl}/triage_actions`, {
+        params: {
+          denial_category: denialCategory,
+          workflow: (() => {
+            const title = `${denialCategory}`.toLowerCase();
+            if (title.includes("pend 277")) return "pend277";
+            if (title.includes("pend 835")) return "pend835";
+            if (title.includes("patient")) return "patient-resp";
+            return undefined;
+          })(),
+        },
+      })
       .then((res) => {
         const items = Array.isArray(res.data) ? res.data : [];
         setTriageActions(

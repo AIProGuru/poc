@@ -334,8 +334,16 @@ const DataTable = (props) => {
     (appTitle || "").toLowerCase().startsWith("denials");
   const denialCategory = useMemo(() => {
     const tags = (selectedTags || []).filter(Boolean);
-    return tags.length === 1 ? tags[0] : "";
-  }, [selectedTags]);
+    if (tags.length === 1) return tags[0];
+
+    const title = `${appTitle || ""}`.toLowerCase();
+    if (title.includes("pend 277")) return "Pend 277";
+    if (title.includes("pend 835")) return "Pend 835";
+    if (title.includes("patient resp") || title.includes("bal due")) return "Patient Resp";
+    if (title.includes("eligibility")) return "Eligibility";
+
+    return "";
+  }, [selectedTags, appTitle]);
   const selectedIds = useMemo(
     () => (selectedClaimIds || []).filter((id) => id && `${id}`.trim() !== ""),
     [selectedClaimIds]

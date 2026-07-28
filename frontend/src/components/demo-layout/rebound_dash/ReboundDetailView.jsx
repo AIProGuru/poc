@@ -30,6 +30,8 @@ import {
   getUserInitials,
   parseTriageActionValue,
   resolveTickleFromActions,
+  resolveTriageActionCategory,
+  resolveTriageWorkflowHint,
 } from "../../../utils/triageHelpers";
 import { IconButton } from "@mui/material";
 import "./dashboard.css"
@@ -361,15 +363,31 @@ const ReboundDetailView = () => {
       setAppeal([...claim.Appeal]);
       setThumb(claim.rate);
 
-      setTriageNotes("");
-      setTriageOtherText("");
-
-      const denialCategory =
+      const claimDataCategory =
         claim?.Claim?.Data?.Category ||
         claim?.Claim?.Data?.CategoryName ||
         claim?.Claim?.Data?.ClaimCategory ||
-        routeCategory ||
         "";
+      const triageCategory = resolveTriageActionCategory({
+        claimCategory: claimDataCategory,
+        routeTitle,
+        appTitle,
+        routeCategory,
+        pend277Flag: Boolean(claim?.Claim?.Data?.Pend277),
+        pend835Flag: Boolean(claim?.Claim?.Data?.Pend835),
+      });
+      const triageWorkflow = resolveTriageWorkflowHint({
+        routeTitle,
+        appTitle,
+        routeCategory,
+        pend277Flag: Boolean(claim?.Claim?.Data?.Pend277),
+        pend835Flag: Boolean(claim?.Claim?.Data?.Pend835),
+      });
+
+      setTriageNotes("");
+      setTriageOtherText("");
+
+      const denialCategory = triageCategory;
 
       if (!denialCategory) {
         setTriageActions(applySavedTriageSelection(defaultTriageActions, { selected: [], otherText: "", transactionCodes: {} }));
@@ -379,7 +397,10 @@ const ReboundDetailView = () => {
 
       try {
         const triageRes = await axios.get(`${apiUrl}/triage_actions`, {
-          params: { denial_category: denialCategory },
+          params: {
+            denial_category: denialCategory,
+            workflow: triageWorkflow || undefined,
+          },
         });
         if (cancelled) return;
 
@@ -423,7 +444,7 @@ const ReboundDetailView = () => {
     return () => {
       cancelled = true;
     };
-  }, [claimNo, apiUrl, username, routeCategory]);
+  }, [claimNo, apiUrl, username, routeCategory, routeTitle, appTitle]);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
