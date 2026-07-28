@@ -20,6 +20,17 @@ import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { useSelector, useDispatch } from "react-redux";
 import { buildAccessExtra } from "../../../utils/accessFilters";
 import { refreshWorklistFromAppState } from "../../../utils/worklistRefresh";
+import {
+  buildAutoTriageNotes,
+  findNextWorklistClaim,
+  formatTriageActionSummary,
+  formatTriageHistoryTimestamp,
+  getInitialsFromUserField,
+  getTriageNotesHistory,
+  getUserInitials,
+  parseTriageActionValue,
+  resolveTickleFromActions,
+} from "../../../utils/triageHelpers";
 import { IconButton } from "@mui/material";
 import "./dashboard.css"
 
@@ -104,6 +115,9 @@ const ReboundDetailView = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const username = useSelector((state) => state.auth.username);
+  const firstname = useSelector((state) => state.auth.firstname);
+  const lastname = useSelector((state) => state.auth.lastname);
+  const tableData = useSelector((state) => state.app.tableData);
   const role = useSelector((state) => state.auth.role);
   const accessModules = useSelector((state) => state.auth.modules);
   const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
@@ -161,6 +175,8 @@ const ReboundDetailView = () => {
   const [triageActions, setTriageActions] = useState([]);
   const [triageOtherText, setTriageOtherText] = useState("");
   const [triageNotes, setTriageNotes] = useState("");
+  const [tickleDate, setTickleDate] = useState("");
+  const [tickleDateManual, setTickleDateManual] = useState(false);
   const [triageSubmitting, setTriageSubmitting] = useState(false);
   const [triageDraftStatus, setTriageDraftStatus] = useState("idle");
   const [lastDraftSavedAt, setLastDraftSavedAt] = useState(null);
@@ -171,6 +187,8 @@ const ReboundDetailView = () => {
   const triageDropdownRefs = useRef({});
   const triageFileInputRefs = useRef({});
   const triageHydratedRef = useRef(false);
+  const triageNotesTouchedRef = useRef(false);
+  const triageAutoNotesRef = useRef("");
   const [originalComment, setOriginalComment] = useState({
     Additional: "",
     CPT: "",
@@ -207,6 +225,7 @@ const ReboundDetailView = () => {
     allowFreeText: false,
     transactionCode: "",
     transactionOptions: [],
+    tickleTime: "",
   }));
 
   const TRIAGE_DOC_MAX_BYTES = 50 * 1024 * 1024;
@@ -304,60 +323,20 @@ const ReboundDetailView = () => {
     })
   }, [showAppealModal])
 
-  const getSavedTriageEntry = (claim) => {
-    const actions = claim?.Action || [];
-    return (
-      actions.find((item) => `${item.claim_status || ""}`.toLowerCase() === "triage") ||
-      null
-    );
-  };
+  const userInitials = useMemo(
+    () => getUserInitials(firstname, lastname, username),
+    [firstname, lastname, username]
+  );
 
-  const parseTriageActionValue = (value) => {
-    if (!value) return { selected: [], otherText: "", transactionCodes: {} };
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) {
-        return { selected: parsed.filter(Boolean), otherText: "", transactionCodes: {} };
-      }
-      if (parsed && typeof parsed === "object") {
-        return {
-          selected: Array.isArray(parsed.selected) ? parsed.selected.filter(Boolean) : [],
-          otherText: parsed.otherText ? `${parsed.otherText}` : "",
-          transactionCodes:
-            parsed.transactionCodes && typeof parsed.transactionCodes === "object"
-              ? parsed.transactionCodes
-              : {},
-        };
-      }
-    } catch (err) {
-      // Fall back to comma-delimited list.
-    }
-    return {
-      selected: `${value}`
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      otherText: "",
-      transactionCodes: {},
-    };
-  };
-
-  const savedTriageEntry = useMemo(
-    () => (currentClaim ? getSavedTriageEntry(currentClaim) : null),
+  const triageNotesHistory = useMemo(
+    () => getTriageNotesHistory(currentClaim?.Action || []),
     [currentClaim]
   );
 
-  const savedTriageSummary = useMemo(() => {
-    if (!savedTriageEntry) return null;
-    const parsed = parseTriageActionValue(savedTriageEntry.action);
-    return {
-      labels: parsed.selected || [],
-      otherText: parsed.otherText || "",
-      notes: savedTriageEntry.notes || "",
-      actionDate: savedTriageEntry.action_date || "",
-      user: savedTriageEntry.user || "",
-    };
-  }, [savedTriageEntry]);
+  const resolvedTickle = useMemo(
+    () => resolveTickleFromActions(triageActions.filter((item) => item.checked)),
+    [triageActions]
+  );
 
   useEffect(() => {
     if (apiUrl === '') return;
@@ -366,6 +345,10 @@ const ReboundDetailView = () => {
     let cancelled = false;
     setClaimLoading(true);
     triageHydratedRef.current = false;
+    triageNotesTouchedRef.current = false;
+    triageAutoNotesRef.current = "";
+    setTickleDate("");
+    setTickleDateManual(false);
 
     axios.get(`${apiUrl}/get_claim?id=${claimNo}&username=${username}`).then(async (res) => {
       if (cancelled) return;
@@ -378,10 +361,8 @@ const ReboundDetailView = () => {
       setAppeal([...claim.Appeal]);
       setThumb(claim.rate);
 
-      const savedEntry = getSavedTriageEntry(claim);
-      const savedTriageValue = parseTriageActionValue(savedEntry?.action);
-      setTriageNotes(savedEntry?.notes || "");
-      setTriageOtherText(savedTriageValue.otherText || "");
+      setTriageNotes("");
+      setTriageOtherText("");
 
       const denialCategory =
         claim?.Claim?.Data?.Category ||
@@ -391,7 +372,7 @@ const ReboundDetailView = () => {
         "";
 
       if (!denialCategory) {
-        setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
+        setTriageActions(applySavedTriageSelection(defaultTriageActions, { selected: [], otherText: "", transactionCodes: {} }));
         triageHydratedRef.current = true;
         return;
       }
@@ -403,8 +384,9 @@ const ReboundDetailView = () => {
         if (cancelled) return;
 
         const items = Array.isArray(triageRes.data) ? triageRes.data : [];
+        const emptySaved = { selected: [], otherText: "", transactionCodes: {} };
         if (items.length === 0) {
-          setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
+          setTriageActions(applySavedTriageSelection(defaultTriageActions, emptySaved));
         } else {
           setTriageActions(
             applySavedTriageSelection(items.map((item) => ({
@@ -415,12 +397,13 @@ const ReboundDetailView = () => {
               transactionOptions: Array.isArray(item.transactionOptions)
                 ? item.transactionOptions
                 : [],
-            })), savedTriageValue)
+              tickleTime: item.tickleTime || item.tickle_time || "",
+            })), emptySaved)
           );
         }
       } catch {
         if (!cancelled) {
-          setTriageActions(applySavedTriageSelection(defaultTriageActions, savedTriageValue));
+          setTriageActions(applySavedTriageSelection(defaultTriageActions, { selected: [], otherText: "", transactionCodes: {} }));
         }
       } finally {
         if (!cancelled) {
@@ -456,13 +439,39 @@ const ReboundDetailView = () => {
     };
   }, [openTriageDropdown]);
 
-  const showDetail = (claimNo) => {
+  const showDetail = (claimNo, category = routeCategory, tabId = 0) => {
     const token = {
-      claimNo
-    }
-    console.log(location.pathname)
+      claimNo,
+      appTitle: routeTitle || appTitle,
+      claimCategory: category,
+    };
+    triageHydratedRef.current = false;
+    triageNotesTouchedRef.current = false;
     navigate(`${type === 0 ? '/rebound' : type === 3 ? '/betacustomer' : '/pilotcustomer'}/detail/${btoa(JSON.stringify(token))}`);
-  }
+    setDetailShowStatus(tabId);
+  };
+
+  const navigateToNextClaim = (nextRow) => {
+    if (!nextRow) return false;
+    const nextClaimNo = nextRow.ClaimNo || nextRow.ClaimID;
+    if (!nextClaimNo) return false;
+    showDetail(nextClaimNo, nextRow.Category || routeCategory, 0);
+    return true;
+  };
+
+  const resetTriageForm = () => {
+    setTriageActions((prev) =>
+      prev.map((item) => ({ ...item, checked: false, transactionCode: "" }))
+    );
+    setTriageOtherText("");
+    setTriageNotes(buildAutoTriageNotes(userInitials, [], ""));
+    triageNotesTouchedRef.current = false;
+    triageAutoNotesRef.current = buildAutoTriageNotes(userInitials, [], "");
+    setTickleDate("");
+    setTickleDateManual(false);
+    setTriageDraftStatus("idle");
+    setLastDraftSavedAt(null);
+  };
 
 
   const submitDocument = () => {
@@ -713,6 +722,9 @@ const ReboundDetailView = () => {
 
     const claimNoValue = getTriageClaimNoValue();
     const draftKey = getTriageDraftKey(claimNoValue, username);
+    const nextRow = findNextWorklistClaim(tableData, claimNoValue);
+    const tickleTime = resolvedTickle.tickleTime || null;
+    const tickleDateValue = tickleDate || resolvedTickle.tickleDate || null;
 
     toast.info("Saving triage...");
     setTriageSubmitting(true);
@@ -733,12 +745,26 @@ const ReboundDetailView = () => {
         thumb: null,
         notes: triageNotes,
         username: username,
+        tickleDate: tickleDateValue,
+        tickleTime: tickleTime,
       });
       clearTriageDraft(draftKey);
       setTriageDraftStatus("submitted");
       setLastDraftSavedAt(null);
       await refreshWorklistAfterTriage();
-      toast.success("Triage saved and submitted.");
+
+      if (navigateToNextClaim(nextRow)) {
+        toast.success("Triage submitted. Opening next claim...");
+      } else {
+        try {
+          const refreshed = await axios.get(`${apiUrl}/get_claim?id=${claimNoValue}&username=${username}`);
+          setCurrentClaim(refreshed.data);
+          resetTriageForm();
+        } catch {
+          // Ignore refresh errors; submit already succeeded.
+        }
+        toast.success("Triage submitted.");
+      }
     } catch (err) {
       const message =
         err?.response?.data?.error ||
@@ -754,7 +780,25 @@ const ReboundDetailView = () => {
   useEffect(() => {
     setTriageDraftStatus("idle");
     setLastDraftSavedAt(null);
+    triageNotesTouchedRef.current = false;
   }, [claimNo, username]);
+
+  useEffect(() => {
+    if (!triageHydratedRef.current) return;
+    if (triageNotesTouchedRef.current) return;
+
+    const selectedLabels = triageActions.filter((item) => item.checked).map((item) => item.label);
+    const autoNotes = buildAutoTriageNotes(userInitials, selectedLabels, triageOtherText.trim());
+    if (triageNotes === "" || triageNotes === triageAutoNotesRef.current) {
+      setTriageNotes(autoNotes);
+      triageAutoNotesRef.current = autoNotes;
+    }
+  }, [triageActions, triageOtherText, userInitials, triageNotes]);
+
+  useEffect(() => {
+    if (tickleDateManual) return;
+    setTickleDate(resolvedTickle.tickleDate || "");
+  }, [resolvedTickle.tickleDate, tickleDateManual]);
 
   useEffect(() => {
     if (!currentClaim || !apiUrl) return;
@@ -764,26 +808,26 @@ const ReboundDetailView = () => {
     const claimNoValue = getTriageClaimNoValue();
     if (!claimNoValue) return;
 
-    const savedTriage = savedTriageEntry;
-    if (savedTriage && (savedTriage.action || savedTriage.notes)) {
-      triageHydratedRef.current = true;
-      return;
-    }
-
     const draftKey = getTriageDraftKey(claimNoValue, username);
     const draft = readTriageDraft(draftKey);
     if (!draft) {
+      const autoNotes = buildAutoTriageNotes(userInitials, [], "");
+      setTriageNotes(autoNotes);
+      triageAutoNotesRef.current = autoNotes;
       triageHydratedRef.current = true;
       return;
     }
 
     setTriageActions((prev) => mergeDraftOntoActions(prev, draft));
     if (typeof draft.triageOtherText === "string") setTriageOtherText(draft.triageOtherText);
-    if (typeof draft.triageNotes === "string") setTriageNotes(draft.triageNotes);
+    if (typeof draft.triageNotes === "string") {
+      setTriageNotes(draft.triageNotes);
+      triageNotesTouchedRef.current = true;
+    }
     setTriageDraftStatus("draft-loaded");
     setLastDraftSavedAt(draft.savedAt || null);
     triageHydratedRef.current = true;
-  }, [apiUrl, currentClaim, triageActions, username, savedTriageEntry]);
+  }, [apiUrl, currentClaim, triageActions, username, userInitials]);
 
   // Debounced auto-save for triage draft (local only, until the user submits).
   useEffect(() => {
@@ -1338,11 +1382,6 @@ const ReboundDetailView = () => {
     console.log("detail")
   }
 
-  const notesHistoryData = [
-    { id: 1, date: '2023-10-10', notes: 'First note', writer: 'John Doe' },
-    { id: 2, date: '2023-10-12', notes: 'Second note', writer: 'Jane Smith' },
-    // Add more data as needed
-  ];
   const claimCategory =
     currentClaim?.Claim?.Data?.Category ||
     currentClaim?.Claim?.Data?.CategoryName ||
@@ -2120,30 +2159,53 @@ const ReboundDetailView = () => {
                 }`}
             >
               <div className="flex flex-col gap-3">
-                {savedTriageSummary ? (
-                  <div
-                    className={`rounded-xl border px-4 py-3 text-sm ${isDark
-                      ? "border-[#2d3348] bg-[#1f2433] text-gray-200"
-                      : "border-gray-200 bg-slate-50 text-slate-700"
-                      }`}
-                  >
-                    <p className="font-semibold">Last saved triage</p>
-                    {savedTriageSummary.labels.length > 0 ? (
-                      <p className="mt-1">
-                        Actions: {savedTriageSummary.labels.join(", ")}
-                      </p>
-                    ) : null}
-                    {savedTriageSummary.notes ? (
-                      <p className="mt-1">Notes: {savedTriageSummary.notes}</p>
-                    ) : null}
-                    {savedTriageSummary.actionDate ? (
-                      <p className={`mt-1 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                        Saved {savedTriageSummary.actionDate}
-                        {savedTriageSummary.user ? ` by ${savedTriageSummary.user}` : ""}
-                      </p>
-                    ) : null}
+                <div className={`${triageGlassPanelClass}`}>
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <p className="text-sm font-semibold">Notes History</p>
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      {triageNotesHistory.length} {triageNotesHistory.length === 1 ? "entry" : "entries"}
+                    </span>
                   </div>
-                ) : null}
+                  {triageNotesHistory.length === 0 ? (
+                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      No triage notes yet. Submit a note to start the history for this claim.
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-3 max-h-56 overflow-y-auto pr-1">
+                      {triageNotesHistory.map((entry, index) => {
+                        const actionSummary = formatTriageActionSummary(entry.action);
+                        return (
+                          <div
+                            key={entry.id || `${entry.action_date}-${index}`}
+                            className={`rounded-xl border px-4 py-3 ${isDark
+                              ? "border-[#2d3348] bg-[#1f2433]"
+                              : "border-gray-200 bg-slate-50"
+                              }`}
+                          >
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className={`inline-flex h-7 min-w-[2rem] items-center justify-center rounded-full px-2 text-xs font-semibold ${isDark ? "bg-white/10 text-white" : "bg-slate-200 text-slate-800"}`}>
+                                {getInitialsFromUserField(entry.user)}
+                              </span>
+                              <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                                {formatTriageHistoryTimestamp(entry)}
+                              </span>
+                            </div>
+                            {actionSummary ? (
+                              <p className={`mt-2 text-xs font-medium ${isDark ? "text-gray-300" : "text-slate-600"}`}>
+                                Actions: {actionSummary}
+                              </p>
+                            ) : null}
+                            {entry.notes ? (
+                              <p className={`mt-2 text-sm whitespace-pre-wrap ${isDark ? "text-gray-200" : "text-slate-700"}`}>
+                                {entry.notes}
+                              </p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-lg font-semibold">Triage</p>
                   <div className="flex flex-wrap items-center gap-2">
@@ -2352,9 +2414,51 @@ const ReboundDetailView = () => {
                       rows={8}
                       className={`min-h-[260px] flex-1 w-full rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-gray-500 resize-none ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-gray-100 border-gray-200 text-gray-800'}`}
                       value={triageNotes}
-                      onChange={(e) => setTriageNotes(e.target.value)}
-                      placeholder="Add notes for this claim..."
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value !== triageAutoNotesRef.current) {
+                          triageNotesTouchedRef.current = true;
+                        }
+                        setTriageNotes(value);
+                      }}
+                      placeholder={`${userInitials}: Add notes for this claim...`}
                     />
+                    <div className={`rounded-xl border px-3 py-3 ${isDark ? "border-[#1f2433] bg-[#1f2025]" : "border-gray-200 bg-white"}`}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-semibold">Tickle date</p>
+                        {resolvedTickle.sourceLabel ? (
+                          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                            Based on: {resolvedTickle.sourceLabel}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        <input
+                          type="date"
+                          value={tickleDate}
+                          onChange={(e) => {
+                            setTickleDate(e.target.value);
+                            setTickleDateManual(true);
+                          }}
+                          className={triageFieldClass}
+                        />
+                        {tickleDateManual ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTickleDateManual(false);
+                              setTickleDate(resolvedTickle.tickleDate || "");
+                            }}
+                            className={`text-xs underline ${isDark ? "text-gray-300" : "text-slate-600"}`}
+                          >
+                            Reset to suggested date
+                          </button>
+                        ) : null}
+                      </div>
+                      <p className={`mt-2 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                        Claim leaves active inventory until this date, then returns prioritized at the top of the worklist.
+                      </p>
+                    </div>
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         {triageDraftStatus === "auto-saved" && (
@@ -3111,7 +3215,9 @@ const ReboundDetailView = () => {
                             <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">
                               {note.claim_status === 'resubmit' ? 'Resubmitted to Payer' :
                                 note.claim_status === 'appeal' ? 'Appealed to Payer' :
-                                  note.claim_status === 'contact' ? 'Contacted to Patient' : ''
+                                  note.claim_status === 'contact' ? 'Contacted to Patient' :
+                                    note.claim_status === 'triage' ? 'Triage' :
+                                      note.claim_status || '—'
                               }
                             </td>
                             <td className="border border-gray-200 px-4 py-2 text-left text-gray-700">

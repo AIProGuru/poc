@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import { auth } from '../FirebaseConfig'; 
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'; 
+import { signInWithEmailAndPassword } from 'firebase/auth'; 
+import { SERVER_URL } from './config';
 import {
   setAuth,
   setUsername,
@@ -23,7 +24,6 @@ import {
 } from '../redux/reducers/auth.reducer';
 import {  doc, getDoc } from 'firebase/firestore/lite'; // Import Firestore methods
 import { db } from '../FirebaseConfig';
-import { getFirebaseAuthErrorMessage } from '../utils/firebaseAuthErrors';
 
 const AccountContext = createContext();
 
@@ -107,19 +107,19 @@ const getSession = () => {
     });
   };
 
-  const forgotPassword = (email) => {
-    return new Promise((resolve, reject) => {
-      sendPasswordResetEmail(auth, email)
-        .then(() => {
-          console.log('Password reset email sent');
-          resolve('Password reset email sent');
-        })
-        .catch((error) => {
-          console.error('Error sending password reset email:', error);
-          reject(getFirebaseAuthErrorMessage(error, 'Failed to send password reset email.'));
-        });
+  const forgotPassword = async (email) => {
+    const normalizedEmail = `${email || ''}`.trim().toLowerCase();
+    const response = await fetch(`${SERVER_URL}/api/v1/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: normalizedEmail }),
     });
-};
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data?.error || 'Failed to send password reset email.');
+    }
+    return data?.message || 'Password reset email sent';
+  };
 
   const logout = () => {
     auth.signOut()

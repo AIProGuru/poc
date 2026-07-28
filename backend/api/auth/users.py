@@ -5,6 +5,8 @@ import logging
 import os
 import requests
 from db import get_connection, close_connection, normalize_tenant_hint
+from core.email_service import send_new_user_welcome_email, send_password_reset_email
+from core.email_service import PASSWORD_RESET_CONTINUE_URL, SENDGRID_API_KEY
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -38,16 +40,33 @@ def _friendly_firebase_error(raw_message: str) -> str:
 
 
 def _send_password_reset_email(email: str) -> None:
-    """Send a Firebase password-reset email via the Identity Toolkit REST API."""
+    """Send a branded password reset email, falling back to Firebase if SendGrid is unavailable."""
+    normalized_email = (email or "").strip().lower()
+    if not normalized_email:
+        raise ValueError("Email is required.")
+
+    if SENDGRID_API_KEY:
+        action_code_settings = auth.ActionCodeSettings(
+            url=PASSWORD_RESET_CONTINUE_URL,
+            handle_code_in_app=False,
+        )
+        reset_link = auth.generate_password_reset_link(normalized_email, action_code_settings)
+        send_password_reset_email(to_email=normalized_email, reset_link=reset_link)
+        return
+
     response = requests.post(
         f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={FIREBASE_WEB_API_KEY}",
         json={
             "requestType": "PASSWORD_RESET",
-            "email": email,
+            "email": normalized_email,
         },
         timeout=15,
     )
     if response.ok:
+        logger.warning(
+            "Password reset for %s sent via Firebase default email (SendGrid not configured).",
+            normalized_email,
+        )
         return
 
     error_body = response.json().get("error", {}) if response.content else {}
@@ -130,12 +149,31 @@ def add_user():
                 return jsonify({"error": "status must be an integer"}), 400
         validate(instance=data, schema=addUserSchema)
 
-        decoded_user = auth.create_user(email=data["email"], password=data["password"])
+        user_email = (data.get("email") or "").strip().lower()
+        user_password = data.get("password") or ""
+        decoded_user = auth.create_user(email=user_email, password=user_password)
         data.pop("password")
         doc_ref = db.collection("users").document(decoded_user.uid)
         doc_ref.set(data)
 
-        return jsonify({"message": "User added successfully"}), 200
+        email_sent = False
+        email_warning = None
+        try:
+            send_new_user_welcome_email(
+                to_email=user_email,
+                password=user_password,
+                firstname=data.get("firstname") or "",
+                lastname=data.get("lastname") or "",
+            )
+            email_sent = True
+        except Exception as email_err:
+            email_warning = str(email_err) or "Welcome email could not be sent."
+            logger.warning("User %s created but welcome email failed: %s", user_email, email_err)
+
+        response_body = {"message": "User added successfully", "emailSent": email_sent}
+        if email_warning:
+            response_body["emailWarning"] = email_warning
+        return jsonify(response_body), 200
 
     except PermissionError as e:
         logger.error(f"Permission error: {e}")
@@ -235,6 +273,11 @@ def forgot_password():
         return jsonify({"error": "Email is required."}), 400
 
     try:
+        try:
+            auth.get_user_by_email(email)
+        except auth.UserNotFoundError:
+            return jsonify({"message": "If an account exists for that email, a reset link has been sent."}), 200
+
         _send_password_reset_email(email)
         return jsonify({"message": "If an account exists for that email, a reset link has been sent."}), 200
     except RuntimeError as e:
@@ -371,6 +414,14 @@ def update_user(user_id):
                     return jsonify({"error": f"{field} cannot be empty."}), 400
                 if field == "email":
                     sanitized[field] = sanitized[field].lower()
+
+        if "status" in sanitized:
+            try:
+                sanitized["status"] = int(sanitized["status"])
+            except (TypeError, ValueError):
+                return jsonify({"error": "status must be an integer"}), 400
+            if sanitized["status"] not in (0, 1):
+                return jsonify({"error": "status must be 0 (active) or 1 (inactive)"}), 400
 
         if resolved_user_id != user_id:
             doc_ref = db.collection("users").document(resolved_user_id)

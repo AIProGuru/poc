@@ -113,6 +113,7 @@ def save_action():
             (claimno, action_date, action, claim_status, notes, username),
         )
 
+        tickle_date = None
         if str(claim_status or "").strip().lower() == "triage":
             tickle_date = resolve_tickle_date_for_triage(
                 cursor,
@@ -130,7 +131,10 @@ def save_action():
             )
 
         conn.commit()
-        return jsonify("success"), 200
+        response_body = {"message": "success"}
+        if tickle_date:
+            response_body["tickleDate"] = tickle_date
+        return jsonify(response_body), 200
     except Exception as e:
         logger.error(f"[ERROR]: {e}")
         if conn:

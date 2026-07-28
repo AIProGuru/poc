@@ -18,9 +18,7 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { auth } from '../../../FirebaseConfig';
-import { sendPasswordResetEmail } from 'firebase/auth';
 import { SERVER_URL } from '../../../utils/config';
-import { getFirebaseAuthErrorMessage } from '../../../utils/firebaseAuthErrors';
 import { MODULE_OPTIONS, MODULE_CATEGORY_MAP } from "../../../utils/moduleCatalog";
 import { ROLE_OPTIONS, ROLE_STANDARD, normalizeRole } from "../../../utils/roles";
 import { setRole, setFirstname, setLastname, setEmail } from '../../../redux/reducers/auth.reducer';
@@ -40,6 +38,142 @@ const getUserDisplayName = (row) => {
   if (name) return name;
   if (row?.email) return row.email;
   return 'Incomplete profile';
+};
+
+const STATUS_OPTIONS = [
+  { value: 0, label: 'Active' },
+  { value: 1, label: 'Inactive' },
+];
+
+const getStatusValue = (status) => (Number(status) === 1 ? 1 : 0);
+
+const UserStatusCell = ({ row, onUpdateStatus, theme }) => {
+  const [selectedStatus, setSelectedStatus] = useState(getStatusValue(row.status));
+  const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState(null);
+  const buttonRef = useRef(null);
+  const menuRef = useRef(null);
+  const isDark = theme === 'dark';
+
+  useEffect(() => {
+    setSelectedStatus(getStatusValue(row.status));
+  }, [row.status]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuStyle(null);
+      return undefined;
+    }
+
+    const updateMenuPosition = () => {
+      const button = buttonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setMenuStyle({
+        position: 'fixed',
+        top: `${Math.round(rect.bottom + 4)}px`,
+        left: `${Math.round(rect.left)}px`,
+        width: `${Math.round(rect.width)}px`,
+        zIndex: 1200,
+      });
+    };
+
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleClickOutside = (event) => {
+      if (
+        !buttonRef.current?.contains(event.target) &&
+        !menuRef.current?.contains(event.target)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const selectedLabel =
+    STATUS_OPTIONS.find((option) => option.value === selectedStatus)?.label || 'Active';
+
+  const handleSelect = (value) => {
+    setSelectedStatus(value);
+    onUpdateStatus(resolveUserId(row), value);
+    setOpen(false);
+  };
+
+  const triggerClass = isDark
+    ? 'bg-[#27282D]/70 text-[#e5e7eb] border-white/10 hover:border-white/20'
+    : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300';
+
+  const menuClass = isDark
+    ? 'bg-[#2f3035] border-white/10 shadow-xl'
+    : 'bg-white border-slate-200 shadow-lg';
+
+  const optionClass = (isActive) => {
+    if (isDark) {
+      return isActive
+        ? 'bg-white/12 text-white'
+        : 'text-[#d1d5db] hover:bg-white/8 hover:text-white';
+    }
+    return isActive
+      ? 'bg-slate-200 text-slate-900'
+      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
+  };
+
+  return (
+    <div className="relative">
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={`flex items-center justify-between gap-2 w-[120px] px-3 py-1.5 rounded-lg border text-sm transition-colors ${triggerClass}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="truncate text-left">{selectedLabel}</span>
+        <svg
+          className={`w-4 h-4 shrink-0 opacity-60 transition-transform ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
+          <path d="M6 8L10 12L14 8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && menuStyle && createPortal(
+        <div
+          ref={menuRef}
+          role="listbox"
+          style={menuStyle}
+          className={`rounded-lg border overflow-hidden py-1 ${menuClass}`}
+        >
+          {STATUS_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="option"
+              aria-selected={selectedStatus === option.value}
+              onClick={() => handleSelect(option.value)}
+              className={`w-full text-left px-3 py-2 text-sm transition-colors ${optionClass(selectedStatus === option.value)}`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
+    </div>
+  );
 };
 
 const UserRoleCell = ({ row, onUpdateRole, theme }) => {
@@ -629,11 +763,34 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     });
   };
 
+  const handleUpdateStatus = (userId, newStatus) => {
+    patchUserProfile(userId, { status: newStatus }, 'Status updated successfully').catch((error) => {
+      console.error('Error updating status:', error);
+    });
+  };
+
+  const openPermissionEditor = (row) => {
+    const rowId = resolveUserId(row);
+    const currentUser = users.find((item) => resolveUserId(item) === rowId) || row;
+    setUpdate_user_id(rowId);
+    setUser((prev) => ({
+      ...prev,
+      tenant: currentUser.tenant || '',
+      client: currentUser.client || [],
+      facility: currentUser.facility || [],
+      clientState: currentUser.clientState || [],
+      denialCategory: currentUser.denialCategory || [],
+      payer: currentUser.payer || [],
+      value: currentUser.value || [],
+    }));
+    setShowPermissionModal(true);
+  };
+
   const [update_user_id, setUpdate_user_id] = useState('')
 
 
   const handleUserUpdate = (userId, updatedUser) => {
-    patchUserProfile(userId, updatedUser, 'User updated successfully').catch((error) => {
+    patchUserProfile(userId, updatedUser, 'Access updated successfully').catch((error) => {
       console.error('Error updating user:', error);
     });
   };
@@ -653,7 +810,11 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       });
       const res = await response.json().catch(() => ({}));
       if (response.ok) {
-        toast.success("User created!");
+        if (res?.emailSent === false) {
+          toast.warn(res?.emailWarning || "User created, but the welcome email could not be sent.");
+        } else {
+          toast.success("User created! A welcome email with login details was sent.");
+        }
         resetUserForm();
         navigate('/management');
         fetchUsers();
@@ -771,11 +932,23 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
       return;
     }
     try {
-      await sendPasswordResetEmail(auth, normalizedEmail);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch(`${SERVER_URL}/api/v1/admin-reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.error || 'Failed to send reset email.');
+      }
       toast.success('Password reset email sent.');
     } catch (error) {
       console.error('Error sending reset email:', error);
-      toast.error(getFirebaseAuthErrorMessage(error, 'Failed to send reset email.'));
+      toast.error(error?.message || 'Failed to send reset email.');
     }
   };
 
@@ -1135,38 +1308,21 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <UserRoleCell theme={theme} row={row} onUpdateRole={handleUpdateRole} />
                         </td>
-                        <td className="px-6 py-3 whitespace-nowrap">
-                          <div className="flex">
-                            {row.status === 0 && (
-                              <div
-                                className={`flex items-center px-3 py-1 rounded-lg border gap-2 text-sm ${
-                                  theme === 'dark'
-                                    ? 'text-gray-200 border-white/20 bg-white/10'
-                                    : 'text-slate-700 border-slate-300 bg-slate-100'
-                                }`}
-                              >
-                                <span>Active</span>
-                              </div>
-                            )}
-                            {row.status === 1 && (
-                              <div
-                                className={`flex items-center px-3 py-1 rounded-lg border gap-2 text-sm ${
-                                  theme === 'dark'
-                                    ? 'text-gray-400 border-white/10 bg-white/5'
-                                    : 'text-slate-500 border-slate-200 bg-slate-50'
-                                }`}
-                              >
-                                <span>Inactive</span>
-                              </div>
-                            )}
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <UserStatusCell theme={theme} row={row} onUpdateStatus={handleUpdateStatus} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="relative group">
-                            <div className="flex items-center justify-start gap-1 flex-wrap max-w-[150px]">
+                          <button
+                            type="button"
+                            onClick={() => openPermissionEditor(row)}
+                            title="Click to edit access"
+                            className={`relative group w-full text-left rounded-lg transition-colors cursor-pointer ${
+                              theme === 'dark' ? 'hover:bg-white/[0.04]' : 'hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-start gap-1 flex-wrap max-w-[180px] py-1">
                               {row.client && row.client.length > 0 ? (
                                 <>
-                                  {/* Always show the first 2 clients */}
                                   {row.client.slice(0, 2).map((client, idx) => (
                                     <span
                                       key={idx}
@@ -1179,10 +1335,9 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                                     </span>
                                   ))}
 
-                                  {/* Show count indicator if more than 2 clients */}
                                   {row.client.length > 2 && (
                                     <span
-                                      className={`text-xs px-2 py-1 rounded-full cursor-pointer ${theme === 'dark'
+                                      className={`text-xs px-2 py-1 rounded-full ${theme === 'dark'
                                         ? 'bg-[#232429] text-gray-300'
                                         : 'bg-gray-100 text-gray-600'
                                         }`}
@@ -1193,14 +1348,13 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                                 </>
                               ) : (
                                 <span className={`text-xs italic ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
-                                  No modules
+                                  Click to assign access
                                 </span>
                               )}
                             </div>
 
-                            {/* Popup that appears on hover if there are more than 2 clients */}
                             {row.client && row.client.length > 2 && (
-                              <div className="absolute z-10 left-0 mt-1 w-auto max-w-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                              <div className="absolute z-10 left-0 mt-1 w-auto max-w-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none">
                                 <div className={`p-2 rounded-lg shadow-lg ${theme === 'dark' ? 'bg-[#232429] text-white' : 'bg-white text-gray-800'
                                   } border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                                   <div className="flex flex-wrap gap-1">
@@ -1219,7 +1373,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                                 </div>
                               </div>
                             )}
-                          </div>
+                          </button>
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -1232,37 +1386,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                             >
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                                 <path d="M4 20h4l10.5-10.5a1.77 1.77 0 0 0 0-2.5l-2-2a1.77 1.77 0 0 0-2.5 0L4 15.5V20z" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </div>
-
-                            {/* Permissions Button */}
-                            <div
-                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-white/[0.06] hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'}`}
-                              onClick={() => {
-                                const currentUser = users.find(u => u.id === row.id) || row;
-                                setUpdate_user_id(resolveUserId(row));
-                                setUser((prev) => ({
-                                  ...prev,
-                                  tenant: currentUser.tenant || "",
-                                  client: currentUser.client || [],
-                                  facility: currentUser.facility || [],
-                                  clientState: currentUser.clientState || [],
-                                  denialCategory: currentUser.denialCategory || [],
-                                  payer: currentUser.payer || [],
-                                  value: currentUser.value || [],
-                                }));
-                                setShowPermissionModal(true);
-                              }}
-                              title="Edit Permissions"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M8.84 2.4L3.37 8.19C3.16 8.41 2.96 8.85 2.92 9.15L2.67 11.31C2.59 12.09 3.15 12.62 3.92 12.49L6.07 12.12C6.37 12.07 6.79 11.85 6.99 11.62L12.47 5.83C13.41 4.83 13.84 3.69 12.37 2.29C10.9 0.91 9.79 1.4 8.84 2.4Z"
-                                  stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'}
-                                  strokeWidth="1.5"
-                                  strokeMiterlimit="10"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
                               </svg>
                             </div>
 
@@ -1725,7 +1848,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
           <Box className={`absolute  rounded-xl border-none w-[600px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}>
             <div className="flex flex-col gap-4">
               <div className={` p-9 gap-y-2 rounded-xl ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-600'}`}>
-                <h1 className="text-[22px] mb-5">Assign</h1>
+                <h1 className="text-[22px] mb-5">Edit Access</h1>
                 <>
                   <MultiSelect
                     label="Module"
