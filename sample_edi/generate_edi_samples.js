@@ -93,6 +93,9 @@ function build837(claim, fileId) {
   const { provider, payer, patient, lines } = claim;
   const matchServiceDate = claim.serviceDate;
   const total = lines.reduce((s, l) => s + l.charge, 0);
+  const taxonomyCode =
+    claim.taxonomyCode !== undefined ? claim.taxonomyCode : provider.taxonomy;
+  const includeTaxonomy = claim.includeTaxonomy !== false && taxonomyCode;
   const segs = [
     buildIsa("SUBMITTER001", "RECEIVER001", ctrl, claim.submitDate),
     `GS${ELEM}HC${ELEM}SUBMITTER001${ELEM}RECEIVER001${ELEM}${fmtDate(claim.submitDate)}${ELEM}1200${ELEM}${fileId}${ELEM}X${ELEM}005010X222A1${SEG}`,
@@ -102,7 +105,11 @@ function build837(claim, fileId) {
     `PER${ELEM}IC${ELEM}BILLING DEPT${ELEM}TE${ELEM}5035550100${SEG}`,
     `NM1${ELEM}40${ELEM}2${ELEM}${payer.name}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}46${ELEM}${payer.id}${SEG}`,
     `HL${ELEM}1${ELEM}${ELEM}20${ELEM}1${SEG}`,
-    `PRV${ELEM}BI${ELEM}PXC${ELEM}${provider.taxonomy}${SEG}`,
+  ];
+  if (includeTaxonomy) {
+    segs.push(`PRV${ELEM}BI${ELEM}PXC${ELEM}${taxonomyCode}${SEG}`);
+  }
+  segs.push(
     `NM1${ELEM}85${ELEM}2${ELEM}${provider.name}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}XX${ELEM}${provider.npi}${SEG}`,
     `N3${ELEM}${provider.address}${SEG}`,
     `N4${ELEM}${provider.city}${ELEM}${provider.state}${ELEM}${provider.zip}${SEG}`,
@@ -118,7 +125,7 @@ function build837(claim, fileId) {
     `DTP${ELEM}431${ELEM}D8${ELEM}${fmtDate(matchServiceDate)}${SEG}`,
     `REF${ELEM}D9${ELEM}${claim.claimNo}${SEG}`,
     `HI${ELEM}ABK${COMP}${claim.diagnosis}${SEG}`,
-  ];
+  );
   lines.forEach((line, idx) => {
     const lineDate = line.serviceDate || matchServiceDate;
     const svc = `HC${COMP}${line.code}`;
@@ -185,6 +192,39 @@ function line(code, charge, paid = 0, units = 1, pos = "11", adjustments = [], r
 
 function lineOnDate(template, serviceDate, paid = 0, adjustments = [], remarkCodes = []) {
   return line(template.code, template.charge, paid, 1, template.pos, adjustments, remarkCodes, serviceDate);
+}
+
+/** Denial for invalid/missing taxonomy: CARC CO-16 + RARC N255 */
+function taxonomyDenialLine(code, charge, pos = "11", serviceDate = null) {
+  return line(
+    code,
+    charge,
+    0,
+    1,
+    pos,
+    [{ group: "CO", reason: "16", amount: charge }],
+    ["N255"],
+    serviceDate
+  );
+}
+
+function buildTaxonomyDenialRemit(claim, checkNumber, checkDate) {
+  return {
+    checkNumber,
+    checkDate,
+    checkAmount: 0,
+    claimStatus: "4",
+    payerClaimId: `PAY${claim.claimNo}`,
+    patientResp: 0,
+    lines: claim.lines.map((ln) =>
+      taxonomyDenialLine(
+        ln.code,
+        ln.charge,
+        ln.pos,
+        ln.serviceDate || claim.serviceDate
+      )
+    ),
+  };
 }
 
 /** Mirrors SUBSTRING_INDEX(value, '-', 1) in db_refresh.sql */
@@ -452,7 +492,378 @@ function buildScenarios() {
   return scenarios;
 }
 
+function buildTaxonomyScenarios(startSeq = 29) {
+  const base = new Date("2026-03-01");
+  let seq = startSeq;
+  const claimNo = () => `CLM2025${String(seq++).padStart(5, "0")}`;
+  const scenarios = [];
+
+  const taxonomyDenialMeta = {
+    scenarioType: "taxonomy_denial_co16_n255",
+    denial_reason: {
+      carc: "CO-16",
+      carc_description: "Claim/service lacks information or has submission/billing error(s)",
+      rarc: "N255",
+      rarc_description: "Missing/incomplete/invalid taxonomy code",
+      platform_note: "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16",
+    },
+  };
+
+  // 1. Missing PRV/taxonomy segment on 837 — matching denial 835
+  {
+    const svc = SERVICE_LINES[0];
+    const svcDate = addDays(base, 0);
+    const submit = addDays(svcDate, 2);
+    const cn = claimNo();
+    const claim = {
+      ...taxonomyDenialMeta,
+      claimNo: cn,
+      serviceDate: svcDate,
+      submitDate: submit,
+      provider: { ...PROVIDERS[0] },
+      payer: PAYERS[5], // Medicare — common taxonomy edits
+      patient: PATIENTS[0],
+      diagnosis: DIAGNOSES[0],
+      frequency: "1",
+      includeTaxonomy: false,
+      taxonomyIssue: "missing_prv_segment",
+      lines: [line(svc.code, svc.charge, 0, 1, svc.pos)],
+      remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: [line(svc.code, svc.charge)] }, "CHK900001", addDays(submit, 14))],
+    };
+    claim.remits[0].lines = claim.lines.map((ln) => taxonomyDenialLine(ln.code, ln.charge, ln.pos, svcDate));
+    scenarios.push(claim);
+  }
+
+  // 2. Invalid taxonomy code on 837 — matching denial 835
+  {
+    const svc = SERVICE_LINES[1];
+    const svcDate = addDays(base, 4);
+    const submit = addDays(svcDate, 1);
+    const cn = claimNo();
+    scenarios.push({
+      ...taxonomyDenialMeta,
+      claimNo: cn,
+      serviceDate: svcDate,
+      submitDate: submit,
+      provider: { ...PROVIDERS[1] },
+      payer: PAYERS[0],
+      patient: PATIENTS[1],
+      diagnosis: DIAGNOSES[1],
+      frequency: "1",
+      taxonomyCode: "INVALIDTX",
+      taxonomyIssue: "invalid_taxonomy_code",
+      lines: [line(svc.code, svc.charge, 0, 1, svc.pos)],
+      remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: [line(svc.code, svc.charge)] }, "CHK900002", addDays(submit, 16))],
+    });
+  }
+
+  // 3. Truncated/wrong-length taxonomy — matching denial 835
+  {
+    const svc = SERVICE_LINES[4];
+    const svcDate = addDays(base, 8);
+    const submit = addDays(svcDate, 2);
+    const cn = claimNo();
+    const claim = {
+      ...taxonomyDenialMeta,
+      claimNo: cn,
+      serviceDate: svcDate,
+      submitDate: submit,
+      provider: { ...PROVIDERS[2] },
+      payer: PAYERS[2],
+      patient: PATIENTS[2],
+      diagnosis: DIAGNOSES[2],
+      frequency: "1",
+      taxonomyCode: "207X00000",
+      taxonomyIssue: "truncated_taxonomy_code",
+      lines: [line(svc.code, svc.charge, 0, 1, svc.pos)],
+      remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: [line(svc.code, svc.charge)] }, "CHK900003", addDays(submit, 18))],
+    };
+    claim.remits[0].lines = claim.lines.map((ln) => taxonomyDenialLine(ln.code, ln.charge, ln.pos, svcDate));
+    scenarios.push(claim);
+  }
+
+  // 4. Multi-line claim, both lines denied CO-16 + N255 — matching 835
+  {
+    const svcDate = addDays(base, 12);
+    const submit = addDays(svcDate, 2);
+    const cn = claimNo();
+    const templates = [SERVICE_LINES[5], SERVICE_LINES[6]];
+    const lines837 = templates.map((t) => line(t.code, t.charge, 0, 1, t.pos));
+    const claim = {
+      ...taxonomyDenialMeta,
+      claimNo: cn,
+      serviceDate: svcDate,
+      submitDate: submit,
+      provider: { ...PROVIDERS[3] },
+      payer: PAYERS[3],
+      patient: PATIENTS[3],
+      diagnosis: DIAGNOSES[3],
+      frequency: "1",
+      taxonomyCode: "",
+      includeTaxonomy: false,
+      taxonomyIssue: "missing_taxonomy_multi_line",
+      lines: lines837,
+      remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: lines837 }, "CHK900004", addDays(submit, 20))],
+    };
+    claim.remits[0].lines = lines837.map((ln) => taxonomyDenialLine(ln.code, ln.charge, ln.pos, svcDate));
+    scenarios.push(claim);
+  }
+
+  // 5. Pending — 837 with bad taxonomy, no 835 yet
+  {
+    const svc = SERVICE_LINES[7];
+    const svcDate = addDays(base, 16);
+    const submit = addDays(svcDate, 1);
+    const cn = claimNo();
+    scenarios.push({
+      ...taxonomyDenialMeta,
+      claimNo: cn,
+      serviceDate: svcDate,
+      submitDate: submit,
+      provider: { ...PROVIDERS[0] },
+      payer: PAYERS[1],
+      patient: PATIENTS[4],
+      diagnosis: DIAGNOSES[4],
+      frequency: "1",
+      taxonomyCode: "BADCODE99",
+      taxonomyIssue: "invalid_taxonomy_pending_remit",
+      lines: [line(svc.code, svc.charge, 0, 1, svc.pos)],
+      remits: [],
+    });
+  }
+
+  // 6. Base matching claim for negative controls (valid match reference)
+  {
+    const svc = SERVICE_LINES[2];
+    const svcDate = addDays(base, 20);
+    const submit = addDays(svcDate, 2);
+    const cn = claimNo();
+    const lines837 = [line(svc.code, svc.charge, 0, 1, svc.pos)];
+    const claim = {
+      ...taxonomyDenialMeta,
+      claimNo: cn,
+      serviceDate: svcDate,
+      submitDate: submit,
+      provider: { ...PROVIDERS[1] },
+      payer: PAYERS[4],
+      patient: PATIENTS[5],
+      diagnosis: DIAGNOSES[5],
+      frequency: "1",
+      includeTaxonomy: false,
+      taxonomyIssue: "missing_prv_with_negative_controls",
+      lines: lines837,
+      remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: lines837 }, "CHK900006", addDays(submit, 15))],
+      negativeControl835s: [
+        {
+          checkNumber: "CHK900061",
+          checkDate: addDays(submit, 17),
+          note: "Wrong CARC — CO-197 instead of CO-16; should NOT match taxonomy denial logic",
+          expected_match: false,
+          reason: "wrong_carc",
+          lines: [line(svc.code, svc.charge, 0, 1, svc.pos, [{ group: "CO", reason: "197", amount: svc.charge }], ["N255"], svcDate)],
+        },
+        {
+          checkNumber: "CHK900062",
+          checkDate: addDays(submit, 18),
+          note: "Wrong RARC — N522 instead of N255; should NOT match taxonomy denial logic",
+          expected_match: false,
+          reason: "wrong_rarc",
+          lines: [line(svc.code, svc.charge, 0, 1, svc.pos, [{ group: "CO", reason: "16", amount: svc.charge }], ["N522"], svcDate)],
+        },
+        {
+          checkNumber: "CHK900063",
+          checkDate: addDays(submit, 19),
+          note: "Wrong service date on 835 line DTP*472 — should NOT match 837",
+          expected_match: false,
+          reason: "wrong_service_date",
+          wrong_service_date: addDays(svcDate, -7).toISOString().slice(0, 10),
+          lines: [taxonomyDenialLine(svc.code, svc.charge, svc.pos, addDays(svcDate, -7))],
+        },
+        {
+          checkNumber: "CHK900064",
+          checkDate: addDays(submit, 20),
+          note: "Wrong charge amount on 835 SVC — should NOT match 837 CLM02 total",
+          expected_match: false,
+          reason: "wrong_charge_amount",
+          lines: [taxonomyDenialLine(svc.code, svc.charge + 50, svc.pos, svcDate)],
+        },
+      ],
+    };
+    claim.remits[0].lines = lines837.map((ln) => taxonomyDenialLine(ln.code, ln.charge, ln.pos, svcDate));
+    scenarios.push(claim);
+  }
+
+  return scenarios;
+}
+
+function writeScenarioBatch(scenarios, fileIdStart, manifestClaims, negativeControls) {
+  let fileId = fileIdStart;
+  scenarios.forEach((claim) => {
+    const fname837 = `837_${claim.claimNo}_${fmtDate(claim.serviceDate)}.edi`;
+    fs.writeFileSync(path.join(DIR_837, fname837), build837(claim, fileId), "utf8");
+    const remitFiles = [];
+    claim.remits.forEach((remit, rIdx) => {
+      const remitFileId = fileId * 10 + rIdx + 1;
+      const fname835 = `835_${remit.checkNumber}_${claim.claimNo}.edi`;
+      fs.writeFileSync(path.join(DIR_835, fname835), build835(claim, remit, remitFileId), "utf8");
+      remitFiles.push({
+        file: fname835,
+        check_number: remit.checkNumber,
+        check_date: remit.checkDate.toISOString().slice(0, 10),
+        claim_status: remit.claimStatus,
+        paid_amount: fmtMoney(remit.lines.reduce((s, l) => s + l.paid, 0)),
+        expected_match: true,
+        denial_codes: remit.lines.some((l) => (l.adjustments || []).some((a) => a.group === "CO" && a.reason === "16"))
+          ? { carc: "CO-16", rarc: (remit.lines[0].remarkCodes || [])[0] || "N255" }
+          : null,
+      });
+    });
+
+    (claim.negativeControl835s || []).forEach((nc) => {
+      const ncRemit = {
+        checkNumber: nc.checkNumber,
+        checkDate: nc.checkDate,
+        checkAmount: 0,
+        claimStatus: "4",
+        payerClaimId: `PAY${claim.claimNo}${nc.reason || "BAD"}`,
+        patientResp: 0,
+        lines: nc.lines,
+      };
+      const suffix = nc.reason ? `_NOMATCH_${nc.reason.toUpperCase()}` : "_NOMATCH";
+      const ncFile = `835_${nc.checkNumber}_${claim.claimNo}${suffix}.edi`;
+      const ncFileId = fileId * 10 + 90 + (claim.negativeControl835s.indexOf(nc) + 1);
+      const clpDate = nc.wrong_service_date
+        ? new Date(nc.wrong_service_date + "T12:00:00")
+        : claim.serviceDate;
+      fs.writeFileSync(path.join(DIR_835, ncFile), build835(claim, ncRemit, ncFileId, { clpServiceDate: clpDate }), "utf8");
+      negativeControls.push({
+        file: ncFile,
+        pairs_with_837: fname837,
+        claim_no: claim.claimNo,
+        expected_match: false,
+        reason: nc.reason,
+        note: nc.note,
+        wrong_service_date: nc.wrong_service_date || null,
+      });
+    });
+
+    if (claim.negativeControl835) {
+      const nc = claim.negativeControl835;
+      const ncRemit = {
+        checkNumber: nc.checkNumber,
+        checkDate: nc.checkDate,
+        checkAmount: nc.checkAmount,
+        claimStatus: nc.claimStatus,
+        payerClaimId: nc.payerClaimId,
+        patientResp: nc.patientResp,
+        lines: nc.lines,
+      };
+      const ncFile = `835_${nc.checkNumber}_${claim.claimNo}_NOMATCH.edi`;
+      fs.writeFileSync(
+        path.join(DIR_835, ncFile),
+        build835(claim, ncRemit, fileId * 10 + 99, {
+          clpServiceDate: nc.wrong_service_date ? new Date(nc.wrong_service_date + "T12:00:00") : claim.serviceDate,
+        }),
+        "utf8"
+      );
+      negativeControls.push({
+        file: ncFile,
+        pairs_with_837: fname837,
+        claim_no: claim.claimNo,
+        expected_match: false,
+        reason: nc.reason || "negative_control",
+        note: nc.note,
+      });
+    }
+
+    const claimTotal = claim.lines.reduce((s, l) => s + l.charge, 0);
+    const entry = {
+      claim_no: claim.claimNo,
+      claim_no_first: claimPrefix(claim.claimNo),
+      "837_file": fname837,
+      service_date: claim.serviceDate.toISOString().slice(0, 10),
+      total_charge: fmtMoney(claimTotal),
+      diagnosis: claim.diagnosis,
+      patient: `${claim.patient.first} ${claim.patient.last}`,
+      payer: claim.payer.name,
+      provider: claim.provider.name,
+      taxonomy_issue: claim.taxonomyIssue || null,
+      taxonomy_on_837: claim.includeTaxonomy === false
+        ? "(PRV segment omitted)"
+        : (claim.taxonomyCode !== undefined ? claim.taxonomyCode : claim.provider.taxonomy),
+      service_lines: claim.lines.map((l) => ({
+        code: l.code,
+        charge: fmtMoney(l.charge),
+        service_date: (l.serviceDate || claim.serviceDate).toISOString().slice(0, 10),
+      })),
+      match_keys: {
+        claim_no_first: claimPrefix(claim.claimNo),
+        service_date: claim.serviceDate.toISOString().slice(0, 10),
+        charge_amount: fmtMoney(claimTotal),
+      },
+      "835_files": remitFiles.map((r, idx) => ({
+        ...r,
+        match_validation: validateRemitMatch(claim, claim.remits[idx]),
+      })),
+      "835_count": remitFiles.length,
+    };
+    if (claim.scenarioType) entry.scenario_type = claim.scenarioType;
+    if (claim.denial_reason) entry.denial_reason = claim.denial_reason;
+    if (claim.lineServiceDates) entry.line_service_dates = claim.lineServiceDates;
+    manifestClaims.push(entry);
+    fileId++;
+  });
+  return fileId;
+}
+
+function generateTaxonomyOnly() {
+  fs.mkdirSync(DIR_837, { recursive: true });
+  fs.mkdirSync(DIR_835, { recursive: true });
+  const manifestPath = path.join(OUTPUT_DIR, "MANIFEST.json");
+  const manifest = fs.existsSync(manifestPath)
+    ? JSON.parse(fs.readFileSync(manifestPath, "utf8"))
+    : { description: "Synthetic 837P/835 sample files", matching_logic: MATCHING_LOGIC, claims: [], stats: {} };
+
+  const scenarios = buildTaxonomyScenarios(29);
+  const existingClaimNos = new Set((manifest.claims || []).map((c) => c.claim_no));
+  const newScenarios = scenarios.filter((c) => !existingClaimNos.has(c.claimNo));
+  const negativeControls = (manifest.negative_controls || []).filter(
+    (nc) => !newScenarios.some((c) => c.claimNo === nc.claim_no)
+  );
+  const fileIdStart = (manifest.claims?.length || 0) + 1;
+  const ncBefore = negativeControls.length;
+
+  writeScenarioBatch(newScenarios, fileIdStart, manifest.claims, negativeControls);
+
+  manifest.taxonomy_denial_logic = {
+    description: "Claims denied for invalid or missing taxonomy code",
+    carc: "CO-16",
+    rarc: "N255",
+    edi_835_segments: "CAS*CO*16*{amount}~ and LQ*HE*N255~ per service line",
+    platform_sql: "backend/sql/db_refresh.sql sets Automation=1 when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16",
+  };
+  manifest.negative_controls = negativeControls;
+  const taxonomyClaims = manifest.claims.filter((c) => c.scenario_type === "taxonomy_denial_co16_n255");
+  const taxonomyClaimNos = new Set(taxonomyClaims.map((c) => c.claim_no));
+  manifest.stats = {
+    ...(manifest.stats || {}),
+    total_837_files: manifest.claims.length,
+    total_835_files: manifest.claims.reduce((s, c) => s + (c["835_count"] || 0), 0) + negativeControls.length,
+    taxonomy_denial_scenarios: taxonomyClaims.length,
+    taxonomy_denial_negative_controls: negativeControls.filter((n) => taxonomyClaimNos.has(n.claim_no)).length,
+  };
+
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+  console.log(`Added ${newScenarios.length} taxonomy denial 837/835 scenario(s)`);
+  console.log(`Taxonomy claims: ${newScenarios.map((c) => c.claimNo).join(", ")}`);
+  console.log(`Negative control 835 files added: ${negativeControls.length - ncBefore}`);
+}
+
 function main() {
+  if (process.argv.includes("--taxonomy-only")) {
+    generateTaxonomyOnly();
+    return;
+  }
   fs.mkdirSync(DIR_837, { recursive: true });
   fs.mkdirSync(DIR_835, { recursive: true });
   const scenarios = buildScenarios();

@@ -1357,15 +1357,337 @@
         "match_key_date": "2026-02-24",
         "note": "servicedate_837 and servicedate_835 both use MAX(line dates). CLP DTP*472 must be the latest date, not earliest or middle."
       }
+    },
+    {
+      "claim_no": "CLM202500029",
+      "claim_no_first": "CLM202500029",
+      "837_file": "837_CLM202500029_20260301.edi",
+      "service_date": "2026-03-01",
+      "total_charge": "150.00",
+      "diagnosis": "M25512",
+      "patient": "Emily Johnson",
+      "payer": "Regence BlueShield",
+      "provider": "Summit Orthopedic Associates",
+      "taxonomy_issue": "missing_prv_segment",
+      "taxonomy_on_837": "(PRV segment omitted)",
+      "service_lines": [
+        {
+          "code": "99213",
+          "charge": "150.00",
+          "service_date": "2026-03-01"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500029",
+        "service_date": "2026-03-01",
+        "charge_amount": "150.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK900001_CLM202500029.edi",
+          "check_number": "CHK900001",
+          "check_date": "2026-03-16",
+          "claim_status": "4",
+          "paid_amount": "0.00",
+          "expected_match": true,
+          "denial_codes": {
+            "carc": "CO-16",
+            "rarc": "N255"
+          },
+          "match_validation": {
+            "claim_no_first": "CLM202500029",
+            "claim_id_first": "CLM202500029",
+            "service_date": "2026-03-01",
+            "charge_amount": "150.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1,
+      "scenario_type": "taxonomy_denial_co16_n255",
+      "denial_reason": {
+        "carc": "CO-16",
+        "carc_description": "Claim/service lacks information or has submission/billing error(s)",
+        "rarc": "N255",
+        "rarc_description": "Missing/incomplete/invalid taxonomy code",
+        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+      }
+    },
+    {
+      "claim_no": "CLM202500030",
+      "claim_no_first": "CLM202500030",
+      "837_file": "837_CLM202500030_20260305.edi",
+      "service_date": "2026-03-05",
+      "total_charge": "210.00",
+      "diagnosis": "M5450",
+      "patient": "Michael Chen",
+      "payer": "Blue Cross Blue Shield of Oregon",
+      "provider": "Cascade Family Medicine",
+      "taxonomy_issue": "invalid_taxonomy_code",
+      "taxonomy_on_837": "INVALIDTX",
+      "service_lines": [
+        {
+          "code": "99214",
+          "charge": "210.00",
+          "service_date": "2026-03-05"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500030",
+        "service_date": "2026-03-05",
+        "charge_amount": "210.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK900002_CLM202500030.edi",
+          "check_number": "CHK900002",
+          "check_date": "2026-03-21",
+          "claim_status": "4",
+          "paid_amount": "0.00",
+          "expected_match": true,
+          "denial_codes": {
+            "carc": "CO-16",
+            "rarc": "N255"
+          },
+          "match_validation": {
+            "claim_no_first": "CLM202500030",
+            "claim_id_first": "CLM202500030",
+            "service_date": "2026-03-05",
+            "charge_amount": "210.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1,
+      "scenario_type": "taxonomy_denial_co16_n255",
+      "denial_reason": {
+        "carc": "CO-16",
+        "carc_description": "Claim/service lacks information or has submission/billing error(s)",
+        "rarc": "N255",
+        "rarc_description": "Missing/incomplete/invalid taxonomy code",
+        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+      }
+    },
+    {
+      "claim_no": "CLM202500031",
+      "claim_no_first": "CLM202500031",
+      "837_file": "837_CLM202500031_20260308.edi",
+      "service_date": "2026-03-08",
+      "total_charge": "85.00",
+      "diagnosis": "J069",
+      "patient": "Sarah Martinez",
+      "payer": "UnitedHealthcare",
+      "provider": "Pacific Spine & Rehab",
+      "taxonomy_issue": "truncated_taxonomy_code",
+      "taxonomy_on_837": "207X00000",
+      "service_lines": [
+        {
+          "code": "97110",
+          "charge": "85.00",
+          "service_date": "2026-03-08"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500031",
+        "service_date": "2026-03-08",
+        "charge_amount": "85.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK900003_CLM202500031.edi",
+          "check_number": "CHK900003",
+          "check_date": "2026-03-28",
+          "claim_status": "4",
+          "paid_amount": "0.00",
+          "expected_match": true,
+          "denial_codes": {
+            "carc": "CO-16",
+            "rarc": "N255"
+          },
+          "match_validation": {
+            "claim_no_first": "CLM202500031",
+            "claim_id_first": "CLM202500031",
+            "service_date": "2026-03-08",
+            "charge_amount": "85.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1,
+      "scenario_type": "taxonomy_denial_co16_n255",
+      "denial_reason": {
+        "carc": "CO-16",
+        "carc_description": "Claim/service lacks information or has submission/billing error(s)",
+        "rarc": "N255",
+        "rarc_description": "Missing/incomplete/invalid taxonomy code",
+        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+      }
+    },
+    {
+      "claim_no": "CLM202500032",
+      "claim_no_first": "CLM202500032",
+      "837_file": "837_CLM202500032_20260312.edi",
+      "service_date": "2026-03-12",
+      "total_charge": "395.00",
+      "diagnosis": "E119",
+      "patient": "David Thompson",
+      "payer": "Cigna Healthcare",
+      "provider": "Northwest Urgent Care PLLC",
+      "taxonomy_issue": "missing_taxonomy_multi_line",
+      "taxonomy_on_837": "(PRV segment omitted)",
+      "service_lines": [
+        {
+          "code": "97140",
+          "charge": "75.00",
+          "service_date": "2026-03-12"
+        },
+        {
+          "code": "20610",
+          "charge": "320.00",
+          "service_date": "2026-03-12"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500032",
+        "service_date": "2026-03-12",
+        "charge_amount": "395.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK900004_CLM202500032.edi",
+          "check_number": "CHK900004",
+          "check_date": "2026-04-03",
+          "claim_status": "4",
+          "paid_amount": "0.00",
+          "expected_match": true,
+          "denial_codes": {
+            "carc": "CO-16",
+            "rarc": "N255"
+          },
+          "match_validation": {
+            "claim_no_first": "CLM202500032",
+            "claim_id_first": "CLM202500032",
+            "service_date": "2026-03-12",
+            "charge_amount": "395.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1,
+      "scenario_type": "taxonomy_denial_co16_n255",
+      "denial_reason": {
+        "carc": "CO-16",
+        "carc_description": "Claim/service lacks information or has submission/billing error(s)",
+        "rarc": "N255",
+        "rarc_description": "Missing/incomplete/invalid taxonomy code",
+        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+      }
+    },
+    {
+      "claim_no": "CLM202500033",
+      "claim_no_first": "CLM202500033",
+      "837_file": "837_CLM202500033_20260316.edi",
+      "service_date": "2026-03-16",
+      "total_charge": "95.00",
+      "diagnosis": "I10",
+      "patient": "Jessica Williams",
+      "payer": "Aetna Better Health",
+      "provider": "Summit Orthopedic Associates",
+      "taxonomy_issue": "invalid_taxonomy_pending_remit",
+      "taxonomy_on_837": "BADCODE99",
+      "service_lines": [
+        {
+          "code": "73030",
+          "charge": "95.00",
+          "service_date": "2026-03-16"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500033",
+        "service_date": "2026-03-16",
+        "charge_amount": "95.00"
+      },
+      "835_files": [],
+      "835_count": 0,
+      "scenario_type": "taxonomy_denial_co16_n255",
+      "denial_reason": {
+        "carc": "CO-16",
+        "carc_description": "Claim/service lacks information or has submission/billing error(s)",
+        "rarc": "N255",
+        "rarc_description": "Missing/incomplete/invalid taxonomy code",
+        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+      }
+    },
+    {
+      "claim_no": "CLM202500034",
+      "claim_no_first": "CLM202500034",
+      "837_file": "837_CLM202500034_20260320.edi",
+      "service_date": "2026-03-20",
+      "total_charge": "175.00",
+      "diagnosis": "S83201A",
+      "patient": "Robert Anderson",
+      "payer": "Medicare Part B",
+      "provider": "Cascade Family Medicine",
+      "taxonomy_issue": "missing_prv_with_negative_controls",
+      "taxonomy_on_837": "(PRV segment omitted)",
+      "service_lines": [
+        {
+          "code": "99203",
+          "charge": "175.00",
+          "service_date": "2026-03-20"
+        }
+      ],
+      "match_keys": {
+        "claim_no_first": "CLM202500034",
+        "service_date": "2026-03-20",
+        "charge_amount": "175.00"
+      },
+      "835_files": [
+        {
+          "file": "835_CHK900006_CLM202500034.edi",
+          "check_number": "CHK900006",
+          "check_date": "2026-04-06",
+          "claim_status": "4",
+          "paid_amount": "0.00",
+          "expected_match": true,
+          "denial_codes": {
+            "carc": "CO-16",
+            "rarc": "N255"
+          },
+          "match_validation": {
+            "claim_no_first": "CLM202500034",
+            "claim_id_first": "CLM202500034",
+            "service_date": "2026-03-20",
+            "charge_amount": "175.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1,
+      "scenario_type": "taxonomy_denial_co16_n255",
+      "denial_reason": {
+        "carc": "CO-16",
+        "carc_description": "Claim/service lacks information or has submission/billing error(s)",
+        "rarc": "N255",
+        "rarc_description": "Missing/incomplete/invalid taxonomy code",
+        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+      }
     }
   ],
   "stats": {
-    "total_837_files": 28,
-    "total_835_files": 34,
+    "total_837_files": 34,
+    "total_835_files": 43,
     "multi_date_scenarios": 2,
     "negative_control_835_files": 1,
     "claims_with_multiple_835": 6,
-    "claims_without_835": 3
+    "claims_without_835": 3,
+    "taxonomy_denial_scenarios": 6,
+    "taxonomy_denial_negative_controls": 4
   },
   "negative_controls": [
     {
@@ -1377,6 +1699,49 @@
       "wrong_max_service_date": "2026-02-03",
       "correct_max_service_date": "2026-02-12",
       "note": "All SVC line DTP*472 dates set to earliest line date — servicedate_835 MAX becomes earliest, so this 835 should NOT match the 837"
+    },
+    {
+      "file": "835_CHK900061_CLM202500034_NOMATCH_WRONG_CARC.edi",
+      "pairs_with_837": "837_CLM202500034_20260320.edi",
+      "claim_no": "CLM202500034",
+      "expected_match": false,
+      "reason": "wrong_carc",
+      "note": "Wrong CARC — CO-197 instead of CO-16; should NOT match taxonomy denial logic",
+      "wrong_service_date": null
+    },
+    {
+      "file": "835_CHK900062_CLM202500034_NOMATCH_WRONG_RARC.edi",
+      "pairs_with_837": "837_CLM202500034_20260320.edi",
+      "claim_no": "CLM202500034",
+      "expected_match": false,
+      "reason": "wrong_rarc",
+      "note": "Wrong RARC — N522 instead of N255; should NOT match taxonomy denial logic",
+      "wrong_service_date": null
+    },
+    {
+      "file": "835_CHK900063_CLM202500034_NOMATCH_WRONG_SERVICE_DATE.edi",
+      "pairs_with_837": "837_CLM202500034_20260320.edi",
+      "claim_no": "CLM202500034",
+      "expected_match": false,
+      "reason": "wrong_service_date",
+      "note": "Wrong service date on 835 line DTP*472 — should NOT match 837",
+      "wrong_service_date": "2026-03-13"
+    },
+    {
+      "file": "835_CHK900064_CLM202500034_NOMATCH_WRONG_CHARGE_AMOUNT.edi",
+      "pairs_with_837": "837_CLM202500034_20260320.edi",
+      "claim_no": "CLM202500034",
+      "expected_match": false,
+      "reason": "wrong_charge_amount",
+      "note": "Wrong charge amount on 835 SVC — should NOT match 837 CLM02 total",
+      "wrong_service_date": null
     }
-  ]
+  ],
+  "taxonomy_denial_logic": {
+    "description": "Claims denied for invalid or missing taxonomy code",
+    "carc": "CO-16",
+    "rarc": "N255",
+    "edi_835_segments": "CAS*CO*16*{amount}~ and LQ*HE*N255~ per service line",
+    "platform_sql": "backend/sql/db_refresh.sql sets Automation=1 when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+  }
 }

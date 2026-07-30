@@ -120,6 +120,7 @@ const Sidebar = () => {
     }, 0);
     const baseItems = [
       { id: "home", title: "Home", icon: "home", badge: null, tab: 0 },
+      { id: "recent-claims", title: "Recent Claims", icon: "clock", badge: null },
       { id: "dashboard", title: "Dashboard", icon: "dashboard", badge: null },
       {
         id: "claim-edits",
@@ -210,6 +211,7 @@ const Sidebar = () => {
 
   const navExtraFilters = useMemo(
     () => ({
+      "recent-claims": { RecentClaims: true, IncludeAllCategories: true },
       "payment-variance": { IncludeAllCategories: true },
       "claim-status:pend-277": { IncludeAllCategories: true, Pend277: true },
       "claim-status:pend-835": { IncludeAllCategories: true, Pend835: true },
@@ -330,6 +332,22 @@ const Sidebar = () => {
           >
             <path d="M3 10.5L12 3l9 7.5" />
             <path d="M5 10v10h5v-6h4v6h5V10" />
+          </svg>
+        );
+      case "clock":
+        return (
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={stroke}
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
           </svg>
         );
       case "dashboard":
@@ -536,6 +554,11 @@ const Sidebar = () => {
 
       if (navId === "home") {
         extra = { IncludeAllCategories: true };
+        tagOverride = [];
+      }
+
+      if (navId === "recent-claims") {
+        extra = { RecentClaims: true, IncludeAllCategories: true };
         tagOverride = [];
       }
 

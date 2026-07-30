@@ -78,6 +78,7 @@ const DataTable = (props) => {
     () => buildAccessExtra(extra, access, role),
     [extra, access, role]
   );
+  const isRecentClaimsView = Boolean(accessExtra?.RecentClaims);
   const appTitle = useSelector((state) => state.app.title);
   const [bulk277Loading, setBulk277Loading] = useState(false);
   const [bulk277Progress, setBulk277Progress] = useState({ total: 0, done: 0, failed: 0 });
@@ -330,8 +331,9 @@ const DataTable = (props) => {
 
   const showBulk277 = (appTitle || "").toLowerCase().includes("pend 277");
   const showBulkDenials =
-    location.pathname.includes("/denials") ||
-    (appTitle || "").toLowerCase().startsWith("denials");
+    !isRecentClaimsView &&
+    (location.pathname.includes("/denials") ||
+    (appTitle || "").toLowerCase().startsWith("denials"));
   const denialCategory = useMemo(() => {
     const tags = (selectedTags || []).filter(Boolean);
     if (tags.length === 1) return tags[0];
@@ -438,11 +440,37 @@ const DataTable = (props) => {
     if (bootstrapLoading) return;
     if (!tableLoading) return;
     const includeAllCategories = accessExtra?.IncludeAllCategories;
-    if (!includeAllCategories && selectedTags.length === 0) return;
+    if (!isRecentClaimsView && !includeAllCategories && selectedTags.length === 0) return;
     requestInFlightRef.current = true;
     const requestId = ++requestRef.current;
     const summarySignature = buildSummarySignature();
-    const shouldFetchSummary = true;
+    const shouldFetchSummary = !isRecentClaimsView;
+
+    if (isRecentClaimsView) {
+      axios.get(`${apiUrl}/recent_claims`, {
+        params: {
+          currentPage,
+          perPage: pageSize,
+          username: username || '',
+        },
+      }).then((tableRes) => {
+        if (requestRef.current !== requestId) return;
+        requestInFlightRef.current = false;
+        dispatch(setTableData(tableRes.data.data || []));
+        dispatch(setTotalPage(tableRes.data.maxPage || 0));
+        if (tableRes.data.summary) {
+          setSummaryTotals(tableRes.data.summary);
+          dispatch(setWorklistSummary(tableRes.data.summary));
+          summarySignatureRef.current = summarySignature;
+        }
+        dispatch(setTableLoading(false));
+      }).catch(() => {
+        if (requestRef.current !== requestId) return;
+        requestInFlightRef.current = false;
+        dispatch(setTableLoading(false));
+      });
+      return;
+    }
 
     const tableRequest = axios.post(`${apiUrl}/data_all`, {
       currentPage: currentPage,
@@ -493,12 +521,13 @@ const DataTable = (props) => {
       requestInFlightRef.current = false;
       dispatch(setTableLoading(false));
     });
-  }, [tableLoading, bootstrapLoading, selectedTags, order, accessExtra, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate, advancedFilters, apiUrl, tabIndex, dispatch])
+  }, [tableLoading, bootstrapLoading, selectedTags, order, accessExtra, isRecentClaimsView, username, code, remark, procedure, pos, currentPage, pageSize, keyword, startDate, endDate, advancedFilters, apiUrl, tabIndex, dispatch])
 
   useEffect(() => {
     if (apiUrl === '') return;
     if (bootstrapLoading) return;
     if (tableLoading) return;
+    if (isRecentClaimsView) return;
     const includeAllCategories = accessExtra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) {
       setSummaryTotals(null);
@@ -541,7 +570,7 @@ const DataTable = (props) => {
       if (summaryRequestRef.current !== requestId) return;
       setSummaryTotals(null);
     });
-  }, [apiUrl, bootstrapLoading, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, accessExtra, advancedFilters])
+  }, [apiUrl, bootstrapLoading, selectedTags, keyword, tabIndex, startDate, endDate, code, remark, procedure, pos, accessExtra, isRecentClaimsView, advancedFilters])
 
   const setOrder = (ord) => {
     const ordName = order[order.length - 1] === '-' ? order.substring(0, order.length - 1) : order;
@@ -818,6 +847,11 @@ const DataTable = (props) => {
         <div className={`mb-3 text-sm font-semibold ${isDarkMode ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
           {appTitle || 'Home'}
         </div>
+        {isRecentClaimsView && (
+          <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-[#3A4058] bg-[#1f2231] text-gray-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+            Claims you triaged recently that are hidden from the active worklist until their tickler date. Click a row to reopen the claim detail.
+          </div>
+        )}
         <div className="relative pb-4 pt-2">
         <button
           className={`p-1 absolute left-0 top-6 -translate-x-1/2 z-10 ${isDarkMode ? 'text-white/70 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
@@ -890,6 +924,7 @@ const DataTable = (props) => {
               >
                 <TableHead>
                   <TableRow>
+                    {!isRecentClaimsView && (
                     <TableCell style={{ ...headerCellStyle, minWidth: "56px" }}>
                       <Checkbox
                         size="small"
@@ -908,6 +943,7 @@ const DataTable = (props) => {
                         inputProps={{ "aria-label": "Select all rows" }}
                       />
                     </TableCell>
+                    )}
                     <TableCell style={{ ...headerCellStyle, minWidth: "120px" }} onClick={() => setOrder("Priority")} className="cursor-pointer">
                       <div className="flex items-center gap-2">
                         Priority
@@ -1022,6 +1058,16 @@ const DataTable = (props) => {
                         {renderSortIcon('PrimaryProcedure')}
                       </div>
                     </TableCell>
+                    {isRecentClaimsView && (
+                      <>
+                        <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
+                          Triaged On
+                        </TableCell>
+                        <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
+                          Tickler Date
+                        </TableCell>
+                      </>
+                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody className="relative">
@@ -1038,6 +1084,7 @@ const DataTable = (props) => {
                         }
                       }}
                     >
+                      {!isRecentClaimsView && (
                       <TableCell style={{ ...bodyCellStyle, minWidth: "56px" }}>
                         <Checkbox
                           size="small"
@@ -1065,6 +1112,7 @@ const DataTable = (props) => {
                           inputProps={{ "aria-label": `Select row ${index + 1}` }}
                         />
                       </TableCell>
+                      )}
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "120px" }}>
                         {row.Priority || ''}
                       </TableCell>
@@ -1145,6 +1193,16 @@ const DataTable = (props) => {
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
                         {row.PrimaryProcedure || ''}
                       </TableCell>
+                      {isRecentClaimsView && (
+                        <>
+                          <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
+                            {formatDateSafe(row.TriageActionDate)}
+                          </TableCell>
+                          <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
+                            {formatDateSafe(row.TickleDate)}
+                          </TableCell>
+                        </>
+                      )}
                     </TableRow>)
                   }
                 </TableBody>
