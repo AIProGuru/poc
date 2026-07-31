@@ -73,11 +73,13 @@ def map_sort_field(sort: str) -> str:
     return f"{target}{suffix}"
 
 
-def get_custom_all_patient_payment_expr(cursor, db_name: str) -> str:
+def get_custom_all_patient_payment_expr(
+    cursor, db_name: str, table_alias: str = "CUSTOM_ALL"
+) -> str:
     """Use PatientPayment when the column exists; otherwise fall back to 0."""
     try:
         if table_has_column(cursor, db_name, "CUSTOM_ALL", "PatientPayment"):
-            return "COALESCE(CUSTOM_ALL.PatientPayment, 0)"
+            return f"COALESCE({table_alias}.PatientPayment, 0)"
         return "0"
     except Exception as exc:
         logger.warning("Unable to inspect CUSTOM_ALL.PatientPayment: %s", exc)

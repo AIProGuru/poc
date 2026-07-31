@@ -123,7 +123,7 @@ WHERE LOWER(TRIM(COALESCE(c.ActionTaken, ''))) = 'triage'
 
 def _fetch_recent_claims(cursor, db_name, username, current_page, per_page):
     delinquent_label = (os.getenv("DELIQUENT") or "Delinquent").replace("'", "''")
-    patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name)
+    patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name, table_alias="c")
     user_filter = (username or "").strip()
 
     cursor.execute(RECENT_CLAIMS_COUNT_QUERY, (user_filter, user_filter))
