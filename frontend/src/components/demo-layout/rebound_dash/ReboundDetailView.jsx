@@ -33,6 +33,7 @@ import {
   resolveTriageActionCategory,
   resolveTriageWorkflowHint,
 } from "../../../utils/triageHelpers";
+import { calculateRecoveryAmount } from "../../../utils/claimMetrics";
 import { IconButton } from "@mui/material";
 import "./dashboard.css"
 
@@ -339,6 +340,21 @@ const ReboundDetailView = () => {
     () => resolveTickleFromActions(triageActions.filter((item) => item.checked)),
     [triageActions]
   );
+
+  const recoveryMetrics = useMemo(() => {
+    if (!currentClaim?.Claim?.Data) {
+      return { amount: 0, remitCount: 0, hasSubmitDate: false };
+    }
+    const computed = calculateRecoveryAmount(currentClaim.Claim.Data, currentClaim.Remit);
+    if (computed.hasSubmitDate) {
+      return computed;
+    }
+    return {
+      amount: Number(currentClaim.Claim.Data.RecoveryAmount) || 0,
+      remitCount: 0,
+      hasSubmitDate: Boolean(currentClaim.Claim.Data.TransactionDate),
+    };
+  }, [currentClaim]);
 
   useEffect(() => {
     if (apiUrl === '') return;
@@ -1612,6 +1628,30 @@ const ReboundDetailView = () => {
                   </ul>
                 </>
               )}
+              <div
+                className={`mt-6 rounded-xl border p-4 ${
+                  isDark
+                    ? "border-[var(--helio-border)] bg-[var(--helio-surface-muted)]"
+                    : "border-slate-200 bg-slate-50"
+                }`}
+              >
+                <p className={`text-sm font-semibold ${emphasisTextClass}`}>Recovery Amount</p>
+                <p className={`mt-2 text-2xl font-semibold tabular-nums ${isDark ? "text-white" : "text-slate-900"}`}>
+                  {formatCurrency(recoveryMetrics.amount)}
+                </p>
+                <p className={`mt-2 text-xs leading-relaxed ${mutedLabelClass}`}>
+                  {recoveryMetrics.hasSubmitDate ? (
+                    <>
+                      Sum of allowed amounts from{" "}
+                      {recoveryMetrics.remitCount}{" "}
+                      {recoveryMetrics.remitCount === 1 ? "835 remit" : "835 remits"} received after submit date (
+                      {formatDateValue(currentClaim?.Claim?.Data?.TransactionDate)}).
+                    </>
+                  ) : (
+                    "Submit date unavailable; recovery amount cannot be calculated from 835 payments."
+                  )}
+                </p>
+              </div>
             </div>
           )}
 

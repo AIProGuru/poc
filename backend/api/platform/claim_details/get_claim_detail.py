@@ -53,6 +53,24 @@ def custom_paid_service_remark_has_line_id(cursor, db_name: str) -> bool:
         return False
 
 
+def _coerce_to_date(value) -> Optional[date]:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    text = str(value).strip()
+    if not text:
+        return None
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%Y-%m-%d %H:%M:%S"):
+        try:
+            return datetime.strptime(text[:19], fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
 def fetch_remit_remark_codes(cursor, id_837, id_835) -> List[str]:
     try:
         cursor.execute(
@@ -244,7 +262,8 @@ def get_rebound_claim():
                 CUSTOM_ALL.RendTaxonomy,
                 CUSTOM_ALL.PrimaryDX,
                 CUSTOM_ALL.Automation,
-                CUSTOM_ALL.Frequency
+                CUSTOM_ALL.Frequency,
+                CUSTOM_ALL.TransactionDate
             FROM CUSTOM_ALL
             LEFT JOIN matching_for_table ON matching_for_table.ClaimNo=CUSTOM_ALL.ClaimNo
             LEFT JOIN CUSTOM_PAID_AMOUNT ON CUSTOM_PAID_AMOUNT.ID=matching_for_table.id_835
@@ -371,7 +390,9 @@ def get_rebound_claim():
         results = cursor.fetchall()
         remark_has_line_id = custom_paid_service_remark_has_line_id(cursor, db_name)
         overturn = 0
+        recovery_amount = 0
         action_date_value = None
+        submit_date_value = _coerce_to_date(ret["Claim"]["Data"].get("TransactionDate"))
         if len(ret.get('Action', [])) != 0:
             action_date = ret['Action'][0].get('action_date')
             if action_date:
@@ -462,12 +483,11 @@ def get_rebound_claim():
                 continue
 
             service_lines = lines_by_claim_id.get(row['id_835'], [])
-            if action_date_value:
-                check_date = row['CheckDate']
-                if isinstance(check_date, datetime):
-                    check_date = check_date.date()
-                if check_date > action_date_value:
-                    overturn += sum(float(line.get('AllowedAmount') or 0) for line in service_lines)
+            check_date = _coerce_to_date(row.get('CheckDate'))
+            if action_date_value and check_date and check_date > action_date_value:
+                overturn += sum(float(line.get('AllowedAmount') or 0) for line in service_lines)
+            if submit_date_value and check_date and check_date > submit_date_value:
+                recovery_amount += sum(float(line.get('AllowedAmount') or 0) for line in service_lines)
 
             modifier_data = modifiers_by_claim_id.get(row['id_835'], [])
             for line in service_lines:
@@ -490,6 +510,7 @@ def get_rebound_claim():
             ret['Remit'][-1]['Remark'] = remit_remarks
         
         ret['Claim']['Data']['Overturn'] = overturn
+        ret['Claim']['Data']['RecoveryAmount'] = recovery_amount
         q = f"""
             SELECT
                 CUSTOM_ALL.ClaimNo,
