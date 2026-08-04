@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import json
 import re
 import time
