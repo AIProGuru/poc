@@ -343,17 +343,13 @@ const ReboundDetailView = () => {
 
   const recoveryMetrics = useMemo(() => {
     if (!currentClaim?.Claim?.Data) {
-      return { amount: 0, remitCount: 0, hasSubmitDate: false };
+      return { amount: 0, remitCount: 0, hasSubmitDate: false, submitDate: null };
     }
-    const computed = calculateRecoveryAmount(currentClaim.Claim.Data, currentClaim.Remit);
-    if (computed.hasSubmitDate) {
-      return computed;
-    }
-    return {
-      amount: Number(currentClaim.Claim.Data.RecoveryAmount) || 0,
-      remitCount: 0,
-      hasSubmitDate: Boolean(currentClaim.Claim.Data.TransactionDate),
-    };
+    return calculateRecoveryAmount(
+      currentClaim.Claim.Data,
+      currentClaim.Remit,
+      currentClaim.Action
+    );
   }, [currentClaim]);
 
   useEffect(() => {
@@ -1645,7 +1641,7 @@ const ReboundDetailView = () => {
                       Sum of allowed amounts from{" "}
                       {recoveryMetrics.remitCount}{" "}
                       {recoveryMetrics.remitCount === 1 ? "835 remit" : "835 remits"} received after submit date (
-                      {formatDateValue(currentClaim?.Claim?.Data?.TransactionDate)}).
+                      {formatDateValue(recoveryMetrics.submitDate)}).
                     </>
                   ) : (
                     "Submit date unavailable; recovery amount cannot be calculated from 835 payments."

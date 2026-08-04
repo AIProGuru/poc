@@ -71,6 +71,53 @@ def _coerce_to_date(value) -> Optional[date]:
     return None
 
 
+def _parse_triage_action_value(raw_value) -> Dict[str, Any]:
+    if not raw_value:
+        return {"selected": [], "otherText": "", "transactionCodes": {}}
+    try:
+        parsed = json.loads(raw_value)
+        if isinstance(parsed, list):
+            return {"selected": [item for item in parsed if item], "otherText": "", "transactionCodes": {}}
+        if isinstance(parsed, dict):
+            selected = parsed.get("selected") if isinstance(parsed.get("selected"), list) else []
+            transaction_codes = parsed.get("transactionCodes")
+            return {
+                "selected": [item for item in selected if item],
+                "otherText": parsed.get("otherText") or "",
+                "transactionCodes": transaction_codes if isinstance(transaction_codes, dict) else {},
+            }
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return {
+        "selected": [part.strip() for part in str(raw_value).split(",") if part.strip()],
+        "otherText": "",
+        "transactionCodes": {},
+    }
+
+
+def _is_submit_action_entry(entry: Optional[Dict[str, Any]]) -> bool:
+    if not entry:
+        return False
+    status = (entry.get("claim_status") or "").strip().lower()
+    if "resubmit" in status:
+        return True
+    parsed = _parse_triage_action_value(entry.get("action"))
+    return any(re.search(r"submit", str(label or ""), re.IGNORECASE) for label in parsed.get("selected", []))
+
+
+def _resolve_submit_date(claim_data: Optional[Dict[str, Any]], actions: List[Dict[str, Any]]) -> Optional[date]:
+    latest: Optional[date] = None
+    for entry in actions or []:
+        if not _is_submit_action_entry(entry):
+            continue
+        entry_date = _coerce_to_date(entry.get("action_date"))
+        if entry_date and (latest is None or entry_date > latest):
+            latest = entry_date
+    if latest is None and claim_data:
+        latest = _coerce_to_date(claim_data.get("SubmitDate") or claim_data.get("TransactionDate"))
+    return latest
+
+
 def fetch_remit_remark_codes(cursor, id_837, id_835) -> List[str]:
     try:
         cursor.execute(
@@ -392,7 +439,9 @@ def get_rebound_claim():
         overturn = 0
         recovery_amount = 0
         action_date_value = None
-        submit_date_value = _coerce_to_date(ret["Claim"]["Data"].get("TransactionDate"))
+        submit_date_value = _resolve_submit_date(ret["Claim"]["Data"], ret.get("Action", []))
+        if submit_date_value:
+            ret["Claim"]["Data"]["SubmitDate"] = submit_date_value.isoformat()
         if len(ret.get('Action', [])) != 0:
             action_date = ret['Action'][0].get('action_date')
             if action_date:
