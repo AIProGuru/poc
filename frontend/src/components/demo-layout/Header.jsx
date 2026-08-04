@@ -110,7 +110,7 @@ const Header = () => {
                 </div>
                 <input
                   placeholder="Search by Claim ID"
-                  className={`text-sm rounded-lg py-2.5 px-10 pl-10 w-72 ${theme === 'dark' ? "bg-[#27282D] text-white border border-gray-600" : "text-black bg-white border border-gray-300"}`}
+                  className={`text-sm rounded-lg py-2.5 px-10 pl-10 w-72 ${theme === 'dark' ? "bg-[var(--helio-surface)] text-white border border-[var(--helio-border-strong)]" : "text-black bg-white border border-gray-300"}`}
                   ref={inputKeywordRef}
                   defaultValue={keyword}
                   onKeyDown={handleKeywordKeyDown}

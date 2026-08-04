@@ -791,7 +791,7 @@ const ReboundDash = () => {
   };
 
   return (
-    <div className={`flex ${isDark ? 'text-white' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`flex ${isDark ? 'bg-[var(--helio-app-bg)] text-white' : 'bg-slate-50 text-slate-900'}`}>
       <div className="flex-1 flex flex-col gap-8 px-6 md:px-10 py-4 min-w-0 overflow-hidden">
         {isUserManagementView ? (
           
@@ -864,7 +864,7 @@ const ReboundDash = () => {
                 <ArIntel onModelSelect={() => setAiLibraryDrilldown(true)} />
               ) : showPlaceholder ? (
                 <div
-                  className={`rounded-2xl border px-6 py-10 text-center text-lg font-semibold ${isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-200' : 'bg-white border-gray-200 text-gray-700'
+                  className={`rounded-2xl border px-6 py-10 text-center text-lg font-semibold ${isDark ? 'bg-[var(--helio-surface)] border-[var(--helio-border)] text-gray-200' : 'bg-white border-gray-200 text-gray-700'
                     }`}
                 >
                   Coming soon

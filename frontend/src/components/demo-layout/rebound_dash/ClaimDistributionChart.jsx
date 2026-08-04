@@ -86,7 +86,7 @@ const ClaimDistributionChart = () => {
   }
 
   return (
-    <div className={`flex flex-col justify-center items-center w-full ${theme === 'dark' ? 'text-white bg-[#151619]' : 'text-black'}`}>
+    <div className={`flex flex-col justify-center items-center w-full ${theme === 'dark' ? 'text-white bg-[#121722]' : 'text-black'}`}>
       <div className='pt-6 flex flex-row justify-between w-full px-5 flex-wrap gap-4'>
         <p className='sm:text-lg text-md font-semibold'>
           Claims Analysis by Category
@@ -129,7 +129,7 @@ const ClaimDistributionChart = () => {
             left: isMobile ? 5 : 5,
             bottom: 10
           }}
-          className={`${theme === 'dark' ? 'text-white bg-[#151619]' : 'text-black'}`}
+          className={`${theme === 'dark' ? 'text-white bg-[#121722]' : 'text-black'}`}
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis 

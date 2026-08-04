@@ -1368,8 +1368,6 @@
       "patient": "Emily Johnson",
       "payer": "Regence BlueShield",
       "provider": "Summit Orthopedic Associates",
-      "taxonomy_issue": "missing_prv_segment",
-      "taxonomy_on_837": "(PRV segment omitted)",
       "service_lines": [
         {
           "code": "99213",
@@ -1390,10 +1388,6 @@
           "claim_status": "4",
           "paid_amount": "0.00",
           "expected_match": true,
-          "denial_codes": {
-            "carc": "CO-16",
-            "rarc": "N255"
-          },
           "match_validation": {
             "claim_no_first": "CLM202500029",
             "claim_id_first": "CLM202500029",
@@ -1412,7 +1406,9 @@
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
         "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
-      }
+      },
+      "taxonomy_issue": "missing_prv_segment",
+      "taxonomy_on_837": "(PRV segment omitted)"
     },
     {
       "claim_no": "CLM202500030",
@@ -1424,8 +1420,6 @@
       "patient": "Michael Chen",
       "payer": "Blue Cross Blue Shield of Oregon",
       "provider": "Cascade Family Medicine",
-      "taxonomy_issue": "invalid_taxonomy_code",
-      "taxonomy_on_837": "INVALIDTX",
       "service_lines": [
         {
           "code": "99214",
@@ -1446,10 +1440,6 @@
           "claim_status": "4",
           "paid_amount": "0.00",
           "expected_match": true,
-          "denial_codes": {
-            "carc": "CO-16",
-            "rarc": "N255"
-          },
           "match_validation": {
             "claim_no_first": "CLM202500030",
             "claim_id_first": "CLM202500030",
@@ -1468,7 +1458,9 @@
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
         "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
-      }
+      },
+      "taxonomy_issue": "invalid_taxonomy_code",
+      "taxonomy_on_837": "INVALIDTX"
     },
     {
       "claim_no": "CLM202500031",
@@ -1480,8 +1472,6 @@
       "patient": "Sarah Martinez",
       "payer": "UnitedHealthcare",
       "provider": "Pacific Spine & Rehab",
-      "taxonomy_issue": "truncated_taxonomy_code",
-      "taxonomy_on_837": "207X00000",
       "service_lines": [
         {
           "code": "97110",
@@ -1502,10 +1492,6 @@
           "claim_status": "4",
           "paid_amount": "0.00",
           "expected_match": true,
-          "denial_codes": {
-            "carc": "CO-16",
-            "rarc": "N255"
-          },
           "match_validation": {
             "claim_no_first": "CLM202500031",
             "claim_id_first": "CLM202500031",
@@ -1524,7 +1510,9 @@
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
         "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
-      }
+      },
+      "taxonomy_issue": "truncated_taxonomy_code",
+      "taxonomy_on_837": "207X00000"
     },
     {
       "claim_no": "CLM202500032",
@@ -1536,8 +1524,6 @@
       "patient": "David Thompson",
       "payer": "Cigna Healthcare",
       "provider": "Northwest Urgent Care PLLC",
-      "taxonomy_issue": "missing_taxonomy_multi_line",
-      "taxonomy_on_837": "(PRV segment omitted)",
       "service_lines": [
         {
           "code": "97140",
@@ -1563,10 +1549,6 @@
           "claim_status": "4",
           "paid_amount": "0.00",
           "expected_match": true,
-          "denial_codes": {
-            "carc": "CO-16",
-            "rarc": "N255"
-          },
           "match_validation": {
             "claim_no_first": "CLM202500032",
             "claim_id_first": "CLM202500032",
@@ -1585,7 +1567,9 @@
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
         "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
-      }
+      },
+      "taxonomy_issue": "missing_taxonomy_multi_line",
+      "taxonomy_on_837": "(PRV segment omitted)"
     },
     {
       "claim_no": "CLM202500033",
@@ -1597,8 +1581,6 @@
       "patient": "Jessica Williams",
       "payer": "Aetna Better Health",
       "provider": "Summit Orthopedic Associates",
-      "taxonomy_issue": "invalid_taxonomy_pending_remit",
-      "taxonomy_on_837": "BADCODE99",
       "service_lines": [
         {
           "code": "73030",
@@ -1620,7 +1602,9 @@
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
         "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
-      }
+      },
+      "taxonomy_issue": "invalid_taxonomy_pending_remit",
+      "taxonomy_on_837": "BADCODE99"
     },
     {
       "claim_no": "CLM202500034",
@@ -1632,8 +1616,6 @@
       "patient": "Robert Anderson",
       "payer": "Medicare Part B",
       "provider": "Cascade Family Medicine",
-      "taxonomy_issue": "missing_prv_with_negative_controls",
-      "taxonomy_on_837": "(PRV segment omitted)",
       "service_lines": [
         {
           "code": "99203",
@@ -1654,10 +1636,6 @@
           "claim_status": "4",
           "paid_amount": "0.00",
           "expected_match": true,
-          "denial_codes": {
-            "carc": "CO-16",
-            "rarc": "N255"
-          },
           "match_validation": {
             "claim_no_first": "CLM202500034",
             "claim_id_first": "CLM202500034",
@@ -1676,16 +1654,18 @@
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
         "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
-      }
+      },
+      "taxonomy_issue": "missing_prv_with_negative_controls",
+      "taxonomy_on_837": "(PRV segment omitted)"
     }
   ],
   "stats": {
     "total_837_files": 34,
     "total_835_files": 43,
     "multi_date_scenarios": 2,
-    "negative_control_835_files": 1,
+    "negative_control_835_files": 5,
     "claims_with_multiple_835": 6,
-    "claims_without_835": 3,
+    "claims_without_835": 4,
     "taxonomy_denial_scenarios": 6,
     "taxonomy_denial_negative_controls": 4
   },

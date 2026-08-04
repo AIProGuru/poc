@@ -94,10 +94,10 @@ const Part2 = () => {
   return (
     <div className="w-full mt-5">
       {!part2Loading && (
-        <div className={`flex flex-col gap-4 max-h-[285px] w-[100%] fade-in ${theme === 'dark' ? 'bg-[#151619] border-[#191A1D] text-white' : 'bg-white border-[#f3f4f6] text-black'} border-[7px] rounded-3xl px-2 py-1 items-center justify-center font-inter mx-auto`}>
+        <div className={`flex flex-col gap-4 max-h-[285px] w-[100%] fade-in ${theme === 'dark' ? 'bg-[#121722] border-[#191A1D] text-white' : 'bg-white border-[#f3f4f6] text-black'} border-[7px] rounded-3xl px-2 py-1 items-center justify-center font-inter mx-auto`}>
           <div className="overflow-y-auto w-full">
-            <table className={`min-w-full ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} rounded-3xl`}>
-              <thead className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} sticky top-0`}>
+            <table className={`min-w-full ${theme === 'dark' ? 'bg-[#121722]' : 'bg-white'} rounded-3xl`}>
+              <thead className={`${theme === 'dark' ? 'bg-[#121722]' : 'bg-white'} sticky top-0`}>
                 <tr>
                   <th className={`text-[14px] font-normal ${theme === 'dark' ? 'text-white' : 'text-black'} text-center px-3 py-2 h-[50px] whitespace-nowrap`}>Category</th>
                   <th className={`text-[14px] font-normal ${theme === 'dark' ? 'text-white' : 'text-black'} text-center px-2 py-2 h-[50px] whitespace-nowrap`}>Total Claims</th>
@@ -128,10 +128,10 @@ const Part2 = () => {
         </div>
       )}
       {part2Loading && (
-        <div className={`flex flex-col gap-4 max-h-[285px] w-full ${theme === 'dark' ? 'bg-[#151619] border-[#191A1D] text-white' : 'bg-white border-[#f3f4f6] text-black'} border-[7px] rounded-3xl p-2 items-center justify-center font-inter mx-auto`}>
+        <div className={`flex flex-col gap-4 max-h-[285px] w-full ${theme === 'dark' ? 'bg-[#121722] border-[#191A1D] text-white' : 'bg-white border-[#f3f4f6] text-black'} border-[7px] rounded-3xl p-2 items-center justify-center font-inter mx-auto`}>
           <div className="overflow-y-auto w-full h-full">
-            <table className={`min-w-full ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} rounded-3xl`}>
-              <thead className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} sticky top-0 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+            <table className={`min-w-full ${theme === 'dark' ? 'bg-[#121722]' : 'bg-white'} rounded-3xl`}>
+              <thead className={`${theme === 'dark' ? 'bg-[#121722]' : 'bg-white'} sticky top-0 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                 <tr>
                   <th className={`text-[12px] font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} text-center px-5 py-2 h-[50px]`}>Category</th>
                   <th className={`text-[12px] font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'} text-center px-2 py-2 h-[50px]`}>Total Claims</th>

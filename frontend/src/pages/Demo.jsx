@@ -12,19 +12,19 @@ const Demo = () => {
   return (
     <div
       className={`w-full h-screen flex overflow-hidden relative ${
-        theme === "dark" ? "bg-[#1e1f24]" : "bg-slate-50"
+        theme === "dark" ? "bg-[var(--helio-app-bg)]" : "bg-slate-50"
       }`}
     >
       <div
         className={`shrink-0 h-screen overflow-hidden transition-[width] duration-300 ease-in-out w-20 ${
           sidebarExpanded ? "md:w-[308px]" : "md:w-20"
-        } ${theme === "dark" ? "bg-[#1F2024]" : "bg-white"}`}
+        } ${theme === "dark" ? "bg-[var(--helio-sidebar-bg)]" : "bg-white"}`}
       >
         <MySidebar />
       </div>
       <div
         className={`${
-          theme === "dark" ? "bg-[#1e1f24] text-white" : "bg-slate-50 text-slate-900"
+          theme === "dark" ? "bg-[var(--helio-app-bg)] text-white" : "bg-slate-50 text-slate-900"
         } overflow-x-hidden grow flex flex-col`}
       >
         <Header />

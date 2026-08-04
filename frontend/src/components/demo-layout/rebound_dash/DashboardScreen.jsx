@@ -1,84 +1,183 @@
 /* eslint-disable react/prop-types */
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import AgentAvatar from "./AgentAvatar";
 
-const formatCurrency = (value) => `$${Number(value || 0).toLocaleString("en-US")}`;
+const formatCurrency = (value) =>
+  `$${Math.round(Number(value || 0)).toLocaleString("en-US")}`;
+
+const Trend = ({ value, label, positiveIsGood = true }) => {
+  const up = value.startsWith("▲");
+  const good = positiveIsGood ? up : !up;
+  const color = good ? "text-emerald-600" : "text-rose-500";
+  return (
+    <p className={`text-xs font-medium ${color}`}>
+      {value} <span className="text-slate-400 font-normal">{label}</span>
+    </p>
+  );
+};
+
+const MetricCard = ({ title, value, subtitle, trend, trendLabel, trendPositiveIsGood = true, highlight, children, isDark }) => (
+  <div
+    className={`rounded-xl border p-4 flex flex-col gap-2 min-h-[132px] ${
+      highlight
+        ? "border-emerald-400 ring-1 ring-emerald-400/30"
+        : isDark
+          ? "bg-[var(--helio-surface)] border-[var(--helio-border)]"
+          : "bg-white border-slate-200 shadow-sm"
+    }`}
+  >
+    <div className="flex items-start justify-between gap-2">
+      <p className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-slate-600"}`}>{title}</p>
+      {children}
+    </div>
+    <p className={`text-2xl font-semibold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>{value}</p>
+    {subtitle ? (
+      <p className={`text-xs ${isDark ? "text-gray-400" : "text-slate-500"}`}>{subtitle}</p>
+    ) : null}
+    {trend ? <Trend value={trend} label={trendLabel} positiveIsGood={trendPositiveIsGood} /> : null}
+  </div>
+);
+
+const SectionCard = ({ title, subtitle, children, footer, isDark, className = "" }) => (
+  <div
+    className={`rounded-xl border p-4 sm:p-5 flex flex-col ${
+      isDark
+        ? "bg-[var(--helio-surface)] border-[var(--helio-border)] text-gray-100"
+        : "bg-white border-slate-200 text-slate-900 shadow-sm"
+    } ${className}`}
+  >
+    <div className="mb-4">
+      <h3 className="text-base font-semibold">{title}</h3>
+      {subtitle ? (
+        <p className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-slate-500"}`}>{subtitle}</p>
+      ) : null}
+    </div>
+    <div className="flex-1 min-h-0">{children}</div>
+    {footer ? (
+      <button
+        type="button"
+        className={`mt-4 text-sm font-medium text-left ${
+          isDark ? "text-sky-400 hover:text-sky-300" : "text-blue-600 hover:text-blue-700"
+        }`}
+      >
+        {footer}
+      </button>
+    ) : null}
+  </div>
+);
+
+const RecoveryTrendChart = ({ isDark }) => {
+  const points = [
+    { x: 0, actual: 120, target: 100 },
+    { x: 1, actual: 155, target: 130 },
+    { x: 2, actual: 140, target: 160 },
+    { x: 3, actual: 210, target: 190 },
+    { x: 4, actual: 285, target: 250 },
+  ];
+  const w = 320;
+  const h = 140;
+  const pad = { t: 12, r: 12, b: 24, l: 36 };
+  const maxY = 350;
+  const toX = (i) => pad.l + (i / (points.length - 1)) * (w - pad.l - pad.r);
+  const toY = (v) => pad.t + (1 - v / maxY) * (h - pad.t - pad.b);
+  const actualPath = points.map((p, i) => `${i === 0 ? "M" : "L"} ${toX(p.x)} ${toY(p.actual)}`).join(" ");
+  const targetPath = points.map((p, i) => `${i === 0 ? "M" : "L"} ${toX(p.x)} ${toY(p.target)}`).join(" ");
+  const gridColor = isDark ? "#2d3348" : "#e2e8f0";
+  const labelColor = isDark ? "#94a3b8" : "#64748b";
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full min-w-[280px]" aria-hidden>
+        {[0, 100, 200, 300].map((tick) => (
+          <g key={tick}>
+            <line x1={pad.l} x2={w - pad.r} y1={toY(tick)} y2={toY(tick)} stroke={gridColor} strokeWidth="1" />
+            <text x={4} y={toY(tick) + 4} fill={labelColor} fontSize="9">
+              ${tick}K
+            </text>
+          </g>
+        ))}
+        <path d={targetPath} fill="none" stroke={isDark ? "#64748b" : "#94a3b8"} strokeWidth="2" strokeDasharray="5 4" />
+        <path d={actualPath} fill="none" stroke="#10b981" strokeWidth="2.5" />
+        {points.map((p, i) => (
+          <circle key={p.x} cx={toX(p.x)} cy={toY(p.actual)} r="4" fill="#10b981" />
+        ))}
+        {points.map((p, i) => (
+          <text key={`w-${p.x}`} x={toX(p.x)} y={h - 4} textAnchor="middle" fill={labelColor} fontSize="10">
+            W{i + 1}
+          </text>
+        ))}
+      </svg>
+      <div className={`flex gap-4 mt-2 text-xs ${isDark ? "text-gray-400" : "text-slate-500"}`}>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block w-4 h-0.5 bg-emerald-500 rounded" /> Actual Recovery
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block w-4 h-0.5 border-t-2 border-dashed border-slate-400" /> Target
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const Sparkline = () => (
+  <svg viewBox="0 0 80 28" className="w-20 h-7 text-emerald-500" aria-hidden>
+    <polyline
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      points="0,22 12,18 24,20 36,12 48,14 60,8 72,10 80,4"
+    />
+  </svg>
+);
 
 const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
-  const [hoveredRecoveryWeek, setHoveredRecoveryWeek] = useState(null);
   const modelsState = useSelector((state) => state.app.models);
   const models = useMemo(() => modelsState ?? [], [modelsState]);
-
-  const surface = isDark
-    ? "bg-[#1b1c20] border-[#2b2f37] text-gray-100"
-    : "bg-white border-slate-200 text-slate-900 shadow-sm";
-  const panel = isDark
-    ? "bg-[#202228] border-[#2b2f37]"
-    : "bg-slate-50 border-slate-200";
-  const inset = isDark
-    ? "border-[#2b2f37] bg-black/30"
-    : "border-slate-200 bg-white";
-  const insetEmphasis = isDark
-    ? "border-[#2b2f37] bg-black/40"
-    : "border-slate-200 bg-slate-100";
-  const mobileCard = isDark
-    ? "border-[#2b2f37] bg-black/20"
-    : "border-slate-200 bg-white";
-  const muted = isDark ? "text-[#b7bcc6]" : "text-slate-600";
-  const subtle = isDark ? "text-[#8f96a3]" : "text-slate-500";
-  const divider = isDark ? "border-[#2b2f37]" : "border-slate-200";
-  const rowTitle = isDark ? "text-gray-200" : "text-slate-800";
-  const valueDefault = isDark ? "text-gray-200" : "text-slate-700";
-  const progressTrack = isDark ? "bg-[#2a2d33]" : "bg-slate-200";
-  const progressFill = isDark ? "bg-[#9aa0ab]" : "bg-slate-500";
-  const tooltip = isDark
-    ? "border-[#2b2f37] bg-[#121418] text-white"
-    : "border-slate-200 bg-white text-slate-900 shadow-md";
-  const selectedItem = isDark
-    ? "bg-white/10 text-white"
-    : "bg-white text-slate-900 border border-slate-300 shadow-sm";
-  const helioWeekColors = isDark
-    ? ["#1CB5E0", "#46E5B9", "#2DD5A5", "#22B8CF", "#5C7CFA"]
-    : ["#cbd5e1", "#94a3b8", "#64748b", "#475569", "#334155"];
 
   const productivity = useMemo(() => {
     const grouped = new Map();
     (models || []).forEach((row) => {
-      const title = `${row.ModelTitle || row.model_title || 'AI Agent'}`.trim() || 'AI Agent';
-      const current = grouped.get(title) || 0;
-      grouped.set(title, current + (Number(row.Count) || 0));
+      const title = `${row.ModelTitle || row.model_title || "AI Agent"}`.trim() || "AI Agent";
+      grouped.set(title, (grouped.get(title) || 0) + (Number(row.Count) || 0));
     });
-    return Array.from(grouped.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 7);
+    const rows = Array.from(grouped.entries()).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    const efficiencies = [99, 78, 71, 67, 62, 58];
+    return rows.map(([name, claims], i) => ({
+      name,
+      claims,
+      efficiency: efficiencies[i] ?? 60,
+    }));
   }, [models]);
+
+  const agentOptions = useMemo(
+    () => ["All Agents", ...productivity.map((p) => p.name)],
+    [productivity]
+  );
 
   const filteredModels = useMemo(() => {
     if (!selectedAgent) return models || [];
     return (models || []).filter((row) => {
-      const title = `${row.ModelTitle || row.model_title || 'AI Agent'}`.trim() || 'AI Agent';
+      const title = `${row.ModelTitle || row.model_title || "AI Agent"}`.trim() || "AI Agent";
       return title === selectedAgent;
     });
   }, [models, selectedAgent]);
 
   const totals = useMemo(() => {
     const totalAmount = filteredModels.reduce((sum, row) => sum + (Number(row.Amount) || 0), 0);
+    const totalClaims = filteredModels.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
     const activeAiAgents = selectedAgent
-      ? (filteredModels.length > 0 ? 1 : 0)
+      ? filteredModels.length > 0
+        ? 1
+        : 0
       : new Set(
-          filteredModels.map((row) => `${row.ModelTitle || row.model_title || 'AI Agent'}`.trim() || 'AI Agent')
+          filteredModels.map(
+            (row) => `${row.ModelTitle || row.model_title || "AI Agent"}`.trim() || "AI Agent"
+          )
         ).size;
-    const manualUsers = 0;
-    const activeUsers = manualUsers + activeAiAgents;
-    const dailyCapacity = activeUsers * 50;
-    return {
-      totalAmount,
-      activeAiAgents,
-      manualUsers,
-      activeUsers,
-      dailyCapacity,
-    };
+    return { totalAmount, totalClaims, activeAiAgents };
   }, [filteredModels, selectedAgent]);
 
   const categoryRows = useMemo(() => {
@@ -91,206 +190,316 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
         amount: current.amount + (Number(row.Amount) || 0),
       });
     });
-    return Array.from(categoryMap.entries())
-      .sort((a, b) => b[1].count - a[1].count)
-      .slice(0, 5)
-      .map(([category, data], index) => {
-        const avgBalance = data.count > 0 ? Math.round(data.amount / data.count) : 0;
-        const avgAge = 12 + index * 4;
-        return [category, data.count.toLocaleString("en-US"), `$${Math.round(data.amount).toLocaleString("en-US")}`, `$${avgBalance.toLocaleString("en-US")}`, `${avgAge}`];
-      });
+    const rows = Array.from(categoryMap.entries()).sort((a, b) => b[1].amount - a[1].amount);
+    const totalAmount = rows.reduce((s, [, d]) => s + d.amount, 0) || 1;
+    const maxCount = Math.max(...rows.map(([, d]) => d.count), 1);
+    return rows.slice(0, 5).map(([category, data]) => ({
+      category,
+      inventory: data.count,
+      arBalance: data.amount,
+      pct: Math.round((data.amount / totalAmount) * 100),
+      barPct: Math.round((data.count / maxCount) * 100),
+    }));
   }, [filteredModels]);
 
-  const inventoryAccuracy = 82;
+  const displayCategories =
+    categoryRows.length > 0
+      ? categoryRows
+      : [
+          { category: "Coordination of Benefits", inventory: 1261, arBalance: 726945, pct: 58, barPct: 100 },
+          { category: "Timely Filing", inventory: 392, arBalance: 225707, pct: 18, barPct: 62 },
+          { category: "Documentation", inventory: 240, arBalance: 137931, pct: 11, barPct: 38 },
+          { category: "Medical Necessity", inventory: 174, arBalance: 100000, pct: 8, barPct: 28 },
+          { category: "Authorization", inventory: 110, arBalance: 63342, pct: 5, barPct: 18 },
+        ];
 
-  const recoveryBars = useMemo(
-    () => ([
-      { week: "W1", height: 42, claims: 55, recovered: 40000 },
-      { week: "W2", height: 64, claims: 75, recovered: 70000 },
-      { week: "W3", height: 53, claims: 62, recovered: 52000 },
-      { week: "W4", height: 78, claims: 88, recovered: 93000 },
-      { week: "W5", height: 61, claims: 71, recovered: 68000 },
-    ]),
-    []
-  );
+  const arBalance = totals.totalAmount > 0 ? totals.totalAmount : 1253925;
+  const inventory = totals.totalClaims > 0 ? totals.totalClaims : 2177;
+  const recoverable = Math.round(arBalance * 0.37) || 462918;
+  const recoveryMtd = Math.round(recoverable * 0.62) || 287450;
+
+  const priorities = [
+    { rank: 1, amount: 72443, label: "BCBS - Coordination of Benefits", priority: "High" },
+    { rank: 2, amount: 58920, label: "Aetna - Timely Filing", priority: "High" },
+    { rank: 3, amount: 42150, label: "UHC - Documentation", priority: "Medium" },
+  ];
+
+  const aiAgents = [
+    { name: "Denial Reviewer Agent", status: "Online", metric: "2,177 Claims Reviewed", rate: "94% Success Rate" },
+    { name: "Underpayment Agent", status: "Online", metric: "412 Claims Corrected", rate: "89% Success Rate" },
+    { name: "Appeals Agent", status: "Idle", metric: "128 Appeals Filed", rate: "76% Success Rate" },
+    { name: "Eligibility Agent", status: "Online", metric: "891 Eligibility Checks", rate: "97% Success Rate" },
+  ];
+
+  const alerts = [
+    { icon: "⏱", text: "43 Claims > 90 days", tone: "text-rose-500" },
+    { icon: "📋", text: "112 COB denials need review", tone: "text-amber-500" },
+    { icon: "📅", text: "17 Appeals overdue", tone: "text-rose-500" },
+  ];
+
+  const productivityRows =
+    productivity.length > 0
+      ? productivity
+      : [
+          { name: "David", claims: 142, efficiency: 99 },
+          { name: "Carrie", claims: 118, efficiency: 78 },
+          { name: "Ivan", claims: 96, efficiency: 71 },
+          { name: "Sarah", claims: 88, efficiency: 67 },
+          { name: "Mike", claims: 74, efficiency: 62 },
+        ];
+
+  const maxClaims = Math.max(...productivityRows.map((r) => r.claims), 1);
+  const barColors = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4", "#ec4899"];
+
+  const muted = isDark ? "text-gray-400" : "text-slate-500";
+  const rowBorder = isDark ? "border-[var(--helio-border)]" : "border-slate-100";
 
   return (
-    <div
-      className={`rounded-2xl border p-4 sm:p-6 ${surface}`}
-      style={{ fontFamily: '"Space Grotesk", "IBM Plex Sans", ui-sans-serif, system-ui' }}
-    >
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className={`space-y-6 ${isDark ? "text-gray-100" : "text-slate-900"}`}>
+      {/* Header */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="mt-1 text-xl sm:text-2xl font-semibold">Client Dashboard</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Client Dashboard</h2>
+          <p className={`mt-1 text-sm ${muted}`}>Real-time overview of your revenue cycle performance</p>
         </div>
-        <div className={`text-xs ${subtle}`}>
-          {selectedAgent ? `Filtered: ${selectedAgent}` : "All agents"}
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+              isDark
+                ? "bg-[var(--helio-surface-muted)] border-[var(--helio-border)] text-gray-200"
+                : "bg-white border-slate-200 text-slate-700"
+            }`}
+          >
+            <span aria-hidden>📅</span>
+            <span>May 12 – May 18, 2025</span>
+          </div>
+          <select
+            value={selectedAgent || "All Agents"}
+            onChange={(e) => {
+              const val = e.target.value;
+              onSelectAgent?.(val === "All Agents" ? null : val);
+            }}
+            className={`rounded-lg border px-3 py-2 text-sm ${
+              isDark
+                ? "bg-[var(--helio-surface-muted)] border-[var(--helio-border)] text-gray-200"
+                : "bg-white border-slate-200 text-slate-700"
+            }`}
+          >
+            {agentOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+          <span className={`text-xs ${muted}`}>Updated 2m ago ↻</span>
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
-        <div className={`rounded-xl border p-4 ${panel}`}>
-          <div className="text-sm font-semibold">User Productivity (Daily)</div>
-          <div className={`mt-2 text-xs ${subtle}`}>Agents and Output</div>
-          <div className="mt-4 space-y-3">
-            {productivity.length === 0 ? (
-              <div className={`text-sm ${muted}`}>No AI agents available.</div>
-            ) : (
-              productivity.map(([name, value]) => {
-                const isSelected = selectedAgent === name;
-                return (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => onSelectAgent?.(isSelected ? null : name)}
-                    className={`w-full flex items-center justify-between text-sm rounded-lg px-2 py-1 transition text-left ${
-                      isSelected
-                        ? selectedItem
+      {/* KPI metrics row */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        <MetricCard
+          isDark={isDark}
+          title="AR Balance"
+          value={formatCurrency(arBalance)}
+          subtitle="Across all open claims"
+        >
+          <Sparkline />
+        </MetricCard>
+        <MetricCard
+          isDark={isDark}
+          title="Recovery MTD"
+          value={formatCurrency(recoveryMtd)}
+          trend="▲ 18.6%"
+          trendLabel="vs Apr 14 – Apr 20"
+        />
+        <MetricCard
+          isDark={isDark}
+          title="Recoverable Revenue"
+          value={formatCurrency(recoverable)}
+          subtitle={`${Math.round(recoverable / 623) || 742} claims`}
+          trend="▲ 14.3%"
+          trendLabel="vs last week"
+          highlight
+        />
+        <MetricCard
+          isDark={isDark}
+          title="Inventory Burn Rate"
+          value="75 Days"
+          subtitle="Target: 60 Days"
+          trend="▼ 9 Days"
+          trendLabel="vs last week"
+          trendPositiveIsGood={false}
+        />
+        <MetricCard
+          isDark={isDark}
+          title="Inventory"
+          value={inventory.toLocaleString("en-US")}
+          subtitle="Total claims"
+        />
+        <MetricCard
+          isDark={isDark}
+          title="Accuracy"
+          value="82%"
+          trend="▲ 5%"
+          trendLabel="vs last week"
+        />
+      </div>
+
+      {/* Charts row */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <SectionCard
+          isDark={isDark}
+          title="Outstanding AR By Category"
+          footer="View all categories →"
+        >
+          <div className={`grid grid-cols-[1.4fr_1fr_0.9fr_0.6fr] gap-2 text-[11px] uppercase tracking-wide ${muted} pb-2 border-b ${rowBorder}`}>
+            <span>Category</span>
+            <span>Inventory</span>
+            <span className="text-right">AR Balance</span>
+            <span className="text-right">% Total</span>
+          </div>
+          <div className="divide-y divide-[var(--helio-border)]">
+            {displayCategories.map((row) => (
+              <div
+                key={row.category}
+                className={`grid grid-cols-[1.4fr_1fr_0.9fr_0.6fr] gap-2 items-center py-3 text-sm ${isDark ? "border-[var(--helio-border)]" : "border-slate-100"}`}
+              >
+                <span className={`truncate font-medium ${isDark ? "text-gray-200" : "text-slate-800"}`} title={row.category}>
+                  {row.category}
+                </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className={`h-2 flex-1 rounded-full overflow-hidden ${isDark ? "bg-[var(--helio-surface-muted)]" : "bg-slate-100"}`}>
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-sky-500 to-violet-500"
+                      style={{ width: `${row.barPct}%` }}
+                    />
+                  </div>
+                  <span className={`text-xs tabular-nums shrink-0 ${muted}`}>{row.inventory.toLocaleString()}</span>
+                </div>
+                <span className="text-right tabular-nums">{formatCurrency(row.arBalance)}</span>
+                <span className="text-right tabular-nums">{row.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        <SectionCard isDark={isDark} title="Recovery Trend MTD" footer="View recovery details →">
+          <RecoveryTrendChart isDark={isDark} />
+        </SectionCard>
+
+        <SectionCard isDark={isDark} title="User Productivity Today" footer="View team performance →">
+          <div className={`grid grid-cols-[1fr_1.2fr_0.7fr] gap-2 text-[11px] uppercase tracking-wide ${muted} pb-2 border-b ${rowBorder}`}>
+            <span>Agent</span>
+            <span>Claims Completed</span>
+            <span className="text-right">Efficiency</span>
+          </div>
+          <div className="space-y-3 mt-1">
+            {productivityRows.map((row, i) => (
+              <div key={row.name} className="grid grid-cols-[1fr_1.2fr_0.7fr] gap-2 items-center text-sm">
+                <span className="flex items-center gap-2 min-w-0">
+                  <AgentAvatar name={row.name} size={28} />
+                  <span className={`truncate ${isDark ? "text-gray-200" : "text-slate-800"}`}>{row.name}</span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className={`h-2 flex-1 rounded-full overflow-hidden ${isDark ? "bg-[var(--helio-surface-muted)]" : "bg-slate-100"}`}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.round((row.claims / maxClaims) * 100)}%`,
+                        backgroundColor: barColors[i % barColors.length],
+                      }}
+                    />
+                  </div>
+                  <span className={`text-xs tabular-nums w-8 text-right ${muted}`}>{row.claims}</span>
+                </div>
+                <span className="text-right font-semibold tabular-nums">{row.efficiency}%</span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      </div>
+
+      {/* Bottom row */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <SectionCard isDark={isDark} title="Today's Priorities" footer="View all priorities →">
+          <div className="space-y-3">
+            {priorities.map((item) => (
+              <div
+                key={item.rank}
+                className={`flex items-center gap-3 rounded-lg border px-3 py-3 ${
+                  isDark ? "border-[var(--helio-border)] bg-[var(--helio-surface-muted)]" : "border-slate-100 bg-slate-50"
+                }`}
+              >
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                    isDark ? "bg-[var(--helio-border-strong)] text-white" : "bg-slate-200 text-slate-700"
+                  }`}
+                >
+                  {item.rank}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-rose-500 tabular-nums">{formatCurrency(item.amount)}</p>
+                  <p className={`text-xs truncate ${muted}`}>{item.label}</p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                    item.priority === "High"
+                      ? "bg-rose-500/15 text-rose-400"
+                      : "bg-amber-500/15 text-amber-400"
+                  }`}
+                >
+                  {item.priority}
+                </span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        <SectionCard isDark={isDark} title="AI Agent Status" footer="View agent details →">
+          <div className="space-y-3">
+            {aiAgents.map((agent) => (
+              <div
+                key={agent.name}
+                className={`rounded-lg border px-3 py-3 ${isDark ? "border-[var(--helio-border)] bg-[var(--helio-surface-muted)]" : "border-slate-100 bg-slate-50"}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className={`text-sm font-medium ${isDark ? "text-gray-200" : "text-slate-800"}`}>{agent.name}</p>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                      agent.status === "Online"
+                        ? "bg-emerald-500/15 text-emerald-400"
                         : isDark
-                          ? "hover:bg-white/5"
-                          : "hover:bg-slate-100"
+                          ? "bg-gray-500/20 text-gray-400"
+                          : "bg-slate-200 text-slate-600"
                     }`}
                   >
-                    <span className={`flex items-center gap-2 ${isSelected ? (isDark ? "text-white" : "text-slate-900") : muted}`}>
-                      <AgentAvatar name={name} size={28} />
-                      {name}
-                    </span>
-                    <span className={`font-semibold ${isSelected ? (isDark ? "text-white" : "text-slate-900") : valueDefault}`}>
-                      {value}
-                    </span>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-          <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">Current Burn Rate</div>
-            <div className={`mt-6 rounded-lg border p-6 text-center ${insetEmphasis}`}>
-              <div className="text-5xl font-semibold">75</div>
-              <div className={`mt-2 text-xs ${subtle}`}>Days to burn through current inventory</div>
-              <div className={`mt-3 text-[11px] leading-5 ${subtle}`}>
-                Estimated time remaining at the current operating pace.
-              </div>
-            </div>
-          </div>
-
-          <div className={`rounded-xl border p-4 ${panel}`}>
-            <div className="text-sm font-semibold">Outstanding AR Inventory By Category</div>
-            <div className={`mt-4 hidden sm:grid sm:grid-cols-[1.5fr_0.9fr_0.9fr_0.9fr_0.6fr] text-[11px] uppercase tracking-[0.12em] ${subtle}`}>
-              <div>Category</div>
-              <div className="text-right">Inventory</div>
-              <div className="text-right">AR Balance</div>
-              <div className="text-right">Avg AR Balance</div>
-              <div className="text-right">Avg Age</div>
-            </div>
-            <div className={`mt-2 border-t ${divider}`} />
-            {categoryRows.length === 0 ? (
-              <div className={`py-6 text-sm ${muted}`}>No category data for this agent.</div>
-            ) : (
-              categoryRows.map((row) => (
-                <div key={row[0]} className={`py-3 text-sm ${muted}`}>
-                  <div className={`sm:hidden space-y-1 rounded-lg border p-3 ${mobileCard}`}>
-                    <div className={`${rowTitle} font-semibold truncate`} title={row[0]}>{row[0]}</div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className={subtle}>Inventory</span>
-                      <span className="tabular-nums">{row[1]}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className={subtle}>AR Balance</span>
-                      <span className="tabular-nums">{row[2]}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className={subtle}>Avg AR Balance</span>
-                      <span className="tabular-nums">{row[3]}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className={subtle}>Avg Age</span>
-                      <span className="tabular-nums">{row[4]}</span>
-                    </div>
-                  </div>
-                  <div className="hidden sm:grid sm:grid-cols-[1.5fr_0.9fr_0.9fr_0.9fr_0.6fr]">
-                    {row.map((cell, i) => (
-                      <div
-                        key={`${row[0]}-${i}`}
-                        className={i === 0 ? `${rowTitle} truncate pr-2` : "text-right tabular-nums"}
-                        title={i === 0 ? row[0] : undefined}
-                      >
-                        {cell}
-                      </div>
-                    ))}
-                  </div>
+                    {agent.status}
+                  </span>
                 </div>
-              ))
-            )}
+                <p className={`mt-1 text-xs ${muted}`}>{agent.metric}</p>
+                <p className={`text-xs font-medium ${isDark ? "text-emerald-400" : "text-emerald-600"}`}>{agent.rate}</p>
+              </div>
+            ))}
           </div>
+        </SectionCard>
 
-          <div className="grid gap-4 lg:grid-cols-[280px_1fr] lg:col-span-2">
-            <div className={`rounded-xl border p-4 ${panel}`}>
-              <div className="text-sm font-semibold">Inventory Accuracy</div>
-              <div className={`mt-4 h-32 rounded-lg border p-4 ${inset}`}>
-                <div className={`text-xs uppercase ${subtle}`}>Accuracy trend</div>
-                <div className={`mt-4 h-2 w-full rounded-full ${progressTrack}`}>
-                  <div className={`h-2 rounded-full ${progressFill}`} style={{ width: `${inventoryAccuracy}%` }} />
-                </div>
-                <div className={`mt-3 text-2xl font-semibold ${muted}`}>{inventoryAccuracy}%</div>
+        <SectionCard isDark={isDark} title="Attention Needed" footer="View all alerts →">
+          <div className="space-y-3">
+            {alerts.map((alert) => (
+              <div
+                key={alert.text}
+                className={`flex items-center gap-3 rounded-lg border px-3 py-3 ${
+                  isDark ? "border-[var(--helio-border)] bg-[var(--helio-surface-muted)]" : "border-slate-100 bg-slate-50"
+                }`}
+              >
+                <span className="text-lg" aria-hidden>
+                  {alert.icon}
+                </span>
+                <p className={`text-sm font-medium ${alert.tone}`}>{alert.text}</p>
               </div>
-            </div>
-
-            <div className={`rounded-xl border p-4 ${panel}`}>
-              <div className="text-sm font-semibold">Recovery $ Month to Date (MTD)</div>
-              <div className={`relative mt-4 h-32 rounded-lg border p-4 ${inset}`}>
-                {hoveredRecoveryWeek ? (
-                  <div className={`pointer-events-none absolute left-4 top-4 z-10 rounded-lg border px-3 py-2 text-xs shadow-lg ${tooltip}`}>
-                    <div>{`${hoveredRecoveryWeek.week} Claims: ${hoveredRecoveryWeek.claims}`}</div>
-                    <div>{`Recovered: ${formatCurrency(hoveredRecoveryWeek.recovered)}`}</div>
-                  </div>
-                ) : null}
-                <div className="flex items-end justify-between gap-1 sm:gap-2">
-                  {recoveryBars.map((bar, idx) => (
-                    <div
-                      key={bar.week}
-                      className="flex w-full flex-col items-center"
-                      onMouseEnter={() => setHoveredRecoveryWeek(bar)}
-                      onMouseLeave={() => setHoveredRecoveryWeek(null)}
-                    >
-                      <div
-                        className="w-full rounded-md transition-transform duration-150 hover:scale-[1.03]"
-                        style={{ height: `${bar.height}px`, backgroundColor: helioWeekColors[idx % helioWeekColors.length] }}
-                      />
-                      <span className={`mt-1 text-[10px] ${subtle}`}>{bar.week}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className={`rounded-xl border p-4 ${panel}`}>
-              <div className="text-sm font-semibold">AR Balance</div>
-              <div className="mt-6 text-3xl font-semibold">{`$${Math.round(totals.totalAmount).toLocaleString("en-US")}`}</div>
-              <div className={`mt-2 text-xs ${subtle}`}>Balance across all open claims</div>
-            </div>
-
-            <div className={`rounded-xl border p-4 ${panel}`}>
-              <div className="text-sm font-semibold">Daily Capacity</div>
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  ["Active Users", totals.activeUsers.toLocaleString("en-US")],
-                  ["Manual Users", totals.manualUsers.toLocaleString("en-US")],
-                  ["AI Agents", totals.activeAiAgents.toLocaleString("en-US")],
-                  ["Accounts / Day", totals.dailyCapacity.toLocaleString("en-US")],
-                ].map(([label, value]) => (
-                  <div key={label} className={`rounded-lg border p-3 ${inset}`}>
-                    <div className={`text-xs ${subtle}`}>{label}</div>
-                    <div className="mt-1 text-xl font-semibold">{value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
-        </div>
+        </SectionCard>
       </div>
     </div>
   );

@@ -139,6 +139,42 @@ function build837(claim, fileId) {
   return joinSegs(segs);
 }
 
+/**
+ * BPR segment for 835 ACH/CTX payments.
+ * BPR12 = receiving DFI qualifier (max 4), BPR14 = receiver account qualifier (max 6).
+ * Prior versions put routing/account numbers in those qualifier slots, which HIPAA Suite rejects.
+ */
+function buildBprSegment(remit, payer) {
+  const senderDfiQual = "01";
+  const senderDfiId = "0210";
+  const senderAcctQual = "DA";
+  const senderAcct = "123456";
+  const payerIdentifier = String(payer.id || "PAYER01").slice(0, 10);
+  const receiverDfiQual = "01";
+  const receiverDfiId = "0211";
+  const receiverAcctQual = "DA";
+  const receiverAcct = "987654";
+  return [
+    "BPR",
+    "I",
+    fmtMoney(remit.checkAmount),
+    "C",
+    "ACH",
+    "CTX",
+    senderDfiQual,
+    senderDfiId,
+    senderAcctQual,
+    senderAcct,
+    payerIdentifier,
+    "",
+    receiverDfiQual,
+    receiverDfiId,
+    receiverAcctQual,
+    receiverAcct,
+    fmtDate(remit.checkDate),
+  ].join(ELEM) + SEG;
+}
+
 function build835(claim, remit, fileId, options = {}) {
   const ctrl = String(fileId + 50000).padStart(9, "0");
   const stCtrl = String(fileId).padStart(4, "0");
@@ -151,7 +187,7 @@ function build835(claim, remit, fileId, options = {}) {
     buildIsa(payer.id.slice(0, 15), provider.npi, ctrl, remit.checkDate),
     `GS${ELEM}HP${ELEM}${payer.id}${ELEM}${provider.npi}${ELEM}${fmtDate(remit.checkDate)}${ELEM}1200${ELEM}${fileId}${ELEM}X${ELEM}005010X221A1${SEG}`,
     `ST${ELEM}835${ELEM}${stCtrl}${ELEM}005010X221A1${SEG}`,
-    `BPR${ELEM}I${ELEM}${fmtMoney(remit.checkAmount)}${ELEM}C${ELEM}ACH${ELEM}CTX${ELEM}01${ELEM}123456789${ELEM}DA${ELEM}987654321${ELEM}${provider.tax_id}${ELEM}01${ELEM}123456789${ELEM}DA${ELEM}987654321${ELEM}${fmtDate(remit.checkDate)}${SEG}`,
+    buildBprSegment(remit, payer),
     `TRN${ELEM}1${ELEM}${remit.checkNumber}${ELEM}${payer.id}${SEG}`,
     `DTM${ELEM}405${ELEM}${fmtDate(remit.checkDate)}${SEG}`,
     `N1${ELEM}PR${ELEM}${payer.name}${ELEM}XV${ELEM}${payer.plan_id}${SEG}`,
@@ -866,7 +902,7 @@ function main() {
   }
   fs.mkdirSync(DIR_837, { recursive: true });
   fs.mkdirSync(DIR_835, { recursive: true });
-  const scenarios = buildScenarios();
+  const scenarios = [...buildScenarios(), ...buildTaxonomyScenarios(29)];
   const manifest = {
     description: "Synthetic 837P/835 sample files aligned to platform matching_837_835 logic",
     matching_logic: MATCHING_LOGIC,
@@ -928,6 +964,35 @@ function main() {
       });
     }
 
+    (claim.negativeControl835s || []).forEach((nc, ncIdx) => {
+      const ncRemit = {
+        checkNumber: nc.checkNumber,
+        checkDate: nc.checkDate,
+        checkAmount: 0,
+        claimStatus: "4",
+        payerClaimId: `PAY${claim.claimNo}${nc.reason || "BAD"}`,
+        patientResp: 0,
+        lines: nc.lines,
+      };
+      const suffix = nc.reason ? `_NOMATCH_${nc.reason.toUpperCase()}` : "_NOMATCH";
+      const ncFile = `835_${nc.checkNumber}_${claim.claimNo}${suffix}.edi`;
+      const ncFileId = fileId * 10 + 90 + ncIdx + 1;
+      const clpDate = nc.wrong_service_date
+        ? new Date(nc.wrong_service_date + "T12:00:00")
+        : claim.serviceDate;
+      fs.writeFileSync(path.join(DIR_835, ncFile), build835(claim, ncRemit, ncFileId, { clpServiceDate: clpDate }), "utf8");
+      total835++;
+      negativeControls.push({
+        file: ncFile,
+        pairs_with_837: fname837,
+        claim_no: claim.claimNo,
+        expected_match: false,
+        reason: nc.reason,
+        note: nc.note,
+        wrong_service_date: nc.wrong_service_date || null,
+      });
+    });
+
     const claimTotal = claim.lines.reduce((s, l) => s + l.charge, 0);
     const entry = {
       claim_no: claim.claimNo,
@@ -956,12 +1021,27 @@ function main() {
       "835_count": remitFiles.length,
     };
     if (claim.scenarioType) entry.scenario_type = claim.scenarioType;
+    if (claim.denial_reason) entry.denial_reason = claim.denial_reason;
+    if (claim.taxonomyIssue) entry.taxonomy_issue = claim.taxonomyIssue;
+    if (claim.includeTaxonomy === false || claim.taxonomyCode !== undefined) {
+      entry.taxonomy_on_837 = claim.includeTaxonomy === false
+        ? "(PRV segment omitted)"
+        : (claim.taxonomyCode !== undefined ? claim.taxonomyCode : claim.provider.taxonomy);
+    }
     if (claim.lineServiceDates) entry.line_service_dates = claim.lineServiceDates;
     manifest.claims.push(entry);
     fileId++;
   });
 
   manifest.negative_controls = negativeControls;
+  const taxonomyClaims = manifest.claims.filter((c) => c.scenario_type === "taxonomy_denial_co16_n255");
+  manifest.taxonomy_denial_logic = {
+    description: "Claims denied for invalid or missing taxonomy code",
+    carc: "CO-16",
+    rarc: "N255",
+    edi_835_segments: "CAS*CO*16*{amount}~ and LQ*HE*N255~ per service line",
+    platform_sql: "backend/sql/db_refresh.sql sets Automation=1 when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16",
+  };
   manifest.stats = {
     total_837_files: total837,
     total_835_files: total835,
@@ -969,6 +1049,10 @@ function main() {
     negative_control_835_files: negativeControls.length,
     claims_with_multiple_835: manifest.claims.filter((c) => c["835_count"] > 1).length,
     claims_without_835: manifest.claims.filter((c) => c["835_count"] === 0).length,
+    taxonomy_denial_scenarios: taxonomyClaims.length,
+    taxonomy_denial_negative_controls: negativeControls.filter((n) =>
+      taxonomyClaims.some((c) => c.claim_no === n.claim_no)
+    ).length,
   };
   fs.writeFileSync(path.join(OUTPUT_DIR, "MANIFEST.json"), JSON.stringify(manifest, null, 2), "utf8");
   console.log(`Generated ${total837} x 837 files`);

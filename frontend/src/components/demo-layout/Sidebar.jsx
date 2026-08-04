@@ -20,7 +20,7 @@ import {
 import { setSelectedTags } from "../../redux/reducers/tag.reducer";
 import { canAccessWorklists } from "../../utils/roles";
 import { setToggleMenu } from "../../redux/reducers/menu.reducer";
-
+import { getHelioLogoSrc } from "../../utils/helioLogo";
 const readStoredTenantBase = () => {
   try {
     const value = localStorage.getItem("lastTenantBase");
@@ -758,14 +758,14 @@ const Sidebar = () => {
               : "sticky w-full px-1.5 py-4"
             : `sticky w-full ${showLabels ? "px-3 py-6" : "px-1.5 py-4"}`
         } ${isDark
-            ? "bg-[#1F2024] border-r-[#3f4045] text-white"
+            ? "bg-[var(--helio-sidebar-bg)] border-r-[var(--helio-border)] text-white"
             : "bg-white border-slate-200 text-slate-900"
           }`}
       >
         <div
           className={`flex items-center justify-center sticky top-0 z-10 ${
             showLabels ? "gap-3 pb-6" : "pb-4"
-          } ${isDark ? "bg-[#1F2024]" : "bg-white"}`}
+          } ${isDark ? "bg-[var(--helio-sidebar-bg)]" : "bg-white"}`}
         >
           <img
             src="/favicon.png"
@@ -774,7 +774,7 @@ const Sidebar = () => {
             loading="lazy"
           />
           <img
-            src="/helio-logo.svg"
+            src={getHelioLogoSrc(isDark)}
             alt="Helio RCM logo"
             className={`${showLabels ? "block h-16 w-auto" : "hidden"}`}
             loading="lazy"
@@ -817,7 +817,7 @@ const Sidebar = () => {
                 ? "bg-white/20 text-white"
                 : "bg-slate-200 text-slate-800"
               : isDark
-                ? "bg-[#1F2231] text-[rgba(244,244,244,0.5)]"
+                ? "bg-[var(--helio-surface-muted)] text-[rgba(244,244,244,0.5)]"
                 : "bg-slate-200 text-slate-700";
             return (
               <div key={item.id}>
@@ -905,7 +905,7 @@ const Sidebar = () => {
                             <span
                               className={`ml-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${childIsActive
                                   ? (isDark ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800')
-                                  : (isDark ? 'bg-[#1F2231] text-[rgba(244,244,244,0.5)]' : 'bg-slate-200 text-slate-700')
+                                  : (isDark ? 'bg-[var(--helio-surface-muted)] text-[rgba(244,244,244,0.5)]' : 'bg-slate-200 text-slate-700')
                                 }`}
                             >
                               {formatCount(childBadge)}

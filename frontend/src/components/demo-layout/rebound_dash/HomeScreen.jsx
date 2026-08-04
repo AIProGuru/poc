@@ -1,4 +1,5 @@
 import React from "react";
+import { getHelioLogoSrc } from "../../../utils/helioLogo";
 
 const HomeScreen = ({ isDark }) => (
   <div
@@ -8,8 +9,8 @@ const HomeScreen = ({ isDark }) => (
         : "text-slate-800 border-slate-200 bg-white shadow-sm"
     }`}
   >
-    <img src="/helio-logo.svg" alt="Helio RCM" className="h-20 w-auto" />
-    <p className="text-center text-xl font-semibold">
+    <img src={getHelioLogoSrc(isDark)} alt="Helio RCM" className="h-20 w-auto" loading="lazy" />
+    <p className={`text-center text-xl font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>
       Simple RCM, AI Precision, Powerful Results
     </p>
   </div>

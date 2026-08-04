@@ -12,6 +12,20 @@ body{
   background-color: #ffffff; /* White background */
 }
 
+.dark-mode {
+  --helio-app-bg: #121722;
+  --helio-sidebar-bg: #0f131b;
+  --helio-surface: #1b1f29;
+  --helio-surface-muted: #141824;
+  --helio-border: #1f2433;
+  --helio-border-strong: #2d3348;
+  color-scheme: dark;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+  background-color: var(--helio-app-bg);
+}
+
 
 ::-webkit-scrollbar {
   width: 8px;

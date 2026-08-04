@@ -26,7 +26,7 @@ const SupportWidget = () => {
         <div
           className={`mb-3 w-[360px] max-w-[calc(100vw-2.5rem)] rounded-lg border shadow-2xl ${
             isDark
-              ? "bg-[#1e1f24] border-[#ffffff15] text-white"
+              ? "bg-[var(--helio-surface)] border-[var(--helio-border)] text-white"
               : "bg-white border-gray-200 text-[#151619]"
           }`}
         >
@@ -72,7 +72,7 @@ const SupportWidget = () => {
                     onClick={() => setMessage(question)}
                     className={`w-full rounded-md border px-3 py-2 text-left text-xs leading-5 transition ${
                       isDark
-                        ? "border-[#ffffff14] bg-[#27282D] text-gray-200 hover:border-[#ffffff2e] hover:bg-[#30323a]"
+                        ? "border-[var(--helio-border)] bg-[var(--helio-surface)] text-gray-200 hover:border-[#ffffff2e] hover:bg-[#222a3a]"
                         : "border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300 hover:bg-gray-100"
                     }`}
                   >

@@ -239,3 +239,44 @@ export const resolveTriageWorkflowHint = ({
   }
   return "";
 };
+
+export const parseTickleDateValue = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) {
+    const d = new Date(value);
+    d.setHours(0, 0, 0, 0);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const raw = `${value}`.trim();
+  if (!raw) return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    const d = new Date(`${raw.slice(0, 10)}T12:00:00`);
+    d.setHours(0, 0, 0, 0);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const mdy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdy) {
+    const d = new Date(Number(mdy[3]), Number(mdy[1]) - 1, Number(mdy[2]));
+    d.setHours(0, 0, 0, 0);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(raw);
+  d.setHours(0, 0, 0, 0);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+export const getTickleDaysRemaining = (tickleDate) => {
+  const due = parseTickleDateValue(tickleDate);
+  if (!due) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((due - today) / (1000 * 60 * 60 * 24));
+};
+
+export const formatTickleDueIn = (tickleDate) => {
+  const days = getTickleDaysRemaining(tickleDate);
+  if (days === null) return "—";
+  if (days <= 0) return "Due today";
+  if (days === 1) return "1 day";
+  return `${days} days`;
+};

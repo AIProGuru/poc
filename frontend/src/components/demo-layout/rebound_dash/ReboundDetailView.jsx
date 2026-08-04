@@ -2180,53 +2180,6 @@ const ReboundDetailView = () => {
                 }`}
             >
               <div className="flex flex-col gap-3">
-                <div className={`${triageGlassPanelClass}`}>
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <p className="text-sm font-semibold">Notes History</p>
-                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                      {triageNotesHistory.length} {triageNotesHistory.length === 1 ? "entry" : "entries"}
-                    </span>
-                  </div>
-                  {triageNotesHistory.length === 0 ? (
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                      No triage notes yet. Submit a note to start the history for this claim.
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-3 max-h-56 overflow-y-auto pr-1">
-                      {triageNotesHistory.map((entry, index) => {
-                        const actionSummary = formatTriageActionSummary(entry.action);
-                        return (
-                          <div
-                            key={entry.id || `${entry.action_date}-${index}`}
-                            className={`rounded-xl border px-4 py-3 ${isDark
-                              ? "border-[#2d3348] bg-[#1f2433]"
-                              : "border-gray-200 bg-slate-50"
-                              }`}
-                          >
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                              <span className={`inline-flex h-7 min-w-[2rem] items-center justify-center rounded-full px-2 text-xs font-semibold ${isDark ? "bg-white/10 text-white" : "bg-slate-200 text-slate-800"}`}>
-                                {getInitialsFromUserField(entry.user)}
-                              </span>
-                              <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                                {formatTriageHistoryTimestamp(entry)}
-                              </span>
-                            </div>
-                            {actionSummary ? (
-                              <p className={`mt-2 text-xs font-medium ${isDark ? "text-gray-300" : "text-slate-600"}`}>
-                                Actions: {actionSummary}
-                              </p>
-                            ) : null}
-                            {entry.notes ? (
-                              <p className={`mt-2 text-sm whitespace-pre-wrap ${isDark ? "text-gray-200" : "text-slate-700"}`}>
-                                {entry.notes}
-                              </p>
-                            ) : null}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-lg font-semibold">Triage</p>
                   <div className="flex flex-wrap items-center gap-2">
@@ -2685,6 +2638,54 @@ const ReboundDetailView = () => {
                   )}
                 </div>
               )}
+
+              <div className={`${triageGlassPanelClass}`}>
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <p className="text-sm font-semibold">Notes History</p>
+                  <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    {triageNotesHistory.length} {triageNotesHistory.length === 1 ? "entry" : "entries"}
+                  </span>
+                </div>
+                {triageNotesHistory.length === 0 ? (
+                  <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    No triage notes yet. Submit a note to start the history for this claim.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-3 max-h-56 overflow-y-auto pr-1">
+                    {triageNotesHistory.map((entry, index) => {
+                      const actionSummary = formatTriageActionSummary(entry.action);
+                      return (
+                        <div
+                          key={entry.id || `${entry.action_date}-${index}`}
+                          className={`rounded-xl border px-4 py-3 ${isDark
+                            ? "border-[#2d3348] bg-[#1f2433]"
+                            : "border-gray-200 bg-slate-50"
+                            }`}
+                        >
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <span className={`inline-flex h-7 min-w-[2rem] items-center justify-center rounded-full px-2 text-xs font-semibold ${isDark ? "bg-white/10 text-white" : "bg-slate-200 text-slate-800"}`}>
+                              {getInitialsFromUserField(entry.user)}
+                            </span>
+                            <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                              {formatTriageHistoryTimestamp(entry)}
+                            </span>
+                          </div>
+                          {actionSummary ? (
+                            <p className={`mt-2 text-xs font-medium ${isDark ? "text-gray-300" : "text-slate-600"}`}>
+                              Actions: {actionSummary}
+                            </p>
+                          ) : null}
+                          {entry.notes ? (
+                            <p className={`mt-2 text-sm whitespace-pre-wrap ${isDark ? "text-gray-200" : "text-slate-700"}`}>
+                              {entry.notes}
+                            </p>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

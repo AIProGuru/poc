@@ -1,35 +1,35 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Link } from "react-router-dom";
+import { getHelioLogoSrc } from "../utils/helioLogo";
 
 const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            {/* Logo */}
             <div className="flex items-center">
-              <img
-                src="/helio-logo.svg"
-                alt="HELIO RCM"
-                className="h-12 w-auto"
-                loading="lazy"
-              />
+              <Link to="/">
+                <img
+                  src={getHelioLogoSrc(true)}
+                  alt="HELIO RCM"
+                  className="h-12 w-auto"
+                  loading="lazy"
+                />
+              </Link>
             </div>
 
-            {/* Navigation */}
             <nav className="hidden md:flex space-x-8">
-              <a href="#" className="text-orange-500 font-medium">Home</a>
-              <a href="#" className="text-gray-700 hover:text-orange-500">About</a>
-              <a href="#" className="text-gray-700 hover:text-orange-500">Products</a>
-              <a href="#" className="text-gray-700 hover:text-orange-500">Innovation Suite</a>
-              <a href="#" className="text-gray-700 hover:text-orange-500">Resources</a>
+              <a href="#" className="text-white font-medium">Home</a>
+              <a href="#" className="text-gray-300 hover:text-white">About</a>
+              <a href="#" className="text-gray-300 hover:text-white">Products</a>
+              <a href="#" className="text-gray-300 hover:text-white">Innovation Suite</a>
+              <a href="#" className="text-gray-300 hover:text-white">Resources</a>
             </nav>
 
-            {/* Auth Buttons */}
             <div className="flex items-center space-x-4">
-              <Link to="/signin" className="text-gray-700 hover:text-orange-500">Login</Link>
+              <Link to="/signin" className="text-gray-200 hover:text-white">Login</Link>
               <Link 
                 to="/contact" 
                 className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"

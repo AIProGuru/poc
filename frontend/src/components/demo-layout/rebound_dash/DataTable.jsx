@@ -26,6 +26,7 @@ import BulkDenialsPanel from "./BulkDenialsPanel";
 import { buildAccessExtra } from "../../../utils/accessFilters";
 import { sanitizeAdvancedFilters, countActiveAdvancedFilters } from "../../../utils/advancedFilters";
 import { refreshWorklistFromAppState } from "../../../utils/worklistRefresh";
+import { formatTickleDueIn, getTickleDaysRemaining } from "../../../utils/triageHelpers";
 
 const DataTable = (props) => {
   const apiUrl = useApiEndpoint();
@@ -83,14 +84,51 @@ const DataTable = (props) => {
   const [bulk277Loading, setBulk277Loading] = useState(false);
   const [bulk277Progress, setBulk277Progress] = useState({ total: 0, done: 0, failed: 0 });
   const [bulk277Errors, setBulk277Errors] = useState([]);
-  const [order, _setOrder] = useState("Priority");
+  const [order, _setOrder] = useState(isRecentClaimsView ? "TickleDate" : "Priority");
+  const displayedTableData = useMemo(() => {
+    if (!isRecentClaimsView || !tableData?.length) return tableData;
+    const sortKey = order.endsWith("-") ? order.slice(0, -1) : order;
+    const descending = order.endsWith("-");
+    if (sortKey !== "TickleDate") return tableData;
+    return [...tableData].sort((a, b) => {
+      const aDays = getTickleDaysRemaining(a.TickleDate);
+      const bDays = getTickleDaysRemaining(b.TickleDate);
+      const aVal = aDays === null ? Number.MAX_SAFE_INTEGER : aDays;
+      const bVal = bDays === null ? Number.MAX_SAFE_INTEGER : bDays;
+      return descending ? bVal - aVal : aVal - bVal;
+    });
+  }, [isRecentClaimsView, tableData, order]);
+  const rowsForTable = isRecentClaimsView ? displayedTableData : tableData;
+  useEffect(() => {
+    if (isRecentClaimsView) {
+      _setOrder("TickleDate");
+    }
+  }, [isRecentClaimsView]);
   const theme = useSelector((state) => state.app.theme);
   const isDarkMode = theme === 'dark';
-  const tableBackground = isDarkMode ? '#27282D' : '#ffffff';
+  const tableBackground = isDarkMode ? '#1b1f29' : '#ffffff';
   const formatDateSafe = (value) => {
     if (!value) return '';
     const dateObj = new Date(value);
     return Number.isNaN(dateObj.getTime()) ? '' : dateObj.toISOString().substring(0, 10);
+  };
+  const formatTickleDueCell = (tickleDate) => {
+    const days = getTickleDaysRemaining(tickleDate);
+    const dueLabel = formatTickleDueIn(tickleDate);
+    const dateLabel = formatDateSafe(tickleDate);
+    const urgent = days !== null && days <= 2;
+    return (
+      <div className="flex flex-col gap-0.5 leading-tight">
+        <span className={urgent ? (isDarkMode ? "font-semibold text-amber-300" : "font-semibold text-amber-700") : undefined}>
+          {dueLabel}
+        </span>
+        {dateLabel ? (
+          <span className={`text-xs ${isDarkMode ? "text-gray-400" : "text-slate-500"}`}>
+            {dateLabel}
+          </span>
+        ) : null}
+      </div>
+    );
   };
   const formatCurrencyRounded = (value) => `$${samplifyInteger(Number(value) || 0)}`;
   const formatCurrencyExact = (value) => `$${samplifyDouble(Number(value) || 0)}`;
@@ -648,8 +686,7 @@ const DataTable = (props) => {
     toast.success('Downloading...');
 
     // Define the CSV headers based on the table headers
-    const tableHeaders = [
-      'Priority',
+    const sharedHeaders = [
       'Facility Name',
       'Provider Tax ID',
       'Claim ID',
@@ -669,19 +706,21 @@ const DataTable = (props) => {
       'CARC',
       'RARC',
       'Primary Dx',
-      'Primary Service'
+      'Primary Service',
     ];
+    const tableHeaders = isRecentClaimsView
+      ? ['Due In', 'Work Again On', ...sharedHeaders, 'Triaged On']
+      : ['Priority', ...sharedHeaders];
     let csv_data = [tableHeaders.join(',')];
 
     // Process each row of data
-    tableData.forEach((row, index) => {
+    (rowsForTable || tableData).forEach((row) => {
       const remark = row.Remark ? [...new Set(row.Remark.split('*'))].join('*') : '';
       const adjustment45 = getAdjustment45Value(row);
       const charges = Number(row.Amount) || 0;
       const allowed = Number(row.AllowedAmt) || 0;
       const balance = getArBalanceValue(row);
-      let value = [
-        row.Priority || '',
+      const sharedValues = [
         getFacility(row),
         row.ProvTaxID || row.ProviderTaxID || '',
         row.ClaimNo || row.ClaimID || '',
@@ -703,6 +742,14 @@ const DataTable = (props) => {
         row.PrimaryDX ? row.PrimaryDX.split("::")[0] : '',
         row.PrimaryProcedure || ''
       ];
+      let value = isRecentClaimsView
+        ? [
+          formatTickleDueIn(row.TickleDate),
+          formatDateSafe(row.TickleDate),
+          ...sharedValues,
+          formatDateSafe(row.TriageActionDate),
+        ]
+        : [row.Priority || '', ...sharedValues];
 
       csv_data.push(value.join(','));
     });
@@ -843,15 +890,10 @@ const DataTable = (props) => {
           onClearSelection={() => dispatch(setSelectedClaimIds([]))}
         />
       )}
-      <div className={`rounded-[32px] border ${isDarkMode ? 'bg-[#27282D] border-[#1F2231] text-white' : 'bg-white border-[#E4E7EF] text-[#0f172a]'} p-6 flex flex-col h-full`}>
+      <div className={`rounded-[32px] border ${isDarkMode ? 'bg-[var(--helio-surface)] border-[var(--helio-border)] text-white' : 'bg-white border-[#E4E7EF] text-[#0f172a]'} p-6 flex flex-col h-full`}>
         <div className={`mb-3 text-sm font-semibold ${isDarkMode ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
           {appTitle || 'Home'}
         </div>
-        {isRecentClaimsView && (
-          <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-[#3A4058] bg-[#1f2231] text-gray-200' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
-            Claims you triaged recently that are hidden from the active worklist until their tickler date. Click a row to reopen the claim detail.
-          </div>
-        )}
         <div className="relative pb-4 pt-2">
         <button
           className={`p-1 absolute left-0 top-6 -translate-x-1/2 z-10 ${isDarkMode ? 'text-white/70 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
@@ -872,7 +914,7 @@ const DataTable = (props) => {
           </svg>
         </button>
         <div className="pl-9 pr-5">
-          <div className={`overflow-x-auto rounded-2xl ${isDarkMode ? 'bg-[#27282D]' : 'bg-white'}`}>
+          <div className={`overflow-x-auto rounded-2xl ${isDarkMode ? 'bg-[var(--helio-surface)]' : 'bg-white'}`}>
             <TableContainer
               className="datatable-scroll"
               ref={tableScrollRef}
@@ -944,10 +986,14 @@ const DataTable = (props) => {
                       />
                     </TableCell>
                     )}
-                    <TableCell style={{ ...headerCellStyle, minWidth: "120px" }} onClick={() => setOrder("Priority")} className="cursor-pointer">
+                    <TableCell
+                      style={{ ...headerCellStyle, minWidth: "120px" }}
+                      onClick={() => setOrder(isRecentClaimsView ? "TickleDate" : "Priority")}
+                      className="cursor-pointer"
+                    >
                       <div className="flex items-center gap-2">
-                        Priority
-                        {renderSortIcon('Priority')}
+                        {isRecentClaimsView ? "Due In" : "Priority"}
+                        {renderSortIcon(isRecentClaimsView ? "TickleDate" : "Priority")}
                       </div>
                     </TableCell>
                     <TableCell style={{ ...headerCellStyle, minWidth: "170px" }} onClick={() => setOrder("BillProvName")} className="cursor-pointer">
@@ -1059,22 +1105,17 @@ const DataTable = (props) => {
                       </div>
                     </TableCell>
                     {isRecentClaimsView && (
-                      <>
-                        <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
-                          Triaged On
-                        </TableCell>
-                        <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
-                          Tickler Date
-                        </TableCell>
-                      </>
+                      <TableCell style={{ ...headerCellStyle, minWidth: "140px" }}>
+                        Triaged On
+                      </TableCell>
                     )}
                   </TableRow>
                 </TableHead>
                 <TableBody className="relative">
                   {tableLoading && <TableRow className="flex justify-center items-center h-[100px]"><TableCell colSpan={22}><div className="flex justify-center items-center">Loading data...</div></TableCell></TableRow>}
-                  {!tableLoading && tableData.length === 0 && <TableRow className="flex justify-center items-center h-[100px]"><TableCell className="w-full" colSpan={22}><div className="flex justify-center items-center">No record</div></TableCell></TableRow>}
+                  {!tableLoading && rowsForTable.length === 0 && <TableRow className="flex justify-center items-center h-[100px]"><TableCell className="w-full" colSpan={22}><div className="flex justify-center items-center">No record</div></TableCell></TableRow>}
                   {
-                    !tableLoading && tableData.length !== 0 && tableData.map((row, index) => <TableRow
+                    !tableLoading && rowsForTable.length !== 0 && rowsForTable.map((row, index) => <TableRow
                       key={index}
                       className="transition-colors"
                       sx={{
@@ -1114,7 +1155,7 @@ const DataTable = (props) => {
                       </TableCell>
                       )}
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} className="h-[50px]" style={{ ...bodyCellStyle, minWidth: "120px" }}>
-                        {row.Priority || ''}
+                        {isRecentClaimsView ? formatTickleDueCell(row.TickleDate) : (row.Priority || '')}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
                         {getFacility(row)}
@@ -1194,14 +1235,9 @@ const DataTable = (props) => {
                         {row.PrimaryProcedure || ''}
                       </TableCell>
                       {isRecentClaimsView && (
-                        <>
-                          <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                            {formatDateSafe(row.TriageActionDate)}
-                          </TableCell>
-                          <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
-                            {formatDateSafe(row.TickleDate)}
-                          </TableCell>
-                        </>
+                        <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
+                          {formatDateSafe(row.TriageActionDate)}
+                        </TableCell>
                       )}
                     </TableRow>)
                   }
@@ -1221,7 +1257,7 @@ const DataTable = (props) => {
           </label>
           <select
             id="pageSize"
-            className={` border-none text-black text-sm rounded-lg focus:ring-gray-500 focus:border-gray-500 block  p-3  ${theme === 'dark' ? 'bg-[#27282D] text-white' : 'bg-gray-50 text-black'}`}
+            className={` border-none text-black text-sm rounded-lg focus:ring-gray-500 focus:border-gray-500 block  p-3  ${theme === 'dark' ? 'bg-[var(--helio-surface)] text-white' : 'bg-gray-50 text-black'}`}
             value={pageSize}
             onChange={(e) => {
               dispatch(setPageSize(parseInt(e.target.value)))
