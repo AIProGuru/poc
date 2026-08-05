@@ -124,6 +124,26 @@ export const formatTriageActionSummary = (actionValue) => {
   return labels.join(", ");
 };
 
+const SUBMIT_ACTION_PATTERN = /submit/i;
+
+/** True when a saved triage action represents a claim submit/resubmit. */
+export const isSubmitActionEntry = (entry) => {
+  if (!entry) return false;
+  const status = `${entry.claim_status || ""}`.trim().toLowerCase();
+  if (status.includes("resubmit")) return true;
+
+  const parsed = parseTriageActionValue(entry.action);
+  const labels = [
+    ...(parsed.selected || []),
+    ...Object.keys(parsed.transactionCodes || {}),
+  ];
+  return labels.some((label) => SUBMIT_ACTION_PATTERN.test(`${label}`));
+};
+
+/** Same timestamp source as Notes History display. */
+export const resolveTriageHistoryEntryDate = (entry) =>
+  entry?.action_date || entry?.created_at || null;
+
 export const getTriageNotesHistory = (actions = []) =>
   (actions || [])
     .filter((entry) => `${entry?.claim_status || ""}`.toLowerCase() === "triage")
@@ -132,10 +152,14 @@ export const getTriageNotesHistory = (actions = []) =>
       const aId = Number(a?.id) || 0;
       const bId = Number(b?.id) || 0;
       if (aId && bId) return aId - bId;
-      const aTime = Date.parse(a?.action_date || "") || 0;
-      const bTime = Date.parse(b?.action_date || "") || 0;
+      const aTime = Date.parse(a?.action_date || a?.created_at || "") || 0;
+      const bTime = Date.parse(b?.action_date || b?.created_at || "") || 0;
       return aTime - bTime;
     });
+
+/** Chronological triage note entries that include a submit-type action. */
+export const getTriageSubmitHistory = (actions = []) =>
+  getTriageNotesHistory(actions).filter(isSubmitActionEntry);
 
 export const findNextWorklistClaim = (tableData = [], currentClaimNo = "") => {
   if (!Array.isArray(tableData) || tableData.length === 0 || !currentClaimNo) return null;

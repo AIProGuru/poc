@@ -1,4 +1,7 @@
-import { parseTriageActionValue } from "./triageHelpers";
+import {
+  getTriageSubmitHistory,
+  resolveTriageHistoryEntryDate,
+} from "./triageHelpers";
 
 /** Parse a claim/remit date to UTC midnight for day-level comparisons. */
 export const toClaimDateOnlyMs = (value) => {
@@ -8,50 +11,29 @@ export const toClaimDateOnlyMs = (value) => {
   return Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
 };
 
-const SUBMIT_ACTION_PATTERN = /submit/i;
-
-/** True when a saved action represents a claim submit/resubmit from triage. */
-export const isSubmitActionEntry = (entry) => {
-  if (!entry) return false;
-  const status = `${entry.claim_status || ""}`.trim().toLowerCase();
-  if (status.includes("resubmit")) return true;
-
-  const parsed = parseTriageActionValue(entry.action);
-  return (parsed.selected || []).some((label) => SUBMIT_ACTION_PATTERN.test(`${label}`));
-};
-
 /**
- * Latest submit date from triage/resubmit actions, falling back to 837 TransactionDate.
+ * First submit date from triage Notes History (earliest submit-type entry).
+ * Uses the same date field as the history timestamp display.
  */
-export const resolveClaimSubmitDate = (claimData, actions = []) => {
-  let latestMs = null;
-  let latestRaw = null;
-
-  (actions || []).forEach((entry) => {
-    if (!isSubmitActionEntry(entry)) return;
-    const ms = toClaimDateOnlyMs(entry.action_date);
-    if (ms == null) return;
-    if (latestMs == null || ms > latestMs) {
-      latestMs = ms;
-      latestRaw = entry.action_date;
-    }
-  });
-
-  if (latestMs == null) {
-    const fallback = claimData?.SubmitDate || claimData?.TransactionDate;
-    latestMs = toClaimDateOnlyMs(fallback);
-    latestRaw = fallback || null;
+export const resolveClaimSubmitDate = (_claimData, actions = []) => {
+  const submits = getTriageSubmitHistory(actions);
+  if (submits.length === 0) {
+    return { submitDateMs: null, submitDateRaw: null, hasSubmitDate: false };
   }
 
+  const firstSubmit = submits[0];
+  const submitDateRaw = resolveTriageHistoryEntryDate(firstSubmit);
+  const submitDateMs = toClaimDateOnlyMs(submitDateRaw);
+
   return {
-    submitDateMs: latestMs,
-    submitDateRaw: latestRaw,
-    hasSubmitDate: latestMs != null,
+    submitDateMs,
+    submitDateRaw,
+    hasSubmitDate: submitDateMs != null,
   };
 };
 
 /**
- * Sum allowed amounts from 835 remits received after the claim submit date.
+ * Sum allowed amounts from 835 remits received after the first triage submit date.
  */
 export const calculateRecoveryAmount = (claimData, remits = [], actions = []) => {
   const { submitDateMs, submitDateRaw, hasSubmitDate } = resolveClaimSubmitDate(
@@ -91,3 +73,5 @@ export const calculateRecoveryAmount = (claimData, remits = [], actions = []) =>
     submitDate: submitDateRaw,
   };
 };
+
+export { isSubmitActionEntry } from "./triageHelpers";

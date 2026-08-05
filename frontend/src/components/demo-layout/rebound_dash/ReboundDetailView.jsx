@@ -1640,7 +1640,7 @@ const ReboundDetailView = () => {
                     <>
                       Sum of allowed amounts from{" "}
                       {recoveryMetrics.remitCount}{" "}
-                      {recoveryMetrics.remitCount === 1 ? "835 remit" : "835 remits"} received after submit date (
+                      {recoveryMetrics.remitCount === 1 ? "835 remit" : "835 remits"} received after first submit date (
                       {formatDateValue(recoveryMetrics.submitDate)}).
                     </>
                   ) : (

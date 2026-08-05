@@ -95,6 +95,17 @@ def _parse_triage_action_value(raw_value) -> Dict[str, Any]:
     }
 
 
+def _is_triage_note_entry(entry: Optional[Dict[str, Any]]) -> bool:
+    if not entry:
+        return False
+    status = (entry.get("claim_status") or "").strip().lower()
+    if status != "triage":
+        return False
+    notes = (entry.get("notes") or "").strip()
+    action = (entry.get("action") or "").strip()
+    return bool(notes or action)
+
+
 def _is_submit_action_entry(entry: Optional[Dict[str, Any]]) -> bool:
     if not entry:
         return False
@@ -102,20 +113,31 @@ def _is_submit_action_entry(entry: Optional[Dict[str, Any]]) -> bool:
     if "resubmit" in status:
         return True
     parsed = _parse_triage_action_value(entry.get("action"))
-    return any(re.search(r"submit", str(label or ""), re.IGNORECASE) for label in parsed.get("selected", []))
+    labels = list(parsed.get("selected", []))
+    transaction_codes = parsed.get("transactionCodes")
+    if isinstance(transaction_codes, dict):
+        labels.extend(transaction_codes.keys())
+    return any(re.search(r"submit", str(label or ""), re.IGNORECASE) for label in labels)
+
+
+def _triage_history_sort_key(entry: Dict[str, Any]) -> Tuple[int, int]:
+    entry_id = int(entry.get("id") or 0)
+    raw_date = entry.get("action_date") or entry.get("created_at") or ""
+    parsed = _coerce_to_date(raw_date)
+    sort_date = int(parsed.strftime("%Y%m%d")) if parsed else 0
+    return (entry_id if entry_id else 10**12, sort_date)
 
 
 def _resolve_submit_date(claim_data: Optional[Dict[str, Any]], actions: List[Dict[str, Any]]) -> Optional[date]:
-    latest: Optional[date] = None
-    for entry in actions or []:
+    triage_entries = [entry for entry in (actions or []) if _is_triage_note_entry(entry)]
+    triage_entries.sort(key=_triage_history_sort_key)
+    for entry in triage_entries:
         if not _is_submit_action_entry(entry):
             continue
-        entry_date = _coerce_to_date(entry.get("action_date"))
-        if entry_date and (latest is None or entry_date > latest):
-            latest = entry_date
-    if latest is None and claim_data:
-        latest = _coerce_to_date(claim_data.get("SubmitDate") or claim_data.get("TransactionDate"))
-    return latest
+        entry_date = _coerce_to_date(entry.get("action_date") or entry.get("created_at"))
+        if entry_date:
+            return entry_date
+    return None
 
 
 def fetch_remit_remark_codes(cursor, id_837, id_835) -> List[str]:
