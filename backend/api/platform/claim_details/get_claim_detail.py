@@ -74,6 +74,16 @@ def _coerce_to_date(value) -> Optional[date]:
 def _parse_triage_action_value(raw_value) -> Dict[str, Any]:
     if not raw_value:
         return {"selected": [], "otherText": "", "transactionCodes": {}}
+    if isinstance(raw_value, dict):
+        selected = raw_value.get("selected") if isinstance(raw_value.get("selected"), list) else []
+        transaction_codes = raw_value.get("transactionCodes")
+        return {
+            "selected": [item for item in selected if item],
+            "otherText": raw_value.get("otherText") or "",
+            "transactionCodes": transaction_codes if isinstance(transaction_codes, dict) else {},
+        }
+    if isinstance(raw_value, list):
+        return {"selected": [item for item in raw_value if item], "otherText": "", "transactionCodes": {}}
     try:
         parsed = json.loads(raw_value)
         if isinstance(parsed, list):
@@ -95,34 +105,59 @@ def _parse_triage_action_value(raw_value) -> Dict[str, Any]:
     }
 
 
+def _normalize_action_entry(entry: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not entry:
+        return {}
+    return {
+        **entry,
+        "id": entry.get("id") or entry.get("ID"),
+        "action_date": entry.get("action_date") or entry.get("ActionDate") or entry.get("actionDate") or "",
+        "created_at": entry.get("created_at") or entry.get("CreatedAt") or entry.get("createdAt") or "",
+        "claim_status": entry.get("claim_status") or entry.get("ClaimStatus") or "",
+        "action": entry.get("action") or entry.get("Action") or "",
+        "notes": entry.get("notes") or entry.get("Notes") or "",
+    }
+
+
 def _is_triage_note_entry(entry: Optional[Dict[str, Any]]) -> bool:
     if not entry:
         return False
-    status = (entry.get("claim_status") or "").strip().lower()
+    normalized = _normalize_action_entry(entry)
+    status = (normalized.get("claim_status") or "").strip().lower()
     if status != "triage":
         return False
-    notes = (entry.get("notes") or "").strip()
-    action = (entry.get("action") or "").strip()
+    notes = (normalized.get("notes") or "").strip()
+    action = (normalized.get("action") or "").strip()
+    if isinstance(action, dict):
+        action = json.dumps(action)
+    action = str(action).strip()
     return bool(notes or action)
 
 
 def _is_submit_action_entry(entry: Optional[Dict[str, Any]]) -> bool:
     if not entry:
         return False
-    status = (entry.get("claim_status") or "").strip().lower()
+    normalized = _normalize_action_entry(entry)
+    status = (normalized.get("claim_status") or "").strip().lower()
     if "resubmit" in status:
         return True
-    parsed = _parse_triage_action_value(entry.get("action"))
+    parsed = _parse_triage_action_value(normalized.get("action"))
     labels = list(parsed.get("selected", []))
     transaction_codes = parsed.get("transactionCodes")
     if isinstance(transaction_codes, dict):
         labels.extend(transaction_codes.keys())
-    return any(re.search(r"submit", str(label or ""), re.IGNORECASE) for label in labels)
+        if transaction_codes:
+            return True
+    if any(re.search(r"submit|resubmit|rebill", str(label or ""), re.IGNORECASE) for label in labels):
+        return True
+    notes = str(normalized.get("notes") or "")
+    return bool(re.search(r"submit|resubmit|rebill", notes, re.IGNORECASE))
 
 
 def _triage_history_sort_key(entry: Dict[str, Any]) -> Tuple[int, int]:
-    entry_id = int(entry.get("id") or 0)
-    raw_date = entry.get("action_date") or entry.get("created_at") or ""
+    normalized = _normalize_action_entry(entry)
+    entry_id = int(normalized.get("id") or 0)
+    raw_date = normalized.get("action_date") or normalized.get("created_at") or ""
     parsed = _coerce_to_date(raw_date)
     sort_date = int(parsed.strftime("%Y%m%d")) if parsed else 0
     return (entry_id if entry_id else 10**12, sort_date)
@@ -134,7 +169,8 @@ def _resolve_submit_date(claim_data: Optional[Dict[str, Any]], actions: List[Dic
     for entry in triage_entries:
         if not _is_submit_action_entry(entry):
             continue
-        entry_date = _coerce_to_date(entry.get("action_date") or entry.get("created_at"))
+        normalized = _normalize_action_entry(entry)
+        entry_date = _coerce_to_date(normalized.get("action_date") or normalized.get("created_at"))
         if entry_date:
             return entry_date
     return None

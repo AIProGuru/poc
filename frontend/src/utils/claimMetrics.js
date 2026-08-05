@@ -1,11 +1,28 @@
-import {
-  getTriageSubmitHistory,
-  resolveTriageHistoryEntryDate,
-} from "./triageHelpers";
+import { resolveFirstTriageSubmitDate } from "./triageHelpers";
 
 /** Parse a claim/remit date to UTC midnight for day-level comparisons. */
 export const toClaimDateOnlyMs = (value) => {
   if (value === undefined || value === null || value === "") return null;
+
+  const text = `${value}`.trim();
+  const mdyMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (mdyMatch) {
+    const month = Number(mdyMatch[1]) - 1;
+    const day = Number(mdyMatch[2]);
+    const year = Number(mdyMatch[3]);
+    if (month >= 0 && month <= 11 && day >= 1 && day <= 31) {
+      return Date.UTC(year, month, day);
+    }
+  }
+
+  const isoDateMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoDateMatch) {
+    const year = Number(isoDateMatch[1]);
+    const month = Number(isoDateMatch[2]) - 1;
+    const day = Number(isoDateMatch[3]);
+    return Date.UTC(year, month, day);
+  }
+
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return null;
   return Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
@@ -16,13 +33,7 @@ export const toClaimDateOnlyMs = (value) => {
  * Uses the same date field as the history timestamp display.
  */
 export const resolveClaimSubmitDate = (_claimData, actions = []) => {
-  const submits = getTriageSubmitHistory(actions);
-  if (submits.length === 0) {
-    return { submitDateMs: null, submitDateRaw: null, hasSubmitDate: false };
-  }
-
-  const firstSubmit = submits[0];
-  const submitDateRaw = resolveTriageHistoryEntryDate(firstSubmit);
+  const { submitDateRaw } = resolveFirstTriageSubmitDate(actions);
   const submitDateMs = toClaimDateOnlyMs(submitDateRaw);
 
   return {
@@ -43,7 +54,7 @@ export const calculateRecoveryAmount = (claimData, remits = [], actions = []) =>
 
   if (!hasSubmitDate) {
     return {
-      amount: Number(claimData?.RecoveryAmount) || 0,
+      amount: 0,
       remitCount: 0,
       hasSubmitDate: false,
       submitDate: null,

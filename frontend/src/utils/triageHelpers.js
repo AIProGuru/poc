@@ -29,6 +29,19 @@ export const getInitialsFromUserField = (user = "") => getUserInitials("", "", u
 
 export const parseTriageActionValue = (value) => {
   if (!value) return { selected: [], otherText: "", transactionCodes: {} };
+  if (typeof value === "object") {
+    if (Array.isArray(value)) {
+      return { selected: value.filter(Boolean), otherText: "", transactionCodes: {} };
+    }
+    return {
+      selected: Array.isArray(value.selected) ? value.selected.filter(Boolean) : [],
+      otherText: value.otherText ? `${value.otherText}` : "",
+      transactionCodes:
+        value.transactionCodes && typeof value.transactionCodes === "object"
+          ? value.transactionCodes
+          : {},
+    };
+  }
   try {
     const parsed = JSON.parse(value);
     if (Array.isArray(parsed)) {
@@ -101,8 +114,29 @@ export const buildAutoTriageNotes = (initials, selectedLabels = [], otherText = 
   return `${prefix} ${parts.join(", ")}`;
 };
 
+/** Normalize action row keys from API / DB variants. */
+export const normalizeActionEntry = (entry) => {
+  if (!entry || typeof entry !== "object") return entry;
+  return {
+    ...entry,
+    id: entry.id ?? entry.ID,
+    action_date: entry.action_date ?? entry.ActionDate ?? entry.actionDate ?? "",
+    created_at: entry.created_at ?? entry.CreatedAt ?? entry.createdAt ?? "",
+    claim_status: entry.claim_status ?? entry.ClaimStatus ?? entry.claim_status ?? "",
+    action: entry.action ?? entry.Action ?? "",
+    notes: entry.notes ?? entry.Notes ?? "",
+    user: entry.user ?? entry.User ?? entry.username ?? "",
+  };
+};
+
+/** Same timestamp source as Notes History display. */
+export const resolveTriageHistoryEntryDate = (entry) => {
+  const normalized = normalizeActionEntry(entry);
+  return normalized?.action_date || normalized?.created_at || null;
+};
+
 export const formatTriageHistoryTimestamp = (entry) => {
-  const raw = entry?.action_date || entry?.created_at || "";
+  const raw = resolveTriageHistoryEntryDate(entry) || "";
   if (!raw) return "—";
   const parsed = Date.parse(raw);
   if (!Number.isNaN(parsed)) {
@@ -124,42 +158,60 @@ export const formatTriageActionSummary = (actionValue) => {
   return labels.join(", ");
 };
 
-const SUBMIT_ACTION_PATTERN = /submit/i;
+const SUBMIT_ACTION_PATTERN = /submit|resubmit|rebill/i;
 
-/** True when a saved triage action represents a claim submit/resubmit. */
+/** True when a triage note entry includes a claim submit/resubmit action. */
 export const isSubmitActionEntry = (entry) => {
-  if (!entry) return false;
-  const status = `${entry.claim_status || ""}`.trim().toLowerCase();
+  const normalized = normalizeActionEntry(entry);
+  if (!normalized) return false;
+
+  const status = `${normalized.claim_status || ""}`.trim().toLowerCase();
   if (status.includes("resubmit")) return true;
 
-  const parsed = parseTriageActionValue(entry.action);
+  const parsed = parseTriageActionValue(normalized.action);
   const labels = [
     ...(parsed.selected || []),
     ...Object.keys(parsed.transactionCodes || {}),
   ];
-  return labels.some((label) => SUBMIT_ACTION_PATTERN.test(`${label}`));
-};
+  if (labels.some((label) => SUBMIT_ACTION_PATTERN.test(`${label}`))) return true;
 
-/** Same timestamp source as Notes History display. */
-export const resolveTriageHistoryEntryDate = (entry) =>
-  entry?.action_date || entry?.created_at || null;
+  // Bulk/Individual submit actions persist a transaction code when selected.
+  if (Object.keys(parsed.transactionCodes || {}).length > 0) return true;
+
+  const notes = `${normalized.notes || ""}`;
+  return SUBMIT_ACTION_PATTERN.test(notes);
+};
 
 export const getTriageNotesHistory = (actions = []) =>
   (actions || [])
-    .filter((entry) => `${entry?.claim_status || ""}`.toLowerCase() === "triage")
+    .map(normalizeActionEntry)
+    .filter((entry) => `${entry?.claim_status || ""}`.toLowerCase().trim() === "triage")
     .filter((entry) => (entry?.notes || "").trim() || (entry?.action || "").trim())
     .sort((a, b) => {
       const aId = Number(a?.id) || 0;
       const bId = Number(b?.id) || 0;
       if (aId && bId) return aId - bId;
-      const aTime = Date.parse(a?.action_date || a?.created_at || "") || 0;
-      const bTime = Date.parse(b?.action_date || b?.created_at || "") || 0;
+      const aTime = Date.parse(resolveTriageHistoryEntryDate(a) || "") || 0;
+      const bTime = Date.parse(resolveTriageHistoryEntryDate(b) || "") || 0;
       return aTime - bTime;
     });
 
-/** Chronological triage note entries that include a submit-type action. */
+/** Earliest triage note entry that includes a submit-type action. */
 export const getTriageSubmitHistory = (actions = []) =>
   getTriageNotesHistory(actions).filter(isSubmitActionEntry);
+
+/** First submit date from Notes History (same entry/date as the history UI). */
+export const resolveFirstTriageSubmitDate = (actions = []) => {
+  const submits = getTriageSubmitHistory(actions);
+  if (submits.length === 0) {
+    return { submitDateRaw: null, firstSubmitEntry: null };
+  }
+  const firstSubmit = submits[0];
+  return {
+    submitDateRaw: resolveTriageHistoryEntryDate(firstSubmit),
+    firstSubmitEntry: firstSubmit,
+  };
+};
 
 export const findNextWorklistClaim = (tableData = [], currentClaimNo = "") => {
   if (!Array.isArray(tableData) || tableData.length === 0 || !currentClaimNo) return null;
