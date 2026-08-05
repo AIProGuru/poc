@@ -22,18 +22,21 @@ import { buildAccessExtra } from "../../../utils/accessFilters";
 import { refreshWorklistFromAppState } from "../../../utils/worklistRefresh";
 import {
   buildAutoTriageNotes,
+  calculateRecoveryAmount,
   findNextWorklistClaim,
+  formatSubmitDateDisplay,
   formatTriageActionSummary,
   formatTriageHistoryTimestamp,
+  getFirstSubmitDate,
   getInitialsFromUserField,
   getTriageNotesHistory,
   getUserInitials,
+  parseTickleDateValue,
   parseTriageActionValue,
   resolveTickleFromActions,
   resolveTriageActionCategory,
   resolveTriageWorkflowHint,
 } from "../../../utils/triageHelpers";
-import { calculateRecoveryAmount } from "../../../utils/claimMetrics";
 import { IconButton } from "@mui/material";
 import "./dashboard.css"
 
@@ -336,21 +339,20 @@ const ReboundDetailView = () => {
     [currentClaim]
   );
 
+  const firstSubmitDate = useMemo(
+    () => getFirstSubmitDate(currentClaim?.Action || []),
+    [currentClaim?.Action]
+  );
+
+  const recoveryAmount = useMemo(
+    () => calculateRecoveryAmount(currentClaim?.Remit || [], firstSubmitDate),
+    [currentClaim?.Remit, firstSubmitDate]
+  );
+
   const resolvedTickle = useMemo(
     () => resolveTickleFromActions(triageActions.filter((item) => item.checked)),
     [triageActions]
   );
-
-  const recoveryMetrics = useMemo(() => {
-    if (!currentClaim?.Claim?.Data) {
-      return { amount: 0, remitCount: 0, hasSubmitDate: false, submitDate: null };
-    }
-    return calculateRecoveryAmount(
-      currentClaim.Claim.Data,
-      currentClaim.Remit,
-      currentClaim.Action
-    );
-  }, [currentClaim]);
 
   useEffect(() => {
     if (apiUrl === '') return;
@@ -938,14 +940,18 @@ const ReboundDetailView = () => {
       : `${numericValue}`.replace(/\.0+$/, "");
   };
 
-  const resolveActionDate = () => actionDate || currentClaim?.Action?.[0]?.action_date || null;
+  const resolveActionDate = () => {
+    if (actionDate) return actionDate;
+    return formatSubmitDateDisplay(firstSubmitDate) || currentClaim?.Claim?.Data?.FirstSubmitDate || null;
+  };
   const isAfterActionDate = (checkDate) => {
-    const action = resolveActionDate();
-    if (!action || !checkDate) return false;
-    const actionTime = Date.parse(action);
-    const checkTime = Date.parse(checkDate);
-    if (Number.isNaN(actionTime) || Number.isNaN(checkTime)) return false;
-    return checkTime > actionTime;
+    const submitDate =
+      firstSubmitDate ||
+      (resolveActionDate() ? parseTickleDateValue(resolveActionDate()) : null);
+    if (!submitDate || !checkDate) return false;
+    const checkTime = parseTickleDateValue(checkDate);
+    if (!checkTime) return false;
+    return checkTime.getTime() > submitDate.getTime();
   };
 
   const shouldExcludeAdjustment = (groupCode, reasonCode) => {
@@ -1624,29 +1630,30 @@ const ReboundDetailView = () => {
                   </ul>
                 </>
               )}
+
               <div
-                className={`mt-6 rounded-xl border p-4 ${
+                className={`mt-6 rounded-xl border p-4 sm:p-5 ${
                   isDark
                     ? "border-[var(--helio-border)] bg-[var(--helio-surface-muted)]"
                     : "border-slate-200 bg-slate-50"
                 }`}
               >
-                <p className={`text-sm font-semibold ${emphasisTextClass}`}>Recovery Amount</p>
-                <p className={`mt-2 text-2xl font-semibold tabular-nums ${isDark ? "text-white" : "text-slate-900"}`}>
-                  {formatCurrency(recoveryMetrics.amount)}
+                <p className={`text-sm font-semibold ${isDark ? "text-gray-100" : "text-slate-900"}`}>
+                  Recovery Amount
                 </p>
-                <p className={`mt-2 text-xs leading-relaxed ${mutedLabelClass}`}>
-                  {recoveryMetrics.hasSubmitDate ? (
-                    <>
-                      Sum of allowed amounts from{" "}
-                      {recoveryMetrics.remitCount}{" "}
-                      {recoveryMetrics.remitCount === 1 ? "835 remit" : "835 remits"} received after first submit date (
-                      {formatDateValue(recoveryMetrics.submitDate)}).
-                    </>
-                  ) : (
-                    "Submit date unavailable; recovery amount cannot be calculated from 835 payments."
-                  )}
+                <p className={`mt-2 text-2xl font-semibold tabular-nums ${isDark ? "text-emerald-400" : "text-emerald-700"}`}>
+                  ${samplifyDouble(recoveryAmount)}
                 </p>
+                {firstSubmitDate ? (
+                  <p className={`mt-2 text-xs leading-relaxed ${mutedLabelClass}`}>
+                    Sum of allowed amounts from 835 remits received after the first submit date (
+                    {formatSubmitDateDisplay(firstSubmitDate)}).
+                  </p>
+                ) : (
+                  <p className={`mt-2 text-xs leading-relaxed ${mutedLabelClass}`}>
+                    Submit a triage action (individual or bulk) to establish a submit date and track recovery from subsequent 835 payments.
+                  </p>
+                )}
               </div>
             </div>
           )}

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 import json
 import re
 import time
@@ -51,129 +51,6 @@ def custom_paid_service_remark_has_line_id(cursor, db_name: str) -> bool:
     except Exception as exc:
         logger.warning("Unable to inspect CUSTOM_PAID_SERVICE_REMARK.line_id: %s", exc)
         return False
-
-
-def _coerce_to_date(value) -> Optional[date]:
-    if value is None:
-        return None
-    if isinstance(value, datetime):
-        return value.date()
-    if isinstance(value, date):
-        return value
-    text = str(value).strip()
-    if not text:
-        return None
-    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%Y-%m-%d %H:%M:%S"):
-        try:
-            return datetime.strptime(text[:19], fmt).date()
-        except ValueError:
-            continue
-    return None
-
-
-def _parse_triage_action_value(raw_value) -> Dict[str, Any]:
-    if not raw_value:
-        return {"selected": [], "otherText": "", "transactionCodes": {}}
-    if isinstance(raw_value, dict):
-        selected = raw_value.get("selected") if isinstance(raw_value.get("selected"), list) else []
-        transaction_codes = raw_value.get("transactionCodes")
-        return {
-            "selected": [item for item in selected if item],
-            "otherText": raw_value.get("otherText") or "",
-            "transactionCodes": transaction_codes if isinstance(transaction_codes, dict) else {},
-        }
-    if isinstance(raw_value, list):
-        return {"selected": [item for item in raw_value if item], "otherText": "", "transactionCodes": {}}
-    try:
-        parsed = json.loads(raw_value)
-        if isinstance(parsed, list):
-            return {"selected": [item for item in parsed if item], "otherText": "", "transactionCodes": {}}
-        if isinstance(parsed, dict):
-            selected = parsed.get("selected") if isinstance(parsed.get("selected"), list) else []
-            transaction_codes = parsed.get("transactionCodes")
-            return {
-                "selected": [item for item in selected if item],
-                "otherText": parsed.get("otherText") or "",
-                "transactionCodes": transaction_codes if isinstance(transaction_codes, dict) else {},
-            }
-    except (json.JSONDecodeError, TypeError):
-        pass
-    return {
-        "selected": [part.strip() for part in str(raw_value).split(",") if part.strip()],
-        "otherText": "",
-        "transactionCodes": {},
-    }
-
-
-def _normalize_action_entry(entry: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-    if not entry:
-        return {}
-    return {
-        **entry,
-        "id": entry.get("id") or entry.get("ID"),
-        "action_date": entry.get("action_date") or entry.get("ActionDate") or entry.get("actionDate") or "",
-        "created_at": entry.get("created_at") or entry.get("CreatedAt") or entry.get("createdAt") or "",
-        "claim_status": entry.get("claim_status") or entry.get("ClaimStatus") or "",
-        "action": entry.get("action") or entry.get("Action") or "",
-        "notes": entry.get("notes") or entry.get("Notes") or "",
-    }
-
-
-def _is_triage_note_entry(entry: Optional[Dict[str, Any]]) -> bool:
-    if not entry:
-        return False
-    normalized = _normalize_action_entry(entry)
-    status = (normalized.get("claim_status") or "").strip().lower()
-    if status != "triage":
-        return False
-    notes = (normalized.get("notes") or "").strip()
-    action = (normalized.get("action") or "").strip()
-    if isinstance(action, dict):
-        action = json.dumps(action)
-    action = str(action).strip()
-    return bool(notes or action)
-
-
-def _is_submit_action_entry(entry: Optional[Dict[str, Any]]) -> bool:
-    if not entry:
-        return False
-    normalized = _normalize_action_entry(entry)
-    status = (normalized.get("claim_status") or "").strip().lower()
-    if "resubmit" in status:
-        return True
-    parsed = _parse_triage_action_value(normalized.get("action"))
-    labels = list(parsed.get("selected", []))
-    transaction_codes = parsed.get("transactionCodes")
-    if isinstance(transaction_codes, dict):
-        labels.extend(transaction_codes.keys())
-        if transaction_codes:
-            return True
-    if any(re.search(r"submit|resubmit|rebill", str(label or ""), re.IGNORECASE) for label in labels):
-        return True
-    notes = str(normalized.get("notes") or "")
-    return bool(re.search(r"submit|resubmit|rebill", notes, re.IGNORECASE))
-
-
-def _triage_history_sort_key(entry: Dict[str, Any]) -> Tuple[int, int]:
-    normalized = _normalize_action_entry(entry)
-    entry_id = int(normalized.get("id") or 0)
-    raw_date = normalized.get("action_date") or normalized.get("created_at") or ""
-    parsed = _coerce_to_date(raw_date)
-    sort_date = int(parsed.strftime("%Y%m%d")) if parsed else 0
-    return (entry_id if entry_id else 10**12, sort_date)
-
-
-def _resolve_submit_date(claim_data: Optional[Dict[str, Any]], actions: List[Dict[str, Any]]) -> Optional[date]:
-    triage_entries = [entry for entry in (actions or []) if _is_triage_note_entry(entry)]
-    triage_entries.sort(key=_triage_history_sort_key)
-    for entry in triage_entries:
-        if not _is_submit_action_entry(entry):
-            continue
-        normalized = _normalize_action_entry(entry)
-        entry_date = _coerce_to_date(normalized.get("action_date") or normalized.get("created_at"))
-        if entry_date:
-            return entry_date
-    return None
 
 
 def fetch_remit_remark_codes(cursor, id_837, id_835) -> List[str]:
@@ -250,6 +127,25 @@ def get_custom_all_patient_payment_expr(cursor, db_name: str) -> str:
     except Exception as exc:
         logger.warning("Unable to inspect CUSTOM_ALL.PatientPayment: %s", exc)
         return "0"
+
+
+def _parse_action_date(raw_value) -> Optional[date]:
+    if not raw_value:
+        return None
+    try:
+        return datetime.strptime(str(raw_value).strip(), "%m/%d/%Y").date()
+    except ValueError:
+        return None
+
+
+def _earliest_action_date(actions: List[dict]) -> Optional[date]:
+    dates = []
+    for action in actions or []:
+        parsed = _parse_action_date(action.get("action_date"))
+        if parsed is not None:
+            dates.append(parsed)
+    return min(dates) if dates else None
+
 
 @rebound_api_get_claim.route("/get_claim", methods=["GET"])
 @medevolve_api_get_claim.route("/get_claim", methods=["GET"])
@@ -367,8 +263,7 @@ def get_rebound_claim():
                 CUSTOM_ALL.RendTaxonomy,
                 CUSTOM_ALL.PrimaryDX,
                 CUSTOM_ALL.Automation,
-                CUSTOM_ALL.Frequency,
-                CUSTOM_ALL.TransactionDate
+                CUSTOM_ALL.Frequency
             FROM CUSTOM_ALL
             LEFT JOIN matching_for_table ON matching_for_table.ClaimNo=CUSTOM_ALL.ClaimNo
             LEFT JOIN CUSTOM_PAID_AMOUNT ON CUSTOM_PAID_AMOUNT.ID=matching_for_table.id_835
@@ -495,18 +390,7 @@ def get_rebound_claim():
         results = cursor.fetchall()
         remark_has_line_id = custom_paid_service_remark_has_line_id(cursor, db_name)
         overturn = 0
-        recovery_amount = 0
-        action_date_value = None
-        submit_date_value = _resolve_submit_date(ret["Claim"]["Data"], ret.get("Action", []))
-        if submit_date_value:
-            ret["Claim"]["Data"]["SubmitDate"] = submit_date_value.isoformat()
-        if len(ret.get('Action', [])) != 0:
-            action_date = ret['Action'][0].get('action_date')
-            if action_date:
-                try:
-                    action_date_value = datetime.strptime(action_date, '%m/%d/%Y').date()
-                except ValueError:
-                    action_date_value = None
+        action_date_value = _earliest_action_date(ret.get("Action", []))
 
         remit_claim_ids = [row['id_835'] for row in results if row.get('id_835') is not None]
         lines_by_claim_id = {}
@@ -590,11 +474,12 @@ def get_rebound_claim():
                 continue
 
             service_lines = lines_by_claim_id.get(row['id_835'], [])
-            check_date = _coerce_to_date(row.get('CheckDate'))
-            if action_date_value and check_date and check_date > action_date_value:
-                overturn += sum(float(line.get('AllowedAmount') or 0) for line in service_lines)
-            if submit_date_value and check_date and check_date > submit_date_value:
-                recovery_amount += sum(float(line.get('AllowedAmount') or 0) for line in service_lines)
+            if action_date_value:
+                check_date = row['CheckDate']
+                if isinstance(check_date, datetime):
+                    check_date = check_date.date()
+                if check_date > action_date_value:
+                    overturn += sum(float(line.get('AllowedAmount') or 0) for line in service_lines)
 
             modifier_data = modifiers_by_claim_id.get(row['id_835'], [])
             for line in service_lines:
@@ -617,7 +502,10 @@ def get_rebound_claim():
             ret['Remit'][-1]['Remark'] = remit_remarks
         
         ret['Claim']['Data']['Overturn'] = overturn
-        ret['Claim']['Data']['RecoveryAmount'] = recovery_amount
+        ret['Claim']['Data']['FirstSubmitDate'] = (
+            action_date_value.strftime("%m/%d/%Y") if action_date_value else ""
+        )
+        ret['Claim']['Data']['RecoveryAmount'] = overturn
         q = f"""
             SELECT
                 CUSTOM_ALL.ClaimNo,
