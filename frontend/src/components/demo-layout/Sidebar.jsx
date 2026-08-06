@@ -20,7 +20,7 @@ import {
 import { setSelectedTags } from "../../redux/reducers/tag.reducer";
 import { canAccessWorklists } from "../../utils/roles";
 import { setToggleMenu } from "../../redux/reducers/menu.reducer";
-import { getHelioLogoSrc } from "../../utils/helioLogo";
+import HelioBrand from "../layout/HelioBrand";
 const readStoredTenantBase = () => {
   try {
     const value = localStorage.getItem("lastTenantBase");
@@ -763,21 +763,16 @@ const Sidebar = () => {
           }`}
       >
         <div
-          className={`flex items-center justify-center sticky top-0 z-10 ${
-            showLabels ? "gap-3 pb-6" : "pb-4"
+          className={`flex items-center w-full sticky top-0 z-10 ${
+            showLabels ? "justify-center gap-3 pb-6 px-1" : "justify-center pb-4"
           } ${isDark ? "bg-[var(--helio-sidebar-bg)]" : "bg-white"}`}
         >
-          <img
-            src="/favicon.png"
-            alt="Helio RCM"
-            className={`object-contain ${showLabels ? "hidden" : "block h-9 w-9"}`}
-            loading="lazy"
-          />
-          <img
-            src={getHelioLogoSrc(isDark)}
-            alt="Helio RCM logo"
-            className={`${showLabels ? "block h-16 w-auto" : "hidden"}`}
-            loading="lazy"
+          <HelioBrand
+            showWordmark={showLabels}
+            variant={isDark ? "onDark" : "onLight"}
+            size={showLabels ? "sidebar" : "md"}
+            markSize={showLabels ? "h-12 w-12" : "h-9 w-9"}
+            className={showLabels ? "gap-4" : ""}
           />
         </div>
         <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden sidebar-scrollbar ${showLabels ? "pr-1" : "pr-0"}`}>

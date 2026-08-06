@@ -1632,7 +1632,7 @@ const ReboundDetailView = () => {
               )}
 
               <div
-                className={`mt-6 rounded-xl border p-4 sm:p-5 ${
+                className={`mt-6 inline-flex items-baseline justify-between gap-4 rounded-lg border px-4 py-3 ${
                   isDark
                     ? "border-[var(--helio-border)] bg-[var(--helio-surface-muted)]"
                     : "border-slate-200 bg-slate-50"
@@ -1641,19 +1641,9 @@ const ReboundDetailView = () => {
                 <p className={`text-sm font-semibold ${isDark ? "text-gray-100" : "text-slate-900"}`}>
                   Recovery Amount
                 </p>
-                <p className={`mt-2 text-2xl font-semibold tabular-nums ${isDark ? "text-emerald-400" : "text-emerald-700"}`}>
+                <p className={`text-lg font-semibold tabular-nums ${isDark ? "text-emerald-400" : "text-emerald-700"}`}>
                   ${samplifyDouble(recoveryAmount)}
                 </p>
-                {firstSubmitDate ? (
-                  <p className={`mt-2 text-xs leading-relaxed ${mutedLabelClass}`}>
-                    Sum of allowed amounts from 835 remits received after the first submit date (
-                    {formatSubmitDateDisplay(firstSubmitDate)}).
-                  </p>
-                ) : (
-                  <p className={`mt-2 text-xs leading-relaxed ${mutedLabelClass}`}>
-                    Submit a triage action (individual or bulk) to establish a submit date and track recovery from subsequent 835 payments.
-                  </p>
-                )}
               </div>
             </div>
           )}

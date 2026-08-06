@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { getHelioLogoSrc } from "../utils/helioLogo";
+import HelioBrand from "../components/layout/HelioBrand";
 
 const Home = () => {
   return (
@@ -11,12 +11,7 @@ const Home = () => {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
               <Link to="/">
-                <img
-                  src={getHelioLogoSrc(true)}
-                  alt="HELIO RCM"
-                  className="h-12 w-auto"
-                  loading="lazy"
-                />
+                <HelioBrand variant="onDark" size="lg" markSize="h-11 w-11" />
               </Link>
             </div>
 

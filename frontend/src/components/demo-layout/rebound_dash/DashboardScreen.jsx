@@ -1,7 +1,28 @@
 /* eslint-disable react/prop-types */
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
+import { MODULE_CATEGORY_MAP } from "../../../utils/moduleCatalog";
 import AgentAvatar from "./AgentAvatar";
+
+const PAYMENT_POSTING_CATEGORIES = new Set(
+  MODULE_CATEGORY_MAP["Payment Posting"].map((c) => c.toLowerCase())
+);
+
+const isPaymentPostingCategory = (category) => {
+  const norm = `${category || ""}`.trim().toLowerCase();
+  if (norm === "payment posting") return true;
+  return PAYMENT_POSTING_CATEGORIES.has(norm);
+};
+
+const MOCK_CATEGORIES = [
+  { category: "Coordination of Benefits", inventory: 1261, arBalance: 580070, pct: 46, barPct: 100 },
+  { category: "Timely Filing", inventory: 392, arBalance: 180000, pct: 14, barPct: 62 },
+  { category: "Documentation", inventory: 240, arBalance: 137931, pct: 11, barPct: 38 },
+  { category: "Medical Necessity", inventory: 174, arBalance: 100000, pct: 8, barPct: 28 },
+  { category: "Authorization", inventory: 110, arBalance: 32925, pct: 3, barPct: 18 },
+  { category: "Contractual Adj", inventory: 420, arBalance: 150000, pct: 12, barPct: 55 },
+  { category: "Payment", inventory: 180, arBalance: 72999, pct: 6, barPct: 30 },
+];
 
 const formatCurrency = (value) =>
   `$${Math.round(Number(value || 0)).toLocaleString("en-US")}`;
@@ -19,7 +40,7 @@ const Trend = ({ value, label, positiveIsGood = true }) => {
 
 const MetricCard = ({ title, value, subtitle, trend, trendLabel, trendPositiveIsGood = true, highlight, children, isDark }) => (
   <div
-    className={`rounded-xl border p-4 flex flex-col gap-2 min-h-[132px] ${
+    className={`rounded-xl border p-3 sm:p-4 flex flex-col gap-1.5 sm:gap-2 min-h-[120px] min-w-0 ${
       highlight
         ? "border-emerald-400 ring-1 ring-emerald-400/30"
         : isDark
@@ -28,10 +49,10 @@ const MetricCard = ({ title, value, subtitle, trend, trendLabel, trendPositiveIs
     }`}
   >
     <div className="flex items-start justify-between gap-2">
-      <p className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-slate-600"}`}>{title}</p>
+      <p className={`text-xs sm:text-sm font-medium leading-snug ${isDark ? "text-gray-300" : "text-slate-600"}`}>{title}</p>
       {children}
     </div>
-    <p className={`text-2xl font-semibold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>{value}</p>
+    <p className={`text-xl sm:text-2xl font-semibold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>{value}</p>
     {subtitle ? (
       <p className={`text-xs ${isDark ? "text-gray-400" : "text-slate-500"}`}>{subtitle}</p>
     ) : null}
@@ -133,7 +154,7 @@ const Sparkline = () => (
   </svg>
 );
 
-const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
+const DashboardScreen = ({ isDark }) => {
   const modelsState = useSelector((state) => state.app.models);
   const models = useMemo(() => modelsState ?? [], [modelsState]);
 
@@ -152,37 +173,9 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
     }));
   }, [models]);
 
-  const agentOptions = useMemo(
-    () => ["All Agents", ...productivity.map((p) => p.name)],
-    [productivity]
-  );
-
-  const filteredModels = useMemo(() => {
-    if (!selectedAgent) return models || [];
-    return (models || []).filter((row) => {
-      const title = `${row.ModelTitle || row.model_title || "AI Agent"}`.trim() || "AI Agent";
-      return title === selectedAgent;
-    });
-  }, [models, selectedAgent]);
-
-  const totals = useMemo(() => {
-    const totalAmount = filteredModels.reduce((sum, row) => sum + (Number(row.Amount) || 0), 0);
-    const totalClaims = filteredModels.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
-    const activeAiAgents = selectedAgent
-      ? filteredModels.length > 0
-        ? 1
-        : 0
-      : new Set(
-          filteredModels.map(
-            (row) => `${row.ModelTitle || row.model_title || "AI Agent"}`.trim() || "AI Agent"
-          )
-        ).size;
-    return { totalAmount, totalClaims, activeAiAgents };
-  }, [filteredModels, selectedAgent]);
-
   const categoryRows = useMemo(() => {
     const categoryMap = new Map();
-    filteredModels.forEach((row) => {
+    (models || []).forEach((row) => {
       const category = row.Category || row.Group || "Uncategorized";
       const current = categoryMap.get(category) || { count: 0, amount: 0 };
       categoryMap.set(category, {
@@ -193,30 +186,39 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
     const rows = Array.from(categoryMap.entries()).sort((a, b) => b[1].amount - a[1].amount);
     const totalAmount = rows.reduce((s, [, d]) => s + d.amount, 0) || 1;
     const maxCount = Math.max(...rows.map(([, d]) => d.count), 1);
-    return rows.slice(0, 5).map(([category, data]) => ({
+    return rows.map(([category, data]) => ({
       category,
       inventory: data.count,
       arBalance: data.amount,
       pct: Math.round((data.amount / totalAmount) * 100),
       barPct: Math.round((data.count / maxCount) * 100),
     }));
-  }, [filteredModels]);
+  }, [models]);
 
-  const displayCategories =
-    categoryRows.length > 0
-      ? categoryRows
-      : [
-          { category: "Coordination of Benefits", inventory: 1261, arBalance: 726945, pct: 58, barPct: 100 },
-          { category: "Timely Filing", inventory: 392, arBalance: 225707, pct: 18, barPct: 62 },
-          { category: "Documentation", inventory: 240, arBalance: 137931, pct: 11, barPct: 38 },
-          { category: "Medical Necessity", inventory: 174, arBalance: 100000, pct: 8, barPct: 28 },
-          { category: "Authorization", inventory: 110, arBalance: 63342, pct: 5, barPct: 18 },
-        ];
+  const displayCategories = categoryRows.length > 0 ? categoryRows : MOCK_CATEGORIES;
 
-  const arBalance = totals.totalAmount > 0 ? totals.totalAmount : 1253925;
-  const inventory = totals.totalClaims > 0 ? totals.totalClaims : 2177;
-  const recoverable = Math.round(arBalance * 0.37) || 462918;
-  const recoveryMtd = Math.round(recoverable * 0.62) || 287450;
+  const revenueSplit = useMemo(() => {
+    const recoverableRows = displayCategories.filter((row) => !isPaymentPostingCategory(row.category));
+    const nonRecoverableRows = displayCategories.filter((row) => isPaymentPostingCategory(row.category));
+    const recoverableRevenue = recoverableRows.reduce((sum, row) => sum + row.arBalance, 0);
+    const nonRecoverableRevenue = nonRecoverableRows.reduce((sum, row) => sum + row.arBalance, 0);
+    const recoverableClaims = recoverableRows.reduce((sum, row) => sum + row.inventory, 0);
+    const nonRecoverableClaims = nonRecoverableRows.reduce((sum, row) => sum + row.inventory, 0);
+    const arBalance = recoverableRevenue + nonRecoverableRevenue;
+    const inventory = displayCategories.reduce((sum, row) => sum + row.inventory, 0);
+    return {
+      arBalance,
+      inventory,
+      recoverableRevenue,
+      nonRecoverableRevenue,
+      recoverableClaims,
+      nonRecoverableClaims,
+    };
+  }, [displayCategories]);
+
+  const { arBalance, inventory, recoverableRevenue, nonRecoverableRevenue, recoverableClaims, nonRecoverableClaims } =
+    revenueSplit;
+  const recoveryMtd = Math.round(recoverableRevenue * 0.62) || 287450;
 
   const priorities = [
     { rank: 1, amount: 72443, label: "BCBS - Coordination of Benefits", priority: "High" },
@@ -257,46 +259,13 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
   return (
     <div className={`space-y-6 ${isDark ? "text-gray-100" : "text-slate-900"}`}>
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Client Dashboard</h2>
-          <p className={`mt-1 text-sm ${muted}`}>Real-time overview of your revenue cycle performance</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div
-            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-              isDark
-                ? "bg-[var(--helio-surface-muted)] border-[var(--helio-border)] text-gray-200"
-                : "bg-white border-slate-200 text-slate-700"
-            }`}
-          >
-            <span aria-hidden>📅</span>
-            <span>May 12 – May 18, 2025</span>
-          </div>
-          <select
-            value={selectedAgent || "All Agents"}
-            onChange={(e) => {
-              const val = e.target.value;
-              onSelectAgent?.(val === "All Agents" ? null : val);
-            }}
-            className={`rounded-lg border px-3 py-2 text-sm ${
-              isDark
-                ? "bg-[var(--helio-surface-muted)] border-[var(--helio-border)] text-gray-200"
-                : "bg-white border-slate-200 text-slate-700"
-            }`}
-          >
-            {agentOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-          <span className={`text-xs ${muted}`}>Updated 2m ago ↻</span>
-        </div>
+      <div>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Client Dashboard</h2>
+        <p className={`mt-1 text-sm ${muted}`}>Real-time overview of your revenue cycle performance</p>
       </div>
 
-      {/* KPI metrics row */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      {/* KPI metrics row — one line on wide screens, wraps on narrower viewports */}
+      <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(min(100%,9.5rem),1fr))]">
         <MetricCard
           isDark={isDark}
           title="AR Balance"
@@ -315,16 +284,22 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
         <MetricCard
           isDark={isDark}
           title="Recoverable Revenue"
-          value={formatCurrency(recoverable)}
-          subtitle={`${Math.round(recoverable / 623) || 742} claims`}
+          value={formatCurrency(recoverableRevenue)}
+          subtitle={`${recoverableClaims.toLocaleString("en-US")} claims`}
           trend="▲ 14.3%"
           trendLabel="vs last week"
           highlight
         />
         <MetricCard
           isDark={isDark}
+          title="Non-Recoverable Revenue"
+          value={formatCurrency(nonRecoverableRevenue)}
+          subtitle={`${nonRecoverableClaims.toLocaleString("en-US")} claims · Payment Posting`}
+        />
+        <MetricCard
+          isDark={isDark}
           title="Inventory Burn Rate"
-          value="75 Days"
+          value="55 Days"
           subtitle="Target: 60 Days"
           trend="▼ 9 Days"
           trendLabel="vs last week"
@@ -339,7 +314,7 @@ const DashboardScreen = ({ isDark, selectedAgent, onSelectAgent }) => {
         <MetricCard
           isDark={isDark}
           title="Accuracy"
-          value="82%"
+          value="98%"
           trend="▲ 5%"
           trendLabel="vs last week"
         />

@@ -71,7 +71,6 @@ web_modules/
 !.env.example
 firebase_auth_local.json
 firebase_auth.json
-gabeo-poc-ca4ac93f6fd1.json
 heliorcm-46d2b-firebase-adminsdk-fbsvc-c417bac768.json
 
 

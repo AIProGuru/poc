@@ -268,7 +268,7 @@ const Contact = () => {
                 </svg>
                 <span className="text-gray-800 font-medium">Email</span>
 
-                <span className="text-gray-600">contact@gabeo.ai</span>
+                <span className="text-gray-600">contact@helio.ai</span>
               </div>
             </div>
           </div> */}

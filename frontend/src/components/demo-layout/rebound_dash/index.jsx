@@ -50,7 +50,9 @@ const ReboundDash = () => {
   const rawToken = params.token ?? null;
   const isManagementRoute = location.pathname === '/management' || location.pathname.startsWith('/management/');
   const isUserAddRoute = location.pathname === '/management/users/new';
-  const isUserListRoute = location.pathname.startsWith('/management/users');
+  const isUserEditRoute = /^\/management\/users\/[^/]+\/edit$/.test(location.pathname);
+  const editUserId = isUserEditRoute ? location.pathname.split('/')[3] : null;
+  const isUserListRoute = location.pathname.startsWith('/management/users') && !isUserAddRoute && !isUserEditRoute;
   const [selectedNav, setSelectedNav] = useState(() => {
     if (isManagementRoute) return 'user-management';
     return location.pathname.includes('/denials') ? 'denials' : 'home';
@@ -797,7 +799,8 @@ const ReboundDash = () => {
           
           <UserManagement
             embedded
-            view={isUserAddRoute ? 'add' : isUserListRoute ? 'table' : 'actions'}
+            view={isUserAddRoute ? 'add' : isUserEditRoute ? 'edit' : isUserListRoute ? 'table' : 'actions'}
+            editUserId={editUserId}
           />
 
         ) : (

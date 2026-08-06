@@ -76,17 +76,17 @@ function CalculateSavingsPage() {
   const [avgTouches, setAvgTouches] = useState(10);
   const [avgDenialsPM, setAvgDenialsPM] = useState(500);
 
-  const gabeo_cost_per_claim = 0.1;
+  const helio_cost_per_claim = 0.1;
 
-  const gabeo_cpc = 0.6;
-  const gabeo_success_rate = 0.8; // assume that gabeo can return 80% of denials into money
+  const helio_cpc = 0.6;
+  const helio_success_rate = 0.8; // assume that helio can return 80% of denials into money
 
   // var n_successed_claims_per_month =
   //   ((bpoAgents * claimsPerDay) / avgTouches * 10) * 20;
   // var monthly_salary = bpoAgents * costBPO * 8 * 20;
-  // var monthly_salary_with_gabeo =
-  //   n_successed_claims_per_month * gabeo_cost_per_claim;
-  // var projected_cost_saving = monthly_salary - monthly_salary_with_gabeo;
+  // var monthly_salary_with_helio =
+  //   n_successed_claims_per_month * helio_cost_per_claim;
+  // var projected_cost_saving = monthly_salary - monthly_salary_with_helio;
   // var fte_saving_per_month = projected_cost_saving / costBPO / 160 
 
   var monthly_salary = bpoAgents * costBPO * 8 * 20;
@@ -95,11 +95,11 @@ function CalculateSavingsPage() {
 
 
 
-  // var n_successed_claims_with_gabeo = avgDenialsPM * gabeo_success_rate
+  // var n_successed_claims_with_helio = avgDenialsPM * helio_success_rate
 
   // var total_cost_per_day = bpoAgents * costBPO * 8
   // var cost_per_claim = total_cost_per_day / n_successed_claims
-  // var total_cost_per_month_with_gabeo = avgDenialsPM * gabeo_cost_per_claim
+  // var total_cost_per_month_with_helio = avgDenialsPM * helio_cost_per_claim
 
   const handleBPOAgents = (e) => {
     const value = parseInt(e.target.value, 10);

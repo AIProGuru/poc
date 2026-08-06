@@ -1660,8 +1660,8 @@ const ClientDashboard = () => {
                               </svg>
                             </button>
 
-                            {/* Don't show delete button for gabeo.ai emails */}
-                            {!user.email.endsWith('@gabeo.ai') && (
+                            {/* Don't show delete button for helio.ai emails */}
+                            {!user.email.endsWith('@helio.ai') && (
                               <button
                                 className="p-2 hover:bg-[#ffffff20] rounded-lg transition"
                                 onClick={() => handleDeleteUser(user.id)}

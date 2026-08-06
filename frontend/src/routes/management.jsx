@@ -18,6 +18,10 @@ const managementRoutes = [
     path: "users/new",
     element: suspense(<PrivateRoute role={USER_MANAGEMENT_ROLES} element={ReboundDash} />)
   },
+  {
+    path: "users/:userId/edit",
+    element: suspense(<PrivateRoute role={USER_MANAGEMENT_ROLES} element={ReboundDash} />)
+  },
 ];
 
 export default managementRoutes;

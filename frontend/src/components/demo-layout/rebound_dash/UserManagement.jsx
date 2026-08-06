@@ -1,20 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import TableCell from "@mui/material/TableCell";
-import TableBody from "@mui/material/TableBody";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Table from "@mui/material/Table";
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import MultiSelect from '../../MultiSelect';
-import Autocomplete from "@mui/material/Autocomplete";
-import Checkbox from "@mui/material/Checkbox";
-import TextField from "@mui/material/TextField";
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { auth } from '../../../FirebaseConfig';
@@ -47,271 +35,19 @@ const STATUS_OPTIONS = [
 
 const getStatusValue = (status) => (Number(status) === 1 ? 1 : 0);
 
-const UserStatusCell = ({ row, onUpdateStatus, theme }) => {
-  const [selectedStatus, setSelectedStatus] = useState(getStatusValue(row.status));
-  const [open, setOpen] = useState(false);
-  const [menuStyle, setMenuStyle] = useState(null);
-  const buttonRef = useRef(null);
-  const menuRef = useRef(null);
-  const isDark = theme === 'dark';
+const getRoleLabel = (role) =>
+  ROLE_OPTIONS.find((option) => option.value === getRoleValue(role))?.label || role || '—';
 
-  useEffect(() => {
-    setSelectedStatus(getStatusValue(row.status));
-  }, [row.status]);
-
-  useLayoutEffect(() => {
-    if (!open) {
-      setMenuStyle(null);
-      return undefined;
-    }
-
-    const updateMenuPosition = () => {
-      const button = buttonRef.current;
-      if (!button) return;
-      const rect = button.getBoundingClientRect();
-      setMenuStyle({
-        position: 'fixed',
-        top: `${Math.round(rect.bottom + 4)}px`,
-        left: `${Math.round(rect.left)}px`,
-        width: `${Math.round(rect.width)}px`,
-        zIndex: 1200,
-      });
-    };
-
-    updateMenuPosition();
-    window.addEventListener('resize', updateMenuPosition);
-    window.addEventListener('scroll', updateMenuPosition, true);
-    return () => {
-      window.removeEventListener('resize', updateMenuPosition);
-      window.removeEventListener('scroll', updateMenuPosition, true);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const handleClickOutside = (event) => {
-      if (
-        !buttonRef.current?.contains(event.target) &&
-        !menuRef.current?.contains(event.target)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open]);
-
-  const selectedLabel =
-    STATUS_OPTIONS.find((option) => option.value === selectedStatus)?.label || 'Active';
-
-  const handleSelect = (value) => {
-    setSelectedStatus(value);
-    onUpdateStatus(resolveUserId(row), value);
-    setOpen(false);
-  };
-
-  const triggerClass = isDark
-    ? 'bg-[#27282D]/70 text-[#e5e7eb] border-white/10 hover:border-white/20'
-    : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300';
-
-  const menuClass = isDark
-    ? 'bg-[#2f3035] border-white/10 shadow-xl'
-    : 'bg-white border-slate-200 shadow-lg';
-
-  const optionClass = (isActive) => {
-    if (isDark) {
-      return isActive
-        ? 'bg-white/12 text-white'
-        : 'text-[#d1d5db] hover:bg-white/8 hover:text-white';
-    }
-    return isActive
-      ? 'bg-slate-200 text-slate-900'
-      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
-  };
-
-  return (
-    <div className="relative">
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className={`flex items-center justify-between gap-2 w-[120px] px-3 py-1.5 rounded-lg border text-sm transition-colors ${triggerClass}`}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <span className="truncate text-left">{selectedLabel}</span>
-        <svg
-          className={`w-4 h-4 shrink-0 opacity-60 transition-transform ${open ? 'rotate-180' : ''}`}
-          viewBox="0 0 20 20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        >
-          <path d="M6 8L10 12L14 8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      {open && menuStyle && createPortal(
-        <div
-          ref={menuRef}
-          role="listbox"
-          style={menuStyle}
-          className={`rounded-lg border overflow-hidden py-1 ${menuClass}`}
-        >
-          {STATUS_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="option"
-              aria-selected={selectedStatus === option.value}
-              onClick={() => handleSelect(option.value)}
-              className={`w-full text-left px-3 py-2 text-sm transition-colors ${optionClass(selectedStatus === option.value)}`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
-
-const UserRoleCell = ({ row, onUpdateRole, theme }) => {
-  const [selectedRole, setSelectedRole] = useState(getRoleValue(row.role));
-  const [open, setOpen] = useState(false);
-  const [menuStyle, setMenuStyle] = useState(null);
-  const buttonRef = useRef(null);
-  const menuRef = useRef(null);
-  const isDark = theme === 'dark';
-
-  useEffect(() => {
-    setSelectedRole(getRoleValue(row.role));
-  }, [row.role]);
-
-  useLayoutEffect(() => {
-    if (!open) {
-      setMenuStyle(null);
-      return undefined;
-    }
-
-    const updateMenuPosition = () => {
-      const button = buttonRef.current;
-      if (!button) return;
-      const rect = button.getBoundingClientRect();
-      setMenuStyle({
-        position: 'fixed',
-        top: `${Math.round(rect.bottom + 4)}px`,
-        left: `${Math.round(rect.left)}px`,
-        width: `${Math.round(rect.width)}px`,
-        zIndex: 1200,
-      });
-    };
-
-    updateMenuPosition();
-    window.addEventListener('resize', updateMenuPosition);
-    window.addEventListener('scroll', updateMenuPosition, true);
-    return () => {
-      window.removeEventListener('resize', updateMenuPosition);
-      window.removeEventListener('scroll', updateMenuPosition, true);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const handleClickOutside = (event) => {
-      if (
-        !buttonRef.current?.contains(event.target) &&
-        !menuRef.current?.contains(event.target)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open]);
-
-  const selectedLabel =
-    ROLE_OPTIONS.find((option) => option.value === selectedRole)?.label || selectedRole;
-
-  const handleSelect = (value) => {
-    setSelectedRole(value);
-    onUpdateRole(row.id, value);
-    setOpen(false);
-  };
-
-  const triggerClass = isDark
-    ? 'bg-[#27282D]/70 text-[#e5e7eb] border-white/10 hover:border-white/20'
-    : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300';
-
-  const menuClass = isDark
-    ? 'bg-[#2f3035] border-white/10 shadow-xl'
-    : 'bg-white border-slate-200 shadow-lg';
-
-  const optionClass = (isActive) => {
-    if (isDark) {
-      return isActive
-        ? 'bg-white/12 text-white'
-        : 'text-[#d1d5db] hover:bg-white/8 hover:text-white';
-    }
-    return isActive
-      ? 'bg-slate-200 text-slate-900'
-      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
-  };
-
-  return (
-    <div className="relative">
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className={`flex items-center justify-between gap-2 w-[159px] px-3 py-1.5 rounded-lg border text-sm transition-colors ${triggerClass}`}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <span className="truncate text-left">{selectedLabel}</span>
-        <svg
-          className={`w-4 h-4 shrink-0 opacity-60 transition-transform ${open ? 'rotate-180' : ''}`}
-          viewBox="0 0 20 20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        >
-          <path d="M6 8L10 12L14 8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      {open && menuStyle && createPortal(
-        <div
-          ref={menuRef}
-          role="listbox"
-          style={menuStyle}
-          className={`rounded-lg border overflow-hidden py-1 max-h-56 overflow-y-auto ${menuClass}`}
-        >
-          {ROLE_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="option"
-              aria-selected={selectedRole === option.value}
-              onClick={() => handleSelect(option.value)}
-              className={`w-full text-left px-3 py-2 text-sm transition-colors ${optionClass(selectedRole === option.value)}`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
+const getStatusLabel = (status) =>
+  STATUS_OPTIONS.find((option) => option.value === getStatusValue(status))?.label || 'Active';
 
 
-
-
-const UserManagement = ({ embedded = false, view = 'actions' }) => {
+const UserManagement = ({ embedded = false, view = 'actions', editUserId = null }) => {
   const navigate = useNavigate();
-  const isTableView = view === 'table' || view === 'actions';
   const isAddView = view === 'add';
+  const isEditView = view === 'edit';
+  const isFormView = isAddView || isEditView;
+  const isTableView = view === 'table' || view === 'actions';
   const [assignFilter, setAssignFilter] = useState({
     client: MODULE_OPTIONS,
     selectedClient: [],
@@ -329,8 +65,9 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPage, setTotalPage] = useState(10);
   const [currentPageSize, setCurrentPageSize] = useState(5);
-  const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const pageSizes = [5, 10, 20, 25];
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
   const [totalUsers, setTotalUsers] = useState([]);
   const [users, setUsers] = useState([]);
   const [clientOptions, setClientOptions] = useState([]);
@@ -567,12 +304,12 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   }, []);
 
   useEffect(() => {
-    if (!resolvedClientOptions.length) return;
+    if (!resolvedClientOptions.length || isEditView) return;
     const hasMatch = resolvedClientOptions.some((option) => option.value === user.tenant);
     if (!user.tenant || !hasMatch) {
       setUser((prev) => ({ ...prev, tenant: resolvedClientOptions[0].value }));
     }
-  }, [resolvedClientOptions, user.tenant]);
+  }, [resolvedClientOptions, user.tenant, isEditView]);
 
   useEffect(() => {
     const tenantValue = user.tenant;
@@ -629,7 +366,9 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   useEffect(() => {
     if (!Array.isArray(user.facility) || user.facility.length === 0) return;
     if (!facilityOptions.length) {
-      setUser((prev) => ({ ...prev, facility: [] }));
+      if (!isEditView) {
+        setUser((prev) => ({ ...prev, facility: [] }));
+      }
       return;
     }
     const allowSet = new Set(
@@ -757,42 +496,28 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     value: Array.isArray(formUser.value) ? formUser.value : [],
   });
 
-  const handleUpdateRole = (userId, newRole) => {
-    patchUserProfile(userId, { role: newRole }, 'Role updated successfully').catch((error) => {
-      console.error('Error updating role:', error);
-    });
-  };
+  const buildUpdateUserPayload = (formUser) => ({
+    firstname: `${formUser.firstname || ''}`.trim(),
+    lastname: `${formUser.lastname || ''}`.trim(),
+    email: `${formUser.email || ''}`.trim().toLowerCase(),
+    role: formUser.role || ROLE_STANDARD,
+    status: Number.isFinite(Number(formUser.status)) ? Number(formUser.status) : 0,
+    tenant: formUser.tenant || '',
+    client: Array.isArray(formUser.client) ? formUser.client : [],
+    facility: Array.isArray(formUser.facility) ? formUser.facility : [],
+    clientState: Array.isArray(formUser.clientState) ? formUser.clientState : [],
+    denialCategory: Array.isArray(formUser.denialCategory) ? formUser.denialCategory : [],
+    payer: Array.isArray(formUser.payer) ? formUser.payer : [],
+    value: Array.isArray(formUser.value) ? formUser.value : [],
+  });
 
-  const handleUpdateStatus = (userId, newStatus) => {
-    patchUserProfile(userId, { status: newStatus }, 'Status updated successfully').catch((error) => {
-      console.error('Error updating status:', error);
-    });
-  };
-
-  const openPermissionEditor = (row) => {
-    const rowId = resolveUserId(row);
-    const currentUser = users.find((item) => resolveUserId(item) === rowId) || row;
-    setUpdate_user_id(rowId);
-    setUser((prev) => ({
-      ...prev,
-      tenant: currentUser.tenant || '',
-      client: currentUser.client || [],
-      facility: currentUser.facility || [],
-      clientState: currentUser.clientState || [],
-      denialCategory: currentUser.denialCategory || [],
-      payer: currentUser.payer || [],
-      value: currentUser.value || [],
-    }));
-    setShowPermissionModal(true);
-  };
-
-  const [update_user_id, setUpdate_user_id] = useState('')
-
-
-  const handleUserUpdate = (userId, updatedUser) => {
-    patchUserProfile(userId, updatedUser, 'Access updated successfully').catch((error) => {
-      console.error('Error updating user:', error);
-    });
+  const openEditUser = (row) => {
+    const userId = resolveUserId(row);
+    if (!userId) {
+      toast.error('Unable to edit this user because the profile ID is missing.');
+      return;
+    }
+    navigate(`/management/users/${userId}/edit`);
   };
 
   const addUser_backend = async (e) => {
@@ -827,16 +552,22 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     }
   };
 
+  const updateUser_backend = async (e) => {
+    e.preventDefault();
+    const userId = user.user_id || editUserId;
+    if (!userId) {
+      toast.error('Unable to update this user because the profile ID is missing.');
+      return;
+    }
+    try {
+      await patchUserProfile(userId, buildUpdateUserPayload(user), 'User updated successfully');
+      resetUserForm();
+      navigate('/management');
+    } catch (error) {
+      console.error('Error updating user:', error);
+    }
+  };
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
-  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
-  const [editProfileUser, setEditProfileUser] = useState({
-    id: '',
-    firstname: '',
-    lastname: '',
-    email: '',
-  });
 
   const DeleteConfirmationModal = () => (
     <div className="fixed inset-0 z-50 mt-2 sm:mt-32" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -952,34 +683,6 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
     }
   };
 
-  const openEditProfileModal = (row) => {
-    setEditProfileUser({
-      id: resolveUserId(row),
-      firstname: row.firstname || '',
-      lastname: row.lastname || '',
-      email: row.email || '',
-    });
-    setShowEditProfileModal(true);
-  };
-
-  const handleSaveProfile = async () => {
-    const userId = editProfileUser.id;
-    if (!userId) {
-      toast.error('Unable to update this profile because the user ID is missing.');
-      return;
-    }
-    await patchUserProfile(
-      userId,
-      {
-        firstname: `${editProfileUser.firstname || ''}`.trim(),
-        lastname: `${editProfileUser.lastname || ''}`.trim(),
-        email: `${editProfileUser.email || ''}`.trim().toLowerCase(),
-      },
-      'Profile updated successfully'
-    );
-    setShowEditProfileModal(false);
-  };
-
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -1035,7 +738,31 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
   const theme = useSelector((state) => state.app.theme);
   const dispatch = useDispatch();
 
-  const [showFilterModal, setShowFilterModal] = useState(false);
+  const editingUser = useMemo(() => {
+    if (!isEditView || !editUserId) return null;
+    return totalUsers.find((row) => resolveUserId(row) === editUserId) || null;
+  }, [isEditView, editUserId, totalUsers]);
+
+  useEffect(() => {
+    if (!isEditView || !editUserId || !editingUser) return;
+    setUser({
+      user_id: editUserId,
+      firstname: editingUser.firstname || '',
+      lastname: editingUser.lastname || '',
+      email: editingUser.email || '',
+      role: getRoleValue(editingUser.role),
+      password: '',
+      status: getStatusValue(editingUser.status),
+      access_level: editingUser.access_level || 0,
+      tenant: editingUser.tenant || '',
+      client: editingUser.client || [],
+      facility: editingUser.facility || [],
+      clientState: editingUser.clientState || [],
+      denialCategory: editingUser.denialCategory || [],
+      payer: editingUser.payer || [],
+      value: editingUser.value || [],
+    });
+  }, [isEditView, editUserId, editingUser]);
 
   // Add this component within your UserManagement component
   const FilterModal = () => (
@@ -1305,21 +1032,26 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
                           {row.email || <span className="italic opacity-60">Missing email</span>}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <UserRoleCell theme={theme} row={row} onUpdateRole={handleUpdateRole} />
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
+                          {getRoleLabel(row.role)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <UserStatusCell theme={theme} row={row} onUpdateStatus={handleUpdateStatus} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={() => openPermissionEditor(row)}
-                            title="Click to edit access"
-                            className={`relative group w-full text-left rounded-lg transition-colors cursor-pointer ${
-                              theme === 'dark' ? 'hover:bg-white/[0.04]' : 'hover:bg-slate-50'
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              getStatusValue(row.status) === 0
+                                ? theme === 'dark'
+                                  ? 'bg-emerald-500/15 text-emerald-300'
+                                  : 'bg-emerald-50 text-emerald-700'
+                                : theme === 'dark'
+                                  ? 'bg-white/10 text-gray-400'
+                                  : 'bg-slate-100 text-slate-600'
                             }`}
                           >
+                            {getStatusLabel(row.status)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="relative group w-full text-left rounded-lg py-1">
                             <div className="flex items-center justify-start gap-1 flex-wrap max-w-[180px] py-1">
                               {row.client && row.client.length > 0 ? (
                                 <>
@@ -1348,7 +1080,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                                 </>
                               ) : (
                                 <span className={`text-xs italic ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
-                                  Click to assign access
+                                  No access assigned
                                 </span>
                               )}
                             </div>
@@ -1373,36 +1105,24 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                                 </div>
                               </div>
                             )}
-                          </button>
+                          </div>
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
-                            {/* Edit Profile Button */}
-                            <div
+                            <button
+                              type="button"
                               className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-white/[0.06] hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'}`}
-                              onClick={() => openEditProfileModal(row)}
-                              title="Edit Profile"
+                              onClick={() => openEditUser(row)}
+                              title="Edit User"
                             >
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                                 <path d="M4 20h4l10.5-10.5a1.77 1.77 0 0 0 0-2.5l-2-2a1.77 1.77 0 0 0-2.5 0L4 15.5V20z" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
-                            </div>
+                            </button>
 
-                            {/* Reset Password Button */}
-                            <div
-                              className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-white/[0.06] hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'}`}
-                              onClick={() => handleResetPassword(row.email)}
-                              title="Reset Password"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                <path d="M4 12a8 8 0 1 1 2.34 5.66" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                <path d="M4 8v4h4" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </div>
-
-                            {/* Delete Button */}
-                            <div
+                            <button
+                              type="button"
                               className={`cursor-pointer w-[50px] h-[38px] flex items-center justify-center text-center rounded-lg ${theme === 'dark' ? 'bg-white/[0.06] hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'}`}
                               onClick={() => {
                                 setUserToDelete(row);
@@ -1415,7 +1135,7 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                                 <path d="M8 6V4h8v2" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                 <path d="M6 6l1 14h10l1-14" stroke={theme === 'dark' ? '#9BA1A6' : '#686B7E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
-                            </div>
+                            </button>
 
                           </div>
                         </td>
@@ -1508,87 +1228,29 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
         )}
         {showDeleteModal && <DeleteConfirmationModal />}
 
-        <Modal
-          open={showEditProfileModal}
-          onClose={() => setShowEditProfileModal(false)}
-          aria-labelledby="edit-profile-modal"
-        >
-          <Box className={`absolute rounded-xl border-none w-[520px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 ${theme === 'dark' ? 'bg-[#27282D]' : 'bg-white'}`}>
-            <div className={`p-6 rounded-xl ${theme === 'dark' ? 'bg-[#2a2b30] text-[#e5e7eb] border border-white/10' : 'bg-white text-slate-700 border border-slate-200'}`}>
-              <h2 className="text-xl font-semibold mb-4">Edit User Profile</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <input
-                  type="text"
-                  value={editProfileUser.firstname}
-                  onChange={(e) => setEditProfileUser((prev) => ({ ...prev, firstname: e.target.value }))}
-                  placeholder="First Name"
-                  className={`text-sm rounded-lg px-4 py-2.5 border w-full ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-white/10' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
-                />
-                <input
-                  type="text"
-                  value={editProfileUser.lastname}
-                  onChange={(e) => setEditProfileUser((prev) => ({ ...prev, lastname: e.target.value }))}
-                  placeholder="Last Name"
-                  className={`text-sm rounded-lg px-4 py-2.5 border w-full ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-white/10' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
-                />
-              </div>
-              <input
-                type="email"
-                value={editProfileUser.email}
-                onChange={(e) => setEditProfileUser((prev) => ({ ...prev, email: e.target.value }))}
-                placeholder="Email"
-                className={`mt-4 text-sm rounded-lg px-4 py-2.5 border w-full ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-white/10' : 'bg-slate-50 text-slate-900 border-slate-200'}`}
-              />
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowEditProfileModal(false)}
-                  className="rounded-lg px-4 py-2 text-sm font-semibold bg-[#d1d5db] text-[#3b3f46]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveProfile}
-                  className="rounded-lg px-4 py-2 text-sm font-semibold text-white bg-[#3b3f46] hover:bg-[#2f3238]"
-                >
-                  Save Profile
-                </button>
-              </div>
+        {isFormView && (
+          isEditView && loading && !editingUser ? (
+            <div className={`rounded-2xl px-[50px] py-[40px] border ${theme === 'dark' ? 'bg-[#27282D] text-white border-[#1F2231]' : 'bg-white text-gray-800 border-slate-200'}`}>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>Loading user...</p>
             </div>
-          </Box>
-        </Modal>
-
-        {/* <div className="flex items-center gap-2 justify-start mb-3 pl-3">
-        <label
-          htmlFor="pageSize"
-          className="text-nowrap mb-2 text-sm font-medium text-gray-900 dark:text-white"
-        >
-          Page Size:
-        </label>
-        <select
-          id="pageSize"
-          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-gray-500 focus:border-gray-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-gray-500 dark:focus:border-gray-500"
-          onChange={(e) => {
-            setCurrentPageSize(parseInt(e.target.value));
-            setCurrentPage(1);
-          }}
-          value={currentPageSize}
-        >
-          {pageSizes.map((row, index) => (
-            <option key={index} value={row}>
-              {row}
-            </option>
-          ))}
-        </select>
-      </div> */}
-
-
-        {isAddView && (
-
+          ) : isEditView && !loading && editUserId && !editingUser ? (
+            <div className={`flex flex-col gap-4 rounded-2xl px-[50px] py-[40px] border ${theme === 'dark' ? 'bg-[#27282D] text-white border-[#1F2231]' : 'bg-white text-gray-800 border-slate-200'}`}>
+              <h2 className="text-xl font-semibold">User not found</h2>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>
+                The user you are trying to edit could not be found.
+              </p>
+              <button
+                type="button"
+                className="self-start rounded-full px-6 py-2 text-sm font-semibold text-white bg-[#3b3f46] hover:bg-[#2f3238]"
+                onClick={() => navigate('/management')}
+              >
+                Back to users
+              </button>
+            </div>
+          ) : (
           <div className={`flex flex-col gap-6 rounded-2xl px-[50px] pt-[30px] pb-[50px] border ${theme === 'dark' ? 'bg-[#27282D] text-white border-[#1F2231]' : 'bg-white text-gray-800 border-slate-200'}`}>
             <div>
-              <h2 className="text-xl font-semibold">Add New User</h2>
+              <h2 className="text-xl font-semibold">{isEditView ? 'Edit User' : 'Add New User'}</h2>
               <div className={`mt-3 border-b ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`} />
             </div>
             <div className="flex flex-col gap-4">
@@ -1786,31 +1448,52 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
                 )}
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-[1fr_auto] items-center">
-                <div className="relative">
-                  <input
-                    type="text"
-                    readOnly
-                    id="add-password"
-                    name="add-password"
-                    className={`text-sm rounded-full px-4 py-2.5 border w-full bg-clip-padding ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-transparent ring-1 ring-inset ring-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
+              {isAddView ? (
+                <div className="grid gap-4 sm:grid-cols-[1fr_auto] items-center">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      readOnly
+                      id="add-password"
+                      name="add-password"
+                      className={`text-sm rounded-full px-4 py-2.5 border w-full bg-clip-padding ${theme === 'dark' ? 'bg-[#FFFFFF]/10 text-white border-transparent ring-1 ring-inset ring-[#3B3F46]' : 'bg-slate-50 text-slate-900 border-slate-200'
+                        }`}
+                      value={user.password}
+                      placeholder="Generated Password"
+                    />
+                    <span className={`absolute right-4 top-1/2 -translate-y-1/2 text-xs ${theme === 'dark' ? 'text-white/40' : 'text-slate-400'}`}>
+                      Auto
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => generatePassword(12)}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold border ${theme === 'dark' ? 'border-white/10 text-white/70 hover:bg-white/10' : 'border-slate-200 text-slate-600 hover:bg-white'
                       }`}
-                    value={user.password}
-                    placeholder="Generated Password"
-                  />
-                  <span className={`absolute right-4 top-1/2 -translate-y-1/2 text-xs ${theme === 'dark' ? 'text-white/40' : 'text-slate-400'}`}>
-                    Auto
-                  </span>
+                  >
+                    Regenerate
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => generatePassword(12)}
-                  className={`px-4 py-2 rounded-full text-xs font-semibold border ${theme === 'dark' ? 'border-white/10 text-white/70 hover:bg-white/10' : 'border-slate-200 text-slate-600 hover:bg-white'
-                    }`}
-                >
-                  Regenerate
-                </button>
-              </div>
+              ) : (
+                <div className={`rounded-2xl border px-4 py-4 ${theme === 'dark' ? 'border-[#2A2F38] bg-[#FFFFFF]/10' : 'border-slate-200 bg-slate-50'}`}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white/90' : 'text-slate-800'}`}>Password</p>
+                      <p className={`mt-1 text-xs ${theme === 'dark' ? 'text-white/50' : 'text-slate-500'}`}>
+                        Passwords cannot be viewed. Send a reset link to the user&apos;s email address.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleResetPassword(user.email)}
+                      disabled={!user.email}
+                      className={`shrink-0 rounded-full px-5 py-2 text-sm font-semibold border transition disabled:cursor-not-allowed disabled:opacity-50 ${theme === 'dark' ? 'border-white/10 text-white hover:bg-white/10' : 'border-slate-200 text-slate-700 hover:bg-white'}`}
+                    >
+                      Send reset email
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-3 justify-end">
@@ -1830,102 +1513,15 @@ const UserManagement = ({ embedded = false, view = 'actions' }) => {
               <button
                 type="button"
                 className="rounded-full px-6 py-2 text-sm font-semibold text-white bg-[#3b3f46] hover:bg-[#2f3238]"
-                onClick={addUser_backend}
+                onClick={isEditView ? updateUser_backend : addUser_backend}
               >
-                Add User
+                {isEditView ? 'Save Changes' : 'Add User'}
               </button>
             </div>
           </div>
-
+          )
         )}
 
-        <Modal
-          open={showPermissionModal}
-          onClose={() => setShowPermissionModal(false)}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Box className={`absolute  rounded-xl border-none w-[600px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-1 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}>
-            <div className="flex flex-col gap-4">
-              <div className={` p-9 gap-y-2 rounded-xl ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-600'}`}>
-                <h1 className="text-[22px] mb-5">Edit Access</h1>
-                <>
-                  <MultiSelect
-                    label="Module"
-                    options={assignFilter.client}
-                    selected={user.client}
-                    onChange={(value) => setUser({ ...user, client: value })}
-                    placeholder="Select Module"
-                    theme={theme}
-                  />
-
-                  <MultiSelect
-                    label="Facility"
-                    options={facilityOptions}
-                    selected={user.facility}
-                    onChange={(value) => setUser({ ...user, facility: value })}
-                    placeholder={facilityOptionsLoading ? "Loading facilities..." : "Select Facility"}
-                    theme={theme}
-                  />
-
-                  <MultiSelect
-                    label="Denial Category"
-                    options={assignFilter.denialCategory}
-                    selected={user.denialCategory}
-                    onChange={(value) => setUser({ ...user, denialCategory: value })}
-                    placeholder="Select Denial Category"
-                    theme={theme}
-                  />
-
-                  <MultiSelect
-                    label="Payer"
-                    options={assignFilter.payer}
-                    selected={user.payer}
-                    onChange={(value) => setUser({ ...user, payer: value })}
-                    placeholder="Select Payer"
-                    theme={theme}
-                  />
-
-                  <MultiSelect
-                    label="Value"
-                    options={assignFilter.value}
-                    selected={user.value}
-                    onChange={(value) => setUser({ ...user, value: value })}
-                    placeholder="Select Value"
-                    theme={theme}
-                  />
-                </>
-
-                <div className="flex gap-4 pr-3 pb-2 justify-end pt-3">
-                  <div
-                    className="rounded-lg text-[16px] font-semibold bg-[#d1d5db] text-[#3b3f46] px-[33px] py-[10px] border border-solid cursor-pointer select-none"
-                    onClick={() => setShowPermissionModal(false)}
-                  >
-                    Cancel
-                  </div>
-                  <div
-                    className="rounded-lg text-[16px] font-semibold px-[33px] py-[10px] border border-solid text-white bg-[#3b3f46] cursor-pointer select-none"
-                    onClick={() => {
-                      const updatedUser = {
-                        client: user.client,
-                        facility: user.facility,
-                        clientState: user.clientState,
-                        denialCategory: user.denialCategory,
-                        payer: user.payer,
-                        value: user.value,
-                      };
-
-                      handleUserUpdate(update_user_id, updatedUser);
-                      setShowPermissionModal(false);
-                    }}
-                  >
-                    Save
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Box>
-        </Modal>
       </div>
     </div>
   )

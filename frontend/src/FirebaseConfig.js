@@ -14,9 +14,9 @@ const firebaseConfig = {
 
 // const firebaseConfig = {
 //     apiKey: "AIzaSyDijNOhO7agUS6aDOPkb_Dkzfmn1z3XNxE",
-//     authDomain: "gabeo-staging.firebaseapp.com",
-//     projectId: "gabeo-staging",
-//     storageBucket: "gabeo-staging.firebasestorage.app",
+//     authDomain: "helio-staging.firebaseapp.com",
+//     projectId: "helio-staging",
+//     storageBucket: "helio-staging.firebasestorage.app",
 //     messagingSenderId: "630739682821",
 //     appId: "1:630739682821:web:b2f6a0fca13f1b9a027e6c"
 //   };
