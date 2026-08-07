@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { isDashboardArCategory, isNonRecoverableDashboardCategory, isRecoverableDashboardCategory } from "../../../utils/moduleCatalog";
+import { buildDashboardCategoriesFromNavGrouped, isDashboardArCategory, isNonRecoverableDashboardCategory, isRecoverableDashboardCategory } from "../../../utils/moduleCatalog";
 import AgentAvatar from "./AgentAvatar";
 
 const MOCK_CATEGORIES = [
@@ -150,8 +150,10 @@ const Sparkline = () => (
 const DashboardScreen = ({ isDark }) => {
   const modelsState = useSelector((state) => state.app.models);
   const arByCategoryState = useSelector((state) => state.app.arByCategory);
+  const navGroupedState = useSelector((state) => state.app.navGrouped);
   const models = useMemo(() => modelsState ?? [], [modelsState]);
   const arByCategory = useMemo(() => arByCategoryState ?? [], [arByCategoryState]);
+  const navGrouped = useMemo(() => navGroupedState ?? {}, [navGroupedState]);
 
   const productivity = useMemo(() => {
     const grouped = new Map();
@@ -169,18 +171,21 @@ const DashboardScreen = ({ isDark }) => {
   }, [models]);
 
   const categoryRows = useMemo(() => {
+    const navRows = buildDashboardCategoriesFromNavGrouped(navGrouped);
     const sourceRows =
-      arByCategory.length > 0
-        ? arByCategory.map((row) => ({
-            category: row.Category || row.category || "Uncategorized",
-            count: Number(row.Count ?? row.count) || 0,
-            amount: Number(row.Charge ?? row.charge ?? row.Amount ?? row.amount) || 0,
-          }))
-        : (models || []).map((row) => ({
-            category: row.Category || row.Group || "Uncategorized",
-            count: Number(row.Count) || 0,
-            amount: Number(row.Amount) || 0,
-          }));
+      navRows.length > 0
+        ? navRows
+        : arByCategory.length > 0
+          ? arByCategory.map((row) => ({
+              category: row.Category || row.category || "Uncategorized",
+              count: Number(row.Count ?? row.count) || 0,
+              amount: Number(row.Charge ?? row.charge ?? row.Amount ?? row.amount) || 0,
+            }))
+          : (models || []).map((row) => ({
+              category: row.Category || row.Group || "Uncategorized",
+              count: Number(row.Count) || 0,
+              amount: Number(row.Amount) || 0,
+            }));
 
     const categoryMap = new Map();
     sourceRows.forEach(({ category, count, amount }) => {
@@ -203,7 +208,7 @@ const DashboardScreen = ({ isDark }) => {
       pct: Math.round((data.amount / totalAmount) * 100),
       barPct: Math.round((data.count / maxCount) * 100),
     }));
-  }, [arByCategory, models]);
+  }, [navGrouped, arByCategory, models]);
 
   const displayCategories =
     categoryRows.length > 0 ? categoryRows : MOCK_CATEGORIES.filter((row) => isDashboardArCategory(row.category));
@@ -223,10 +228,8 @@ const DashboardScreen = ({ isDark }) => {
     const recoverableClaims = recoverableRows.reduce((sum, row) => sum + row.inventory, 0);
     const nonRecoverableClaims = nonRecoverableRows.reduce((sum, row) => sum + row.inventory, 0);
     const arBalance = recoverableRevenue + nonRecoverableRevenue;
-    const inventory = displayCategories.reduce((sum, row) => sum + row.inventory, 0);
     return {
       arBalance,
-      inventory,
       recoverableRevenue,
       nonRecoverableRevenue,
       recoverableClaims,
@@ -234,7 +237,7 @@ const DashboardScreen = ({ isDark }) => {
     };
   }, [displayCategories]);
 
-  const { arBalance, inventory, recoverableRevenue, nonRecoverableRevenue, recoverableClaims, nonRecoverableClaims } =
+  const { arBalance, recoverableRevenue, nonRecoverableRevenue, recoverableClaims, nonRecoverableClaims } =
     revenueSplit;
   const recoveryMtd = Math.round(recoverableRevenue * 0.62) || 287450;
 
@@ -312,7 +315,7 @@ const DashboardScreen = ({ isDark }) => {
           isDark={isDark}
           title="Non-Recoverable Revenue"
           value={formatCurrency(nonRecoverableRevenue)}
-          subtitle={`${nonRecoverableClaims.toLocaleString("en-US")} claims · Payment Posting`}
+          subtitle={`${nonRecoverableClaims.toLocaleString("en-US")} claims`}
         />
         <MetricCard
           isDark={isDark}
@@ -322,12 +325,6 @@ const DashboardScreen = ({ isDark }) => {
           trend="▼ 9 Days"
           trendLabel="vs last week"
           trendPositiveIsGood={false}
-        />
-        <MetricCard
-          isDark={isDark}
-          title="Inventory"
-          value={inventory.toLocaleString("en-US")}
-          subtitle="Total claims"
         />
         <MetricCard
           isDark={isDark}

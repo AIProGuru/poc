@@ -542,29 +542,33 @@ def platform_bootstrap():
         except Exception as pend_error:
             logger.warning(f"Failed to compute pend counts: {pend_error}")
 
-        cursor.execute(
-            append_where(
-                f"""
-                SELECT
-                    CASE
-                        WHEN CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = ''
-                            THEN '{delinquent_safe}'
-                        ELSE CUSTOM_ALL.Category
-                    END AS Category,
-                    COUNT(ID) AS Count,
-                    SUM(Amount) AS Charge
-                FROM CUSTOM_ALL
-                GROUP BY
-                    CASE
-                        WHEN CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = ''
-                            THEN '{delinquent_safe}'
-                        ELSE CUSTOM_ALL.Category
-                    END
-                """,
-                extra_conditions,
-            )
-        )
-        ar_by_category = cursor.fetchall() or []
+        payment_posting_categories = {"Contractual Adj", "Payment", "Write-off", "Refund"}
+        payment_variance_categories = {"Payer Overpaid", "Payer Underpaid"}
+
+        def dashboard_category_source_tab(category):
+            category_value = (category or "").strip()
+            if category_value in payment_posting_categories:
+                return "1"
+            if category_value == "Patient Resp":
+                return "2"
+            if category_value in payment_variance_categories:
+                return "4"
+            return "6"
+
+        ar_by_category_map = {}
+        for tab in target_tabs:
+            for row in grouped_payload.get(str(tab), []):
+                category_value = (row.get("Category") or "").strip()
+                if not category_value:
+                    continue
+                if dashboard_category_source_tab(category_value) != str(tab):
+                    continue
+                ar_by_category_map[category_value] = {
+                    "Category": category_value,
+                    "Count": row.get("Count") or 0,
+                    "Charge": row.get("Charge") or 0,
+                }
+        ar_by_category = list(ar_by_category_map.values())
 
         result = {
             "tags": tags,
