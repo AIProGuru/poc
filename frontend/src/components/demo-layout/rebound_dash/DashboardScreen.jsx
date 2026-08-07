@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { isDashboardArCategory, isNonRecoverableDashboardCategory, isRecoverableDashboardCategory } from "../../../utils/moduleCatalog";
 import AgentAvatar from "./AgentAvatar";
@@ -13,6 +13,8 @@ const MOCK_CATEGORIES = [
   { category: "Contractual Adj", inventory: 420, arBalance: 150000, pct: 12, barPct: 55 },
   { category: "Payment", inventory: 180, arBalance: 72999, pct: 6, barPct: 30 },
 ];
+
+const DEFAULT_CATEGORY_PREVIEW_COUNT = 5;
 
 const formatCurrency = (value) =>
   `$${Math.round(Number(value || 0)).toLocaleString("en-US")}`;
@@ -50,7 +52,7 @@ const MetricCard = ({ title, value, subtitle, trend, trendLabel, trendPositiveIs
   </div>
 );
 
-const SectionCard = ({ title, subtitle, children, footer, isDark, className = "" }) => (
+const SectionCard = ({ title, subtitle, children, footer, onFooterClick, isDark, className = "" }) => (
   <div
     className={`rounded-xl border p-4 sm:p-5 flex flex-col ${
       isDark
@@ -68,6 +70,7 @@ const SectionCard = ({ title, subtitle, children, footer, isDark, className = ""
     {footer ? (
       <button
         type="button"
+        onClick={onFooterClick}
         className={`mt-4 text-sm font-medium text-left ${
           isDark ? "text-sky-400 hover:text-sky-300" : "text-blue-600 hover:text-blue-700"
         }`}
@@ -205,6 +208,13 @@ const DashboardScreen = ({ isDark }) => {
   const displayCategories =
     categoryRows.length > 0 ? categoryRows : MOCK_CATEGORIES.filter((row) => isDashboardArCategory(row.category));
 
+  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
+  const hasHiddenCategories = displayCategories.length > DEFAULT_CATEGORY_PREVIEW_COUNT;
+  const visibleCategories = categoriesExpanded || !hasHiddenCategories
+    ? displayCategories
+    : displayCategories.slice(0, DEFAULT_CATEGORY_PREVIEW_COUNT);
+  const hiddenCategoryCount = displayCategories.length - DEFAULT_CATEGORY_PREVIEW_COUNT;
+
   const revenueSplit = useMemo(() => {
     const recoverableRows = displayCategories.filter((row) => isRecoverableDashboardCategory(row.category));
     const nonRecoverableRows = displayCategories.filter((row) => isNonRecoverableDashboardCategory(row.category));
@@ -333,7 +343,16 @@ const DashboardScreen = ({ isDark }) => {
         <SectionCard
           isDark={isDark}
           title="Outstanding AR By Category"
-          footer="View all categories →"
+          footer={
+            hasHiddenCategories
+              ? categoriesExpanded
+                ? "Show fewer categories ↑"
+                : `View all categories (${hiddenCategoryCount} more) →`
+              : null
+          }
+          onFooterClick={
+            hasHiddenCategories ? () => setCategoriesExpanded((expanded) => !expanded) : undefined
+          }
         >
           <div className={`grid grid-cols-[1.4fr_1fr_0.9fr_0.6fr] gap-2 text-[11px] uppercase tracking-wide ${muted} pb-2 border-b ${rowBorder}`}>
             <span>Category</span>
@@ -342,7 +361,7 @@ const DashboardScreen = ({ isDark }) => {
             <span className="text-right">% Total</span>
           </div>
           <div className="divide-y divide-[var(--helio-border)]">
-            {displayCategories.map((row) => (
+            {visibleCategories.map((row) => (
               <div
                 key={row.category}
                 className={`grid grid-cols-[1.4fr_1fr_0.9fr_0.6fr] gap-2 items-center py-3 text-sm ${isDark ? "border-[var(--helio-border)]" : "border-slate-100"}`}
