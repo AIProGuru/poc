@@ -277,7 +277,7 @@ const DetailView = () => {
           <p className=" text-[32px] font-semibold">Claim ID: {currentClaim.LIMS_CLINIC_ID}</p>
         </div>
 
-        <div className={`flex sm:flex-row flex-col rounded-xl p-2 gap-2 items-center font-inter w-full ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} `}>
+        <div className={`flex sm:flex-row flex-col rounded-xl p-2 gap-2 items-center font-inter w-full ${theme === 'dark' ? 'bg-[var(--helio-surface-muted)]' : 'bg-[#EFF4FE]'} `}>
           <div className={` h-full w-full rounded-xl flex flex-row sm:items-start items-center sm:flex-col sm:justify-center justify-between p-3 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'} `}>
             <div className="text-[12px] text-[#828385]">Service Date(s)</div>
             <div className={`text-[16px] ${theme === 'dark' ? 'text-gray-300' : 'text-[#151618]'}  mt-0 sm:mt-5`}>
@@ -380,7 +380,7 @@ const DetailView = () => {
             <div className="flex flex-col w-full sm:w-[49.5%]">
               <h1 className="mb-5 font-semibold ">General Information</h1>
               <div
-                className={`sm:w-full w-full h-auto  rounded-xl p-2 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} `}
+                className={`sm:w-full w-full h-auto  rounded-xl p-2 ${theme === 'dark' ? 'bg-[var(--helio-surface-muted)]' : 'bg-[#EFF4FE]'} `}
                 style={{ display: 'flex', flexDirection: 'column' }}
 
               >   <div className='flex sm:flex-row flex-col w-full gap-x-2  justify-evenly'>
@@ -476,7 +476,7 @@ const DetailView = () => {
             >
               <h1 className="mb-5 font-semibold   ">Action</h1>
               <div
-                className={`sm:w-full w-full  sm:max-h-[750px] md:max-h-[710px] h-auto rounded-xl p-2 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
+                className={`sm:w-full w-full  sm:max-h-[750px] md:max-h-[710px] h-auto rounded-xl p-2 ${theme === 'dark' ? 'bg-[var(--helio-surface-muted)]' : 'bg-[#EFF4FE]'}`}
                 style={{ display: 'flex', flexDirection: 'column' }}
               >
                 <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6  w-full rounded-lg`}>

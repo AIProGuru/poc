@@ -35,7 +35,7 @@ const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, stat
 
   return (
     <div className={`pt-2  px-2 pb-2 rounded-3xl flex flex-col ${theme === 'dark' ? 'bg-[#1E1E1E]' : 'bg-[#EFF4FE]'}`}>
-      <div className={`select-none rounded-3xl ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-black'} flex flex-col py-3`}>
+      <div className={`select-none rounded-3xl ${theme === 'dark' ? 'bg-[var(--helio-surface)] text-white' : 'bg-white text-black'} flex flex-col py-3`}>
         <div className="flex justify-between items-center px-6 py-2">
           <div className="flex flex-col w-full">
             <div className="flex flex-col sm:flex-row justify-between">
@@ -60,9 +60,9 @@ const ModelCard = ({ id, title, count, charge, state, category, carc, rarc, stat
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) => saveStatus(e.target.value)}
                 >
-                  <option value="approved" className={`border-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>Approved</option>
-                  <option value="pending" className={`border-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>Pending</option>
-                  <option value="refused" className={`border-none ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>Refused</option>
+                  <option value="approved" className={`border-none ${theme === 'dark' ? 'bg-[var(--helio-surface)] text-white' : 'bg-white text-black'}`}>Approved</option>
+                  <option value="pending" className={`border-none ${theme === 'dark' ? 'bg-[var(--helio-surface)] text-white' : 'bg-white text-black'}`}>Pending</option>
+                  <option value="refused" className={`border-none ${theme === 'dark' ? 'bg-[var(--helio-surface)] text-white' : 'bg-white text-black'}`}>Refused</option>
                 </select>
               </div>
             </div>

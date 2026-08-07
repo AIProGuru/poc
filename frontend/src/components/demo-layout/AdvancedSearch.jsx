@@ -88,7 +88,7 @@ const AdvancedSearch = () => {
 
   const inputClass = `w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B9187]/40 ${
     isDark
-      ? 'bg-[#1f232a] border-[#3f4558] text-white placeholder:text-gray-500'
+      ? 'bg-[var(--helio-surface)] border-[#3f4558] text-white placeholder:text-gray-500'
       : 'bg-white border-gray-300 text-slate-900 placeholder:text-gray-400'
   }`;
 
@@ -101,7 +101,7 @@ const AdvancedSearch = () => {
           onClick={() => setOpen((prev) => !prev)}
           className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
             isDark
-              ? 'border-gray-600 bg-[#27282D] text-white hover:bg-[#32343a]'
+              ? 'border-gray-600 bg-[var(--helio-surface)] text-white hover:bg-[#32343a]'
               : 'border-gray-300 bg-white text-slate-700 hover:bg-gray-50'
           } ${open ? (isDark ? 'ring-2 ring-[#4B9187]/50' : 'ring-2 ring-[#4B9187]/30') : ''}`}
           aria-expanded={open}
@@ -219,7 +219,7 @@ const AdvancedSearch = () => {
             <span
               key={entry.key}
               className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs ${
-                isDark ? 'border-[#3f4558] bg-[#27282D] text-gray-200' : 'border-gray-200 bg-gray-50 text-slate-700'
+                isDark ? 'border-[#3f4558] bg-[var(--helio-surface)] text-gray-200' : 'border-gray-200 bg-gray-50 text-slate-700'
               }`}
             >
               <span className="font-medium">{entry.label}:</span>

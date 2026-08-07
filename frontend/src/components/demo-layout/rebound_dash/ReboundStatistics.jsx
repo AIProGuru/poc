@@ -317,10 +317,10 @@ const ReboundStatistics = () => {
       
     {/* New UI */}
  
-<div className={ `${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2  p-2 rounded-xl`}>
+<div className={ `${theme === 'dark' ? 'bg-[var(--helio-surface-muted)]' : 'bg-[#EFF4FE]'} grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2  p-2 rounded-xl`}>
         {/* 1 */}
       
-    <div className={` ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} con-1  h-[120px] flex flex-col justify-between w-full rounded-xl`}>
+    <div className={` ${theme === 'dark' ? 'bg-[var(--helio-surface)]' :'bg-white'} con-1  h-[120px] flex flex-col justify-between w-full rounded-xl`}>
       <div className = ' h-10 w-full flex flex-row justify-between content-center p-2'>
         <div>
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -348,7 +348,7 @@ const ReboundStatistics = () => {
 
     {/* 2 */}
 
-    <div className={` ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} con-1  h-[120px] w-full  rounded-xl`}>
+    <div className={` ${theme === 'dark' ? 'bg-[var(--helio-surface)]' :'bg-white'} con-1  h-[120px] w-full  rounded-xl`}>
 
     <div className = ' h-10 w-full flex flex-row justify-between content-center p-2'>
         <div>
@@ -378,7 +378,7 @@ const ReboundStatistics = () => {
 
 {/* 3 */}
 
-    <div className={` ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} con-1  h-[120px] w-full  rounded-xl`}>
+    <div className={` ${theme === 'dark' ? 'bg-[var(--helio-surface)]' :'bg-white'} con-1  h-[120px] w-full  rounded-xl`}>
     <div className = ' h-10 w-full flex flex-row justify-between content-center p-2'>
         <div>
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -407,7 +407,7 @@ const ReboundStatistics = () => {
 
 {/* 4 */}
 
-    <div className={` ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} con-1  h-[120px] w-full  rounded-xl`}>
+    <div className={` ${theme === 'dark' ? 'bg-[var(--helio-surface)]' :'bg-white'} con-1  h-[120px] w-full  rounded-xl`}>
     <div className = ' h-10 w-full flex flex-row justify-between content-center p-2'>
         <div>
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -440,14 +440,14 @@ const ReboundStatistics = () => {
 {/* first table */}
 
  <div className = 'flex gap-2 justify-center flex-wrap'>
-<div className = {`${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} h-[400px] sm:w-[49.5%] w-full rounded-xl p-1`}>
-<div className = {` ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} h-full w-full overflow-y-hidden rounded-xl`}>
+<div className = {`${theme === 'dark' ? 'bg-[var(--helio-surface-muted)]' : 'bg-[#EFF4FE]'} h-[400px] sm:w-[49.5%] w-full rounded-xl p-1`}>
+<div className = {` ${theme === 'dark' ? 'bg-[var(--helio-surface)]' :'bg-white'} h-full w-full overflow-y-hidden rounded-xl`}>
   <ClaimDistributionChart data={data_line}/>
 </div>
   </div>
 
-    <div className = {` ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} h-[400px] sm:w-[49.5%] w-full rounded-xl p-1`}>
-<div className = {`  ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} h-full w-full overflow-y-hidden rounded-xl`}>
+    <div className = {` ${theme === 'dark' ? 'bg-[var(--helio-surface-muted)]' : 'bg-[#EFF4FE]'} h-[400px] sm:w-[49.5%] w-full rounded-xl p-1`}>
+<div className = {`  ${theme === 'dark' ? 'bg-[var(--helio-surface)]' :'bg-white'} h-full w-full overflow-y-hidden rounded-xl`}>
   <RecoverableViewChart  data_pie={data_pie}/>
 </div>
   </div>
@@ -456,14 +456,14 @@ const ReboundStatistics = () => {
 
 
 <div className = 'flex gap-2 justify-start flex-wrap'>
-<div className =  {` ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} h-[400px] sm:w-[49.5%] w-full rounded-xl p-1`}>
-<div className ={`  ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} h-full w-full overflow-y-hidden rounded-xl`}>
+<div className =  {` ${theme === 'dark' ? 'bg-[var(--helio-surface-muted)]' : 'bg-[#EFF4FE]'} h-[400px] sm:w-[49.5%] w-full rounded-xl p-1`}>
+<div className ={`  ${theme === 'dark' ? 'bg-[var(--helio-surface)]' :'bg-white'} h-full w-full overflow-y-hidden rounded-xl`}>
   <HorizontalBarChart data={data_bar}/>
 </div>
   </div>
 
-  {/* <div className =  {` ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} h-[400px] sm:w-[49.5%] w-full rounded-xl p-1`}>
-<div className = {`  ${theme === 'dark' ? 'bg-[#151619]' :'bg-white'} h-full w-full overflow-y-hidden rounded-xl`}>
+  {/* <div className =  {` ${theme === 'dark' ? 'bg-[var(--helio-surface-muted)]' : 'bg-[#EFF4FE]'} h-[400px] sm:w-[49.5%] w-full rounded-xl p-1`}>
+<div className = {`  ${theme === 'dark' ? 'bg-[var(--helio-surface)]' :'bg-white'} h-full w-full overflow-y-hidden rounded-xl`}>
   <GroupedBarChart data={data_assigned}/>
 </div>
   </div> */}

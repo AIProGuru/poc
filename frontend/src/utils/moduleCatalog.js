@@ -29,3 +29,40 @@ export const MODULE_CATEGORY_MAP = {
   "Payment Variance": ["Payer Overpaid", "Payer Underpaid"],
   "Payment Posting": ["Contractual Adj", "Payment", "Write-off", "Refund"],
 };
+
+export const DASHBOARD_RECOVERABLE_MODULES = [
+  "Claim Edits",
+  "Claim Status",
+  "Denials",
+  "Payment Variance",
+];
+
+export const DASHBOARD_NON_RECOVERABLE_MODULE = "Payment Posting";
+
+const CATEGORY_TO_MODULE = (() => {
+  const map = new Map();
+  Object.entries(MODULE_CATEGORY_MAP).forEach(([module, categories]) => {
+    categories.forEach((category) => {
+      map.set(category.toLowerCase(), module);
+    });
+  });
+  return map;
+})();
+
+export const getModuleForCategory = (category) => {
+  const normalized = `${category || ""}`.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === "payment posting") return DASHBOARD_NON_RECOVERABLE_MODULE;
+  return CATEGORY_TO_MODULE.get(normalized) || null;
+};
+
+export const isRecoverableDashboardCategory = (category) => {
+  const module = getModuleForCategory(category);
+  return module != null && DASHBOARD_RECOVERABLE_MODULES.includes(module);
+};
+
+export const isNonRecoverableDashboardCategory = (category) =>
+  getModuleForCategory(category) === DASHBOARD_NON_RECOVERABLE_MODULE;
+
+export const isDashboardArCategory = (category) =>
+  isRecoverableDashboardCategory(category) || isNonRecoverableDashboardCategory(category);

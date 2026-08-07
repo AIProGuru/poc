@@ -33,6 +33,7 @@ const initialState = {
   selectedClaimIds: [],
   navGrouped: {},
   navPendCounts: {},
+  arByCategory: [],
   worklistSummary: null,
 };
 
@@ -158,6 +159,9 @@ const appReducer = createSlice({
     setNavPendCounts: (state, action) => {
       state.navPendCounts = action.payload || {};
     },
+    setArByCategory: (state, action) => {
+      state.arByCategory = action.payload || [];
+    },
     setWorklistSummary: (state, action) => {
       state.worklistSummary = action.payload || null;
     },
@@ -211,6 +215,7 @@ const appReducer = createSlice({
       state.selectedClaimIds = [];
       state.navGrouped = {};
       state.navPendCounts = {};
+      state.arByCategory = [];
       state.worklistSummary = null;
     }
   },
@@ -255,6 +260,7 @@ export const {
   setSelectedClaimIds,
   setNavGrouped,
   setNavPendCounts,
+  setArByCategory,
   setWorklistSummary,
   clearSelectedClaimIds,
   setTabDefaults,

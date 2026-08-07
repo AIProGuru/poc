@@ -21,7 +21,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function GroupedBarChart({ data }) {
   const theme = useSelector((state) => state.app.theme);
   return (
-    <div className={`p-6  ${theme === 'dark' ? 'bg-[#151619]' :''} rounded-xl flex flex-col justify-center items-center shadow-sm`}>
+    <div className={`p-6  ${theme === 'dark' ? 'bg-[var(--helio-surface)]' :''} rounded-xl flex flex-col justify-center items-center shadow-sm`}>
       <h2 className={`text-xl font-bold mb-6 text-left ${theme === 'dark' ?'text-white' :'text-gray-800'} `} >Assigned View</h2>
       <BarChart
         width={500}

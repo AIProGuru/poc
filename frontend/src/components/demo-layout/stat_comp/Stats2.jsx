@@ -61,7 +61,7 @@ export default function SingleBarWithList({ data_pie, type = 1 }) {
       <h2 className="text-xl font-bold mb-2">Recoverable View</h2>
       <h1 className="text-4xl font-bold mb-2">{total.toLocaleString()}</h1>
       
-      <div className={` ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}  py-4 rounded`}>
+      <div className={` ${theme === 'dark' ? 'bg-[var(--helio-surface)]' : 'bg-white'}  py-4 rounded`}>
         <div className="h-[16px] w-full flex rounded-lg overflow-hidden relative">
           {data.map((item, index) => {
             const width = (item.value / total) * 100;
@@ -80,8 +80,8 @@ export default function SingleBarWithList({ data_pie, type = 1 }) {
                 {activeSegment === index && (
                   <div className="absolute bottom-full mb-4 left-1/2 transform -translate-x-1/2 z-50">
                     <div className="relative">
-                      <div className={`absolute w-3 h-3  ${theme === 'dark' ? 'bg-[#151619]' : ''}s transform rotate-45 left-1/2 -translate-x-1/2 translate-y-[6px] shadow-lg`}></div>
-                      <div className={` ${theme === 'dark' ? 'bg-[#151619]' : ''} backdrop-blur-md rounded-lg p-3 shadow-xl border border-gray-100`}>
+                      <div className={`absolute w-3 h-3  ${theme === 'dark' ? 'bg-[var(--helio-surface)]' : ''}s transform rotate-45 left-1/2 -translate-x-1/2 translate-y-[6px] shadow-lg`}></div>
+                      <div className={` ${theme === 'dark' ? 'bg-[var(--helio-surface)]' : ''} backdrop-blur-md rounded-lg p-3 shadow-xl border border-gray-100`}>
                         <div className="flex flex-col gap-1 min-w-[150px]">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors[index % colors.length] }}></div>
@@ -116,7 +116,7 @@ export default function SingleBarWithList({ data_pie, type = 1 }) {
       {sortedData.map((item, index) => (
           <div 
             key={item.name} 
-            className={`flex justify-between items-center p-2 cursor-pointer ${theme === 'dark' ? 'bg-[#151619]' : ''} ${
+            className={`flex justify-between items-center p-2 cursor-pointer ${theme === 'dark' ? 'bg-[var(--helio-surface)]' : ''} ${
               index === data.length - 1 ? 'border-b' : ''
             }`}
             onClick={() => handleClick(item.name)}

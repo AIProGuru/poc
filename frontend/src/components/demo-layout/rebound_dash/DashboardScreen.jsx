@@ -1,18 +1,8 @@
 /* eslint-disable react/prop-types */
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { MODULE_CATEGORY_MAP } from "../../../utils/moduleCatalog";
+import { isDashboardArCategory, isNonRecoverableDashboardCategory, isRecoverableDashboardCategory } from "../../../utils/moduleCatalog";
 import AgentAvatar from "./AgentAvatar";
-
-const PAYMENT_POSTING_CATEGORIES = new Set(
-  MODULE_CATEGORY_MAP["Payment Posting"].map((c) => c.toLowerCase())
-);
-
-const isPaymentPostingCategory = (category) => {
-  const norm = `${category || ""}`.trim().toLowerCase();
-  if (norm === "payment posting") return true;
-  return PAYMENT_POSTING_CATEGORIES.has(norm);
-};
 
 const MOCK_CATEGORIES = [
   { category: "Coordination of Benefits", inventory: 1261, arBalance: 580070, pct: 46, barPct: 100 },
@@ -156,7 +146,9 @@ const Sparkline = () => (
 
 const DashboardScreen = ({ isDark }) => {
   const modelsState = useSelector((state) => state.app.models);
+  const arByCategoryState = useSelector((state) => state.app.arByCategory);
   const models = useMemo(() => modelsState ?? [], [modelsState]);
+  const arByCategory = useMemo(() => arByCategoryState ?? [], [arByCategoryState]);
 
   const productivity = useMemo(() => {
     const grouped = new Map();
@@ -174,16 +166,31 @@ const DashboardScreen = ({ isDark }) => {
   }, [models]);
 
   const categoryRows = useMemo(() => {
+    const sourceRows =
+      arByCategory.length > 0
+        ? arByCategory.map((row) => ({
+            category: row.Category || row.category || "Uncategorized",
+            count: Number(row.Count ?? row.count) || 0,
+            amount: Number(row.Charge ?? row.charge ?? row.Amount ?? row.amount) || 0,
+          }))
+        : (models || []).map((row) => ({
+            category: row.Category || row.Group || "Uncategorized",
+            count: Number(row.Count) || 0,
+            amount: Number(row.Amount) || 0,
+          }));
+
     const categoryMap = new Map();
-    (models || []).forEach((row) => {
-      const category = row.Category || row.Group || "Uncategorized";
+    sourceRows.forEach(({ category, count, amount }) => {
       const current = categoryMap.get(category) || { count: 0, amount: 0 };
       categoryMap.set(category, {
-        count: current.count + (Number(row.Count) || 0),
-        amount: current.amount + (Number(row.Amount) || 0),
+        count: current.count + count,
+        amount: current.amount + amount,
       });
     });
-    const rows = Array.from(categoryMap.entries()).sort((a, b) => b[1].amount - a[1].amount);
+
+    const rows = Array.from(categoryMap.entries())
+      .filter(([category]) => isDashboardArCategory(category))
+      .sort((a, b) => b[1].amount - a[1].amount);
     const totalAmount = rows.reduce((s, [, d]) => s + d.amount, 0) || 1;
     const maxCount = Math.max(...rows.map(([, d]) => d.count), 1);
     return rows.map(([category, data]) => ({
@@ -193,13 +200,14 @@ const DashboardScreen = ({ isDark }) => {
       pct: Math.round((data.amount / totalAmount) * 100),
       barPct: Math.round((data.count / maxCount) * 100),
     }));
-  }, [models]);
+  }, [arByCategory, models]);
 
-  const displayCategories = categoryRows.length > 0 ? categoryRows : MOCK_CATEGORIES;
+  const displayCategories =
+    categoryRows.length > 0 ? categoryRows : MOCK_CATEGORIES.filter((row) => isDashboardArCategory(row.category));
 
   const revenueSplit = useMemo(() => {
-    const recoverableRows = displayCategories.filter((row) => !isPaymentPostingCategory(row.category));
-    const nonRecoverableRows = displayCategories.filter((row) => isPaymentPostingCategory(row.category));
+    const recoverableRows = displayCategories.filter((row) => isRecoverableDashboardCategory(row.category));
+    const nonRecoverableRows = displayCategories.filter((row) => isNonRecoverableDashboardCategory(row.category));
     const recoverableRevenue = recoverableRows.reduce((sum, row) => sum + row.arBalance, 0);
     const nonRecoverableRevenue = nonRecoverableRows.reduce((sum, row) => sum + row.arBalance, 0);
     const recoverableClaims = recoverableRows.reduce((sum, row) => sum + row.inventory, 0);

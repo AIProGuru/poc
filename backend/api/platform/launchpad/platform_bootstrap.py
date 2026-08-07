@@ -542,6 +542,30 @@ def platform_bootstrap():
         except Exception as pend_error:
             logger.warning(f"Failed to compute pend counts: {pend_error}")
 
+        cursor.execute(
+            append_where(
+                f"""
+                SELECT
+                    CASE
+                        WHEN CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = ''
+                            THEN '{delinquent_safe}'
+                        ELSE CUSTOM_ALL.Category
+                    END AS Category,
+                    COUNT(ID) AS Count,
+                    SUM(Amount) AS Charge
+                FROM CUSTOM_ALL
+                GROUP BY
+                    CASE
+                        WHEN CUSTOM_ALL.Category IS NULL OR TRIM(CUSTOM_ALL.Category) = ''
+                            THEN '{delinquent_safe}'
+                        ELSE CUSTOM_ALL.Category
+                    END
+                """,
+                extra_conditions,
+            )
+        )
+        ar_by_category = cursor.fetchall() or []
+
         result = {
             "tags": tags,
             "counts": counts,
@@ -551,6 +575,7 @@ def platform_bootstrap():
             "models": models,
             "grouped": grouped_payload,
             "pendCounts": pend_counts,
+            "arByCategory": ar_by_category,
             "Call_from": request.blueprint,
             "Database": db_name,
         }

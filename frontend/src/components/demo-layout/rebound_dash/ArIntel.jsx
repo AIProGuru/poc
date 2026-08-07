@@ -243,7 +243,7 @@ const ArIntel = ({ onModelSelect }) => {
       </div>
       </div>
 
-      <div className={`rounded-xl border ${isDark ? 'bg-[#27282D] border-[#222632] text-[#F4F4F4]' : 'bg-white border-slate-200 text-slate-900'} shadow-none`}>
+      <div className={`rounded-xl border ${isDark ? 'bg-[var(--helio-surface)] border-[var(--helio-border)] text-[#F4F4F4]' : 'bg-white border-slate-200 text-slate-900'} shadow-none`}>
         <button
           type="button"
           onClick={() => setIsFilterOpen((prev) => !prev)}
@@ -306,7 +306,7 @@ const ArIntel = ({ onModelSelect }) => {
         </div>
       </div>
 
-      <div className={`rounded-xl border ${isDark ? 'bg-[#27282D] border-[#222632] text-[#F4F4F4]' : 'bg-white border-slate-200 text-slate-900'} shadow-none`}>
+      <div className={`rounded-xl border ${isDark ? 'bg-[var(--helio-surface)] border-[var(--helio-border)] text-[#F4F4F4]' : 'bg-white border-slate-200 text-slate-900'} shadow-none`}>
         <button
           type="button"
           onClick={() => setIsAgentPanelOpen((prev) => !prev)}

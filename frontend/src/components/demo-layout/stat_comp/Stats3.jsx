@@ -69,7 +69,7 @@ export default function HorizontalBarChart({data}) {
               left: isMobile ? -5 : -60,
               bottom: 20
             }}
-            className={`${theme === 'dark' ? 'bg-[#151619]' :''}`}
+            className={`${theme === 'dark' ? 'bg-[var(--helio-surface)]' :''}`}
           >
             <XAxis
               type="number"

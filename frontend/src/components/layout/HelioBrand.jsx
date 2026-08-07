@@ -3,51 +3,70 @@ import React from "react";
 /** Teal wordmark color matching the Helio RCM brand on light backgrounds. */
 export const HELIO_WORDMARK_TEAL = "#3dbaa8";
 
-const WORDMARK_SIZES = {
-  sm: {
-    helio: "text-[1.125rem]",
-    rcm: "text-[0.4375rem]",
-    rcmTracking: "tracking-[0.52em]",
-  },
-  md: {
-    helio: "text-[1.375rem]",
-    rcm: "text-[0.5rem]",
-    rcmTracking: "tracking-[0.55em]",
-  },
-  lg: {
-    helio: "text-[1.75rem]",
-    rcm: "text-[0.625rem]",
-    rcmTracking: "tracking-[0.55em]",
-  },
-  sidebar: {
-    helio: "text-[1.875rem]",
-    helioTracking: "tracking-[0.07em]",
-    rcm: "text-[0.6875rem]",
-    rcmTracking: "tracking-[0.62em]",
-  },
-  xl: {
-    helio: "text-[2.25rem]",
-    rcm: "text-[0.75rem]",
-    rcmTracking: "tracking-[0.5em]",
-  },
+const LOGO_VIEWBOX = { width: 229, height: 68, markWidth: 68 };
+
+const parseTailwindHeightPx = (className = "") => {
+  const arbitrary = className.match(/h-\[(\d+(?:\.\d+)?)px\]/);
+  if (arbitrary) return Number(arbitrary[1]);
+
+  const scale = className.match(/\bh-(\d+(?:\.\d+)?)\b/);
+  if (scale) return Number(scale[1]) * 4;
+
+  return 36;
+};
+
+const LogoWordmark = ({ variant, markHeightPx, className = "" }) => {
+  const src = variant === "onLight" ? "/helio-logo.svg" : "/helio-logo-white.svg";
+  const scaledWidth = markHeightPx * (LOGO_VIEWBOX.width / LOGO_VIEWBOX.height);
+  const wordmarkWidth =
+    markHeightPx * ((LOGO_VIEWBOX.width - LOGO_VIEWBOX.markWidth) / LOGO_VIEWBOX.height);
+
+  return (
+    <div
+      className={`overflow-hidden shrink-0 ${className}`}
+      style={{ height: markHeightPx, width: wordmarkWidth }}
+      aria-hidden
+    >
+      <img
+        src={src}
+        alt=""
+        className="max-w-none select-none"
+        style={{
+          height: markHeightPx,
+          width: scaledWidth,
+          marginLeft: -markHeightPx,
+        }}
+        loading="lazy"
+        draggable={false}
+      />
+    </div>
+  );
+};
+
+const SIZE_MARK = {
+  sm: "h-8 w-8",
+  md: "h-9 w-9",
+  lg: "h-11 w-11",
+  sidebar: "h-12 w-12",
+  xl: "h-16 w-16",
 };
 
 /**
- * Helio RCM brand lockup: colorful mark (unchanged) + separate HELIO / RCM wordmark.
- * Use variant="onDark" for white text; variant="onLight" for brand teal text.
+ * Helio RCM brand lockup: colorful mark + original HELIO / RCM wordmark from helio-logo.svg.
+ * Use variant="onDark" for white wordmark; variant="onLight" for brand teal wordmark.
  */
 export default function HelioBrand({
   variant = "onDark",
   showWordmark = true,
   size = "md",
-  markSize = "h-9 w-9",
+  markSize,
   className = "",
   markClassName = "",
   wordmarkClassName = "",
   alt = "Helio RCM",
 }) {
-  const wordmarkColor = variant === "onLight" ? "text-[#3dbaa8]" : "text-white";
-  const scale = WORDMARK_SIZES[size] || WORDMARK_SIZES.md;
+  const resolvedMarkSize = markSize || SIZE_MARK[size] || SIZE_MARK.md;
+  const markHeightPx = parseTailwindHeightPx(resolvedMarkSize);
 
   return (
     <div className={`inline-flex items-center gap-3 ${className}`} aria-label={alt}>
@@ -55,18 +74,16 @@ export default function HelioBrand({
         src="/favicon.png"
         alt=""
         aria-hidden
-        className={`shrink-0 object-contain ${markSize} ${markClassName}`}
+        className={`shrink-0 object-contain ${resolvedMarkSize} ${markClassName}`}
         loading="lazy"
+        draggable={false}
       />
       {showWordmark ? (
-        <div
-          className={`inline-block leading-none select-none font-bold ${wordmarkColor} ${wordmarkClassName}`}
-        >
-          <span className={`block ${scale.helio} ${scale.helioTracking || "tracking-[0.04em]"} uppercase`}>HELIO</span>
-          <span className={`block text-center ${scale.rcm} ${scale.rcmTracking} mt-1 uppercase`}>
-            RCM
-          </span>
-        </div>
+        <LogoWordmark
+          variant={variant}
+          markHeightPx={markHeightPx}
+          className={wordmarkClassName}
+        />
       ) : null}
     </div>
   );

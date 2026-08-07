@@ -770,8 +770,7 @@ const Sidebar = () => {
           <HelioBrand
             showWordmark={showLabels}
             variant={isDark ? "onDark" : "onLight"}
-            size={showLabels ? "sidebar" : "md"}
-            markSize={showLabels ? "h-12 w-12" : "h-9 w-9"}
+            size="sidebar"
             className={showLabels ? "gap-4" : ""}
           />
         </div>

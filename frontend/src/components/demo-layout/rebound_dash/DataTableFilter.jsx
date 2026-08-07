@@ -156,7 +156,7 @@ const theme = useSelector((state) => state.app.theme)
       <button
         onClick={handleFilterOpen}
         style={open ? { boxShadow: "0px 0px 0px 4px #F2F7FF" } : {}}
-        className={`w-[144px] rounded-lg flex justify-center items-center h-[40px] p-3 border ${theme === 'dark' ?"bg-[#151619] text-white  border border-gray-600" :" text-black bg-white border border-gray-300"} gap-2`}
+        className={`w-[144px] rounded-lg flex justify-center items-center h-[40px] p-3 border ${theme === 'dark' ?"bg-[var(--helio-surface)] text-white  border border-gray-600" :" text-black bg-white border border-gray-300"} gap-2`}
       >
         <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M6.84717 16.9446V12.0835" stroke="#9598B0" strokeWidth="1.3" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />

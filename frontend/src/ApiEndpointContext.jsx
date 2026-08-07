@@ -15,6 +15,7 @@ import {
   setModels,
   setNavGrouped,
   setNavPendCounts,
+  setArByCategory,
   setTableData,
   setExtraFilter,
   setCurrentPage,
@@ -111,6 +112,7 @@ export const ApiEndpointProvider = ({ children }) => {
       dispatch(setAllPayers([]));
       dispatch(setNavGrouped({}));
       dispatch(setNavPendCounts({}));
+      dispatch(setArByCategory([]));
       dispatch(setCount([]));
       dispatch(setCategoryLabel([]));
       dispatch(setCategoryValue([]));
@@ -368,6 +370,7 @@ export const ApiEndpointProvider = ({ children }) => {
         dispatch(setAllPayers(data.payers || []));
         dispatch(setNavGrouped(data.grouped || {}));
         dispatch(setNavPendCounts(data.pendCounts || {}));
+        dispatch(setArByCategory(data.arByCategory || []));
 
         const counts = data.counts || {};
         dispatch(
