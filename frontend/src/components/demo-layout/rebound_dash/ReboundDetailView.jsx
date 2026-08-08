@@ -18,7 +18,7 @@ import Recommendation from "./Recommendation";
 import { samplifyDouble, samplifyString, samplifyInteger, SERVER_URL } from "../../../utils/config";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { useSelector, useDispatch } from "react-redux";
-import { buildAccessExtra } from "../../../utils/accessFilters";
+import { buildWorklistExtra } from "../../../utils/aiModelFilters";
 import { refreshWorklistFromAppState } from "../../../utils/worklistRefresh";
 import {
   buildAutoTriageNotes,
@@ -141,6 +141,7 @@ const ReboundDetailView = () => {
   const pos = useSelector((state) => state.app.pos);
   const advancedFilters = useSelector((state) => state.app.advancedFilters);
   const extra = useSelector((state) => state.app.extraFilter);
+  const models = useSelector((state) => state.app.models);
   const access = useMemo(
     () => ({
       modules: accessModules,
@@ -152,8 +153,8 @@ const ReboundDetailView = () => {
     [accessModules, accessDenialCategory, accessPayer, accessValue, accessFacility]
   );
   const accessExtra = useMemo(
-    () => buildAccessExtra(extra, access, role),
-    [extra, access, role]
+    () => buildWorklistExtra(extra, access, role, models, { code, remark }),
+    [extra, access, role, models, code, remark]
   );
   const [detailShowStatus, setDetailShowStatus] = useState(0);
   const [routeTitle, setRouteTitle] = useState('');

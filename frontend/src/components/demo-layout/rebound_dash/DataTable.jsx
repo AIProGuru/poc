@@ -23,7 +23,7 @@ import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { toast } from "react-toastify";
 import DataTableTags from "./DataTableTags";
 import BulkDenialsPanel from "./BulkDenialsPanel";
-import { buildAccessExtra } from "../../../utils/accessFilters";
+import { buildWorklistExtra } from "../../../utils/aiModelFilters";
 import { sanitizeAdvancedFilters, countActiveAdvancedFilters } from "../../../utils/advancedFilters";
 import { refreshWorklistFromAppState } from "../../../utils/worklistRefresh";
 import { formatTickleDueIn, getTickleDaysRemaining } from "../../../utils/triageHelpers";
@@ -72,12 +72,13 @@ const DataTable = (props) => {
   const pos = useSelector((state) => state.app.pos)
   const advancedFilters = useSelector((state) => state.app.advancedFilters);
   const extra = useSelector((state) => state.app.extraFilter);
+  const models = useSelector((state) => state.app.models);
   const selectedClaimIds = useSelector((state) => state.app.selectedClaimIds);
   const navPendCounts = useSelector((state) => state.app.navPendCounts);
   const worklistSummary = useSelector((state) => state.app.worklistSummary);
   const accessExtra = useMemo(
-    () => buildAccessExtra(extra, access, role),
-    [extra, access, role]
+    () => buildWorklistExtra(extra, access, role, models, { code, remark }),
+    [extra, access, role, models, code, remark]
   );
   const isRecentClaimsView = Boolean(accessExtra?.RecentClaims);
   const appTitle = useSelector((state) => state.app.title);

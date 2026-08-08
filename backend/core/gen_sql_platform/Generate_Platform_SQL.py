@@ -327,29 +327,7 @@ def generate_sql(
                 WHERE e.trading_partner_claim_number = CUSTOM_ALL.ClaimNo
             )
         """
-    exclude_ai_models = extra.get("ExcludeAiModels")
-    if exclude_ai_models:
-        conditions = []
-        for item in exclude_ai_models:
-            group = (item.get("group") or item.get("GroupCode") or "").strip()
-            code = (item.get("code") or item.get("AdjustmentReason") or "").strip()
-            if not group or not code:
-                continue
-            group_safe = group.replace("'", "''")
-            code_safe = code.replace("'", "''")
-            conditions.append(
-                f"(CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentGroup='{group_safe}' AND CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentReason='{code_safe}')"
-            )
-        if len(conditions) > 0:
-            conditions_sql = " OR ".join(conditions)
-            query += f"""
-                AND NOT EXISTS (
-                    SELECT 1
-                    FROM CUSTOM_SERVICE_CODE_FOR_TABLE
-                    WHERE CUSTOM_SERVICE_CODE_FOR_TABLE.id_837=CUSTOM_ALL.ID
-                      AND ({conditions_sql})
-                )
-            """
+    query += build_exclude_ai_models_sql(extra)
     if code != "":
         query += f"""
             AND EXISTS (
@@ -385,3 +363,64 @@ def generate_sql(
         else:
             query += f" ORDER BY CUSTOM_ALL.{sort}"
     return query
+
+
+def build_exclude_ai_models_from_rows(models):
+    seen = set()
+    payload = []
+    for row in models or []:
+        if not isinstance(row, dict):
+            continue
+        group = str(row.get("GroupCode") or row.get("group") or "").strip()
+        code = str(row.get("Code") or row.get("code") or row.get("AdjustmentReason") or "").strip()
+        if not group or not code:
+            continue
+        key = f"{group}:{code}"
+        if key in seen:
+            continue
+        seen.add(key)
+        payload.append({"group": group, "code": code})
+    return payload
+
+
+def build_exclude_ai_models_condition(extra):
+    exclude_ai_models = (extra or {}).get("ExcludeAiModels") if isinstance(extra, dict) else None
+    if not exclude_ai_models:
+        return ""
+    conditions = []
+    for item in exclude_ai_models:
+        group = (item.get("group") or item.get("GroupCode") or "").strip()
+        code = (item.get("code") or item.get("AdjustmentReason") or "").strip()
+        if not group or not code:
+            continue
+        group_safe = group.replace("'", "''")
+        code_safe = code.replace("'", "''")
+        conditions.append(
+            f"(CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentGroup='{group_safe}' AND CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentReason='{code_safe}')"
+        )
+    if not conditions:
+        return ""
+    conditions_sql = " OR ".join(conditions)
+    return f"""NOT EXISTS (
+                    SELECT 1
+                    FROM CUSTOM_SERVICE_CODE_FOR_TABLE
+                    WHERE CUSTOM_SERVICE_CODE_FOR_TABLE.id_837=CUSTOM_ALL.ID
+                      AND ({conditions_sql})
+                )"""
+
+
+def build_exclude_ai_models_sql(extra):
+    condition = build_exclude_ai_models_condition(extra)
+    if not condition:
+        return ""
+    return f" AND {condition}"
+
+
+def merge_sql_conditions(base, addition):
+    base_sql = (base or "").strip()
+    addition_sql = (addition or "").strip()
+    if not addition_sql:
+        return base_sql
+    if not base_sql:
+        return addition_sql
+    return f"{base_sql} AND {addition_sql}"

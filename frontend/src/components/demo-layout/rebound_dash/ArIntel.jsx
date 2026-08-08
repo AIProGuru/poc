@@ -217,7 +217,7 @@ const ArIntel = ({ onModelSelect }) => {
     dispatch(setRemark(payload.remark));
     dispatch(setProcedure(''));
     dispatch(setPOS(''));
-    dispatch(setExtraFilter(payload.extra));
+    dispatch(setExtraFilter({ ...(payload.extra || {}), source: "ai-library" }));
     dispatch(setSelectedTags(tags));
     // Ensure any in-flight AI Agents requests are cleared so the drilldown triggers a single load.
     dispatch(setTableLoading(false));

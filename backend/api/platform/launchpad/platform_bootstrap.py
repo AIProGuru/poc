@@ -5,7 +5,12 @@ import json
 import re
 import os
 from db import get_connection, close_connection
-from core.gen_sql_platform.Generate_Platform_SQL import generate_sql as newGenerateSQL
+from core.gen_sql_platform.Generate_Platform_SQL import (
+    generate_sql as newGenerateSQL,
+    build_exclude_ai_models_from_rows,
+    build_exclude_ai_models_condition,
+    merge_sql_conditions,
+)
 from api.platform.launchpad.stratification_details import (
     build_priority_helpers,
     get_custom_all_patient_payment_expr,
@@ -227,159 +232,6 @@ def platform_bootstrap():
 
         extra_conditions = build_extra_conditions(extra)
 
-        # Tags
-        cursor.execute(
-            append_where(
-                """
-                SELECT DISTINCT Category
-                FROM CUSTOM_ALL
-                ORDER BY Category;
-                """,
-                extra_conditions,
-            )
-        )
-        rows = cursor.fetchall() or []
-        tags = []
-        for row in rows:
-            category_value = (row.get("Category") or "").strip()
-            if category_value:
-                tags.append(category_value)
-            else:
-                tags.append(delinquent_label)
-
-        # Counts
-        cursor.execute(
-            append_where(
-                """
-                SELECT
-                    COUNT(CASE WHEN (Category != 'Contractual Adj' AND Category != 'Patient Resp'
-                        AND Category IS NOT NULL AND TRIM(Category) != '' AND Automation = 0) THEN 1 ELSE NULL END) cnt1,
-                    COUNT(CASE WHEN Category = 'Contractual Adj' AND Automation = 0 THEN 1 ELSE NULL END) cnt2,
-                    COUNT(CASE WHEN Category = 'Patient Resp' AND Automation = 0 THEN 1 ELSE NULL END) cnt3,
-                    COUNT(CASE WHEN (Category IS NULL OR TRIM(Category) = '') AND Automation = 0 THEN 1 ELSE NULL END) cnt4,
-                    COUNT(CASE WHEN Automation != 0 THEN 1 ELSE NULL END) cnt6,
-                    COUNT(1) cnt7,
-                    SUM(CASE WHEN (Category != 'Contractual Adj' AND Category != 'Patient Resp'
-                        AND Category IS NOT NULL AND TRIM(Category) != '') THEN Amount ELSE 0 END) amount1,
-                    SUM(CASE WHEN Category = 'Contractual Adj' THEN Amount ELSE 0 END) amount2,
-                    SUM(CASE WHEN Category = 'Patient Resp' THEN Amount ELSE 0 END) amount3,
-                    SUM(CASE WHEN (Category IS NULL OR TRIM(Category) = '') THEN Amount ELSE 0 END) amount4
-                FROM CUSTOM_ALL;
-                """,
-                extra_conditions,
-            )
-        )
-        counts = cursor.fetchone() or {}
-
-        # Statistics
-        cursor.execute(
-            append_where(
-                """
-                SELECT
-                    Category AS label,
-                    COUNT(ID) AS value
-                FROM CUSTOM_ALL
-                WHERE Category IS NOT NULL
-                    AND TRIM(Category) != ''
-                    AND Category != 'Patient Resp'
-                    AND Category != 'Contractual Adj'
-                GROUP BY Category
-                """,
-                extra_conditions,
-            )
-        )
-        statistics = cursor.fetchall() or []
-
-        # Payers
-        cursor.execute(
-            append_where(
-                """
-                SELECT DISTINCT PayerName
-                FROM CUSTOM_ALL
-                WHERE PayerName IS NOT NULL
-                ORDER BY PayerName;
-                """,
-                extra_conditions,
-            )
-        )
-        payers = cursor.fetchall() or []
-
-        # Recovery
-        recovery = [
-            {"count": 0, "amount": 0},
-            {"count": 0, "amount": 0},
-            {"count": 0, "amount": 0},
-            {"count": 0, "amount": 0},
-        ]
-
-        cursor.execute(
-            append_where(
-                """
-                SELECT
-                    SUM(recoverable_amount) amount,
-                    COUNT(1) cnt
-                FROM denial_actions;
-                """,
-                "",
-            )
-        )
-        row = cursor.fetchone() or {}
-        recovery[0]["count"] = row.get("cnt")
-        recovery[0]["amount"] = row.get("amount")
-
-        cursor.execute(
-            append_where(
-                """
-                SELECT
-                    SUM(Amount) amount,
-                    COUNT(1) cnt
-                FROM CUSTOM_ALL
-                WHERE EXISTS (
-                    SELECT 1
-                    FROM actions
-                    WHERE actions.ClaimNo=CUSTOM_ALL.ClaimNo
-                );
-                """,
-                extra_conditions,
-            )
-        )
-        row = cursor.fetchone() or {}
-        recovery[1]["count"] = row.get("cnt")
-        recovery[1]["amount"] = row.get("amount")
-
-        cursor.execute(
-            append_where(
-                """
-                SELECT
-                    SUM(Amount) amount,
-                    COUNT(1) cnt
-                FROM CUSTOM_ALL
-                WHERE CUSTOM_ALL.Automation!=0;
-                """,
-                extra_conditions,
-            )
-        )
-        row = cursor.fetchone() or {}
-        recovery[2]["count"] = row.get("cnt")
-        recovery[2]["amount"] = row.get("amount")
-
-        cursor.execute(
-            append_where(
-                """
-                SELECT
-                    SUM(OverturnAmount) amount,
-                    COUNT(1) cnt
-                FROM CUSTOM_ALL
-                WHERE CUSTOM_ALL.Recovery=1;
-                """,
-                extra_conditions,
-            )
-        )
-        row = cursor.fetchone() or {}
-        recovery[3]["count"] = row.get("cnt")
-        recovery[3]["amount"] = row.get("amount")
-
-        # AI models (supports access filters via extra)
         def inject_conditions(query_text, conditions_sql):
             if not conditions_sql:
                 return query_text
@@ -442,6 +294,163 @@ def platform_bootstrap():
                 logger.error(f"[QUERY ERROR]: {query_error} - Query: {item.get('query')}")
                 continue
 
+        exclude_ai_models = build_exclude_ai_models_from_rows(models)
+        worklist_extra = {**extra, "ExcludeAiModels": exclude_ai_models} if exclude_ai_models else dict(extra)
+        ai_exclude_condition = build_exclude_ai_models_condition(worklist_extra)
+        extra_conditions_worklist = merge_sql_conditions(extra_conditions, ai_exclude_condition)
+
+        # Tags
+        cursor.execute(
+            append_where(
+                """
+                SELECT DISTINCT Category
+                FROM CUSTOM_ALL
+                ORDER BY Category;
+                """,
+                extra_conditions,
+            )
+        )
+        rows = cursor.fetchall() or []
+        tags = []
+        for row in rows:
+            category_value = (row.get("Category") or "").strip()
+            if category_value:
+                tags.append(category_value)
+            else:
+                tags.append(delinquent_label)
+
+        # Counts
+        cursor.execute(
+            append_where(
+                """
+                SELECT
+                    COUNT(CASE WHEN (Category != 'Contractual Adj' AND Category != 'Patient Resp'
+                        AND Category IS NOT NULL AND TRIM(Category) != '' AND Automation = 0) THEN 1 ELSE NULL END) cnt1,
+                    COUNT(CASE WHEN Category = 'Contractual Adj' AND Automation = 0 THEN 1 ELSE NULL END) cnt2,
+                    COUNT(CASE WHEN Category = 'Patient Resp' AND Automation = 0 THEN 1 ELSE NULL END) cnt3,
+                    COUNT(CASE WHEN (Category IS NULL OR TRIM(Category) = '') AND Automation = 0 THEN 1 ELSE NULL END) cnt4,
+                    COUNT(CASE WHEN Automation != 0 THEN 1 ELSE NULL END) cnt6,
+                    COUNT(1) cnt7,
+                    SUM(CASE WHEN (Category != 'Contractual Adj' AND Category != 'Patient Resp'
+                        AND Category IS NOT NULL AND TRIM(Category) != '') THEN Amount ELSE 0 END) amount1,
+                    SUM(CASE WHEN Category = 'Contractual Adj' THEN Amount ELSE 0 END) amount2,
+                    SUM(CASE WHEN Category = 'Patient Resp' THEN Amount ELSE 0 END) amount3,
+                    SUM(CASE WHEN (Category IS NULL OR TRIM(Category) = '') THEN Amount ELSE 0 END) amount4
+                FROM CUSTOM_ALL;
+                """,
+                extra_conditions_worklist,
+            )
+        )
+        counts = cursor.fetchone() or {}
+
+        # Statistics
+        cursor.execute(
+            append_where(
+                """
+                SELECT
+                    Category AS label,
+                    COUNT(ID) AS value
+                FROM CUSTOM_ALL
+                WHERE Category IS NOT NULL
+                    AND TRIM(Category) != ''
+                    AND Category != 'Patient Resp'
+                    AND Category != 'Contractual Adj'
+                GROUP BY Category
+                """,
+                extra_conditions_worklist,
+            )
+        )
+        statistics = cursor.fetchall() or []
+
+        # Payers
+        cursor.execute(
+            append_where(
+                """
+                SELECT DISTINCT PayerName
+                FROM CUSTOM_ALL
+                WHERE PayerName IS NOT NULL
+                ORDER BY PayerName;
+                """,
+                extra_conditions,
+            )
+        )
+        payers = cursor.fetchall() or []
+
+        # Recovery
+        recovery = [
+            {"count": 0, "amount": 0},
+            {"count": 0, "amount": 0},
+            {"count": 0, "amount": 0},
+            {"count": 0, "amount": 0},
+        ]
+
+        cursor.execute(
+            append_where(
+                """
+                SELECT
+                    SUM(recoverable_amount) amount,
+                    COUNT(1) cnt
+                FROM denial_actions;
+                """,
+                "",
+            )
+        )
+        row = cursor.fetchone() or {}
+        recovery[0]["count"] = row.get("cnt")
+        recovery[0]["amount"] = row.get("amount")
+
+        cursor.execute(
+            append_where(
+                """
+                SELECT
+                    SUM(Amount) amount,
+                    COUNT(1) cnt
+                FROM CUSTOM_ALL
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM actions
+                    WHERE actions.ClaimNo=CUSTOM_ALL.ClaimNo
+                );
+                """,
+                extra_conditions_worklist,
+            )
+        )
+        row = cursor.fetchone() or {}
+        recovery[1]["count"] = row.get("cnt")
+        recovery[1]["amount"] = row.get("amount")
+
+        cursor.execute(
+            append_where(
+                """
+                SELECT
+                    SUM(Amount) amount,
+                    COUNT(1) cnt
+                FROM CUSTOM_ALL
+                WHERE CUSTOM_ALL.Automation!=0;
+                """,
+                extra_conditions_worklist,
+            )
+        )
+        row = cursor.fetchone() or {}
+        recovery[2]["count"] = row.get("cnt")
+        recovery[2]["amount"] = row.get("amount")
+
+        cursor.execute(
+            append_where(
+                """
+                SELECT
+                    SUM(OverturnAmount) amount,
+                    COUNT(1) cnt
+                FROM CUSTOM_ALL
+                WHERE CUSTOM_ALL.Recovery=1;
+                """,
+                extra_conditions_worklist,
+            )
+        )
+        row = cursor.fetchone() or {}
+        recovery[3]["count"] = row.get("cnt")
+        recovery[3]["amount"] = row.get("amount")
+
         # Grouped data (nav badges)
         grouped_payload = {}
         target_tabs = []
@@ -466,7 +475,7 @@ def platform_bootstrap():
                 remark,
                 procedure,
                 pos,
-                extra,
+                worklist_extra,
                 "",
                 False,
             )
@@ -500,8 +509,8 @@ def platform_bootstrap():
         # Pend 277 / Pend 835 counts (claim status badges)
         pend_counts = {"pend277": 0, "pend835": 0}
         try:
-            pend277_extra = {**extra, "Pend277": True, "IncludeAllCategories": True}
-            pend835_extra = {**extra, "Pend835": True, "IncludeAllCategories": True}
+            pend277_extra = {**worklist_extra, "Pend277": True, "IncludeAllCategories": True}
+            pend835_extra = {**worklist_extra, "Pend835": True, "IncludeAllCategories": True}
             pend277_sql = f"""select
                 count(ID) AS cnt
                 {newGenerateSQL(

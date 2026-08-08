@@ -31,6 +31,7 @@ import SettingsScreen from "./SettingsScreen";
 import { AccountContext } from "../../../utils/Account";
 import { canAccessUserManagement } from "../../../utils/roles";
 import { buildAccessExtra } from "../../../utils/accessFilters";
+import { buildExcludeAiModels } from "../../../utils/aiModelFilters";
 
 const readStoredTenantBase = () => {
   try {
@@ -200,23 +201,7 @@ const ReboundDash = () => {
   ];
 
   const models = useSelector((state) => state.app.models);
-  const aiModelFilters = useMemo(() => {
-    const seen = new Set();
-    return models.reduce((acc, row) => {
-      const group = (row.GroupCode || '').trim();
-      const code = (row.Code || '').trim();
-      if (!group || !code) {
-        return acc;
-      }
-      const key = `${group}:${code}`;
-      if (seen.has(key)) {
-        return acc;
-      }
-      seen.add(key);
-      acc.push({ group, code });
-      return acc;
-    }, []);
-  }, [models]);
+  const excludeAiModels = useMemo(() => buildExcludeAiModels(models), [models]);
   const denialCount = models.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
 
   const accessExtra = useMemo(
@@ -393,10 +378,6 @@ const ReboundDash = () => {
       );
     }
     if (isAiLibrary) {
-      if (aiModelFilters.length > 0) {
-        filterPayload.ExcludeAiModels = aiModelFilters;
-      }
-      // For AI Agents we still want to expose Denial categories so users can drill back into them.
       dispatch(setSelectedTags(tags));
       dispatch(setTabIndex(6));
       dispatch(setExtraFilter(filterPayload));
@@ -407,7 +388,11 @@ const ReboundDash = () => {
     const tabOverrideMap = {
       'patient-responsibility': 2,
       'patient-responsibility:bal-due': 2,
+      'payment-posting': 1,
       'payment-posting:contractual-adj': 1,
+      'payment-posting:payment': 1,
+      'payment-posting:writeoff': 1,
+      'payment-posting:refund': 1,
     };
     dispatch(setExtraFilter(filterPayload));
     if (tagOverride) {
@@ -416,7 +401,7 @@ const ReboundDash = () => {
     }
     dispatch(setCurrentPage(1));
     dispatch(setTableLoading(true));
-  }, [aiModelFilters, dispatch, navExtraFilters, navTagFilters, tags]);
+  }, [dispatch, navExtraFilters, navTagFilters, tags]);
 
   const resetFilters = useCallback(() => {
     // Clear drill-down filters (e.g., from AI Agents payload) before applying new nav defaults.
@@ -455,7 +440,7 @@ const ReboundDash = () => {
     applyNavFilters(selectedNav);
   }, [applyNavFilters, selectedNav, tags]);
 
-  const aiFilterSignature = useMemo(() => JSON.stringify(aiModelFilters), [aiModelFilters]);
+  const aiFilterSignature = useMemo(() => JSON.stringify(excludeAiModels), [excludeAiModels]);
   const lastAiFilterSignatureRef = useRef(aiFilterSignature);
   const wasAiDrilldownRef = useRef(aiLibraryDrilldown);
 

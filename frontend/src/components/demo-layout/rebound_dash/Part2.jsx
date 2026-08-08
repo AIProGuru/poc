@@ -5,7 +5,7 @@ import { setPart2Count } from '../../../redux/reducers/count.reducer';
 import { setPart2Loading } from "../../../redux/reducers/app.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { samplifyInteger } from "../../../utils/config";
-import { buildAccessExtra } from "../../../utils/accessFilters";
+import { buildWorklistExtra } from "../../../utils/aiModelFilters";
 import { sanitizeAdvancedFilters } from "../../../utils/advancedFilters";
 
 const Part2 = () => {
@@ -24,6 +24,7 @@ const Part2 = () => {
   const pos = useSelector((state) => state.app.pos);
   const advancedFilters = useSelector((state) => state.app.advancedFilters);
   const extra = useSelector((state) => state.app.extraFilter);
+  const models = useSelector((state) => state.app.models);
   const theme = useSelector((state) => state.app.theme);
   const role = useSelector((state) => state.auth.role);
   const accessModules = useSelector((state) => state.auth.modules);
@@ -45,7 +46,7 @@ const Part2 = () => {
   useEffect(() => {
     if (apiUrl === '') return;
     if (!part2Loading) return;
-    const accessExtra = buildAccessExtra(extra, access, role);
+    const accessExtra = buildWorklistExtra(extra, access, role, models, { code, remark });
     const includeAllCategories = accessExtra?.IncludeAllCategories;
     if (!includeAllCategories && selectedTags.length === 0) return;
     axios.post(`${apiUrl}/part2_all`, {
@@ -64,7 +65,7 @@ const Part2 = () => {
       dispatch(setPart2Count(res.data));
       dispatch(setPart2Loading(false));
     });
-  }, [part2Loading, selectedTags, extra, access, role, keyword, startDate, endDate, code, remark, procedure, pos, advancedFilters, apiUrl, dispatch, tabIndex]);
+  }, [part2Loading, selectedTags, extra, access, role, models, keyword, startDate, endDate, code, remark, procedure, pos, advancedFilters, apiUrl, dispatch, tabIndex]);
 
   const aggregateData = (data) => {
     const aggregated = data.reduce((acc, row) => {

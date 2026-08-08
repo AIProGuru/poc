@@ -187,6 +187,7 @@ const Sidebar = () => {
         title: "Payment Posting",
         icon: "card",
         badge: 0,
+        tab: 1,
         children: [
           { id: "payment-posting:contractual-adj", title: "Contractual Adj", badge: 0 },
           { id: "payment-posting:payment", title: "Payment", badge: 0 },
@@ -565,7 +566,11 @@ const Sidebar = () => {
       const tabOverrideMap = {
         "patient-responsibility": 2,
         "patient-responsibility:bal-due": 2,
+        "payment-posting": 1,
         "payment-posting:contractual-adj": 1,
+        "payment-posting:payment": 1,
+        "payment-posting:writeoff": 1,
+        "payment-posting:refund": 1,
       };
 
       dispatch(setExtraFilter(extra));
@@ -606,7 +611,11 @@ const Sidebar = () => {
     const tabOverrideMap = {
       "patient-responsibility": 2,
       "patient-responsibility:bal-due": 2,
+      "payment-posting": 1,
       "payment-posting:contractual-adj": 1,
+      "payment-posting:payment": 1,
+      "payment-posting:writeoff": 1,
+      "payment-posting:refund": 1,
     };
 
     const navTagKeys = Object.keys(navTagFilters);
