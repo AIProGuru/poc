@@ -72,6 +72,7 @@ INNER JOIN CUSTOM_ALL c ON c.ClaimNo = lt.ClaimNo
 WHERE LOWER(TRIM(COALESCE(c.ActionTaken, ''))) = 'triage'
   AND c.TickleDate IS NOT NULL
   AND CURRENT_DATE() < DATE(c.TickleDate)
+{claim_filter}
 ORDER BY a.id DESC
 """
 
@@ -92,6 +93,7 @@ INNER JOIN CUSTOM_ALL c ON c.ClaimNo = lt.ClaimNo
 WHERE LOWER(TRIM(COALESCE(c.ActionTaken, ''))) = 'triage'
   AND c.TickleDate IS NOT NULL
   AND CURRENT_DATE() < DATE(c.TickleDate)
+{claim_filter}
 """
 
 RECENT_CLAIMS_SUMMARY_QUERY = """
@@ -118,6 +120,7 @@ INNER JOIN CUSTOM_ALL c ON c.ClaimNo = lt.ClaimNo
 WHERE LOWER(TRIM(COALESCE(c.ActionTaken, ''))) = 'triage'
   AND c.TickleDate IS NOT NULL
   AND CURRENT_DATE() < DATE(c.TickleDate)
+{claim_filter}
 """
 
 
@@ -134,7 +137,7 @@ def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyw
     user_filter = (username or "").strip()
     claim_filter = _keyword_claim_filter(keyword)
 
-    count_query = RECENT_CLAIMS_COUNT_QUERY + claim_filter
+    count_query = RECENT_CLAIMS_COUNT_QUERY.format(claim_filter=claim_filter)
     cursor.execute(count_query, (user_filter, user_filter))
     total_count = int((cursor.fetchone() or {}).get("cnt") or 0)
     max_page = (total_count - 1) // per_page + 1 if total_count > 0 else 0
@@ -142,7 +145,8 @@ def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyw
 
     summary_query = RECENT_CLAIMS_SUMMARY_QUERY.format(
         patient_payment_expr=patient_payment_expr,
-    ) + claim_filter
+        claim_filter=claim_filter,
+    )
     cursor.execute(summary_query, (user_filter, user_filter))
     summary_row = cursor.fetchone() or {}
     summary = {
@@ -160,8 +164,8 @@ def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyw
         RECENT_CLAIMS_QUERY.format(
             patient_payment_expr=patient_payment_expr,
             delinquent_label=delinquent_label,
+            claim_filter=claim_filter,
         )
-        + claim_filter
         + f"\nLIMIT {int(per_page)} OFFSET {int(offset)}"
     )
     cursor.execute(query, (user_filter, user_filter))

@@ -486,11 +486,13 @@ const DataTable = (props) => {
     const searchKeyword = `${keyword || ""}`.trim();
 
     axios
-      .post(`${apiUrl}/recent_claims`, {
-        currentPage,
-        perPage: pageSize,
-        username: username || "",
-        keyword: searchKeyword,
+      .get(`${apiUrl}/recent_claims`, {
+        params: {
+          currentPage,
+          perPage: pageSize,
+          username: username || "",
+          keyword: searchKeyword,
+        },
       })
       .then((tableRes) => {
         if (requestRef.current !== requestId) return;
@@ -503,6 +505,10 @@ const DataTable = (props) => {
       })
       .catch(() => {
         if (requestRef.current !== requestId) return;
+        if (searchKeyword) {
+          dispatch(setTableData([]));
+          dispatch(setTotalPage(0));
+        }
         toast.error("Unable to load recent claims.");
       })
       .finally(() => {
