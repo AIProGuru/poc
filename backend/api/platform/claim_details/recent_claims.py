@@ -121,11 +121,18 @@ WHERE LOWER(TRIM(COALESCE(c.ActionTaken, ''))) = 'triage'
 """
 
 
-def _keyword_claim_filter(keyword):
-    safe = (keyword or "").strip().replace("'", "''")
+def _keyword_claim_filter(keyword, claim_column="c.ClaimNo"):
+    safe = (keyword or "").strip().replace("\\", "\\\\").replace("'", "''").replace("%", "\\%").replace("_", "\\_")
     if not safe:
         return ""
-    return f" AND c.ClaimNo LIKE '{safe}%'"
+    return f" AND {claim_column} LIKE '{safe}%' ESCAPE '\\\\'"
+
+
+def _latest_triage_claim_filter(keyword):
+    safe = (keyword or "").strip().replace("\\", "\\\\").replace("'", "''").replace("%", "\\%").replace("_", "\\_")
+    if not safe:
+        return ""
+    return f" AND a.ClaimNo LIKE '{safe}%' ESCAPE '\\\\'"
 
 
 def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyword=""):
@@ -133,13 +140,21 @@ def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyw
     patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name, table_alias="c")
     user_filter = (username or "").strip()
     claim_filter = _keyword_claim_filter(keyword)
+    triage_claim_filter = _latest_triage_claim_filter(keyword)
 
-    cursor.execute(RECENT_CLAIMS_COUNT_QUERY + claim_filter, (user_filter, user_filter))
+    count_query = RECENT_CLAIMS_COUNT_QUERY.replace(
+        "GROUP BY a.ClaimNo",
+        f"{triage_claim_filter}\n    GROUP BY a.ClaimNo",
+    ) + claim_filter
+    cursor.execute(count_query, (user_filter, user_filter))
     total_count = int((cursor.fetchone() or {}).get("cnt") or 0)
     max_page = (total_count - 1) // per_page + 1 if total_count > 0 else 0
     offset = (current_page - 1) * per_page
 
-    summary_query = RECENT_CLAIMS_SUMMARY_QUERY.format(
+    summary_query = RECENT_CLAIMS_SUMMARY_QUERY.replace(
+        "GROUP BY a.ClaimNo",
+        f"{triage_claim_filter}\n    GROUP BY a.ClaimNo",
+    ).format(
         patient_payment_expr=patient_payment_expr,
     ) + claim_filter
     cursor.execute(summary_query, (user_filter, user_filter))
@@ -155,10 +170,18 @@ def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyw
         "balance": float(summary_row.get("balance") or 0),
     }
 
-    query = RECENT_CLAIMS_QUERY.format(
-        patient_payment_expr=patient_payment_expr,
-        delinquent_label=delinquent_label,
-    ) + claim_filter + f"\nLIMIT {int(per_page)} OFFSET {int(offset)}"
+    query = (
+        RECENT_CLAIMS_QUERY.replace(
+            "GROUP BY a.ClaimNo",
+            f"{triage_claim_filter}\n    GROUP BY a.ClaimNo",
+        )
+        .format(
+            patient_payment_expr=patient_payment_expr,
+            delinquent_label=delinquent_label,
+        )
+        + claim_filter
+        + f"\nLIMIT {int(per_page)} OFFSET {int(offset)}"
+    )
     cursor.execute(query, (user_filter, user_filter))
     rows = cursor.fetchall() or []
 

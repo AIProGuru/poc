@@ -474,9 +474,55 @@ const DataTable = (props) => {
   };
 
   useEffect(() => {
+    if (apiUrl === "") return;
+    if (bootstrapLoading) return;
+    if (!isRecentClaimsView) return;
+
+    dispatch(setTableLoading(true));
+    const requestId = ++requestRef.current;
+    const searchKeyword = `${keyword || ""}`.trim();
+
+    axios
+      .get(`${apiUrl}/recent_claims`, {
+        params: {
+          currentPage,
+          perPage: pageSize,
+          username: username || "",
+          keyword: searchKeyword,
+        },
+      })
+      .then((tableRes) => {
+        if (requestRef.current !== requestId) return;
+        requestInFlightRef.current = false;
+        dispatch(setTableData(tableRes.data.data || []));
+        dispatch(setTotalPage(tableRes.data.maxPage || 0));
+        if (tableRes.data.summary) {
+          setSummaryTotals(tableRes.data.summary);
+          dispatch(setWorklistSummary(tableRes.data.summary));
+        }
+        dispatch(setTableLoading(false));
+      })
+      .catch(() => {
+        if (requestRef.current !== requestId) return;
+        requestInFlightRef.current = false;
+        dispatch(setTableLoading(false));
+      });
+  }, [
+    apiUrl,
+    bootstrapLoading,
+    isRecentClaimsView,
+    keyword,
+    currentPage,
+    pageSize,
+    username,
+    dispatch,
+  ]);
+
+  useEffect(() => {
 
     if (apiUrl === '') return;
     if (bootstrapLoading) return;
+    if (isRecentClaimsView) return;
     if (!tableLoading) return;
     const includeAllCategories = accessExtra?.IncludeAllCategories;
     if (!isRecentClaimsView && !includeAllCategories && selectedTags.length === 0) {
@@ -487,33 +533,6 @@ const DataTable = (props) => {
     const requestId = ++requestRef.current;
     const summarySignature = buildSummarySignature();
     const shouldFetchSummary = !isRecentClaimsView;
-
-    if (isRecentClaimsView) {
-      axios.get(`${apiUrl}/recent_claims`, {
-        params: {
-          currentPage,
-          perPage: pageSize,
-          username: username || '',
-          keyword: keyword || '',
-        },
-      }).then((tableRes) => {
-        if (requestRef.current !== requestId) return;
-        requestInFlightRef.current = false;
-        dispatch(setTableData(tableRes.data.data || []));
-        dispatch(setTotalPage(tableRes.data.maxPage || 0));
-        if (tableRes.data.summary) {
-          setSummaryTotals(tableRes.data.summary);
-          dispatch(setWorklistSummary(tableRes.data.summary));
-          summarySignatureRef.current = summarySignature;
-        }
-        dispatch(setTableLoading(false));
-      }).catch(() => {
-        if (requestRef.current !== requestId) return;
-        requestInFlightRef.current = false;
-        dispatch(setTableLoading(false));
-      });
-      return;
-    }
 
     const tableRequest = axios.post(`${apiUrl}/data_all`, {
       currentPage: currentPage,

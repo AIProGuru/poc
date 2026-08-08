@@ -35,9 +35,10 @@ const Header = () => {
   const menuButtonRef = useRef(null);
 
   const filterByKeyword = () => {
-    dispatch(setTableLoading(true));
-    dispatch(setKeyword(inputKeywordRef.current?.value || ''));
+    const nextKeyword = inputKeywordRef.current?.value?.trim() || "";
+    dispatch(setKeyword(nextKeyword));
     dispatch(setCurrentPage(1));
+    dispatch(setTableLoading(true));
   };
 
   useEffect(() => {
