@@ -122,17 +122,10 @@ WHERE LOWER(TRIM(COALESCE(c.ActionTaken, ''))) = 'triage'
 
 
 def _keyword_claim_filter(keyword, claim_column="c.ClaimNo"):
-    safe = (keyword or "").strip().replace("\\", "\\\\").replace("'", "''").replace("%", "\\%").replace("_", "\\_")
+    safe = (keyword or "").strip().replace("'", "''")
     if not safe:
         return ""
-    return f" AND {claim_column} LIKE '{safe}%' ESCAPE '\\\\'"
-
-
-def _latest_triage_claim_filter(keyword):
-    safe = (keyword or "").strip().replace("\\", "\\\\").replace("'", "''").replace("%", "\\%").replace("_", "\\_")
-    if not safe:
-        return ""
-    return f" AND a.ClaimNo LIKE '{safe}%' ESCAPE '\\\\'"
+    return f" AND {claim_column} LIKE '{safe}%'"
 
 
 def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyword=""):
@@ -140,21 +133,14 @@ def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyw
     patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name, table_alias="c")
     user_filter = (username or "").strip()
     claim_filter = _keyword_claim_filter(keyword)
-    triage_claim_filter = _latest_triage_claim_filter(keyword)
 
-    count_query = RECENT_CLAIMS_COUNT_QUERY.replace(
-        "GROUP BY a.ClaimNo",
-        f"{triage_claim_filter}\n    GROUP BY a.ClaimNo",
-    ) + claim_filter
+    count_query = RECENT_CLAIMS_COUNT_QUERY + claim_filter
     cursor.execute(count_query, (user_filter, user_filter))
     total_count = int((cursor.fetchone() or {}).get("cnt") or 0)
     max_page = (total_count - 1) // per_page + 1 if total_count > 0 else 0
     offset = (current_page - 1) * per_page
 
-    summary_query = RECENT_CLAIMS_SUMMARY_QUERY.replace(
-        "GROUP BY a.ClaimNo",
-        f"{triage_claim_filter}\n    GROUP BY a.ClaimNo",
-    ).format(
+    summary_query = RECENT_CLAIMS_SUMMARY_QUERY.format(
         patient_payment_expr=patient_payment_expr,
     ) + claim_filter
     cursor.execute(summary_query, (user_filter, user_filter))
@@ -171,11 +157,7 @@ def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyw
     }
 
     query = (
-        RECENT_CLAIMS_QUERY.replace(
-            "GROUP BY a.ClaimNo",
-            f"{triage_claim_filter}\n    GROUP BY a.ClaimNo",
-        )
-        .format(
+        RECENT_CLAIMS_QUERY.format(
             patient_payment_expr=patient_payment_expr,
             delinquent_label=delinquent_label,
         )
@@ -188,19 +170,27 @@ def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyw
     return max_page, rows, summary
 
 
-@rebound_api_recent_claims.route("/recent_claims", methods=["GET"])
-@medevolve_api_recent_claims.route("/recent_claims", methods=["GET"])
-@pilotcustomer_api_recent_claims.route("/recent_claims", methods=["GET"])
-@betacustomer_api_recent_claims.route("/recent_claims", methods=["GET"])
+def _read_recent_claims_params():
+    payload = request.get_json(silent=True) if request.method == "POST" else None
+    source = payload if isinstance(payload, dict) else request.args
+    getter = source.get if hasattr(source, "get") else lambda _key, _default=None: _default
+    current_page = max(int(getter("currentPage", 1) or 1), 1)
+    per_page = max(int(getter("perPage", 50) or 50), 1)
+    username = (getter("username") or "").strip()
+    keyword = (getter("keyword") or "").strip()
+    return current_page, per_page, username, keyword
+
+
+@rebound_api_recent_claims.route("/recent_claims", methods=["GET", "POST"])
+@medevolve_api_recent_claims.route("/recent_claims", methods=["GET", "POST"])
+@pilotcustomer_api_recent_claims.route("/recent_claims", methods=["GET", "POST"])
+@betacustomer_api_recent_claims.route("/recent_claims", methods=["GET", "POST"])
 def get_recent_claims():
     conn = None
     cursor = None
     try:
         conn, cursor, db_name = get_connection(request)
-        current_page = max(int(request.args.get("currentPage", 1)), 1)
-        per_page = max(int(request.args.get("perPage", 50)), 1)
-        username = (request.args.get("username") or "").strip()
-        keyword = (request.args.get("keyword") or "").strip()
+        current_page, per_page, username, keyword = _read_recent_claims_params()
 
         max_page, rows, summary = _fetch_recent_claims(
             cursor, db_name, username, current_page, per_page, keyword
