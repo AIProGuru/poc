@@ -479,7 +479,10 @@ const DataTable = (props) => {
     if (bootstrapLoading) return;
     if (!tableLoading) return;
     const includeAllCategories = accessExtra?.IncludeAllCategories;
-    if (!isRecentClaimsView && !includeAllCategories && selectedTags.length === 0) return;
+    if (!isRecentClaimsView && !includeAllCategories && selectedTags.length === 0) {
+      dispatch(setTableLoading(false));
+      return;
+    }
     requestInFlightRef.current = true;
     const requestId = ++requestRef.current;
     const summarySignature = buildSummarySignature();
@@ -491,6 +494,7 @@ const DataTable = (props) => {
           currentPage,
           perPage: pageSize,
           username: username || '',
+          keyword: keyword || '',
         },
       }).then((tableRes) => {
         if (requestRef.current !== requestId) return;

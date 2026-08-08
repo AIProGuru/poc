@@ -121,19 +121,27 @@ WHERE LOWER(TRIM(COALESCE(c.ActionTaken, ''))) = 'triage'
 """
 
 
-def _fetch_recent_claims(cursor, db_name, username, current_page, per_page):
+def _keyword_claim_filter(keyword):
+    safe = (keyword or "").strip().replace("'", "''")
+    if not safe:
+        return ""
+    return f" AND c.ClaimNo LIKE '{safe}%'"
+
+
+def _fetch_recent_claims(cursor, db_name, username, current_page, per_page, keyword=""):
     delinquent_label = (os.getenv("DELIQUENT") or "Delinquent").replace("'", "''")
     patient_payment_expr = get_custom_all_patient_payment_expr(cursor, db_name, table_alias="c")
     user_filter = (username or "").strip()
+    claim_filter = _keyword_claim_filter(keyword)
 
-    cursor.execute(RECENT_CLAIMS_COUNT_QUERY, (user_filter, user_filter))
+    cursor.execute(RECENT_CLAIMS_COUNT_QUERY + claim_filter, (user_filter, user_filter))
     total_count = int((cursor.fetchone() or {}).get("cnt") or 0)
     max_page = (total_count - 1) // per_page + 1 if total_count > 0 else 0
     offset = (current_page - 1) * per_page
 
     summary_query = RECENT_CLAIMS_SUMMARY_QUERY.format(
         patient_payment_expr=patient_payment_expr,
-    )
+    ) + claim_filter
     cursor.execute(summary_query, (user_filter, user_filter))
     summary_row = cursor.fetchone() or {}
     summary = {
@@ -150,7 +158,7 @@ def _fetch_recent_claims(cursor, db_name, username, current_page, per_page):
     query = RECENT_CLAIMS_QUERY.format(
         patient_payment_expr=patient_payment_expr,
         delinquent_label=delinquent_label,
-    ) + f"\nLIMIT {int(per_page)} OFFSET {int(offset)}"
+    ) + claim_filter + f"\nLIMIT {int(per_page)} OFFSET {int(offset)}"
     cursor.execute(query, (user_filter, user_filter))
     rows = cursor.fetchall() or []
 
@@ -169,9 +177,10 @@ def get_recent_claims():
         current_page = max(int(request.args.get("currentPage", 1)), 1)
         per_page = max(int(request.args.get("perPage", 50)), 1)
         username = (request.args.get("username") or "").strip()
+        keyword = (request.args.get("keyword") or "").strip()
 
         max_page, rows, summary = _fetch_recent_claims(
-            cursor, db_name, username, current_page, per_page
+            cursor, db_name, username, current_page, per_page, keyword
         )
         return jsonify({"maxPage": max_page, "data": rows, "summary": summary}), 200
     except Exception as exc:

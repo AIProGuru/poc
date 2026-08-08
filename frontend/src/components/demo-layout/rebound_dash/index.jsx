@@ -140,7 +140,6 @@ const ReboundDash = () => {
   // console.log('apiUrl', apiUrl);
 
   const filterByKeyword = () => {
-    dispatch(setExtraFilter({}));
     dispatch(setTableLoading(true));
     dispatch(setKeyword(inputKeywordRef.current?.value || ''));
     dispatch(setCurrentPage(1));
