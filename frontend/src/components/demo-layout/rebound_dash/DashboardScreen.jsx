@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { buildDashboardCategoriesFromNavGrouped, isDashboardArCategory, isNonRecoverableDashboardCategory, isRecoverableDashboardCategory } from "../../../utils/moduleCatalog";
+import { computeRecoveryMtd, RECOVERY_MTD_AI_LIBRARY_RATE, sumAiLibraryModels } from "../../../utils/dashboardMetrics";
 import AgentAvatar from "./AgentAvatar";
 
 const MOCK_CATEGORIES = [
@@ -239,7 +240,9 @@ const DashboardScreen = ({ isDark }) => {
 
   const { arBalance, recoverableRevenue, nonRecoverableRevenue, recoverableClaims, nonRecoverableClaims } =
     revenueSplit;
-  const recoveryMtd = Math.round(recoverableRevenue * 0.62) || 287450;
+  const aiLibraryStats = useMemo(() => sumAiLibraryModels(models), [models]);
+  const recoveryMtd = useMemo(() => computeRecoveryMtd(models), [models]);
+  const recoveryMtdRateLabel = `${Math.round(RECOVERY_MTD_AI_LIBRARY_RATE * 100)}%`;
 
   const priorities = [
     { rank: 1, amount: 72443, label: "BCBS - Coordination of Benefits", priority: "High" },
@@ -299,8 +302,11 @@ const DashboardScreen = ({ isDark }) => {
           isDark={isDark}
           title="Recovery MTD"
           value={formatCurrency(recoveryMtd)}
-          trend="▲ 18.6%"
-          trendLabel="vs Apr 14 – Apr 20"
+          subtitle={
+            aiLibraryStats.claims > 0
+              ? `${recoveryMtdRateLabel} of AI Library recoverable AR · ${aiLibraryStats.claims.toLocaleString("en-US")} claims`
+              : `${recoveryMtdRateLabel} of AI Library recoverable AR`
+          }
         />
         <MetricCard
           isDark={isDark}
