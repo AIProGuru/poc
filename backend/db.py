@@ -102,7 +102,7 @@ def normalize_tenant_hint(value, default="pilotcustomer"):
     if compact in app_type_map:
         return app_type_map[compact]
 
-    if "betacustomer" in compact or compact in {"beta", "betacustomer"}:
+    if "betacustomer" in compact or compact == "beta" or compact.startswith("beta"):
         return "betacustomer"
     if any(token in compact for token in ("rebound", "medevolve", "pilotcustomer", "demo")):
         if "betacustomer" in raw:

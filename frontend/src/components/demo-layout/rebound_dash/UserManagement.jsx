@@ -9,13 +9,12 @@ import { auth } from '../../../FirebaseConfig';
 import { SERVER_URL } from '../../../utils/config';
 import { MODULE_OPTIONS, MODULE_CATEGORY_MAP } from "../../../utils/moduleCatalog";
 import { ROLE_OPTIONS, ROLE_STANDARD, normalizeRole } from "../../../utils/roles";
-import {
-  PLATFORM_TENANT_OPTIONS,
-  normalizePlatformTenant,
-  platformTenantToAppType,
-  resolvePlatformTenantFromUser,
-} from "../../../utils/platformTenant";
 import { setRole, setFirstname, setLastname, setEmail } from '../../../redux/reducers/auth.reducer';
+import {
+  PLATFORM_CLIENT_OPTIONS,
+  resolveAppTypeFromTenant,
+  resolvePlatformTenantFromHint,
+} from '../../../utils/platformTenant';
 
 
 const getRoleValue = (role) => {
@@ -46,11 +45,6 @@ const getRoleLabel = (role) =>
 
 const getStatusLabel = (status) =>
   STATUS_OPTIONS.find((option) => option.value === getStatusValue(status))?.label || 'Active';
-
-const getPlatformLabel = (row) => {
-  const tenant = resolvePlatformTenantFromUser(row || {});
-  return PLATFORM_TENANT_OPTIONS.find((option) => option.value === tenant)?.label || tenant || '—';
-};
 
 
 const UserManagement = ({ embedded = false, view = 'actions', editUserId = null }) => {
@@ -152,15 +146,6 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
     }));
   }, [user.client]);
 
-  const sanitizeTenantValue = (raw) => {
-    if (!raw) return "";
-    return String(raw)
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "")
-      .replace(/[^a-z0-9_-]/g, "");
-  };
-
   const normalizeFacility = (facility) => {
     if (!facility || typeof facility !== "object") return null;
     const name =
@@ -247,17 +232,38 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
   };
 
   const resolveClientForTenant = (tenantValue) => {
-    const normalizedTenant = normalizePlatformTenant(tenantValue);
+    const normalizedTenant = resolvePlatformTenantFromHint(tenantValue, { defaultTenant: "" });
     if (!normalizedTenant) return null;
     return (rawClients || []).find((client) => {
-      const candidate = normalizePlatformTenant(
-        client?.basePath || client?.tenant || client?.slug || client?.name
+      const candidate = resolvePlatformTenantFromHint(
+        client?.basePath || client?.tenant || client?.slug || client?.name,
+        { defaultTenant: "" }
       );
       return candidate && candidate === normalizedTenant;
     });
   };
 
-  const resolvedClientOptions = useMemo(() => PLATFORM_TENANT_OPTIONS, []);
+  const resolvedClientOptions = useMemo(() => {
+    const fromApi = (clientOptions || []).filter(Boolean);
+    const byValue = new Map();
+    PLATFORM_CLIENT_OPTIONS.forEach((option) => {
+      byValue.set(option.value, option);
+    });
+    fromApi.forEach((option) => {
+      const platformValue = resolvePlatformTenantFromHint(option.value, { defaultTenant: "" });
+      if (!platformValue || !PLATFORM_CLIENT_OPTIONS.some((p) => p.value === platformValue)) {
+        return;
+      }
+      // Prefer platform option labels; keep Firestore id for facility lookups when available.
+      const existing = byValue.get(platformValue);
+      byValue.set(platformValue, {
+        ...(existing || { value: platformValue, label: option.label || platformValue }),
+        id: option.id || existing?.id || platformValue,
+        label: existing?.label || option.label || platformValue,
+      });
+    });
+    return Array.from(byValue.values());
+  }, [clientOptions]);
 
   useEffect(() => {
     let mounted = true;
@@ -272,15 +278,27 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
         if (!response.ok) {
           throw new Error(data?.error || "Failed to fetch clients");
         }
+        const options = (Array.isArray(data) ? data : [])
+          .map((client) => {
+            const raw =
+              client?.basePath || client?.tenant || client?.slug || client?.name || "";
+            const value = resolvePlatformTenantFromHint(raw, { defaultTenant: "" });
+            if (!value) return null;
+            return {
+              value,
+              label: client?.name || value,
+              id: client?.id || value,
+            };
+          })
+          .filter(Boolean);
         if (mounted) {
           setRawClients(Array.isArray(data) ? data : []);
-          setClientOptions(PLATFORM_TENANT_OPTIONS);
+          setClientOptions(options);
         }
       } catch (error) {
         console.error("Failed to load client options:", error);
         if (mounted) {
-          setRawClients([]);
-          setClientOptions(PLATFORM_TENANT_OPTIONS);
+          setClientOptions([]);
         }
       } finally {
         if (mounted) {
@@ -298,7 +316,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
     if (!resolvedClientOptions.length || isEditView) return;
     const hasMatch = resolvedClientOptions.some((option) => option.value === user.tenant);
     if (!user.tenant || !hasMatch) {
-      setUser((prev) => ({ ...prev, tenant: "pilotcustomer" }));
+      setUser((prev) => ({ ...prev, tenant: resolvedClientOptions[0].value }));
     }
   }, [resolvedClientOptions, user.tenant, isEditView]);
 
@@ -473,7 +491,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
   };
 
   const buildAddUserPayload = (formUser) => {
-    const tenant = normalizePlatformTenant(formUser.tenant, "pilotcustomer");
+    const tenant = resolvePlatformTenantFromHint(formUser.tenant);
     return {
       email: `${formUser.email || ''}`.trim(),
       password: formUser.password,
@@ -482,7 +500,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
       role: formUser.role || ROLE_STANDARD,
       status: Number.isFinite(Number(formUser.status)) ? Number(formUser.status) : 0,
       tenant,
-      appType: platformTenantToAppType(tenant),
+      appType: resolveAppTypeFromTenant(tenant),
       client: Array.isArray(formUser.client) ? formUser.client : [],
       facility: Array.isArray(formUser.facility) ? formUser.facility : [],
       denialCategory: Array.isArray(formUser.denialCategory) ? formUser.denialCategory : [],
@@ -492,7 +510,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
   };
 
   const buildUpdateUserPayload = (formUser) => {
-    const tenant = normalizePlatformTenant(formUser.tenant, "pilotcustomer");
+    const tenant = resolvePlatformTenantFromHint(formUser.tenant);
     return {
       firstname: `${formUser.firstname || ''}`.trim(),
       lastname: `${formUser.lastname || ''}`.trim(),
@@ -500,7 +518,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
       role: formUser.role || ROLE_STANDARD,
       status: Number.isFinite(Number(formUser.status)) ? Number(formUser.status) : 0,
       tenant,
-      appType: platformTenantToAppType(tenant),
+      appType: resolveAppTypeFromTenant(tenant),
       client: Array.isArray(formUser.client) ? formUser.client : [],
       facility: Array.isArray(formUser.facility) ? formUser.facility : [],
       clientState: Array.isArray(formUser.clientState) ? formUser.clientState : [],
@@ -753,7 +771,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
       password: '',
       status: getStatusValue(editingUser.status),
       access_level: editingUser.access_level || 0,
-      tenant: resolvePlatformTenantFromUser(editingUser),
+      tenant: resolvePlatformTenantFromHint(editingUser.tenant || editingUser.appType),
       client: editingUser.client || [],
       facility: editingUser.facility || [],
       clientState: editingUser.clientState || [],
@@ -967,11 +985,6 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
 
                         </div>
                       </th>
-                      <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[140px]`}>
-                        <div className="flex items-center gap-2">
-                          Platform
-                        </div>
-                      </th>
                       <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[120px]`}>
                         <div className="flex items-center gap-2">
                           Status
@@ -1038,9 +1051,6 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
                           {getRoleLabel(row.role)}
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
-                          {getPlatformLabel(row)}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
                           <span
@@ -1332,24 +1342,22 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
 
               <div className="grid gap-4 sm:grid-cols-2 items-center">
                 <div className="flex flex-col gap-2">
-                  <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-slate-700'}`}>Platform</span>
+                  <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-slate-700'}`}>Client</span>
                   <select
-                    value={user.tenant || 'pilotcustomer'}
+                    value={user.tenant}
                     onChange={(e) => setUser({ ...user, tenant: e.target.value })}
                     className={`user-tenant-select ${theme === 'dark' ? 'user-tenant-select--dark' : 'user-tenant-select--light'} text-sm rounded-full px-4 py-2.5 border bg-clip-padding focus:outline-none ${theme === 'dark' ?
                       'bg-[#FFFFFF]/10 text-white border-transparent ring-1 ring-inset ring-[#3B3F46] focus:border-[#6b6c71] focus:border-opacity-50' :
                       'bg-slate-50 text-slate-900 border-slate-200 focus:border-gray-800'
                       }`}
+                    disabled={clientOptionsLoading}
                   >
-                    {PLATFORM_TENANT_OPTIONS.map((option) => (
+                    {resolvedClientOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </select>
-                  <span className={`text-xs ${theme === 'dark' ? 'text-white/50' : 'text-slate-500'}`}>
-                    Controls login URL: Beta Customer → /betacustomer, Pilot Customer → /pilotcustomer
-                  </span>
                 </div>
                 <div className="flex flex-col gap-2">
                   <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-slate-700'}`}>Facility</span>

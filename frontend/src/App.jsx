@@ -24,13 +24,6 @@ import {
 import { useApiEndpoint } from "./ApiEndpointContext";
 import { AccountContext } from "./utils/Account";
 import {
-  PLATFORM_TENANTS,
-  resolveAppType,
-  resolvePlatformTenantFromUser,
-  persistPlatformTenant,
-  normalizePlatformTenant,
-} from "./utils/platformTenant";
-import {
   increaseLoading,
   decreaseLoading,
   setTagLoading,
@@ -66,6 +59,12 @@ import { app, auth } from "./FirebaseConfig";
 import { setTags, setAllPayers, setSelectedTags } from "./redux/reducers/tag.reducer";
 import { setCount, setPart1Count, setPart2Count, setRecovery } from "./redux/reducers/count.reducer";
 import { setCategoryLabel, setCategoryValue } from "./redux/reducers/statistics.reducer";
+
+import {
+  PLATFORM_TENANTS,
+  resolveAppType,
+  resolvePlatformTenant,
+} from "./utils/platformTenant";
 
 const isPublicPath = (pathname = "") => {
   if (pathname === "/") return true;
@@ -194,15 +193,12 @@ function App() {
         dispatch(setLastname(session.userData.lastname ?? ""));
         dispatch(setEmail(session.userData.email ?? ""));
         dispatch(setRole(session.userData.role ?? ""))
-        const resolvedTenant = resolvePlatformTenantFromUser(session.userData);
-        const resolvedType = resolveAppType(session.userData);
-        persistPlatformTenant(resolvedTenant);
-        dispatch(setTenant(resolvedTenant))
-        dispatch(setAppType(resolvedType))
         {
-          if (Number.isFinite(resolvedType)) {
-            dispatch(setType(resolvedType));
-          }
+          const resolvedTenant = resolvePlatformTenant(session.userData);
+          const resolvedType = resolveAppType(session.userData);
+          dispatch(setTenant(resolvedTenant));
+          dispatch(setAppType(resolvedType));
+          dispatch(setType(resolvedType));
         }
         dispatch(setModules(session.userData.client ?? []))
         dispatch(setDenialCategory(session.userData.denialCategory ?? []))
@@ -264,24 +260,19 @@ function App() {
           return;
         }
         const userData = snapshot.data() || {};
-        const nextTenant = resolvePlatformTenantFromUser(userData);
+        const resolvedTenant = resolvePlatformTenant(userData);
         const resolvedType = resolveAppType(userData);
-        if (lastTenantRef.current && lastTenantRef.current !== nextTenant) {
+        if (lastTenantRef.current && lastTenantRef.current !== resolvedTenant) {
           clearTenantState();
         }
-        lastTenantRef.current = nextTenant;
-        persistPlatformTenant(nextTenant);
+        lastTenantRef.current = resolvedTenant;
         dispatch(setFirstname(userData.firstname ?? ""));
         dispatch(setLastname(userData.lastname ?? ""));
         dispatch(setEmail(userData.email ?? ""));
         dispatch(setRole(userData.role ?? ""));
-        dispatch(setTenant(nextTenant));
+        dispatch(setTenant(resolvedTenant));
         dispatch(setAppType(resolvedType));
-        {
-          if (Number.isFinite(resolvedType)) {
-            dispatch(setType(resolvedType));
-          }
-        }
+        dispatch(setType(resolvedType));
         dispatch(setModules(userData.client ?? []));
         dispatch(setDenialCategory(userData.denialCategory ?? []));
         dispatch(setPayer(userData.payer ?? []));
@@ -300,9 +291,8 @@ function App() {
 
   useEffect(() => {
     if (!authReady) return;
-    const tenantValue = normalizePlatformTenant(tenant);
-    if (!tenantValue) return;
-    if (!PLATFORM_TENANTS.includes(tenantValue)) return;
+    const tenantValue = `${tenant || ""}`.toLowerCase();
+    if (!tenantValue || !PLATFORM_TENANTS.includes(tenantValue)) return;
 
     const path = location.pathname || "";
     const parts = path.split('/').filter(Boolean);

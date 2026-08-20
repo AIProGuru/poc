@@ -121,6 +121,33 @@ addUserSchema = {
     "additionalProperties": False,
 }
 
+APP_TYPE_BY_TENANT = {
+    "rebound": 0,
+    "pilotcustomer": 1,
+    "demo": 2,
+    "betacustomer": 3,
+}
+
+
+def _normalize_platform_tenant(value) -> str:
+    """Canonical URL/DB tenant for the app. Unknown/empty → pilotcustomer."""
+    hint = normalize_tenant_hint(value, default="pilotcustomer")
+    if hint == "medevolve":
+        return "pilotcustomer"
+    return hint
+
+
+def _with_normalized_tenant_fields(data: dict) -> dict:
+    payload = dict(data or {})
+    tenant = _normalize_platform_tenant(
+        payload.get("tenant")
+        if payload.get("tenant") not in (None, "")
+        else payload.get("appType")
+    )
+    payload["tenant"] = tenant
+    payload["appType"] = APP_TYPE_BY_TENANT.get(tenant, 1)
+    return payload
+
 
 def _assert_admin(uid: str):
     """
@@ -149,27 +176,12 @@ def add_user():
             except (TypeError, ValueError):
                 return jsonify({"error": "status must be an integer"}), 400
         validate(instance=data, schema=addUserSchema)
+        data = _with_normalized_tenant_fields(data)
 
         user_email = (data.get("email") or "").strip().lower()
         user_password = data.get("password") or ""
         decoded_user = auth.create_user(email=user_email, password=user_password)
         data.pop("password")
-
-        # Canonical platform tenant drives login URL (/betacustomer, etc.)
-        platform_tenant = normalize_tenant_hint(data.get("tenant"), default="pilotcustomer")
-        if platform_tenant == "medevolve":
-            platform_tenant = "rebound"
-        if platform_tenant not in {"rebound", "pilotcustomer", "betacustomer", "demo"}:
-            platform_tenant = "pilotcustomer"
-        data["tenant"] = platform_tenant
-        app_type_map = {
-            "rebound": 0,
-            "pilotcustomer": 1,
-            "demo": 2,
-            "betacustomer": 3,
-        }
-        data["appType"] = app_type_map[platform_tenant]
-
         doc_ref = db.collection("users").document(decoded_user.uid)
         doc_ref.set(data)
 
@@ -425,6 +437,10 @@ def update_user(user_id):
         if not sanitized:
             return jsonify({"error": "No valid fields to update"}), 400
 
+        if "tenant" in sanitized or "appType" in sanitized:
+            normalized = _with_normalized_tenant_fields(sanitized)
+            sanitized["tenant"] = normalized["tenant"]
+            sanitized["appType"] = normalized["appType"]
         for field in ("firstname", "lastname", "email"):
             if field in sanitized:
                 sanitized[field] = f"{sanitized[field]}".strip()
@@ -440,20 +456,6 @@ def update_user(user_id):
                 return jsonify({"error": "status must be an integer"}), 400
             if sanitized["status"] not in (0, 1):
                 return jsonify({"error": "status must be 0 (active) or 1 (inactive)"}), 400
-
-        if "tenant" in sanitized:
-            platform_tenant = normalize_tenant_hint(sanitized.get("tenant"), default="pilotcustomer")
-            if platform_tenant == "medevolve":
-                platform_tenant = "rebound"
-            if platform_tenant not in {"rebound", "pilotcustomer", "betacustomer", "demo"}:
-                platform_tenant = "pilotcustomer"
-            sanitized["tenant"] = platform_tenant
-            sanitized["appType"] = {
-                "rebound": 0,
-                "pilotcustomer": 1,
-                "demo": 2,
-                "betacustomer": 3,
-            }[platform_tenant]
 
         if resolved_user_id != user_id:
             doc_ref = db.collection("users").document(resolved_user_id)

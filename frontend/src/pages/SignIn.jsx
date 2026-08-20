@@ -8,14 +8,7 @@ import { db } from "../FirebaseConfig";
 
 import { AccountContext } from "../utils/Account";
 import {
-  resolveAppType,
-  resolvePlatformTenantFromUser,
-  persistPlatformTenant,
-  clearPersistedPlatformTenant,
-} from "../utils/platformTenant";
-import {
   setAuth,
-  setAuthReady,
   setUsername,
   setRole,
   setFirstname,
@@ -34,6 +27,11 @@ import { setType, resetViewState } from "../redux/reducers/app.reducer";
 import { setSelectedTags, setTags, setAllPayers } from "../redux/reducers/tag.reducer";
 import { setCount, setPart1Count, setPart2Count, setRecovery } from "../redux/reducers/count.reducer";
 import { setCategoryLabel, setCategoryValue } from "../redux/reducers/statistics.reducer";
+import {
+  resolveAppType,
+  resolveLandingPath,
+  resolvePlatformTenant,
+} from "../utils/platformTenant";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -51,51 +49,44 @@ export default function SignIn() {
     try {
       const data = await authenticate(user, password);
       const userDoc = await getDoc(doc(db, "users", data.uid));
-
+  
       if (userDoc.exists()) {
-        if (userDoc.data().status > 0) {
+        if (userDoc.data().status > 0){
           toast.error("Please contact the administrator.");
-          setLoading(false);
-        } else {
-          const userData = userDoc.data();
-          const resolvedTenant = resolvePlatformTenantFromUser(userData);
-          const resolvedType = resolveAppType(userData);
-          const landingPath = `/${resolvedTenant}`;
-
-          clearPersistedPlatformTenant();
-          persistPlatformTenant(resolvedTenant);
-
-          dispatch(resetViewState());
-          dispatch(setTags([]));
-          dispatch(setAllPayers([]));
-          dispatch(setSelectedTags([]));
-          dispatch(setCount([]));
-          dispatch(setPart1Count([]));
-          dispatch(setPart2Count([]));
-          dispatch(setRecovery([]));
-          dispatch(setCategoryLabel([]));
-          dispatch(setCategoryValue([]));
-          dispatch(setAuth(true));
-          dispatch(setAuthReady(true));
-          dispatch(setFirstname(userData.firstname ?? ""));
-          dispatch(setLastname(userData.lastname ?? ""));
-          dispatch(setEmail(userData.email ?? ""));
-          dispatch(setRole(userData.role ?? ""));
-          dispatch(setTenant(resolvedTenant));
-          dispatch(setAppType(resolvedType));
-          dispatch(setModules(userData.client ?? []));
-          dispatch(setDenialCategory(userData.denialCategory ?? []));
-          dispatch(setPayer(userData.payer ?? []));
-          dispatch(setValue(userData.value ?? []));
-          dispatch(setFacility(userData.facility ?? []));
-          if (Number.isFinite(resolvedType)) {
-            dispatch(setType(resolvedType));
-          }
-          dispatch(setPermission(""));
-          dispatch(setUsername(userData.firstname ?? ""));
-          setLoading(false);
-          navigate(landingPath, { replace: true });
-          toast.success("Login Successful!");
+          setLoading(false)
+        }
+        else{
+        const userData = userDoc.data();
+        const resolvedTenant = resolvePlatformTenant(userData);
+        const resolvedType = resolveAppType(userData);
+        dispatch(resetViewState());
+        dispatch(setTags([]));
+        dispatch(setAllPayers([]));
+        dispatch(setSelectedTags([]));
+        dispatch(setCount([]));
+        dispatch(setPart1Count([]));
+        dispatch(setPart2Count([]));
+        dispatch(setRecovery([]));
+        dispatch(setCategoryLabel([]));
+        dispatch(setCategoryValue([]));
+        dispatch(setAuth(true));
+        dispatch(setFirstname(userData.firstname ?? ""));
+        dispatch(setLastname(userData.lastname ?? ""));
+        dispatch(setEmail(userData.email ?? ""));
+        dispatch(setRole(userData.role ?? ""));
+        dispatch(setTenant(resolvedTenant));
+        dispatch(setAppType(resolvedType));
+        dispatch(setModules(userData.client ?? []));
+        dispatch(setDenialCategory(userData.denialCategory ?? []));
+        dispatch(setPayer(userData.payer ?? []));
+        dispatch(setValue(userData.value ?? []));
+        dispatch(setFacility(userData.facility ?? []));
+        dispatch(setType(resolvedType));
+        dispatch(setPermission(""));
+        dispatch(setUsername(userData.firstname ?? ""));
+        setLoading(false);
+        navigate(resolveLandingPath(userData));
+        toast.success("Login Successful!");
         }
       } else {
         toast.error("User document does not exist.");

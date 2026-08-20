@@ -127,7 +127,6 @@ const getSession = () => {
         clearAuthState();
         try {
           localStorage.removeItem('lastAppType');
-          localStorage.removeItem('lastTenantBase');
         } catch (err) {
           // Ignore storage errors.
         }

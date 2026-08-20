@@ -1,127 +1,137 @@
+/** Canonical platform tenant URL/DB keys used by the app. */
 export const PLATFORM_TENANTS = ["rebound", "pilotcustomer", "betacustomer", "demo"];
 
-export const PLATFORM_TENANT_OPTIONS = [
-  { value: "rebound", label: "Rebound" },
-  { value: "pilotcustomer", label: "Pilot Customer" },
-  { value: "betacustomer", label: "Beta Customer" },
-  { value: "demo", label: "Demo" },
+export const DEFAULT_PLATFORM_TENANT = "pilotcustomer";
+
+export const PLATFORM_CLIENT_OPTIONS = [
+  { value: "pilotcustomer", label: "Pilot Customer", id: "pilotcustomer" },
+  { value: "betacustomer", label: "Beta Customer", id: "betacustomer" },
 ];
 
-export const LAST_TENANT_BASE_KEY = "lastTenantBase";
-export const LAST_APP_TYPE_KEY = "lastAppType";
-
-const APP_TYPE_BY_TENANT = {
-  rebound: 0,
-  pilotcustomer: 1,
-  demo: 2,
-  betacustomer: 3,
-};
-
-const TENANT_BY_APP_TYPE = {
+const APP_TYPE_TO_TENANT = {
   0: "rebound",
   1: "pilotcustomer",
   2: "demo",
   3: "betacustomer",
 };
 
+const TENANT_TO_APP_TYPE = {
+  rebound: 0,
+  pilotcustomer: 1,
+  demo: 2,
+  betacustomer: 3,
+};
+
 /**
- * Map assorted client/tenant labels to a canonical platform path tenant.
- * Returns null when the value cannot be mapped.
+ * Map a free-form client/tenant label to a platform tenant key.
+ * Empty / unknown → pilotcustomer (medevolve), per product rules.
  */
-export function normalizePlatformTenant(value, defaultTenant = null) {
-  if (value === null || value === undefined) return defaultTenant;
+export function resolvePlatformTenantFromHint(value, { defaultTenant = DEFAULT_PLATFORM_TENANT } = {}) {
+  if (value === null || value === undefined) {
+    return defaultTenant;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return APP_TYPE_TO_TENANT[value] || defaultTenant;
+  }
 
   const raw = String(value).trim().toLowerCase();
-  if (!raw) return defaultTenant;
+  if (!raw) {
+    return defaultTenant;
+  }
 
-  if (PLATFORM_TENANTS.includes(raw)) return raw;
+  if (Object.prototype.hasOwnProperty.call(APP_TYPE_TO_TENANT, raw)) {
+    return APP_TYPE_TO_TENANT[Number(raw)] || defaultTenant;
+  }
 
-  const compact = raw.replace(/[\s/_-]+/g, "");
-  if (PLATFORM_TENANTS.includes(compact)) return compact;
+  const compact = raw
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter(Boolean)
+    .pop()
+    .replace(/[\s_-]+/g, "");
 
-  if (compact.includes("betacustomer") || compact === "beta") return "betacustomer";
-  if (compact.includes("pilotcustomer") || compact === "pilot") return "pilotcustomer";
-  if (compact.includes("rebound") || compact.includes("medevolve")) return "rebound";
-  if (compact.includes("demo")) return "demo";
+  if (PLATFORM_TENANTS.includes(compact)) {
+    return compact;
+  }
+
+  // Prefer beta before pilot so labels like "beta-customer" resolve correctly.
+  if (compact.includes("betacustomer") || compact === "beta" || compact.startsWith("beta")) {
+    return "betacustomer";
+  }
+  if (compact.includes("rebound")) {
+    return "rebound";
+  }
+  if (compact.includes("demo")) {
+    return "demo";
+  }
+  if (compact.includes("pilotcustomer") || compact.includes("pilot") || compact.includes("medevolve")) {
+    return "pilotcustomer";
+  }
+
+  if (raw.includes("betacustomer") || /\bbeta\b/.test(raw)) {
+    return "betacustomer";
+  }
+  if (raw.includes("rebound")) {
+    return "rebound";
+  }
+  if (raw.includes("demo")) {
+    return "demo";
+  }
+  if (raw.includes("pilotcustomer") || raw.includes("pilot") || raw.includes("medevolve")) {
+    return "pilotcustomer";
+  }
 
   return defaultTenant;
-}
-
-export function platformTenantToAppType(tenant) {
-  const normalized = normalizePlatformTenant(tenant);
-  return normalized == null ? null : APP_TYPE_BY_TENANT[normalized];
-}
-
-export function appTypeToPlatformTenant(appType) {
-  const key = Number(appType);
-  return Number.isFinite(key) ? TENANT_BY_APP_TYPE[key] || null : null;
-}
-
-function resolveFromClientList(userData = {}) {
-  const buckets = [userData.client, userData.clients, userData.modules];
-  for (const bucket of buckets) {
-    if (!Array.isArray(bucket)) continue;
-    for (const entry of bucket) {
-      const mapped = normalizePlatformTenant(
-        typeof entry === "string" ? entry : entry?.basePath || entry?.tenant || entry?.slug || entry?.name
-      );
-      if (mapped) return mapped;
-    }
-  }
-  return null;
 }
 
 /**
- * Canonical platform tenant for routing (/betacustomer, /pilotcustomer, ...).
- * Uses explicit tenant/appType. Defaults to pilotcustomer (admins included).
+ * Resolve platform tenant from a Firestore user profile.
+ * Checks tenant/product/basePath, then appType, then client[] assignment.
+ * No client / unknown → pilotcustomer.
  */
-export function resolvePlatformTenantFromUser(userData = {}, defaultTenant = "pilotcustomer") {
-  const fromTenant = normalizePlatformTenant(
-    userData.tenant || userData.product || userData.basePath
-  );
-  if (fromTenant) return fromTenant;
+export function resolvePlatformTenant(userData = {}) {
+  const explicit =
+    userData.tenant ||
+    userData.product ||
+    userData.basePath ||
+    "";
+  if (`${explicit}`.trim()) {
+    return resolvePlatformTenantFromHint(explicit);
+  }
 
-  // Prefer dedicated appType over legacy `type` (type is overloaded in older docs).
-  const fromAppType = appTypeToPlatformTenant(userData.appType);
-  if (fromAppType) return fromAppType;
+  const rawType = userData.appType ?? userData.type;
+  if (rawType !== null && rawType !== undefined && `${rawType}`.trim() !== "") {
+    const fromType = resolvePlatformTenantFromHint(rawType);
+    if (fromType) {
+      return fromType;
+    }
+  }
 
-  const fromClient = resolveFromClientList(userData);
-  if (fromClient) return fromClient;
+  const clients = Array.isArray(userData.client) ? userData.client : [];
+  for (const entry of clients) {
+    const resolved = resolvePlatformTenantFromHint(entry, { defaultTenant: "" });
+    if (resolved) {
+      return resolved;
+    }
+  }
 
-  const fromType = appTypeToPlatformTenant(userData.type);
-  if (fromType) return fromType;
-
-  return defaultTenant;
+  return DEFAULT_PLATFORM_TENANT;
 }
 
-export function resolveLandingPath(userData = {}) {
-  return `/${resolvePlatformTenantFromUser(userData)}`;
+export function resolveAppTypeFromTenant(tenant) {
+  const key = resolvePlatformTenantFromHint(tenant);
+  return TENANT_TO_APP_TYPE[key] ?? 1;
 }
 
 export function resolveAppType(userData = {}) {
-  const tenant = resolvePlatformTenantFromUser(userData);
-  return platformTenantToAppType(tenant);
+  return resolveAppTypeFromTenant(resolvePlatformTenant(userData));
 }
 
-export function persistPlatformTenant(tenant) {
-  const normalized = normalizePlatformTenant(tenant, "pilotcustomer");
-  const appType = platformTenantToAppType(normalized);
-  try {
-    localStorage.setItem(LAST_TENANT_BASE_KEY, normalized);
-    if (appType !== null && appType !== undefined) {
-      localStorage.setItem(LAST_APP_TYPE_KEY, String(appType));
-    }
-  } catch (err) {
-    // Ignore storage write errors.
-  }
-  return { tenant: normalized, appType };
+export function resolveLandingPath(userData = {}) {
+  return `/${resolvePlatformTenant(userData)}`;
 }
 
-export function clearPersistedPlatformTenant() {
-  try {
-    localStorage.removeItem(LAST_TENANT_BASE_KEY);
-    localStorage.removeItem(LAST_APP_TYPE_KEY);
-  } catch (err) {
-    // Ignore storage errors.
-  }
+export function isPlatformTenant(value) {
+  return PLATFORM_TENANTS.includes(`${value || ""}`.toLowerCase());
 }
