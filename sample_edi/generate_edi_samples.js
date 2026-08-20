@@ -19,13 +19,34 @@ const PROVIDERS = [
 ];
 
 const PAYERS = [
-  { name: "Blue Cross Blue Shield of Oregon", id: "BCBSOR", plan_id: "87726" },
-  { name: "Aetna Better Health", id: "AETNA01", plan_id: "60054" },
-  { name: "UnitedHealthcare", id: "UHC001", plan_id: "87726" },
-  { name: "Cigna Healthcare", id: "CIGNA01", plan_id: "62308" },
-  { name: "Medicare Part B", id: "MEDICARE", plan_id: "CMS" },
-  { name: "Regence BlueShield", id: "REGENCE", plan_id: "00430" },
+  { name: "Blue Cross Blue Shield of Oregon", id: "BCBSOR", plan_id: "87726", address: "500 Payer Boulevard", city: "Chicago", state: "IL", zip: "60601" },
+  { name: "Aetna Better Health", id: "AETNA01", plan_id: "60054", address: "151 Farmington Ave", city: "Hartford", state: "CT", zip: "06156" },
+  { name: "UnitedHealthcare", id: "UHC001", plan_id: "87726", address: "9900 Bren Rd E", city: "Minnetonka", state: "MN", zip: "55343" },
+  { name: "Cigna Healthcare", id: "CIGNA01", plan_id: "62308", address: "900 Cottage Grove Rd", city: "Bloomfield", state: "CT", zip: "06002" },
+  { name: "Medicare Part B", id: "MEDICARE", plan_id: "CMS", address: "PO Box 30141", city: "Salt Lake City", state: "UT", zip: "84130" },
+  { name: "Regence BlueShield", id: "REGENCE", plan_id: "00430", address: "100 SW Market St", city: "Portland", state: "OR", zip: "97201" },
 ];
+
+/** Segment patterns taken from HIPAA Suite reference files in `HIPAA 837 samples/` and `HIPAA 835 samples/`. */
+const HIPAA_SUITE_REFERENCE = {
+  source_837: "HIPAA 837 samples/837P_5010.837, TXMedicaid_837P_Professional.edi, Medicare_837P_Professional.edi",
+  source_835: "HIPAA 835 samples/835_5010.edi, 835I1.edi",
+  edi837: {
+    claim_service_date: "DTP*472*D8 at claim level (not DTP*431)",
+    payer_address: "NM1*PR followed by N3/N4",
+    rendering_provider: "NM1*82 on claim after HI",
+    service_line: "SV1*HC:code*amount*UN*units*pos**1",
+    line_service_date: "DTP*472*D8 per LX loop",
+  },
+  edi835: {
+    claim_dates: "DTM*232, DTM*233 (service period), DTM*050 (received) before service lines",
+    claim_service_date: "DTP*472*D8 retained for platform matching",
+    service_line: "SVC*HC:code*charge*paid**units",
+    line_service_date: "DTP*472*D8 per SVC (5010)",
+    adjustments: "Claim-level CAS*group*reason*amount*qty (aggregated) plus line-level CAS for detail — populates EDI_ClaimLevelAdjustments and EDI_PaidClaimLineAdj",
+    plb: "PLB*providerId*fiscalDate*reason:referenceId*amount — composite PLB03/05 (extension for EDI_ProviderLevelAdjustments)",
+  },
+};
 
 const PATIENTS = [
   { first: "Emily", last: "Johnson", member_id: "MBR100001", dob: "19850314", sex: "F" },
@@ -71,10 +92,116 @@ const SERVICE_LINES = [
 ];
 
 function fmtMoney(v) { return Number(v).toFixed(2); }
+
+/** CARC reason codes → AdjustmentReason char(3), e.g. 45 → 045, 2 → 002 */
+function formatCarcReason(reason) {
+  const raw = String(reason ?? "").trim();
+  if (/^\d+$/.test(raw)) return raw.padStart(3, "0").slice(-3);
+  return raw.length >= 3 ? raw.slice(0, 3) : raw.padEnd(3, " ").trimEnd();
+}
+
+/** Service unit count → AdjustmentQty varchar(15) */
+function formatCasQty(qty) {
+  const n = Math.max(1, Math.round(Number(qty || 1)));
+  return String(n);
+}
+
+function normalizeAdjGroup(group) {
+  return String(group || "CO").trim().toUpperCase().slice(0, 2);
+}
 function fmtDate(d) { return d.toISOString().slice(0, 10).replace(/-/g, ""); }
 function addDays(base, n) { const d = new Date(base); d.setDate(d.getDate() + n); return d; }
 function joinSegs(segs) { return segs.join(""); }
 function round2(v) { return Math.round(v * 100) / 100; }
+
+/** Common professional modifiers to populate ProcedureModifier / SubmittedProcedureModifier columns. */
+const CODE_MODIFIERS = {
+  "99213": ["25"],
+  "99214": ["25"],
+  "99203": ["25"],
+  "99204": ["25"],
+  "73721": ["LT"],
+  "97110": ["59"],
+  "97140": ["59"],
+  "20610": ["RT"],
+  "73030": ["LT"],
+  "99285": ["25"],
+};
+
+function defaultModifiers(code) {
+  return CODE_MODIFIERS[code] ? [...CODE_MODIFIERS[code]] : [];
+}
+
+function enrichServiceLine(line) {
+  if (!line.modifiers?.length) line.modifiers = defaultModifiers(line.code);
+  return line;
+}
+
+function svcComposite(code, modifiers = []) {
+  return `HC${COMP}${[code, ...modifiers.filter(Boolean).slice(0, 4)].join(COMP)}`;
+}
+
+function buildSvcSegment(line) {
+  enrichServiceLine(line);
+  const paidComp = svcComposite(line.code, line.modifiers);
+  const units = String(line.units || 1);
+  // 835_5010 layout: SVC*composite*charge*paid**units~
+  // SVC04=revenue (blank prof), SVC05=UnitsPaid. No trailing SVC06/07 composite —
+  // HIPAA Suite WriteClaimLines mis-reads it as UnitsCharged (decimal).
+  return ["SVC", paidComp, fmtMoney(line.charge), fmtMoney(line.paid), "", units].join(ELEM) + SEG;
+}
+
+function lineAllowedAmount(line) {
+  const adjTotal = (line.adjustments || []).reduce((s, a) => s + Number(a.amount), 0);
+  return round2(Math.max(0, Number(line.charge) - adjTotal));
+}
+
+/** Emit loop 2110 service line segments — maps to EDI_PaidClaimLines columns on import. */
+function append835ServiceLineSegments(segs, line, ctx) {
+  const { claim, provider, lineIdx, matchServiceDate } = ctx;
+  enrichServiceLine(line);
+  const lineDate = line.serviceDate || matchServiceDate;
+  const ctrlNo = `${claim.claimNo.replace(/\D/g, "").slice(-12)}${String(lineIdx + 1).padStart(2, "0")}`.slice(0, 20);
+  const authNo = `AUTH${line.code}${String(lineIdx + 1).padStart(2, "0")}`.slice(0, 50);
+  const allowed = lineAllowedAmount(line);
+  const prAmount = (line.adjustments || [])
+    .filter((a) => a.group === "PR")
+    .reduce((s, a) => s + Number(a.amount), 0);
+
+  segs.push(buildSvcSegment(line));
+  segs.push(`DTP${ELEM}472${ELEM}D8${ELEM}${fmtDate(lineDate)}${SEG}`);
+  segs.push(`DTP${ELEM}150${ELEM}${fmtDate(lineDate)}${SEG}`);
+  segs.push(`DTP${ELEM}151${ELEM}${fmtDate(lineDate)}${SEG}`);
+  segs.push(`REF${ELEM}6R${ELEM}${ctrlNo}${SEG}`);
+  segs.push(`REF${ELEM}G1${ELEM}${authNo}${SEG}`);
+  segs.push(`REF${ELEM}BB${ELEM}${authNo}${SEG}`);
+  segs.push(`REF${ELEM}1D${ELEM}${String(line.pos || "11").padStart(2, "0")}${SEG}`);
+  segs.push(`REF${ELEM}BT${ELEM}POL${claim.patient.member_id}${SEG}`);
+  segs.push(`REF${ELEM}9B${ELEM}REB${lineIdx + 1}${SEG}`);
+
+  (line.adjustments || []).forEach((adj) => {
+    segs.push(`CAS${ELEM}${adj.group}${ELEM}${adj.reason}${ELEM}${fmtMoney(adj.amount)}${SEG}`);
+  });
+
+  segs.push(`NM1${ELEM}82${ELEM}1${ELEM}SMITH${ELEM}JOHN${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}XX${ELEM}${provider.npi}${SEG}`);
+  segs.push(`REF${ELEM}TJ${ELEM}${provider.tax_id}${SEG}`);
+  segs.push(`REF${ELEM}1C${ELEM}${provider.tax_id}${SEG}`);
+  segs.push(`REF${ELEM}G2${ELEM}${provider.npi}${SEG}`);
+  segs.push(`REF${ELEM}HPI${ELEM}${provider.npi}${SEG}`);
+  segs.push(`REF${ELEM}SY${ELEM}${provider.tax_id}${SEG}`);
+  segs.push(`REF${ELEM}LU${ELEM}${provider.npi}${SEG}`);
+
+  if (allowed > 0) segs.push(`AMT${ELEM}B6${ELEM}${fmtMoney(allowed)}${SEG}`);
+  if (prAmount > 0) segs.push(`AMT${ELEM}F5${ELEM}${fmtMoney(prAmount)}${SEG}`);
+  if (Number(line.paid) > 0) segs.push(`AMT${ELEM}T${ELEM}${fmtMoney(line.paid)}${SEG}`);
+
+  segs.push(`QTY${ELEM}ZK${ELEM}${line.units || 1}${SEG}`);
+  segs.push(`QTY${ELEM}NE${ELEM}${line.units || 1}${SEG}`);
+
+  (line.remarkCodes || []).forEach((code) => {
+    segs.push(`LQ${ELEM}HE${ELEM}${code}${SEG}`);
+  });
+}
 
 function buildIsa(sender, receiver, ctrl, dt) {
   return `ISA${ELEM}00${ELEM}          ${ELEM}00${ELEM}          ${ELEM}ZZ${ELEM}${sender.padEnd(15)}${ELEM}ZZ${ELEM}${receiver.padEnd(15)}${ELEM}${fmtDate(dt).slice(2)}${ELEM}1200${ELEM}^${ELEM}00501${ELEM}${String(ctrl).padStart(9)}${ELEM}0${ELEM}P${ELEM}${COMP}${SEG}`;
@@ -91,7 +218,7 @@ function build837(claim, fileId) {
   const ctrl = String(fileId).padStart(9, "0");
   const stCtrl = String(fileId).padStart(4, "0");
   const { provider, payer, patient, lines } = claim;
-  const matchServiceDate = claim.serviceDate;
+  const matchServiceDate = latestLineDate(lines, claim.serviceDate);
   const total = lines.reduce((s, l) => s + l.charge, 0);
   const taxonomyCode =
     claim.taxonomyCode !== undefined ? claim.taxonomyCode : provider.taxonomy;
@@ -121,17 +248,23 @@ function build837(claim, fileId) {
     `N4${ELEM}Portland${ELEM}OR${ELEM}97205${SEG}`,
     `DMG${ELEM}D8${ELEM}${patient.dob}${ELEM}${patient.sex}${SEG}`,
     `NM1${ELEM}PR${ELEM}2${ELEM}${payer.name}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}PI${ELEM}${payer.plan_id}${SEG}`,
+    `N3${ELEM}${payer.address || "500 Payer Boulevard"}${SEG}`,
+    `N4${ELEM}${payer.city || "Chicago"}${ELEM}${payer.state || "IL"}${ELEM}${payer.zip || "60601"}${SEG}`,
     `CLM${ELEM}${claim.claimNo}${ELEM}${fmtMoney(total)}${ELEM}${ELEM}${ELEM}${lines[0].pos}${COMP}B${COMP}${claim.frequency}${ELEM}${ELEM}Y${ELEM}A${ELEM}Y${ELEM}I${SEG}`,
-    `DTP${ELEM}431${ELEM}D8${ELEM}${fmtDate(matchServiceDate)}${SEG}`,
+    `DTP${ELEM}472${ELEM}D8${ELEM}${fmtDate(matchServiceDate)}${SEG}`,
     `REF${ELEM}D9${ELEM}${claim.claimNo}${SEG}`,
+    `REF${ELEM}EA${ELEM}${claim.claimNo}${SEG}`,
     `HI${ELEM}ABK${COMP}${claim.diagnosis}${SEG}`,
+    `NM1${ELEM}82${ELEM}1${ELEM}SMITH${ELEM}JOHN${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}XX${ELEM}${provider.npi}${SEG}`,
   );
   lines.forEach((line, idx) => {
     const lineDate = line.serviceDate || matchServiceDate;
-    const svc = `HC${COMP}${line.code}`;
+    enrichServiceLine(line);
+    const svc = svcComposite(line.code, line.modifiers);
     segs.push(`LX${ELEM}${idx + 1}${SEG}`);
-    segs.push(`SV1${ELEM}${svc}${ELEM}${fmtMoney(line.charge)}${ELEM}UN${ELEM}${line.units}${ELEM}${ELEM}${ELEM}1${SEG}`);
+    segs.push(`SV1${ELEM}${svc}${ELEM}${fmtMoney(line.charge)}${ELEM}UN${ELEM}${line.units}${ELEM}${line.pos}${ELEM}${ELEM}1${SEG}`);
     segs.push(`DTP${ELEM}472${ELEM}D8${ELEM}${fmtDate(lineDate)}${SEG}`);
+    segs.push(`REF${ELEM}6R${ELEM}${claim.claimNo}${String(idx + 1).padStart(2, "0")}${SEG}`);
   });
   segs.push(`SE${ELEM}${segs.length + 1}${ELEM}${stCtrl}${SEG}`);
   segs.push(`GE${ELEM}1${ELEM}${fileId}${SEG}`);
@@ -175,12 +308,136 @@ function buildBprSegment(remit, payer) {
   ].join(ELEM) + SEG;
 }
 
+/** Last day of the check year — maps to EDI_ProviderLevelAdjustments.FiscalPeriodDate (MM/DD/YYYY in DB). */
+function fiscalPeriodDate(checkDate) {
+  const y = checkDate.getFullYear();
+  return `${y}1231`;
+}
+
+/**
+ * PLB*providerId*fiscalDate*reason:identifier*amount*(repeat composite+amount up to 6 pairs).
+ * PLB03/05/... are C042 composites (reason:reference), not separate elements.
+ */
+function formatPlbComposite(adj) {
+  const reason = adj.reason || "L6";
+  let refId = `${adj.identifier || ""}`.trim();
+  if (!refId) return reason;
+  refId = refId.replace(/-/g, ":");
+  if (refId.startsWith(`${reason}:`)) return refId;
+  return `${reason}:${refId}`;
+}
+
+function buildPlbSegments(provider, remit, claim) {
+  const adjustments = remit.providerLevelAdjustments || defaultProviderLevelAdjustments(claim, remit);
+  if (!adjustments.length) return [];
+
+  const providerId = provider.npi;
+  const fiscalDate = fiscalPeriodDate(remit.checkDate);
+  const segments = [];
+
+  for (let i = 0; i < adjustments.length; i += 6) {
+    const batch = adjustments.slice(i, i + 6);
+    const parts = ["PLB", providerId, fiscalDate];
+    batch.forEach((adj) => {
+      parts.push(formatPlbComposite(adj), fmtMoney(adj.amount));
+    });
+    segments.push(parts.join(ELEM) + SEG);
+  }
+  return segments;
+}
+
+function defaultProviderLevelAdjustments(claim, remit) {
+  const checkDigits = String(remit.checkNumber || "").replace(/\D/g, "").slice(-6).padStart(6, "0");
+  const baseSuffix = 539303;
+  return remit.lines.map((line, idx) => {
+    const charge = Number(line.charge) || 0;
+    const amount = -round2(Math.max(2.16, charge * 0.0144));
+    return {
+      reason: "L6",
+      identifier: `${checkDigits}-${String(baseSuffix + idx * 6884).padStart(6, "0")}`,
+      amount,
+    };
+  });
+}
+
+/** Aggregate line CAS → EDI_ClaimLevelAdjustments rows (CAS in loop 2100, before first SVC). */
+function resolveClaimLevelAdjustments(remit) {
+  if (remit.claimLevelAdjustments?.length) {
+    return remit.claimLevelAdjustments.map((adj) => ({
+      group: normalizeAdjGroup(adj.group),
+      reason: formatCarcReason(adj.reason),
+      amount: round2(Number(adj.amount)),
+      qty: Number(adj.qty ?? 1),
+    }));
+  }
+
+  const map = new Map();
+  remit.lines.forEach((line) => {
+    (line.adjustments || []).forEach((adj) => {
+      const group = normalizeAdjGroup(adj.group);
+      const reason = formatCarcReason(adj.reason);
+      const key = `${group}|${reason}`;
+      const prev = map.get(key) || { group, reason, amount: 0, qty: 0 };
+      prev.amount = round2(prev.amount + Number(adj.amount));
+      prev.qty += Number(adj.qty ?? line.units ?? 1);
+      map.set(key, prev);
+    });
+  });
+
+  let adjustments = Array.from(map.values()).filter((adj) => Number(adj.amount) > 0);
+  if (adjustments.length === 0) {
+    const totalCharge = remit.lines.reduce((s, l) => s + Number(l.charge || 0), 0);
+    const totalPaid = remit.lines.reduce((s, l) => s + Number(l.paid || 0), 0);
+    const patientResp = Number(remit.patientResp || 0);
+    const totalUnits = remit.lines.reduce((s, l) => s + Number(l.units || 1), 0);
+    const coAmount = round2(totalCharge - totalPaid - patientResp);
+    if (coAmount > 0.001) {
+      adjustments.push({ group: "CO", reason: formatCarcReason("45"), amount: coAmount, qty: totalUnits });
+    }
+    if (patientResp > 0.001) {
+      const prReason = remit.prReasonCode ? formatCarcReason(remit.prReasonCode) : formatCarcReason("2");
+      adjustments.push({ group: "PR", reason: prReason, amount: patientResp, qty: totalUnits });
+    }
+  }
+  return adjustments;
+}
+
+function appendClaimLevelCasSegments(segs, remit) {
+  if (remit.includeClaimLevelCas === false) return;
+  const adjustments = resolveClaimLevelAdjustments(remit);
+  if (!adjustments.length) return;
+
+  const byGroup = new Map();
+  adjustments.forEach((adj) => {
+    if (!byGroup.has(adj.group)) byGroup.set(adj.group, []);
+    byGroup.get(adj.group).push(adj);
+  });
+  byGroup.forEach((groupAdjs, group) => {
+    for (let i = 0; i < groupAdjs.length; i += 6) {
+      const batch = groupAdjs.slice(i, i + 6);
+      const parts = ["CAS", group];
+      batch.forEach((adj) => {
+        // CAS*Group*Reason*Amount*Qty → AdjustmentGroup/Reason/Amount/Qty
+        parts.push(adj.reason, fmtMoney(adj.amount), formatCasQty(adj.qty));
+      });
+      segs.push(parts.join(ELEM) + SEG);
+    }
+  });
+}
+
+function append835ClaimDateSegments(segs, serviceDate, checkDate) {
+  segs.push(`DTM${ELEM}232${ELEM}${fmtDate(serviceDate)}${SEG}`);
+  segs.push(`DTM${ELEM}233${ELEM}${fmtDate(serviceDate)}${SEG}`);
+  segs.push(`DTM${ELEM}050${ELEM}${fmtDate(checkDate)}${SEG}`);
+  segs.push(`DTP${ELEM}472${ELEM}D8${ELEM}${fmtDate(serviceDate)}${SEG}`);
+}
+
 function build835(claim, remit, fileId, options = {}) {
   const ctrl = String(fileId + 50000).padStart(9, "0");
   const stCtrl = String(fileId).padStart(4, "0");
   const provider = claim.provider;
   const payer = remit.payer || claim.payer;
-  const matchServiceDate = options.clpServiceDate || claim.serviceDate;
+  const matchServiceDate = options.clpServiceDate || latestLineDate(remit.lines, claim.serviceDate);
   const totalCharge = remit.lines.reduce((s, l) => s + l.charge, 0);
   const totalPaid = remit.lines.reduce((s, l) => s + l.paid, 0);
   const segs = [
@@ -191,8 +448,8 @@ function build835(claim, remit, fileId, options = {}) {
     `TRN${ELEM}1${ELEM}${remit.checkNumber}${ELEM}${payer.id}${SEG}`,
     `DTM${ELEM}405${ELEM}${fmtDate(remit.checkDate)}${SEG}`,
     `N1${ELEM}PR${ELEM}${payer.name}${ELEM}XV${ELEM}${payer.plan_id}${SEG}`,
-    `N3${ELEM}500 Payer Boulevard${SEG}`,
-    `N4${ELEM}Chicago${ELEM}IL${ELEM}60601${SEG}`,
+    `N3${ELEM}${payer.address || "500 Payer Boulevard"}${SEG}`,
+    `N4${ELEM}${payer.city || "Chicago"}${ELEM}${payer.state || "IL"}${ELEM}${payer.zip || "60601"}${SEG}`,
     `REF${ELEM}2U${ELEM}${payer.id}${SEG}`,
     `N1${ELEM}PE${ELEM}${provider.name}${ELEM}XX${ELEM}${provider.npi}${SEG}`,
     `N3${ELEM}${provider.address}${SEG}`,
@@ -202,28 +459,33 @@ function build835(claim, remit, fileId, options = {}) {
     `CLP${ELEM}${claim.claimNo}${ELEM}${remit.claimStatus}${ELEM}${fmtMoney(totalCharge)}${ELEM}${fmtMoney(totalPaid)}${ELEM}${fmtMoney(remit.patientResp)}${ELEM}12${ELEM}${remit.payerClaimId}${ELEM}${claim.frequency}${SEG}`,
     `NM1${ELEM}QC${ELEM}1${ELEM}${claim.patient.last}${ELEM}${claim.patient.first}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}MI${ELEM}${claim.patient.member_id}${SEG}`,
     `NM1${ELEM}82${ELEM}1${ELEM}SMITH${ELEM}JOHN${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}XX${ELEM}${provider.npi}${SEG}`,
+    `REF${ELEM}EA${ELEM}${provider.tax_id}${SEG}`,
     `REF${ELEM}1L${ELEM}${claim.patient.member_id}${SEG}`,
-    `DTP${ELEM}472${ELEM}D8${ELEM}${fmtDate(matchServiceDate)}${SEG}`,
   ];
-  remit.lines.forEach((line) => {
-    const lineDate = line.serviceDate || matchServiceDate;
-    segs.push(`SVC${ELEM}HC${COMP}${line.code}${ELEM}${fmtMoney(line.charge)}${ELEM}${fmtMoney(line.paid)}${ELEM}${ELEM}${line.units}${SEG}`);
-    segs.push(`DTP${ELEM}472${ELEM}D8${ELEM}${fmtDate(lineDate)}${SEG}`);
-    (line.adjustments || []).forEach((adj) => {
-      segs.push(`CAS${ELEM}${adj.group}${ELEM}${adj.reason}${ELEM}${fmtMoney(adj.amount)}${SEG}`);
-    });
-    if (line.remarkCodes && line.remarkCodes.length) {
-      segs.push(`LQ${ELEM}HE${ELEM}${line.remarkCodes[0]}${SEG}`);
-    }
+  append835ClaimDateSegments(segs, matchServiceDate, remit.checkDate);
+  appendClaimLevelCasSegments(segs, remit);
+  remit.lines.forEach((line, lineIdx) => {
+    append835ServiceLineSegments(segs, line, { claim, provider, payer, lineIdx, matchServiceDate });
   });
+  buildPlbSegments(provider, remit, claim).forEach((plbSeg) => segs.push(plbSeg));
   segs.push(`SE${ELEM}${segs.length + 1}${ELEM}${stCtrl}${SEG}`);
   segs.push(`GE${ELEM}1${ELEM}${fileId}${SEG}`);
   segs.push(`IEA${ELEM}1${ELEM}${ctrl}${SEG}`);
   return joinSegs(segs);
 }
 
-function line(code, charge, paid = 0, units = 1, pos = "11", adjustments = [], remarkCodes = [], serviceDate = null) {
-  return { code, charge, paid, units, pos, adjustments, remarkCodes, serviceDate };
+function line(code, charge, paid = 0, units = 1, pos = "11", adjustments = [], remarkCodes = [], serviceDate = null, modifiers = null) {
+  return {
+    code,
+    charge,
+    paid,
+    units,
+    pos,
+    adjustments,
+    remarkCodes,
+    serviceDate,
+    modifiers: modifiers ?? defaultModifiers(code),
+  };
 }
 
 function lineOnDate(template, serviceDate, paid = 0, adjustments = [], remarkCodes = []) {
@@ -300,6 +562,13 @@ const MATCHING_LOGIC = {
   ],
   multiple_835_per_837:
     "Each 835 that satisfies all three predicates links to the same id_837. matching_837_835.rn=1 (latest CheckDate) is used for CUSTOM_ALL; get_claim_detail returns all linked 835 rows.",
+  plb_provider_level_adjustments:
+    "PLB*ProviderID*FiscalDate*Reason:ReferenceID*Amount before SE (composite PLB03/05). Maps to EDI_ProviderLevelAdjustments.",
+  claim_level_adjustments:
+    "EDI_ClaimLevelAdjustments: CAS*Group(2)*Reason(3)*Amount*Qty after claim DTM/DTP, before SVC. Reason zero-padded (045, 016, 002). AdjustmentQty = CAS04.",
+  paid_claim_lines:
+    "Loop 2110 SVC with HC composite + modifiers, submitted composite (SVC07), DTP*472/150/151, REF*6R/G1/BB, NM1*82+REF*TJ, AMT*B6/F5/T, QTY*ZK/NE, LQ*HE — populates EDI_PaidClaimLines.",
+  hipaa_suite_reference: HIPAA_SUITE_REFERENCE,
   related_837_lookup:
     "Separate from 835 matching: get_claim_detail Related uses ClaimNoFirst + Amount + PrincipalDiagnosis + ServiceDate to find duplicate 837 submissions.",
 };

@@ -9,6 +9,12 @@ import { auth } from '../../../FirebaseConfig';
 import { SERVER_URL } from '../../../utils/config';
 import { MODULE_OPTIONS, MODULE_CATEGORY_MAP } from "../../../utils/moduleCatalog";
 import { ROLE_OPTIONS, ROLE_STANDARD, normalizeRole } from "../../../utils/roles";
+import {
+  PLATFORM_TENANT_OPTIONS,
+  normalizePlatformTenant,
+  platformTenantToAppType,
+  resolvePlatformTenantFromUser,
+} from "../../../utils/platformTenant";
 import { setRole, setFirstname, setLastname, setEmail } from '../../../redux/reducers/auth.reducer';
 
 
@@ -236,25 +242,17 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
   };
 
   const resolveClientForTenant = (tenantValue) => {
-    const normalizedTenant = sanitizeTenantValue(tenantValue);
+    const normalizedTenant = normalizePlatformTenant(tenantValue);
     if (!normalizedTenant) return null;
     return (rawClients || []).find((client) => {
-      const candidate = sanitizeTenantValue(
+      const candidate = normalizePlatformTenant(
         client?.basePath || client?.tenant || client?.slug || client?.name
       );
       return candidate && candidate === normalizedTenant;
     });
   };
 
-  const resolvedClientOptions = useMemo(() => {
-    const options = (clientOptions || []).filter(Boolean);
-    return options.length > 0
-      ? options
-      : [
-          { value: "pilotcustomer", label: "Pilot Customer", id: "pilotcustomer" },
-          { value: "betacustomer", label: "Beta Customer", id: "betacustomer" },
-        ];
-  }, [clientOptions]);
+  const resolvedClientOptions = useMemo(() => PLATFORM_TENANT_OPTIONS, []);
 
   useEffect(() => {
     let mounted = true;
@@ -269,27 +267,15 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
         if (!response.ok) {
           throw new Error(data?.error || "Failed to fetch clients");
         }
-        const options = (Array.isArray(data) ? data : [])
-          .map((client) => {
-            const value = sanitizeTenantValue(
-              client?.basePath || client?.tenant || client?.slug || client?.name
-            );
-            if (!value) return null;
-            return {
-              value,
-              label: client?.name || value,
-              id: client?.id || value,
-            };
-          })
-          .filter(Boolean);
         if (mounted) {
           setRawClients(Array.isArray(data) ? data : []);
-          setClientOptions(options);
+          setClientOptions(PLATFORM_TENANT_OPTIONS);
         }
       } catch (error) {
         console.error("Failed to load client options:", error);
         if (mounted) {
-          setClientOptions([]);
+          setRawClients([]);
+          setClientOptions(PLATFORM_TENANT_OPTIONS);
         }
       } finally {
         if (mounted) {
@@ -307,7 +293,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
     if (!resolvedClientOptions.length || isEditView) return;
     const hasMatch = resolvedClientOptions.some((option) => option.value === user.tenant);
     if (!user.tenant || !hasMatch) {
-      setUser((prev) => ({ ...prev, tenant: resolvedClientOptions[0].value }));
+      setUser((prev) => ({ ...prev, tenant: "pilotcustomer" }));
     }
   }, [resolvedClientOptions, user.tenant, isEditView]);
 
@@ -481,35 +467,43 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
     return password;
   };
 
-  const buildAddUserPayload = (formUser) => ({
-    email: `${formUser.email || ''}`.trim(),
-    password: formUser.password,
-    firstname: `${formUser.firstname || ''}`.trim(),
-    lastname: `${formUser.lastname || ''}`.trim(),
-    role: formUser.role || ROLE_STANDARD,
-    status: Number.isFinite(Number(formUser.status)) ? Number(formUser.status) : 0,
-    tenant: formUser.tenant || '',
-    client: Array.isArray(formUser.client) ? formUser.client : [],
-    facility: Array.isArray(formUser.facility) ? formUser.facility : [],
-    denialCategory: Array.isArray(formUser.denialCategory) ? formUser.denialCategory : [],
-    payer: Array.isArray(formUser.payer) ? formUser.payer : [],
-    value: Array.isArray(formUser.value) ? formUser.value : [],
-  });
+  const buildAddUserPayload = (formUser) => {
+    const tenant = normalizePlatformTenant(formUser.tenant, "pilotcustomer");
+    return {
+      email: `${formUser.email || ''}`.trim(),
+      password: formUser.password,
+      firstname: `${formUser.firstname || ''}`.trim(),
+      lastname: `${formUser.lastname || ''}`.trim(),
+      role: formUser.role || ROLE_STANDARD,
+      status: Number.isFinite(Number(formUser.status)) ? Number(formUser.status) : 0,
+      tenant,
+      appType: platformTenantToAppType(tenant),
+      client: Array.isArray(formUser.client) ? formUser.client : [],
+      facility: Array.isArray(formUser.facility) ? formUser.facility : [],
+      denialCategory: Array.isArray(formUser.denialCategory) ? formUser.denialCategory : [],
+      payer: Array.isArray(formUser.payer) ? formUser.payer : [],
+      value: Array.isArray(formUser.value) ? formUser.value : [],
+    };
+  };
 
-  const buildUpdateUserPayload = (formUser) => ({
-    firstname: `${formUser.firstname || ''}`.trim(),
-    lastname: `${formUser.lastname || ''}`.trim(),
-    email: `${formUser.email || ''}`.trim().toLowerCase(),
-    role: formUser.role || ROLE_STANDARD,
-    status: Number.isFinite(Number(formUser.status)) ? Number(formUser.status) : 0,
-    tenant: formUser.tenant || '',
-    client: Array.isArray(formUser.client) ? formUser.client : [],
-    facility: Array.isArray(formUser.facility) ? formUser.facility : [],
-    clientState: Array.isArray(formUser.clientState) ? formUser.clientState : [],
-    denialCategory: Array.isArray(formUser.denialCategory) ? formUser.denialCategory : [],
-    payer: Array.isArray(formUser.payer) ? formUser.payer : [],
-    value: Array.isArray(formUser.value) ? formUser.value : [],
-  });
+  const buildUpdateUserPayload = (formUser) => {
+    const tenant = normalizePlatformTenant(formUser.tenant, "pilotcustomer");
+    return {
+      firstname: `${formUser.firstname || ''}`.trim(),
+      lastname: `${formUser.lastname || ''}`.trim(),
+      email: `${formUser.email || ''}`.trim().toLowerCase(),
+      role: formUser.role || ROLE_STANDARD,
+      status: Number.isFinite(Number(formUser.status)) ? Number(formUser.status) : 0,
+      tenant,
+      appType: platformTenantToAppType(tenant),
+      client: Array.isArray(formUser.client) ? formUser.client : [],
+      facility: Array.isArray(formUser.facility) ? formUser.facility : [],
+      clientState: Array.isArray(formUser.clientState) ? formUser.clientState : [],
+      denialCategory: Array.isArray(formUser.denialCategory) ? formUser.denialCategory : [],
+      payer: Array.isArray(formUser.payer) ? formUser.payer : [],
+      value: Array.isArray(formUser.value) ? formUser.value : [],
+    };
+  };
 
   const openEditUser = (row) => {
     const userId = resolveUserId(row);
@@ -754,7 +748,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
       password: '',
       status: getStatusValue(editingUser.status),
       access_level: editingUser.access_level || 0,
-      tenant: editingUser.tenant || '',
+      tenant: resolvePlatformTenantFromUser(editingUser),
       client: editingUser.client || [],
       facility: editingUser.facility || [],
       clientState: editingUser.clientState || [],
@@ -1325,7 +1319,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
 
               <div className="grid gap-4 sm:grid-cols-2 items-center">
                 <div className="flex flex-col gap-2">
-                  <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-slate-700'}`}>Client</span>
+                  <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-slate-700'}`}>Platform</span>
                   <select
                     value={user.tenant}
                     onChange={(e) => setUser({ ...user, tenant: e.target.value })}

@@ -26,6 +26,28 @@
       }
     ],
     "multiple_835_per_837": "Each 835 that satisfies all three predicates links to the same id_837. matching_837_835.rn=1 (latest CheckDate) is used for CUSTOM_ALL; get_claim_detail returns all linked 835 rows.",
+    "plb_provider_level_adjustments": "PLB*ProviderID*FiscalDate*Reason:ReferenceID*Amount before SE (composite PLB03/05). Maps to EDI_ProviderLevelAdjustments.",
+    "claim_level_adjustments": "EDI_ClaimLevelAdjustments: CAS*Group(2)*Reason(3)*Amount*Qty after claim DTM/DTP, before SVC. Reason zero-padded (045, 016, 002). AdjustmentQty = CAS04.",
+    "paid_claim_lines": "Loop 2110 SVC with HC composite + modifiers, submitted composite (SVC07), DTP*472/150/151, REF*6R/G1/BB, NM1*82+REF*TJ, AMT*B6/F5/T, QTY*ZK/NE, LQ*HE — populates EDI_PaidClaimLines.",
+    "hipaa_suite_reference": {
+      "source_837": "HIPAA 837 samples/837P_5010.837, TXMedicaid_837P_Professional.edi, Medicare_837P_Professional.edi",
+      "source_835": "HIPAA 835 samples/835_5010.edi, 835I1.edi",
+      "edi837": {
+        "claim_service_date": "DTP*472*D8 at claim level (not DTP*431)",
+        "payer_address": "NM1*PR followed by N3/N4",
+        "rendering_provider": "NM1*82 on claim after HI",
+        "service_line": "SV1*HC:code*amount*UN*units*pos**1",
+        "line_service_date": "DTP*472*D8 per LX loop"
+      },
+      "edi835": {
+        "claim_dates": "DTM*232, DTM*233 (service period), DTM*050 (received) before service lines",
+        "claim_service_date": "DTP*472*D8 retained for platform matching",
+        "service_line": "SVC*HC:code*charge*paid**units",
+        "line_service_date": "DTP*472*D8 per SVC (5010)",
+        "adjustments": "Claim-level CAS*group*reason*amount*qty (aggregated) plus line-level CAS for detail — populates EDI_ClaimLevelAdjustments and EDI_PaidClaimLineAdj",
+        "plb": "PLB*providerId*fiscalDate*reason:referenceId*amount — composite PLB03/05 (extension for EDI_ProviderLevelAdjustments)"
+      }
+    },
     "related_837_lookup": "Separate from 835 matching: get_claim_detail Related uses ClaimNoFirst + Amount + PrincipalDiagnosis + ServiceDate to find duplicate 837 submissions."
   },
   "claims": [

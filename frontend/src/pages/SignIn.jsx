@@ -8,6 +8,11 @@ import { db } from "../FirebaseConfig";
 
 import { AccountContext } from "../utils/Account";
 import {
+  resolveAppType,
+  resolveLandingPath,
+  resolvePlatformTenantFromUser,
+} from "../utils/platformTenant";
+import {
   setAuth,
   setUsername,
   setRole,
@@ -37,28 +42,6 @@ export default function SignIn() {
   const [error, setError] = useState("");
 
   const { authenticate } = useContext(AccountContext);
-  const resolveAppType = (userData = {}) => {
-    const rawTenant = `${userData.tenant || userData.product || userData.basePath || ""}`.toLowerCase();
-    if (rawTenant === "rebound") return 0;
-    if (rawTenant === "pilotcustomer") return 1;
-    if (rawTenant === "betacustomer") return 3;
-    if (rawTenant === "demo") return 2;
-    const rawType = userData.appType ?? userData.type;
-    return Number.isFinite(rawType) ? rawType : null;
-  };
-
-  const resolveLandingPath = (userData = {}) => {
-    const rawTenant = `${userData.tenant || userData.product || userData.basePath || ""}`.toLowerCase();
-    if (rawTenant === "rebound" || rawTenant === "pilotcustomer" || rawTenant === "betacustomer" || rawTenant === "demo") {
-      return `/${rawTenant}`;
-    }
-    const rawType = userData.appType ?? userData.type;
-    if (rawType === 0) return "/rebound";
-    if (rawType === 1) return "/pilotcustomer";
-    if (rawType === 3) return "/betacustomer";
-    if (rawType === 2) return "/demo";
-    return "/pilotcustomer";
-  };
 
   const signIn = async () => {
     setLoading(true);
@@ -74,6 +57,7 @@ export default function SignIn() {
         }
         else{
         const userData = userDoc.data();
+        const resolvedTenant = resolvePlatformTenantFromUser(userData);
         const resolvedType = resolveAppType(userData);
         dispatch(resetViewState());
         dispatch(setTags([]));
@@ -90,8 +74,8 @@ export default function SignIn() {
         dispatch(setLastname(userData.lastname ?? ""));
         dispatch(setEmail(userData.email ?? ""));
         dispatch(setRole(userData.role ?? ""));
-        dispatch(setTenant(userData.tenant ?? userData.product ?? userData.basePath ?? ""));
-        dispatch(setAppType(userData.appType ?? userData.type ?? null));
+        dispatch(setTenant(resolvedTenant));
+        dispatch(setAppType(resolvedType));
         dispatch(setModules(userData.client ?? []));
         dispatch(setDenialCategory(userData.denialCategory ?? []));
         dispatch(setPayer(userData.payer ?? []));

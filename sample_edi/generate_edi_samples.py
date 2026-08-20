@@ -63,12 +63,12 @@ PROVIDERS = [
 ]
 
 PAYERS = [
-    {"name": "Blue Cross Blue Shield of Oregon", "id": "BCBSOR", "id_qual": "PI", "plan_id": "87726"},
-    {"name": "Aetna Better Health", "id": "AETNA01", "id_qual": "PI", "plan_id": "60054"},
-    {"name": "UnitedHealthcare", "id": "UHC001", "id_qual": "PI", "plan_id": "87726"},
-    {"name": "Cigna Healthcare", "id": "CIGNA01", "id_qual": "PI", "plan_id": "62308"},
-    {"name": "Medicare Part B", "id": "MEDICARE", "id_qual": "PI", "plan_id": "CMS"},
-    {"name": "Regence BlueShield", "id": "REGENCE", "id_qual": "PI", "plan_id": "00430"},
+    {"name": "Blue Cross Blue Shield of Oregon", "id": "BCBSOR", "id_qual": "PI", "plan_id": "87726", "address": "500 Payer Boulevard", "city": "Chicago", "state": "IL", "zip": "60601"},
+    {"name": "Aetna Better Health", "id": "AETNA01", "id_qual": "PI", "plan_id": "60054", "address": "151 Farmington Ave", "city": "Hartford", "state": "CT", "zip": "06156"},
+    {"name": "UnitedHealthcare", "id": "UHC001", "id_qual": "PI", "plan_id": "87726", "address": "9900 Bren Rd E", "city": "Minnetonka", "state": "MN", "zip": "55343"},
+    {"name": "Cigna Healthcare", "id": "CIGNA01", "id_qual": "PI", "plan_id": "62308", "address": "900 Cottage Grove Rd", "city": "Bloomfield", "state": "CT", "zip": "06002"},
+    {"name": "Medicare Part B", "id": "MEDICARE", "id_qual": "PI", "plan_id": "CMS", "address": "PO Box 30141", "city": "Salt Lake City", "state": "UT", "zip": "84130"},
+    {"name": "Regence BlueShield", "id": "REGENCE", "id_qual": "PI", "plan_id": "00430", "address": "100 SW Market St", "city": "Portland", "state": "OR", "zip": "97201"},
 ]
 
 PATIENTS = [
@@ -125,6 +125,95 @@ SERVICE_LINES = [
     {"code": "99232", "desc": "Subsequent hospital care", "charge": Decimal("180.00"), "pos": "21"},
 ]
 
+CODE_MODIFIERS = {
+    "99213": ["25"],
+    "99214": ["25"],
+    "99203": ["25"],
+    "99204": ["25"],
+    "73721": ["LT"],
+    "97110": ["59"],
+    "97140": ["59"],
+    "20610": ["RT"],
+    "73030": ["LT"],
+    "99285": ["25"],
+}
+
+
+def default_modifiers(code: str) -> list[str]:
+    return list(CODE_MODIFIERS.get(code, []))
+
+
+def svc_composite(code: str, modifiers: list[str] | None = None) -> str:
+    parts = [code, *(modifiers or [])[:4]]
+    return f"HC{COMP}{COMP.join(parts)}"
+
+
+def build_svc_segment(line: ServiceLine) -> str:
+    mods = default_modifiers(line.code)
+    if line.modifier:
+        mods = line.modifier.split(":") if ":" in line.modifier else [line.modifier]
+    paid_comp = svc_composite(line.code, mods)
+    parts = ["SVC", paid_comp, fmt_money(line.charge), fmt_money(line.paid), "", str(line.units or 1)]
+    return ELEM.join(parts) + SEG
+
+
+def line_allowed_amount(line: ServiceLine) -> Decimal:
+    adj_total = sum(Decimal(str(adj.amount)) for adj in line.adjustments)
+    return max(Decimal("0.00"), (Decimal(str(line.charge)) - adj_total).quantize(Decimal("0.01")))
+
+
+def append_835_service_line_segments(
+    segments: list[str],
+    line: ServiceLine,
+    claim: Claim837,
+    provider: dict,
+    line_idx: int,
+    match_service_date: date,
+) -> None:
+    line_date = getattr(line, "service_date", None) or match_service_date
+    mods = default_modifiers(line.code)
+    if line.modifier and ":" not in line.modifier:
+        mods = [line.modifier]
+    ctrl_no = f"{''.join(ch for ch in claim.claim_no if ch.isdigit())[-12:]}{line_idx + 1:02d}"[:20]
+    auth_no = f"AUTH{line.code}{line_idx + 1:02d}"[:50]
+    allowed = line_allowed_amount(line)
+    pr_amount = sum(Decimal(str(adj.amount)) for adj in line.adjustments if adj.group == "PR")
+
+    segments.append(build_svc_segment(line))
+    segments.append(f"DTP{ELEM}472{ELEM}D8{ELEM}{fmt_date(line_date)}{SEG}")
+    segments.append(f"DTP{ELEM}150{ELEM}{fmt_date(line_date)}{SEG}")
+    segments.append(f"DTP{ELEM}151{ELEM}{fmt_date(line_date)}{SEG}")
+    segments.append(f"REF{ELEM}6R{ELEM}{ctrl_no}{SEG}")
+    segments.append(f"REF{ELEM}G1{ELEM}{auth_no}{SEG}")
+    segments.append(f"REF{ELEM}BB{ELEM}{auth_no}{SEG}")
+    segments.append(f"REF{ELEM}1D{ELEM}{str(line.pos or '11').zfill(2)}{SEG}")
+    segments.append(f"REF{ELEM}BT{ELEM}POL{claim.patient['member_id']}{SEG}")
+    segments.append(f"REF{ELEM}9B{ELEM}REB{line_idx + 1}{SEG}")
+
+    for adj in line.adjustments:
+        segments.append(f"CAS{ELEM}{adj.group}{ELEM}{adj.reason}{ELEM}{fmt_money(adj.amount)}{SEG}")
+
+    segments.append(f"NM1{ELEM}82{ELEM}1{ELEM}SMITH{ELEM}JOHN{ELEM}{ELEM}{ELEM}{ELEM}{ELEM}XX{ELEM}{provider['npi']}{SEG}")
+    segments.append(f"REF{ELEM}TJ{ELEM}{provider['tax_id']}{SEG}")
+    segments.append(f"REF{ELEM}1C{ELEM}{provider['tax_id']}{SEG}")
+    segments.append(f"REF{ELEM}G2{ELEM}{provider['npi']}{SEG}")
+    segments.append(f"REF{ELEM}HPI{ELEM}{provider['npi']}{SEG}")
+    segments.append(f"REF{ELEM}SY{ELEM}{provider['tax_id']}{SEG}")
+    segments.append(f"REF{ELEM}LU{ELEM}{provider['npi']}{SEG}")
+
+    if allowed > 0:
+        segments.append(f"AMT{ELEM}B6{ELEM}{fmt_money(allowed)}{SEG}")
+    if pr_amount > 0:
+        segments.append(f"AMT{ELEM}F5{ELEM}{fmt_money(pr_amount)}{SEG}")
+    if line.paid > 0:
+        segments.append(f"AMT{ELEM}T{ELEM}{fmt_money(line.paid)}{SEG}")
+
+    segments.append(f"QTY{ELEM}ZK{ELEM}{line.units or 1}{SEG}")
+    segments.append(f"QTY{ELEM}NE{ELEM}{line.units or 1}{SEG}")
+
+    for code in line.remark_codes:
+        segments.append(f"LQ{ELEM}HE{ELEM}{code}{SEG}")
+
 
 @dataclass
 class Adjustment:
@@ -141,6 +230,7 @@ class ServiceLine:
     units: int = 1
     modifier: str = ""
     pos: str = "11"
+    service_date: date | None = None
     adjustments: list[Adjustment] = field(default_factory=list)
     remark_codes: list[str] = field(default_factory=list)
 
@@ -155,6 +245,8 @@ class Remit835:
     lines: list[ServiceLine]
     patient_resp: Decimal = Decimal("0.00")
     payer: dict | None = None
+    include_claim_level_cas: bool = True
+    claim_level_adjustments: list[dict] | None = None
 
 
 @dataclass
@@ -179,6 +271,21 @@ def fmt_money(value: Decimal) -> str:
     return f"{value:.2f}"
 
 
+def format_carc_reason(reason: str) -> str:
+    raw = str(reason or "").strip()
+    if raw.isdigit():
+        return raw.zfill(3)[-3:]
+    return raw[:3] if len(raw) >= 3 else raw
+
+
+def format_cas_qty(qty: int | float | str) -> str:
+    return str(max(1, int(round(float(qty or 1)))))
+
+
+def normalize_adj_group(group: str) -> str:
+    return str(group or "CO").strip().upper()[:2]
+
+
 def fmt_date(d: date) -> str:
     return d.strftime("%Y%m%d")
 
@@ -195,6 +302,23 @@ def build_isa(sender: str, receiver: str, ctrl: str, dt: date) -> str:
     )
 
 
+def latest_line_date(lines: list[ServiceLine], fallback: date) -> date:
+    dates = [getattr(line, "service_date", None) or fallback for line in lines]
+    return max(dates) if dates else fallback
+
+
+def build_bpr_segment(remit: Remit835, payer: dict) -> str:
+    payer_identifier = str(payer.get("id", "PAYER01"))[:10]
+    parts = [
+        "BPR", "I", fmt_money(remit.check_amount), "C", "ACH", "CTX",
+        "01", "0210", "DA", "123456",
+        payer_identifier, "",
+        "01", "0211", "DA", "987654",
+        fmt_date(remit.check_date),
+    ]
+    return ELEM.join(parts) + SEG
+
+
 def build_837(claim: Claim837, file_id: int) -> str:
     ctrl = f"{file_id:09d}"
     st_ctrl = f"{file_id:04d}"
@@ -202,6 +326,7 @@ def build_837(claim: Claim837, file_id: int) -> str:
     payer = claim.payer
     patient = claim.patient
     total = claim.total_charge
+    match_service_date = latest_line_date(claim.lines, claim.service_date)
 
     segments = [
         build_isa("SUBMITTER001", "RECEIVER001", ctrl, claim.submit_date),
@@ -224,25 +349,28 @@ def build_837(claim: Claim837, file_id: int) -> str:
         f"N4{ELEM}Portland{ELEM}OR{ELEM}97205{SEG}",
         f"DMG{ELEM}D8{ELEM}{patient['dob']}{ELEM}{patient['sex']}{SEG}",
         f"NM1{ELEM}PR{ELEM}2{ELEM}{payer['name']}{ELEM}{ELEM}{ELEM}{ELEM}{ELEM}PI{ELEM}{payer['plan_id']}{SEG}",
+        f"N3{ELEM}{payer.get('address', '500 Payer Boulevard')}{SEG}",
+        f"N4{ELEM}{payer.get('city', 'Chicago')}{ELEM}{payer.get('state', 'IL')}{ELEM}{payer.get('zip', '60601')}{SEG}",
         f"CLM{ELEM}{claim.claim_no}{ELEM}{fmt_money(total)}{ELEM}{ELEM}{ELEM}{claim.lines[0].pos}{COMP}B{COMP}{claim.frequency}{ELEM}{ELEM}Y{ELEM}A{ELEM}Y{ELEM}I{SEG}",
-        f"DTP{ELEM}431{ELEM}D8{ELEM}{fmt_date(claim.service_date)}{SEG}",
+        f"DTP{ELEM}472{ELEM}D8{ELEM}{fmt_date(match_service_date)}{SEG}",
         f"REF{ELEM}D9{ELEM}{claim.claim_no}{SEG}",
+        f"REF{ELEM}EA{ELEM}{claim.claim_no}{SEG}",
         f"HI{ELEM}ABK{COMP}{claim.diagnosis}{SEG}",
+        f"NM1{ELEM}82{ELEM}1{ELEM}SMITH{ELEM}JOHN{ELEM}{ELEM}{ELEM}{ELEM}{ELEM}XX{ELEM}{provider['npi']}{SEG}",
     ]
 
     for idx, line in enumerate(claim.lines, start=1):
-        code = line.code if hasattr(line, "code") else line["code"]
-        charge = line.charge if hasattr(line, "charge") else line["charge"]
-        units = line.units if hasattr(line, "units") else 1
-        modifier = line.modifier if hasattr(line, "modifier") else ""
-        svc = f"HC{COMP}{code}"
-        if modifier:
-            svc += f"{COMP}{modifier}"
+        mods = default_modifiers(line.code)
+        if line.modifier:
+            mods = line.modifier.split(":") if ":" in line.modifier else [line.modifier]
+        svc = svc_composite(line.code, mods)
+        line_date = getattr(line, "service_date", None) or match_service_date
         segments.extend(
             [
                 f"LX{ELEM}{idx}{SEG}",
-                f"SV1{ELEM}{svc}{ELEM}{fmt_money(charge)}{ELEM}UN{ELEM}{units}{ELEM}{ELEM}{ELEM}1{SEG}",
-                f"DTP{ELEM}472{ELEM}D8{ELEM}{fmt_date(claim.service_date)}{SEG}",
+                f"SV1{ELEM}{svc}{ELEM}{fmt_money(line.charge)}{ELEM}UN{ELEM}{line.units}{ELEM}{line.pos}{ELEM}{ELEM}1{SEG}",
+                f"DTP{ELEM}472{ELEM}D8{ELEM}{fmt_date(line_date)}{SEG}",
+                f"REF{ELEM}6R{ELEM}{claim.claim_no}{idx:02d}{SEG}",
             ]
         )
 
@@ -253,11 +381,139 @@ def build_837(claim: Claim837, file_id: int) -> str:
     return join_segments(segments)
 
 
+def fiscal_period_date(check_date: date) -> str:
+    """CCYYMMDD for PLB02; importers store as FiscalPeriodDate (e.g. 12/31/YYYY)."""
+    return f"{check_date.year}1231"
+
+
+def default_provider_level_adjustments(claim: Claim837, remit: Remit835) -> list[dict]:
+    check_digits = "".join(ch for ch in str(remit.check_number) if ch.isdigit())[-6:].zfill(6)
+    base_suffix = 539303
+    rows = []
+    for idx, line in enumerate(remit.lines):
+        charge = Decimal(str(line.charge))
+        amount = -(max(Decimal("2.16"), (charge * Decimal("0.0144")).quantize(Decimal("0.01"))))
+        rows.append(
+            {
+                "reason": "L6",
+                "identifier": f"{check_digits}-{base_suffix + idx * 6884:06d}",
+                "amount": amount,
+            }
+        )
+    return rows
+
+
+def format_plb_composite(adj: dict) -> str:
+    reason = adj.get("reason", "L6")
+    ref_id = str(adj.get("identifier", "")).strip()
+    if not ref_id:
+        return reason
+    ref_id = ref_id.replace("-", ":")
+    composite_prefix = f"{reason}:"
+    if ref_id.startswith(composite_prefix):
+        return ref_id
+    return f"{reason}:{ref_id}"
+
+
+def build_plb_segments(provider: dict, remit: Remit835, claim: Claim837) -> list[str]:
+    adjustments = getattr(remit, "provider_level_adjustments", None) or default_provider_level_adjustments(
+        claim, remit
+    )
+    if not adjustments:
+        return []
+
+    provider_id = provider["npi"]
+    fiscal_date = fiscal_period_date(remit.check_date)
+    segments: list[str] = []
+    for i in range(0, len(adjustments), 6):
+        batch = adjustments[i : i + 6]
+        parts = ["PLB", provider_id, fiscal_date]
+        for adj in batch:
+            parts.extend([format_plb_composite(adj), fmt_money(adj["amount"])])
+        segments.append(ELEM.join(parts) + SEG)
+    return segments
+
+
+def resolve_claim_level_adjustments(remit: Remit835) -> list[dict]:
+    explicit = remit.claim_level_adjustments
+    if explicit:
+        return [
+            {
+                "group": normalize_adj_group(adj["group"]),
+                "reason": format_carc_reason(adj["reason"]),
+                "amount": Decimal(str(adj["amount"])).quantize(Decimal("0.01")),
+                "qty": int(adj.get("qty", 1)),
+            }
+            for adj in explicit
+        ]
+
+    grouped: dict[str, dict] = {}
+    for line in remit.lines:
+        for adj in line.adjustments:
+            group = normalize_adj_group(adj.group)
+            reason = format_carc_reason(adj.reason)
+            key = f"{group}|{reason}"
+            row = grouped.get(key) or {
+                "group": group,
+                "reason": reason,
+                "amount": Decimal("0.00"),
+                "qty": 0,
+            }
+            row["amount"] = (row["amount"] + Decimal(str(adj.amount))).quantize(Decimal("0.01"))
+            row["qty"] += int(getattr(line, "units", 1) or 1)
+            grouped[key] = row
+
+    adjustments = [row for row in grouped.values() if row["amount"] > 0]
+    if not adjustments:
+        total_charge = sum(Decimal(str(line.charge)) for line in remit.lines)
+        total_paid = sum(Decimal(str(line.paid)) for line in remit.lines)
+        patient_resp = Decimal(str(remit.patient_resp or 0))
+        total_units = sum(int(getattr(line, "units", 1) or 1) for line in remit.lines)
+        co_amount = (total_charge - total_paid - patient_resp).quantize(Decimal("0.01"))
+        if co_amount > 0:
+            adjustments.append(
+                {"group": "CO", "reason": format_carc_reason("45"), "amount": co_amount, "qty": total_units}
+            )
+        if patient_resp > 0:
+            pr_reason = format_carc_reason(getattr(remit, "pr_reason_code", None) or "2")
+            adjustments.append(
+                {"group": "PR", "reason": pr_reason, "amount": patient_resp, "qty": total_units}
+            )
+    return adjustments
+
+
+def append_claim_level_cas_segments(segments: list[str], remit: Remit835) -> None:
+    if remit.include_claim_level_cas is False:
+        return
+    adjustments = resolve_claim_level_adjustments(remit)
+    if not adjustments:
+        return
+    by_group: dict[str, list[dict]] = {}
+    for adj in adjustments:
+        by_group.setdefault(adj["group"], []).append(adj)
+
+    for group, group_adjs in by_group.items():
+        for i in range(0, len(group_adjs), 6):
+            batch = group_adjs[i : i + 6]
+            parts = ["CAS", group]
+            for adj in batch:
+                parts.extend([adj["reason"], fmt_money(adj["amount"]), format_cas_qty(adj.get("qty", 1))])
+            segments.append(ELEM.join(parts) + SEG)
+
+
+def append_835_claim_date_segments(segments: list[str], service_date: date, check_date: date) -> None:
+    segments.append(f"DTM{ELEM}232{ELEM}{fmt_date(service_date)}{SEG}")
+    segments.append(f"DTM{ELEM}233{ELEM}{fmt_date(service_date)}{SEG}")
+    segments.append(f"DTM{ELEM}050{ELEM}{fmt_date(check_date)}{SEG}")
+    segments.append(f"DTP{ELEM}472{ELEM}D8{ELEM}{fmt_date(service_date)}{SEG}")
+
+
 def build_835(claim: Claim837, remit: Remit835, file_id: int) -> str:
     ctrl = f"{file_id + 50000:09d}"
     st_ctrl = f"{file_id:04d}"
     provider = claim.provider
     payer = remit.payer or claim.payer
+    match_service_date = latest_line_date(remit.lines, claim.service_date)
     total_charge = sum(line.charge for line in remit.lines)
     total_paid = sum(line.paid for line in remit.lines)
     patient_resp = remit.patient_resp
@@ -266,12 +522,12 @@ def build_835(claim: Claim837, remit: Remit835, file_id: int) -> str:
         build_isa(payer["id"][:15].ljust(15).strip(), provider["npi"], ctrl, remit.check_date),
         f"GS{ELEM}HP{ELEM}{payer['id']}{ELEM}{provider['npi']}{ELEM}{fmt_date(remit.check_date)}{ELEM}1200{ELEM}{file_id}{ELEM}X{ELEM}005010X221A1{SEG}",
         f"ST{ELEM}835{ELEM}{st_ctrl}{ELEM}005010X221A1{SEG}",
-        f"BPR{ELEM}I{ELEM}{fmt_money(remit.check_amount)}{ELEM}C{ELEM}ACH{ELEM}CTX{ELEM}01{ELEM}123456789{ELEM}DA{ELEM}987654321{ELEM}{provider['tax_id']}{ELEM}01{ELEM}123456789{ELEM}DA{ELEM}987654321{ELEM}{fmt_date(remit.check_date)}{SEG}",
+        build_bpr_segment(remit, payer),
         f"TRN{ELEM}1{ELEM}{remit.check_number}{ELEM}{payer['id']}{SEG}",
         f"DTM{ELEM}405{ELEM}{fmt_date(remit.check_date)}{SEG}",
         f"N1{ELEM}PR{ELEM}{payer['name']}{ELEM}XV{ELEM}{payer['plan_id']}{SEG}",
-        f"N3{ELEM}500 Payer Boulevard{SEG}",
-        f"N4{ELEM}Chicago{ELEM}IL{ELEM}60601{SEG}",
+        f"N3{ELEM}{payer.get('address', '500 Payer Boulevard')}{SEG}",
+        f"N4{ELEM}{payer.get('city', 'Chicago')}{ELEM}{payer.get('state', 'IL')}{ELEM}{payer.get('zip', '60601')}{SEG}",
         f"REF{ELEM}2U{ELEM}{payer['id']}{SEG}",
         f"N1{ELEM}PE{ELEM}{provider['name']}{ELEM}XX{ELEM}{provider['npi']}{SEG}",
         f"N3{ELEM}{provider['address']}{SEG}",
@@ -281,24 +537,19 @@ def build_835(claim: Claim837, remit: Remit835, file_id: int) -> str:
         f"CLP{ELEM}{claim.claim_no}{ELEM}{remit.claim_status}{ELEM}{fmt_money(total_charge)}{ELEM}{fmt_money(total_paid)}{ELEM}{fmt_money(patient_resp)}{ELEM}12{ELEM}{remit.payer_claim_id}{ELEM}{claim.frequency}{SEG}",
         f"NM1{ELEM}QC{ELEM}1{ELEM}{claim.patient['last']}{ELEM}{claim.patient['first']}{ELEM}{ELEM}{ELEM}{ELEM}{ELEM}MI{ELEM}{claim.patient['member_id']}{SEG}",
         f"NM1{ELEM}82{ELEM}1{ELEM}SMITH{ELEM}JOHN{ELEM}{ELEM}{ELEM}{ELEM}{ELEM}XX{ELEM}{provider['npi']}{SEG}",
+        f"REF{ELEM}EA{ELEM}{provider['tax_id']}{SEG}",
         f"REF{ELEM}1L{ELEM}{claim.patient['member_id']}{SEG}",
-        f"DTP{ELEM}472{ELEM}D8{ELEM}{fmt_date(claim.service_date)}{SEG}",
     ]
 
-    for line in remit.lines:
-        svc = f"HC{COMP}{line.code}"
-        if line.modifier:
-            svc += f"{COMP}{line.modifier}"
-        segments.append(
-            f"SVC{ELEM}{svc}{ELEM}{fmt_money(line.charge)}{ELEM}{fmt_money(line.paid)}{ELEM}{ELEM}{line.units}{SEG}"
+    append_835_claim_date_segments(segments, match_service_date, remit.check_date)
+    append_claim_level_cas_segments(segments, remit)
+
+    for line_idx, line in enumerate(remit.lines):
+        append_835_service_line_segments(
+            segments, line, claim, provider, line_idx, match_service_date
         )
-        segments.append(f"DTP{ELEM}472{ELEM}D8{ELEM}{fmt_date(claim.service_date)}{SEG}")
-        for adj in line.adjustments:
-            segments.append(
-                f"CAS{ELEM}{adj.group}{ELEM}{adj.reason}{ELEM}{fmt_money(adj.amount)}{SEG}"
-            )
-        if line.remark_codes:
-            segments.append(f"LQ{ELEM}HE{ELEM}{line.remark_codes[0]}{SEG}")
+
+    segments.extend(build_plb_segments(provider, remit, claim))
 
     seg_count = len(segments) + 1
     segments.append(f"SE{ELEM}{seg_count}{ELEM}{st_ctrl}{SEG}")
@@ -309,7 +560,15 @@ def build_835(claim: Claim837, remit: Remit835, file_id: int) -> str:
 
 def make_line_from_template(template: dict, charge_override: Decimal | None = None) -> ServiceLine:
     charge = charge_override or template["charge"]
-    return ServiceLine(code=template["code"], charge=charge, paid=Decimal("0.00"), pos=template.get("pos", "11"))
+    code = template["code"]
+    modifier = default_modifiers(code)
+    return ServiceLine(
+        code=code,
+        charge=charge,
+        paid=Decimal("0.00"),
+        pos=template.get("pos", "11"),
+        modifier=":".join(modifier) if modifier else "",
+    )
 
 
 def build_scenarios() -> list[Claim837]:

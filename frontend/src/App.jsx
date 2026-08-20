@@ -24,6 +24,11 @@ import {
 import { useApiEndpoint } from "./ApiEndpointContext";
 import { AccountContext } from "./utils/Account";
 import {
+  PLATFORM_TENANTS,
+  resolveAppType,
+  resolvePlatformTenantFromUser,
+} from "./utils/platformTenant";
+import {
   increaseLoading,
   decreaseLoading,
   setTagLoading,
@@ -59,19 +64,6 @@ import { app, auth } from "./FirebaseConfig";
 import { setTags, setAllPayers, setSelectedTags } from "./redux/reducers/tag.reducer";
 import { setCount, setPart1Count, setPart2Count, setRecovery } from "./redux/reducers/count.reducer";
 import { setCategoryLabel, setCategoryValue } from "./redux/reducers/statistics.reducer";
-
-const resolveAppType = (userData = {}) => {
-  const rawType = userData.appType ?? userData.type;
-  if (Number.isFinite(rawType)) {
-    return rawType;
-  }
-  const rawTenant = `${userData.tenant || userData.product || userData.basePath || ""}`.toLowerCase();
-  if (rawTenant === 'rebound') return 0;
-  if (rawTenant === 'pilotcustomer') return 1;
-  if (rawTenant === 'betacustomer') return 3;
-  if (rawTenant === 'demo') return 2;
-  return null;
-};
 
 const isPublicPath = (pathname = "") => {
   if (pathname === "/") return true;
@@ -200,8 +192,8 @@ function App() {
         dispatch(setLastname(session.userData.lastname ?? ""));
         dispatch(setEmail(session.userData.email ?? ""));
         dispatch(setRole(session.userData.role ?? ""))
-        dispatch(setTenant(session.userData.tenant ?? session.userData.product ?? session.userData.basePath ?? ""))
-        dispatch(setAppType(session.userData.appType ?? session.userData.type ?? null))
+        dispatch(setTenant(resolvePlatformTenantFromUser(session.userData)))
+        dispatch(setAppType(resolveAppType(session.userData)))
         {
           const resolvedType = resolveAppType(session.userData);
           if (Number.isFinite(resolvedType)) {
@@ -268,7 +260,7 @@ function App() {
           return;
         }
         const userData = snapshot.data() || {};
-        const nextTenant = `${userData.tenant ?? userData.product ?? userData.basePath ?? ""}`.toLowerCase();
+        const nextTenant = resolvePlatformTenantFromUser(userData);
         if (lastTenantRef.current && lastTenantRef.current !== nextTenant) {
           clearTenantState();
         }
@@ -277,8 +269,8 @@ function App() {
         dispatch(setLastname(userData.lastname ?? ""));
         dispatch(setEmail(userData.email ?? ""));
         dispatch(setRole(userData.role ?? ""));
-        dispatch(setTenant(userData.tenant ?? userData.product ?? userData.basePath ?? ""));
-        dispatch(setAppType(userData.appType ?? userData.type ?? null));
+        dispatch(setTenant(nextTenant));
+        dispatch(setAppType(resolveAppType(userData)));
         {
           const resolvedType = resolveAppType(userData);
           if (Number.isFinite(resolvedType)) {
@@ -305,15 +297,14 @@ function App() {
     if (!authReady) return;
     const tenantValue = `${tenant || ""}`.toLowerCase();
     if (!tenantValue) return;
-    const allowedTenants = new Set(['rebound', 'pilotcustomer', 'betacustomer', 'demo']);
-    if (!allowedTenants.has(tenantValue)) return;
+    if (!PLATFORM_TENANTS.includes(tenantValue)) return;
 
     const path = location.pathname || "";
     const parts = path.split('/').filter(Boolean);
     if (parts.length === 0) return;
 
     const currentBase = parts[0];
-    if (!allowedTenants.has(currentBase)) return;
+    if (!PLATFORM_TENANTS.includes(currentBase)) return;
 
     if (currentBase !== tenantValue) {
       const rest = parts.slice(1).join('/');

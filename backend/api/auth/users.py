@@ -115,6 +115,7 @@ addUserSchema = {
         "value": {"type": "array"},
         "facility": {"type": "array"},
         "tenant": {"type": "string"},
+        "appType": {"type": "integer"},
     },
     "required": ["email", "password", "firstname", "lastname", "role", "status"],
     "additionalProperties": False,
@@ -153,6 +154,22 @@ def add_user():
         user_password = data.get("password") or ""
         decoded_user = auth.create_user(email=user_email, password=user_password)
         data.pop("password")
+
+        # Canonical platform tenant drives login URL (/betacustomer, etc.)
+        platform_tenant = normalize_tenant_hint(data.get("tenant"), default="pilotcustomer")
+        if platform_tenant == "medevolve":
+            platform_tenant = "rebound"
+        if platform_tenant not in {"rebound", "pilotcustomer", "betacustomer", "demo"}:
+            platform_tenant = "pilotcustomer"
+        data["tenant"] = platform_tenant
+        app_type_map = {
+            "rebound": 0,
+            "pilotcustomer": 1,
+            "demo": 2,
+            "betacustomer": 3,
+        }
+        data["appType"] = app_type_map[platform_tenant]
+
         doc_ref = db.collection("users").document(decoded_user.uid)
         doc_ref.set(data)
 
@@ -393,6 +410,7 @@ def update_user(user_id):
             "access_level",
             "user_id",
             "tenant",
+            "appType",
         }
         admin_only_fields = {"role", "status"}
 
@@ -422,6 +440,20 @@ def update_user(user_id):
                 return jsonify({"error": "status must be an integer"}), 400
             if sanitized["status"] not in (0, 1):
                 return jsonify({"error": "status must be 0 (active) or 1 (inactive)"}), 400
+
+        if "tenant" in sanitized:
+            platform_tenant = normalize_tenant_hint(sanitized.get("tenant"), default="pilotcustomer")
+            if platform_tenant == "medevolve":
+                platform_tenant = "rebound"
+            if platform_tenant not in {"rebound", "pilotcustomer", "betacustomer", "demo"}:
+                platform_tenant = "pilotcustomer"
+            sanitized["tenant"] = platform_tenant
+            sanitized["appType"] = {
+                "rebound": 0,
+                "pilotcustomer": 1,
+                "demo": 2,
+                "betacustomer": 3,
+            }[platform_tenant]
 
         if resolved_user_id != user_id:
             doc_ref = db.collection("users").document(resolved_user_id)
