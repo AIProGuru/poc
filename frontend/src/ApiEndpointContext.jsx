@@ -3,6 +3,12 @@ import { useLocation } from 'react-router-dom';
 import { SERVER_URL } from './utils/config';
 import axios from 'axios';
 import {
+  PLATFORM_TENANTS,
+  LAST_TENANT_BASE_KEY,
+  normalizePlatformTenant,
+  persistPlatformTenant,
+} from './utils/platformTenant';
+import {
   setTableLoading,
   setType,
   setBootstrapLoading,
@@ -41,26 +47,28 @@ import { buildAccessExtra } from './utils/accessFilters';
 import { useDispatch, useSelector } from 'react-redux';
 
 const ApiEndpointContext = createContext();
-const LAST_APP_TYPE_KEY = 'lastAppType';
-const LAST_TENANT_BASE_KEY = 'lastTenantBase';
 
 const readStoredTenantBase = () => {
   try {
     const value = localStorage.getItem(LAST_TENANT_BASE_KEY);
-    return ['rebound', 'pilotcustomer', 'betacustomer', 'demo'].includes(value || '')
-      ? value
-      : '';
+    return PLATFORM_TENANTS.includes(value || '') ? value : '';
   } catch (err) {
     return '';
   }
 };
 
-const persistTenantBase = (base) => {
-  try {
-    localStorage.setItem(LAST_TENANT_BASE_KEY, base);
-  } catch (err) {
-    // Ignore storage write errors.
-  }
+const isPublicPath = (pathname = '') => {
+  if (pathname === '/' || pathname === '') return true;
+  return [
+    '/signin',
+    '/signup',
+    '/forgot-password',
+    '/contact',
+    '/privacy',
+    '/verify_email',
+    '/update_password',
+    '/verify_error',
+  ].some((path) => pathname === path || pathname.startsWith(`${path}/`));
 };
 
 const isTenantScopedAdminPath = (pathname = '') =>
@@ -71,10 +79,24 @@ const isTenantScopedAdminPath = (pathname = '') =>
   pathname.startsWith('/appeal-templates') ||
   pathname.startsWith('/account-settings');
 
+const tenantToApiUrl = (base) => {
+  if (base === 'betacustomer') return `${SERVER_URL}/api/v1/betacustomer`;
+  if (base === 'pilotcustomer') return `${SERVER_URL}/api/v1/pilotcustomer`;
+  if (base === 'rebound' || base === 'demo') return `${SERVER_URL}/api/v1/rebound`;
+  return '';
+};
+
+const tenantToAppType = (base) => {
+  if (base === 'rebound') return 0;
+  if (base === 'pilotcustomer') return 1;
+  if (base === 'demo') return 2;
+  if (base === 'betacustomer') return 3;
+  return null;
+};
+
 export const ApiEndpointProvider = ({ children }) => {
   const location = useLocation();
   const dispatch = useDispatch();
-  const appType = useSelector((state) => state.app.type);
   const authReady = useSelector((state) => state.auth.authReady);
   const tenant = useSelector((state) => state.auth.tenant);
   const role = useSelector((state) => state.auth.role);
@@ -103,9 +125,9 @@ export const ApiEndpointProvider = ({ children }) => {
   const bootstrapRef = useRef({ key: '', id: 0 });
 
   useEffect(() => {
-    const tenantValue = `${tenant || ""}`.toLowerCase();
-    if (!authReady || !tenantValue) return;
-    if (lastTenantRef.current && lastTenantRef.current !== tenantValue) {
+    const tenantValue = normalizePlatformTenant(tenant);
+    if (!authReady) return;
+    if (lastTenantRef.current && tenantValue && lastTenantRef.current !== tenantValue) {
       // Clear tenant-scoped data when switching tenants to avoid stale counts.
       dispatch(setTableData([]));
       dispatch(setTags([]));
@@ -122,24 +144,35 @@ export const ApiEndpointProvider = ({ children }) => {
       setApiUrl('');
       bootstrapRef.current = { key: '', id: 0 };
     }
-    lastTenantRef.current = tenantValue;
+    if (tenantValue) {
+      lastTenantRef.current = tenantValue;
+    }
   }, [authReady, tenant, dispatch]);
 
   useEffect(() => {
-    const tenantValue = `${tenant || ""}`.toLowerCase();
+    const tenantValue = normalizePlatformTenant(tenant);
     const pathBase = (location.pathname.split('/')[1] || '').toLowerCase();
-    const hasTenantRoute =
-      pathBase === 'rebound' || pathBase === 'pilotcustomer' || pathBase === 'betacustomer' || pathBase === 'demo';
+    const hasTenantRoute = PLATFORM_TENANTS.includes(pathBase);
     const storedTenantBase = readStoredTenantBase();
     const hasTenantScopedAdminRoute = isTenantScopedAdminPath(location.pathname);
-    if (!authReady) {
-      // Avoid selecting a tenant-specific API before auth is resolved.
+
+    if (!authReady || isPublicPath(location.pathname)) {
+      // Avoid selecting a tenant-specific API before auth is resolved / on public pages.
       setApiUrl('');
       dispatch(setBootstrapLoading(false));
       didInitRef.current = false;
       bootstrapRef.current = { key: '', id: 0 };
       return;
     }
+
+    // Wait until the URL matches the authenticated tenant before bootstrapping.
+    // This prevents empty first paints when login lands on the wrong path briefly.
+    if (hasTenantRoute && tenantValue && pathBase !== tenantValue) {
+      setApiUrl('');
+      dispatch(setBootstrapLoading(true));
+      return;
+    }
+
     if (!tenantValue && !hasTenantRoute && !hasTenantScopedAdminRoute) {
       setApiUrl('');
       dispatch(setBootstrapLoading(false));
@@ -147,172 +180,28 @@ export const ApiEndpointProvider = ({ children }) => {
       bootstrapRef.current = { key: '', id: 0 };
       return;
     }
-    const desiredBase =
-      tenantValue === 'rebound' || tenantValue === 'pilotcustomer' || tenantValue === 'betacustomer' || tenantValue === 'demo'
-        ? tenantValue
-        : hasTenantRoute
-          ? pathBase
-          : '';
 
-    if (desiredBase) {
-      const desiredUrl =
-        desiredBase === 'rebound' ? `${SERVER_URL}/api/v1/rebound`
-          : desiredBase === 'pilotcustomer' ? `${SERVER_URL}/api/v1/pilotcustomer`
-            : desiredBase === 'betacustomer' ? `${SERVER_URL}/api/v1/betacustomer`
-              : `${SERVER_URL}/api/v1/rebound`;
+    const desiredBase = tenantValue
+      || (hasTenantRoute ? pathBase : '')
+      || (hasTenantScopedAdminRoute ? storedTenantBase : '');
 
-      if (apiUrl !== desiredUrl) {
-        setApiUrl(desiredUrl);
-        dispatch(setType(desiredBase === 'rebound' ? 0 : desiredBase === 'pilotcustomer' ? 1 : desiredBase === 'betacustomer' ? 3 : 2));
-        didInitRef.current = true;
-        persistTenantBase(desiredBase);
-        try {
-          localStorage.setItem(LAST_APP_TYPE_KEY, String(desiredBase === 'rebound' ? 0 : desiredBase === 'pilotcustomer' ? 1 : desiredBase === 'betacustomer' ? 3 : 2));
-        } catch (err) {
-          // Ignore storage write errors (private mode, etc.)
-        }
-      }
-      return;
-    }
-    if (tenantValue) {
-      if (tenantValue === 'rebound') {
-        setApiUrl(`${SERVER_URL}/api/v1/rebound`);
-        dispatch(setType(0));
-        didInitRef.current = true;
-        persistTenantBase('rebound');
-        try {
-          localStorage.setItem(LAST_APP_TYPE_KEY, '0');
-        } catch (err) {
-          // Ignore storage write errors (private mode, etc.)
-        }
-        return;
-      }
-      if (tenantValue === 'pilotcustomer') {
-        setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`);
-        dispatch(setType(1));
-        didInitRef.current = true;
-        persistTenantBase('pilotcustomer');
-        try {
-          localStorage.setItem(LAST_APP_TYPE_KEY, '1');
-        } catch (err) {
-          // Ignore storage write errors (private mode, etc.)
-        }
-        return;
-      }
-      if (tenantValue === 'betacustomer') {
-        setApiUrl(`${SERVER_URL}/api/v1/betacustomer`);
-        dispatch(setType(3));
-        didInitRef.current = true;
-        persistTenantBase('betacustomer');
-        try {
-          localStorage.setItem(LAST_APP_TYPE_KEY, '3');
-        } catch (err) {
-          // Ignore storage write errors (private mode, etc.)
-        }
-        return;
-      }
-      if (tenantValue === 'demo') {
-        setApiUrl(`${SERVER_URL}/api/v1/rebound`);
-        dispatch(setType(2));
-        didInitRef.current = true;
-        persistTenantBase('demo');
-        try {
-          localStorage.setItem(LAST_APP_TYPE_KEY, '2');
-        } catch (err) {
-          // Ignore storage write errors (private mode, etc.)
-        }
-        return;
-      }
-    }
-
-    if (didInitRef.current) {
+    if (!desiredBase) {
       return;
     }
 
-    if (location.pathname.startsWith('/rebound')) {
-      setApiUrl(`${SERVER_URL}/api/v1/rebound`)
-      dispatch(setType(0))
+    const desiredUrl = tenantToApiUrl(desiredBase);
+    const desiredType = tenantToAppType(desiredBase);
+    if (!desiredUrl) return;
+
+    if (apiUrl !== desiredUrl) {
+      setApiUrl(desiredUrl);
+      if (desiredType !== null) {
+        dispatch(setType(desiredType));
+      }
       didInitRef.current = true;
-      persistTenantBase('rebound');
-      try {
-        localStorage.setItem(LAST_APP_TYPE_KEY, '0');
-      } catch (err) {
-        // Ignore storage write errors (private mode, etc.)
-      }
-    } else if (location.pathname.startsWith('/pilotcustomer')) {
-      setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
-      dispatch(setType(1))
-      didInitRef.current = true;
-      persistTenantBase('pilotcustomer');
-      try {
-        localStorage.setItem(LAST_APP_TYPE_KEY, '1');
-      } catch (err) {
-        // Ignore storage write errors (private mode, etc.)
-      }
-    } else if (location.pathname.startsWith('/betacustomer')) {
-      setApiUrl(`${SERVER_URL}/api/v1/betacustomer`)
-      dispatch(setType(3))
-      didInitRef.current = true;
-      persistTenantBase('betacustomer');
-      try {
-        localStorage.setItem(LAST_APP_TYPE_KEY, '3');
-      } catch (err) {
-        // Ignore storage write errors (private mode, etc.)
-      }
-    } else if(location.pathname.startsWith('/demo')) {
-      // setApiUrl(`${SERVER_URL}/api/v1/demo`)
-      setApiUrl(`${SERVER_URL}/api/v1/rebound`)
-      dispatch(setType(2))
-      didInitRef.current = true;
-      persistTenantBase('demo');
-      try {
-        localStorage.setItem(LAST_APP_TYPE_KEY, '2');
-      } catch (err) {
-        // Ignore storage write errors (private mode, etc.)
-      }
-    } else if (hasTenantScopedAdminRoute) {
-      if (storedTenantBase === 'pilotcustomer') {
-        setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
-        dispatch(setType(1));
-        didInitRef.current = true;
-        return;
-      }
-      if (storedTenantBase === 'betacustomer') {
-        setApiUrl(`${SERVER_URL}/api/v1/betacustomer`)
-        dispatch(setType(3));
-        didInitRef.current = true;
-        return;
-      }
-      if (storedTenantBase === 'demo') {
-        setApiUrl(`${SERVER_URL}/api/v1/rebound`)
-        dispatch(setType(2));
-        didInitRef.current = true;
-        return;
-      }
-      let resolvedType = appType;
-      if (resolvedType !== 1 && resolvedType !== 2 && resolvedType !== 3) {
-        try {
-          const storedType = Number(localStorage.getItem(LAST_APP_TYPE_KEY));
-          if (storedType === 1 || storedType === 2 || storedType === 3) {
-            resolvedType = storedType;
-            dispatch(setType(storedType));
-          }
-        } catch (err) {
-          // Ignore storage read errors.
-        }
-      }
-      if (resolvedType === 1) {
-        setApiUrl(`${SERVER_URL}/api/v1/pilotcustomer`)
-        didInitRef.current = true;
-      } else if (resolvedType === 3) {
-        setApiUrl(`${SERVER_URL}/api/v1/betacustomer`)
-        didInitRef.current = true;
-      } else {
-        setApiUrl(`${SERVER_URL}/api/v1/rebound`)
-        didInitRef.current = true;
-      }
+      persistPlatformTenant(desiredBase);
     }
-  }, [location.pathname, appType, authReady, tenant, dispatch]);
+  }, [location.pathname, authReady, tenant, apiUrl, dispatch]);
 
   useEffect(() => {
     if (!apiUrl || !authReady) return;

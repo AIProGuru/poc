@@ -27,6 +27,8 @@ import {
   PLATFORM_TENANTS,
   resolveAppType,
   resolvePlatformTenantFromUser,
+  persistPlatformTenant,
+  normalizePlatformTenant,
 } from "./utils/platformTenant";
 import {
   increaseLoading,
@@ -192,10 +194,12 @@ function App() {
         dispatch(setLastname(session.userData.lastname ?? ""));
         dispatch(setEmail(session.userData.email ?? ""));
         dispatch(setRole(session.userData.role ?? ""))
-        dispatch(setTenant(resolvePlatformTenantFromUser(session.userData)))
-        dispatch(setAppType(resolveAppType(session.userData)))
+        const resolvedTenant = resolvePlatformTenantFromUser(session.userData);
+        const resolvedType = resolveAppType(session.userData);
+        persistPlatformTenant(resolvedTenant);
+        dispatch(setTenant(resolvedTenant))
+        dispatch(setAppType(resolvedType))
         {
-          const resolvedType = resolveAppType(session.userData);
           if (Number.isFinite(resolvedType)) {
             dispatch(setType(resolvedType));
           }
@@ -261,18 +265,19 @@ function App() {
         }
         const userData = snapshot.data() || {};
         const nextTenant = resolvePlatformTenantFromUser(userData);
+        const resolvedType = resolveAppType(userData);
         if (lastTenantRef.current && lastTenantRef.current !== nextTenant) {
           clearTenantState();
         }
         lastTenantRef.current = nextTenant;
+        persistPlatformTenant(nextTenant);
         dispatch(setFirstname(userData.firstname ?? ""));
         dispatch(setLastname(userData.lastname ?? ""));
         dispatch(setEmail(userData.email ?? ""));
         dispatch(setRole(userData.role ?? ""));
         dispatch(setTenant(nextTenant));
-        dispatch(setAppType(resolveAppType(userData)));
+        dispatch(setAppType(resolvedType));
         {
-          const resolvedType = resolveAppType(userData);
           if (Number.isFinite(resolvedType)) {
             dispatch(setType(resolvedType));
           }
@@ -295,7 +300,7 @@ function App() {
 
   useEffect(() => {
     if (!authReady) return;
-    const tenantValue = `${tenant || ""}`.toLowerCase();
+    const tenantValue = normalizePlatformTenant(tenant);
     if (!tenantValue) return;
     if (!PLATFORM_TENANTS.includes(tenantValue)) return;
 

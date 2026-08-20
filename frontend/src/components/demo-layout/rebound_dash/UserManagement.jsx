@@ -47,6 +47,11 @@ const getRoleLabel = (role) =>
 const getStatusLabel = (status) =>
   STATUS_OPTIONS.find((option) => option.value === getStatusValue(status))?.label || 'Active';
 
+const getPlatformLabel = (row) => {
+  const tenant = resolvePlatformTenantFromUser(row || {});
+  return PLATFORM_TENANT_OPTIONS.find((option) => option.value === tenant)?.label || tenant || '—';
+};
+
 
 const UserManagement = ({ embedded = false, view = 'actions', editUserId = null }) => {
   const navigate = useNavigate();
@@ -962,6 +967,11 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
 
                         </div>
                       </th>
+                      <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[140px]`}>
+                        <div className="flex items-center gap-2">
+                          Platform
+                        </div>
+                      </th>
                       <th scope="col" className={`${tableHeaderClass} px-6 py-3 text-left text-xs font-medium uppercase tracking-wider min-w-[120px]`}>
                         <div className="flex items-center gap-2">
                           Status
@@ -1028,6 +1038,9 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
                           {getRoleLabel(row.role)}
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
+                          {getPlatformLabel(row)}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${tableCellClass}`}>
                           <span
@@ -1321,20 +1334,22 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
                 <div className="flex flex-col gap-2">
                   <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-slate-700'}`}>Platform</span>
                   <select
-                    value={user.tenant}
+                    value={user.tenant || 'pilotcustomer'}
                     onChange={(e) => setUser({ ...user, tenant: e.target.value })}
                     className={`user-tenant-select ${theme === 'dark' ? 'user-tenant-select--dark' : 'user-tenant-select--light'} text-sm rounded-full px-4 py-2.5 border bg-clip-padding focus:outline-none ${theme === 'dark' ?
                       'bg-[#FFFFFF]/10 text-white border-transparent ring-1 ring-inset ring-[#3B3F46] focus:border-[#6b6c71] focus:border-opacity-50' :
                       'bg-slate-50 text-slate-900 border-slate-200 focus:border-gray-800'
                       }`}
-                    disabled={clientOptionsLoading}
                   >
-                    {resolvedClientOptions.map((option) => (
+                    {PLATFORM_TENANT_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </select>
+                  <span className={`text-xs ${theme === 'dark' ? 'text-white/50' : 'text-slate-500'}`}>
+                    Controls login URL: Beta Customer → /betacustomer, Pilot Customer → /pilotcustomer
+                  </span>
                 </div>
                 <div className="flex flex-col gap-2">
                   <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-slate-700'}`}>Facility</span>
