@@ -252,13 +252,24 @@ def diagnose_taxonomy(
     edi_taxonomy: str,
     configured_taxonomy: str,
     has_prv: bool,
+    *,
+    facility_matched: bool = True,
 ) -> Dict[str, Any]:
     current = (edi_taxonomy or "").strip()
     expected = (configured_taxonomy or "").strip()
+    if not facility_matched:
+        return {
+            "issue": "facility_not_matched",
+            "summary": (
+                "No Client Management facility matched this claim's billing Tax ID / NPI. "
+                "Facility name is not used for matching — update Tax ID and NPI to match the 837."
+            ),
+            "canFix": False,
+        }
     if not expected:
         return {
             "issue": "config_missing",
-            "summary": "Client Management has no taxonomy code for the matched facility.",
+            "summary": "A facility matched, but taxonomyCode is empty in Client Management.",
             "canFix": False,
         }
     if not has_prv or not current:
@@ -390,7 +401,12 @@ def build_taxonomy_agent_result(
         or claim_rend_taxonomy
         or ""
     ).strip()
-    diagnosis = diagnose_taxonomy(current_taxonomy, configured, bool(ctx.get("hasPrvBi")))
+    diagnosis = diagnose_taxonomy(
+        current_taxonomy,
+        configured,
+        bool(ctx.get("hasPrvBi")),
+        facility_matched=facility is not None,
+    )
 
     change = None
     corrected_content = None
@@ -432,6 +448,13 @@ def build_taxonomy_agent_result(
             "hasPrvBi": ctx.get("hasPrvBi"),
         },
         "facility": facility_payload,
+        "matchContext": {
+            "ediBillingNpi": ctx.get("billingNpi") or "",
+            "ediBillingTaxId": ctx.get("billingTaxId") or "",
+            "claimNpi": claim_npi or "",
+            "claimTaxId": claim_tax_id or "",
+            "facilitiesLoaded": len(facilities),
+        },
         "diagnosis": diagnosis,
         "before": {
             "taxonomy": current_taxonomy or None,

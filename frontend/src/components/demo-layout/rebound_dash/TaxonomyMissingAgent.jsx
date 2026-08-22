@@ -62,6 +62,8 @@ export default function TaxonomyMissingAgent({
         return "Incorrect taxonomy";
       case "config_missing":
         return "Facility taxonomy not configured";
+      case "facility_not_matched":
+        return "No facility match";
       case "match":
         return "Already correct";
       default:
@@ -135,6 +137,20 @@ export default function TaxonomyMissingAgent({
           </div>
 
           <p className="text-sm">{diagnosis.summary || agent.error || ""}</p>
+
+          {agent.matchContext ? (
+            <div className={`rounded-xl border p-3 text-xs ${isDark ? "border-[#3f4558]" : "border-slate-200"}`}>
+              <p className={`font-semibold uppercase ${muted}`}>837 billing provider (used for matching)</p>
+              <p className="mt-1 font-mono">
+                NPI {agent.matchContext.ediBillingNpi || agent.matchContext.claimNpi || "—"}
+                {" · "}
+                Tax ID {agent.matchContext.ediBillingTaxId || agent.matchContext.claimTaxId || "—"}
+              </p>
+              <p className={`mt-1 ${muted}`}>
+                {agent.matchContext.facilitiesLoaded} facilit{agent.matchContext.facilitiesLoaded === 1 ? "y" : "ies"} loaded from Client Management
+              </p>
+            </div>
+          ) : null}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className={`rounded-xl border p-3 ${isDark ? "border-[#3f4558]" : "border-slate-200"}`}>
