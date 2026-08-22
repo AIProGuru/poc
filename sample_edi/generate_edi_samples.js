@@ -27,6 +27,18 @@ const PAYERS = [
   { name: "Regence BlueShield", id: "REGENCE", plan_id: "00430", address: "100 SW Market St", city: "Portland", state: "OR", zip: "97201" },
 ];
 
+/** Required by db_refresh Automation=1 (Taxonomy Missing AI agent). */
+const DSHS_MEDICAID_PAYER = {
+  name: "WA DSHS Medicaid",
+  id: "WADSHS",
+  plan_id: "WADSHS",
+  address: "PO Box 45505",
+  city: "Olympia",
+  state: "WA",
+  zip: "98504",
+  claimFilingIndicator: "MC",
+};
+
 /** Segment patterns taken from HIPAA Suite reference files in `HIPAA 837 samples/` and `HIPAA 835 samples/`. */
 const HIPAA_SUITE_REFERENCE = {
   source_837: "HIPAA 837 samples/837P_5010.837, TXMedicaid_837P_Professional.edi, Medicare_837P_Professional.edi",
@@ -42,7 +54,7 @@ const HIPAA_SUITE_REFERENCE = {
     claim_dates: "DTM*232, DTM*233 (service period), DTM*050 (received) before service lines",
     claim_service_date: "DTP*472*D8 retained for platform matching",
     service_line: "SVC*HC:code*charge*paid**units",
-    line_service_date: "DTP*472*D8 per SVC (5010)",
+    line_service_date: "DTM*150 + DTM*151 per SVC (HIPAA Suite reference) plus DTP*472*D8",
     adjustments: "Claim-level CAS*group*reason*amount*qty (aggregated) plus line-level CAS for detail — populates EDI_ClaimLevelAdjustments and EDI_PaidClaimLineAdj",
     plb: "PLB*providerId*fiscalDate*reason:referenceId*amount — composite PLB03/05 (extension for EDI_ProviderLevelAdjustments)",
   },
@@ -93,11 +105,11 @@ const SERVICE_LINES = [
 
 function fmtMoney(v) { return Number(v).toFixed(2); }
 
-/** CARC reason codes → AdjustmentReason char(3), e.g. 45 → 045, 2 → 002 */
+/** CARC reason codes — keep unpadded like production EDI / carc.Code (16, not 016). */
 function formatCarcReason(reason) {
   const raw = String(reason ?? "").trim();
-  if (/^\d+$/.test(raw)) return raw.padStart(3, "0").slice(-3);
-  return raw.length >= 3 ? raw.slice(0, 3) : raw.padEnd(3, " ").trimEnd();
+  if (/^\d+$/.test(raw)) return String(parseInt(raw, 10));
+  return raw.length > 5 ? raw.slice(0, 5) : raw;
 }
 
 /** Service unit count → AdjustmentQty varchar(15) */
@@ -109,10 +121,32 @@ function formatCasQty(qty) {
 function normalizeAdjGroup(group) {
   return String(group || "CO").trim().toUpperCase().slice(0, 2);
 }
-function fmtDate(d) { return d.toISOString().slice(0, 10).replace(/-/g, ""); }
+function fmtDate(d) {
+  const date = d instanceof Date ? d : new Date(d);
+  // Use UTC parts — scenario dates are created as YYYY-MM-DD (UTC).
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}${m}${day}`;
+}
+
+function toDateOnly(d) {
+  const date = d instanceof Date ? d : new Date(d);
+  return date.toISOString().slice(0, 10);
+}
 function addDays(base, n) { const d = new Date(base); d.setDate(d.getDate() + n); return d; }
 function joinSegs(segs) { return segs.join(""); }
 function round2(v) { return Math.round(v * 100) / 100; }
+
+/** Person NM1: NM05–NM07 empty, NM08=qual, NM09=id (HIPAA Suite / 835_5010.edi). */
+function nm1Person(entity, last, first, qual, id) {
+  return ["NM1", entity, "1", last, first, "", "", "", qual, id].join(ELEM) + SEG;
+}
+
+/** Organization NM1: NM04–NM07 empty, NM08=qual, NM09=id. */
+function nm1Org(entity, name, qual, id) {
+  return ["NM1", entity, "2", name, "", "", "", "", qual, id].join(ELEM) + SEG;
+}
 
 /** Common professional modifiers to populate ProcedureModifier / SubmittedProcedureModifier columns. */
 const CODE_MODIFIERS = {
@@ -169,9 +203,13 @@ function append835ServiceLineSegments(segs, line, ctx) {
     .reduce((s, a) => s + Number(a.amount), 0);
 
   segs.push(buildSvcSegment(line));
+  // HIPAA Suite reference (835_5010.edi) maps line service period via DTM*150/151.
+  // These populate ServicePeriodStart/End used by servicedate_835 when ServiceDate
+  // is not already stored as mm/dd/yyyy.
+  segs.push(`DTM${ELEM}150${ELEM}${fmtDate(lineDate)}${SEG}`);
+  segs.push(`DTM${ELEM}151${ELEM}${fmtDate(lineDate)}${SEG}`);
+  // Keep DTP*472*D8 as well — many importers write this to ServiceDate.
   segs.push(`DTP${ELEM}472${ELEM}D8${ELEM}${fmtDate(lineDate)}${SEG}`);
-  segs.push(`DTP${ELEM}150${ELEM}${fmtDate(lineDate)}${SEG}`);
-  segs.push(`DTP${ELEM}151${ELEM}${fmtDate(lineDate)}${SEG}`);
   segs.push(`REF${ELEM}6R${ELEM}${ctrlNo}${SEG}`);
   segs.push(`REF${ELEM}G1${ELEM}${authNo}${SEG}`);
   segs.push(`REF${ELEM}BB${ELEM}${authNo}${SEG}`);
@@ -180,10 +218,12 @@ function append835ServiceLineSegments(segs, line, ctx) {
   segs.push(`REF${ELEM}9B${ELEM}REB${lineIdx + 1}${SEG}`);
 
   (line.adjustments || []).forEach((adj) => {
-    segs.push(`CAS${ELEM}${adj.group}${ELEM}${adj.reason}${ELEM}${fmtMoney(adj.amount)}${SEG}`);
+    segs.push(
+      `CAS${ELEM}${normalizeAdjGroup(adj.group)}${ELEM}${formatCarcReason(adj.reason)}${ELEM}${fmtMoney(adj.amount)}${ELEM}${formatCasQty(adj.qty)}${SEG}`
+    );
   });
 
-  segs.push(`NM1${ELEM}82${ELEM}1${ELEM}SMITH${ELEM}JOHN${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}XX${ELEM}${provider.npi}${SEG}`);
+  segs.push(nm1Person("82", "SMITH", "JOHN", "XX", provider.npi));
   segs.push(`REF${ELEM}TJ${ELEM}${provider.tax_id}${SEG}`);
   segs.push(`REF${ELEM}1C${ELEM}${provider.tax_id}${SEG}`);
   segs.push(`REF${ELEM}G2${ELEM}${provider.npi}${SEG}`);
@@ -219,6 +259,10 @@ function build837(claim, fileId) {
   const stCtrl = String(fileId).padStart(4, "0");
   const { provider, payer, patient, lines } = claim;
   const matchServiceDate = latestLineDate(lines, claim.serviceDate);
+  claim.serviceDate = matchServiceDate;
+  lines.forEach((ln) => {
+    if (!ln.serviceDate) ln.serviceDate = matchServiceDate;
+  });
   const total = lines.reduce((s, l) => s + l.charge, 0);
   const taxonomyCode =
     claim.taxonomyCode !== undefined ? claim.taxonomyCode : provider.taxonomy;
@@ -228,26 +272,26 @@ function build837(claim, fileId) {
     `GS${ELEM}HC${ELEM}SUBMITTER001${ELEM}RECEIVER001${ELEM}${fmtDate(claim.submitDate)}${ELEM}1200${ELEM}${fileId}${ELEM}X${ELEM}005010X222A1${SEG}`,
     `ST${ELEM}837${ELEM}${stCtrl}${ELEM}005010X222A1${SEG}`,
     `BHT${ELEM}0019${ELEM}00${ELEM}${claim.claimNo}${ELEM}${fmtDate(claim.submitDate)}${ELEM}1200${ELEM}CH${SEG}`,
-    `NM1${ELEM}41${ELEM}2${ELEM}${provider.name}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}46${ELEM}${provider.tax_id}${SEG}`,
+    nm1Org("41", provider.name, "46", provider.tax_id),
     `PER${ELEM}IC${ELEM}BILLING DEPT${ELEM}TE${ELEM}5035550100${SEG}`,
-    `NM1${ELEM}40${ELEM}2${ELEM}${payer.name}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}46${ELEM}${payer.id}${SEG}`,
+    nm1Org("40", payer.name, "46", payer.id),
     `HL${ELEM}1${ELEM}${ELEM}20${ELEM}1${SEG}`,
   ];
   if (includeTaxonomy) {
     segs.push(`PRV${ELEM}BI${ELEM}PXC${ELEM}${taxonomyCode}${SEG}`);
   }
   segs.push(
-    `NM1${ELEM}85${ELEM}2${ELEM}${provider.name}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}XX${ELEM}${provider.npi}${SEG}`,
+    nm1Org("85", provider.name, "XX", provider.npi),
     `N3${ELEM}${provider.address}${SEG}`,
     `N4${ELEM}${provider.city}${ELEM}${provider.state}${ELEM}${provider.zip}${SEG}`,
     `REF${ELEM}EI${ELEM}${provider.tax_id}${SEG}`,
     `HL${ELEM}2${ELEM}1${ELEM}22${ELEM}0${SEG}`,
-    `SBR${ELEM}P${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}CI${SEG}`,
-    `NM1${ELEM}IL${ELEM}1${ELEM}${patient.last}${ELEM}${patient.first}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}MI${ELEM}${patient.member_id}${SEG}`,
+    `SBR${ELEM}P${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}${claim.claimFilingIndicator || payer.claimFilingIndicator || "CI"}${SEG}`,
+    nm1Person("IL", patient.last, patient.first, "MI", patient.member_id),
     `N3${ELEM}100 Main Street${SEG}`,
     `N4${ELEM}Portland${ELEM}OR${ELEM}97205${SEG}`,
     `DMG${ELEM}D8${ELEM}${patient.dob}${ELEM}${patient.sex}${SEG}`,
-    `NM1${ELEM}PR${ELEM}2${ELEM}${payer.name}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}PI${ELEM}${payer.plan_id}${SEG}`,
+    nm1Org("PR", payer.name, "PI", payer.plan_id),
     `N3${ELEM}${payer.address || "500 Payer Boulevard"}${SEG}`,
     `N4${ELEM}${payer.city || "Chicago"}${ELEM}${payer.state || "IL"}${ELEM}${payer.zip || "60601"}${SEG}`,
     `CLM${ELEM}${claim.claimNo}${ELEM}${fmtMoney(total)}${ELEM}${ELEM}${ELEM}${lines[0].pos}${COMP}B${COMP}${claim.frequency}${ELEM}${ELEM}Y${ELEM}A${ELEM}Y${ELEM}I${SEG}`,
@@ -255,7 +299,7 @@ function build837(claim, fileId) {
     `REF${ELEM}D9${ELEM}${claim.claimNo}${SEG}`,
     `REF${ELEM}EA${ELEM}${claim.claimNo}${SEG}`,
     `HI${ELEM}ABK${COMP}${claim.diagnosis}${SEG}`,
-    `NM1${ELEM}82${ELEM}1${ELEM}SMITH${ELEM}JOHN${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}XX${ELEM}${provider.npi}${SEG}`,
+    nm1Person("82", "SMITH", "JOHN", "XX", provider.npi),
   );
   lines.forEach((line, idx) => {
     const lineDate = line.serviceDate || matchServiceDate;
@@ -437,7 +481,14 @@ function build835(claim, remit, fileId, options = {}) {
   const stCtrl = String(fileId).padStart(4, "0");
   const provider = claim.provider;
   const payer = remit.payer || claim.payer;
-  const matchServiceDate = options.clpServiceDate || latestLineDate(remit.lines, claim.serviceDate);
+  const matchServiceDate = options.clpServiceDate || latestLineDate(
+    remit.lines,
+    latestLineDate(claim.lines, claim.serviceDate)
+  );
+  // Guarantee every SVC line carries the match date when not explicitly set.
+  remit.lines.forEach((ln) => {
+    if (!ln.serviceDate) ln.serviceDate = matchServiceDate;
+  });
   const totalCharge = remit.lines.reduce((s, l) => s + l.charge, 0);
   const totalPaid = remit.lines.reduce((s, l) => s + l.paid, 0);
   const segs = [
@@ -456,10 +507,11 @@ function build835(claim, remit, fileId, options = {}) {
     `N4${ELEM}${provider.city}${ELEM}${provider.state}${ELEM}${provider.zip}${SEG}`,
     `REF${ELEM}TJ${ELEM}${provider.tax_id}${SEG}`,
     `LX${ELEM}1${SEG}`,
-    `CLP${ELEM}${claim.claimNo}${ELEM}${remit.claimStatus}${ELEM}${fmtMoney(totalCharge)}${ELEM}${fmtMoney(totalPaid)}${ELEM}${fmtMoney(remit.patientResp)}${ELEM}12${ELEM}${remit.payerClaimId}${ELEM}${claim.frequency}${SEG}`,
-    `NM1${ELEM}QC${ELEM}1${ELEM}${claim.patient.last}${ELEM}${claim.patient.first}${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}MI${ELEM}${claim.patient.member_id}${SEG}`,
-    `NM1${ELEM}82${ELEM}1${ELEM}SMITH${ELEM}JOHN${ELEM}${ELEM}${ELEM}${ELEM}${ELEM}XX${ELEM}${provider.npi}${SEG}`,
-    `REF${ELEM}EA${ELEM}${provider.tax_id}${SEG}`,
+    `CLP${ELEM}${claim.claimNo}${ELEM}${remit.claimStatus}${ELEM}${fmtMoney(totalCharge)}${ELEM}${fmtMoney(totalPaid)}${ELEM}${fmtMoney(remit.patientResp)}${ELEM}${remit.claimFilingIndicator || payer.claimFilingIndicator || "12"}${ELEM}${remit.payerClaimId}${ELEM}${claim.frequency}${SEG}`,
+    nm1Person("QC", claim.patient.last, claim.patient.first, "MI", claim.patient.member_id),
+    nm1Person("82", "SMITH", "JOHN", "XX", provider.npi),
+    // REF*EA = patient account / patient control number (same as CLM01 / CLP01)
+    `REF${ELEM}EA${ELEM}${claim.claimNo}${SEG}`,
     `REF${ELEM}1L${ELEM}${claim.patient.member_id}${SEG}`,
   ];
   append835ClaimDateSegments(segs, matchServiceDate, remit.checkDate);
@@ -549,8 +601,8 @@ const MATCHING_LOGIC = {
       id: "service_date",
       sql: "CUSTOM_EDI_PaidClaims_CLONE.ServiceDate = CUSTOM_EDI_Claims_CLONE.ServiceDate",
       edi_837: "MAX(EDI_ClaimDetail.ServiceDateFrom) per claim — latest line date (servicedate_837)",
-      edi_835: "MAX(COALESCE(STR_TO_DATE(ServiceDate,'%m/%d/%Y'), ServicePeriodStart, ServicePeriodEnd)) per paid claim — latest line date (servicedate_835)",
-      note: "Not the 835 check/ERA date. Use the same latest service line date on both sides.",
+      edi_835: "MAX(COALESCE(parse ServiceDate as mm/dd/yyyy|yyyy-mm-dd|yyyymmdd, ServicePeriodStart, ServicePeriodEnd)) per paid claim (servicedate_835)",
+      note: "Not the 835 check/ERA date. Emit matching DTM*150/151 (+ DTP*472) on every SVC line using the same latest service date as the 837.",
     },
     {
       id: "charge_amount",
@@ -567,15 +619,17 @@ const MATCHING_LOGIC = {
   claim_level_adjustments:
     "EDI_ClaimLevelAdjustments: CAS*Group(2)*Reason(3)*Amount*Qty after claim DTM/DTP, before SVC. Reason zero-padded (045, 016, 002). AdjustmentQty = CAS04.",
   paid_claim_lines:
-    "Loop 2110 SVC with HC composite + modifiers, submitted composite (SVC07), DTP*472/150/151, REF*6R/G1/BB, NM1*82+REF*TJ, AMT*B6/F5/T, QTY*ZK/NE, LQ*HE — populates EDI_PaidClaimLines.",
+    "Loop 2110 SVC with HC composite + modifiers, DTM*150/151 + DTP*472, REF*6R/G1/BB, NM1*82+REF*TJ, AMT*B6/F5/T, QTY*ZK/NE, LQ*HE — populates EDI_PaidClaimLines.",
   hipaa_suite_reference: HIPAA_SUITE_REFERENCE,
   related_837_lookup:
     "Separate from 835 matching: get_claim_detail Related uses ClaimNoFirst + Amount + PrincipalDiagnosis + ServiceDate to find duplicate 837 submissions.",
 };
 
 function validateRemitMatch(claim, remit) {
-  const totalCharge = remit.lines.reduce((s, l) => s + l.charge, 0);
-  const claimTotal = claim.lines.reduce((s, l) => s + l.charge, 0);
+  const totalCharge = remit.lines.reduce((s, l) => s + Number(l.charge || 0), 0);
+  const claimTotal = claim.lines.reduce((s, l) => s + Number(l.charge || 0), 0);
+  const claimMatchDate = toDateOnly(latestLineDate(claim.lines, claim.serviceDate));
+  const remitMatchDate = toDateOnly(latestLineDate(remit.lines, claim.serviceDate));
   const errors = [];
   if (claimPrefix(claim.claimNo) !== claimPrefix(claim.claimNo)) {
     errors.push("internal: claim prefix check failed");
@@ -583,10 +637,13 @@ function validateRemitMatch(claim, remit) {
   if (Math.abs(totalCharge - claimTotal) > 0.001) {
     errors.push(`charge mismatch: 835 billed ${totalCharge.toFixed(2)} vs 837 ${claimTotal.toFixed(2)}`);
   }
+  if (claimMatchDate !== remitMatchDate) {
+    errors.push(`service date mismatch: 835 max line ${remitMatchDate} vs 837 max line ${claimMatchDate}`);
+  }
   return {
     claim_no_first: claimPrefix(claim.claimNo),
     claim_id_first: claimPrefix(claim.claimNo),
-    service_date: claim.serviceDate.toISOString().slice(0, 10),
+    service_date: claimMatchDate,
     charge_amount: claimTotal.toFixed(2),
     valid: errors.length === 0,
     errors,
@@ -717,7 +774,7 @@ function buildScenarios() {
     });
   }
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 1; i++) {
     const svc = SERVICE_LINES[i + 12];
     const svcDate = addDays(base, 110 + i * 3);
     const submit = addDays(svcDate, 1);
@@ -725,7 +782,33 @@ function buildScenarios() {
       claimNo: claimNo(), serviceDate: svcDate, submitDate: submit,
       provider: PROVIDERS[(i + 3) % 4], payer: PAYERS[(i + 3) % 6], patient: PATIENTS[(i + 17) % PATIENTS.length],
       diagnosis: DIAGNOSES[(i + 8) % 10], frequency: "1",
+      scenarioType: "unmatched_no_835_pend277",
       lines: [line(svc.code, svc.charge, 0, 1, svc.pos)], remits: [],
+    });
+  }
+
+  // Matching remits for the former "no 835" slots so most sample claims leave Pend 277
+  for (let i = 1; i < 3; i++) {
+    const svc = SERVICE_LINES[i + 12];
+    const svcDate = addDays(base, 110 + i * 3);
+    const submit = addDays(svcDate, 1);
+    const cn = claimNo();
+    const co = round2(svc.charge * 0.18);
+    const paid = round2(svc.charge - co);
+    scenarios.push({
+      claimNo: cn, serviceDate: svcDate, submitDate: submit,
+      provider: PROVIDERS[(i + 3) % 4], payer: PAYERS[(i + 3) % 6], patient: PATIENTS[(i + 17) % PATIENTS.length],
+      diagnosis: DIAGNOSES[(i + 8) % 10], frequency: "1",
+      lines: [line(svc.code, svc.charge, paid, 1, svc.pos, [], [], svcDate)],
+      remits: [{
+        checkNumber: `CHK${850000 + i}`,
+        checkDate: addDays(submit, 16),
+        checkAmount: paid,
+        claimStatus: "1",
+        payerClaimId: `PAY${cn}`,
+        patientResp: 0,
+        lines: [line(svc.code, svc.charge, paid, 1, svc.pos, [{ group: "CO", reason: "45", amount: co }], ["N130"], svcDate)],
+      }],
     });
   }
 
@@ -810,8 +893,19 @@ function buildTaxonomyScenarios(startSeq = 29) {
       carc_description: "Claim/service lacks information or has submission/billing error(s)",
       rarc: "N255",
       rarc_description: "Missing/incomplete/invalid taxonomy code",
-      platform_note: "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16",
+      platform_note:
+        "db_refresh.sql sets Automation=1 (Taxonomy Missing) when RemarkCode=N255, CO-16, InsuranceType=MC, and PayerName LIKE '%DSHS%'",
     },
+  };
+
+  const withDshsMedicaid = (claim) => {
+    const payer = { ...DSHS_MEDICAID_PAYER };
+    const remits = (claim.remits || []).map((remit) => ({
+      ...remit,
+      payer,
+      claimFilingIndicator: "MC",
+    }));
+    return { ...claim, payer, claimFilingIndicator: "MC", remits };
   };
 
   // 1. Missing PRV/taxonomy segment on 837 — matching denial 835
@@ -820,13 +914,12 @@ function buildTaxonomyScenarios(startSeq = 29) {
     const svcDate = addDays(base, 0);
     const submit = addDays(svcDate, 2);
     const cn = claimNo();
-    const claim = {
+    const claim = withDshsMedicaid({
       ...taxonomyDenialMeta,
       claimNo: cn,
       serviceDate: svcDate,
       submitDate: submit,
       provider: { ...PROVIDERS[0] },
-      payer: PAYERS[5], // Medicare — common taxonomy edits
       patient: PATIENTS[0],
       diagnosis: DIAGNOSES[0],
       frequency: "1",
@@ -834,7 +927,7 @@ function buildTaxonomyScenarios(startSeq = 29) {
       taxonomyIssue: "missing_prv_segment",
       lines: [line(svc.code, svc.charge, 0, 1, svc.pos)],
       remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: [line(svc.code, svc.charge)] }, "CHK900001", addDays(submit, 14))],
-    };
+    });
     claim.remits[0].lines = claim.lines.map((ln) => taxonomyDenialLine(ln.code, ln.charge, ln.pos, svcDate));
     scenarios.push(claim);
   }
@@ -845,13 +938,12 @@ function buildTaxonomyScenarios(startSeq = 29) {
     const svcDate = addDays(base, 4);
     const submit = addDays(svcDate, 1);
     const cn = claimNo();
-    scenarios.push({
+    scenarios.push(withDshsMedicaid({
       ...taxonomyDenialMeta,
       claimNo: cn,
       serviceDate: svcDate,
       submitDate: submit,
       provider: { ...PROVIDERS[1] },
-      payer: PAYERS[0],
       patient: PATIENTS[1],
       diagnosis: DIAGNOSES[1],
       frequency: "1",
@@ -859,7 +951,7 @@ function buildTaxonomyScenarios(startSeq = 29) {
       taxonomyIssue: "invalid_taxonomy_code",
       lines: [line(svc.code, svc.charge, 0, 1, svc.pos)],
       remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: [line(svc.code, svc.charge)] }, "CHK900002", addDays(submit, 16))],
-    });
+    }));
   }
 
   // 3. Truncated/wrong-length taxonomy — matching denial 835
@@ -868,13 +960,12 @@ function buildTaxonomyScenarios(startSeq = 29) {
     const svcDate = addDays(base, 8);
     const submit = addDays(svcDate, 2);
     const cn = claimNo();
-    const claim = {
+    const claim = withDshsMedicaid({
       ...taxonomyDenialMeta,
       claimNo: cn,
       serviceDate: svcDate,
       submitDate: submit,
       provider: { ...PROVIDERS[2] },
-      payer: PAYERS[2],
       patient: PATIENTS[2],
       diagnosis: DIAGNOSES[2],
       frequency: "1",
@@ -882,7 +973,7 @@ function buildTaxonomyScenarios(startSeq = 29) {
       taxonomyIssue: "truncated_taxonomy_code",
       lines: [line(svc.code, svc.charge, 0, 1, svc.pos)],
       remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: [line(svc.code, svc.charge)] }, "CHK900003", addDays(submit, 18))],
-    };
+    });
     claim.remits[0].lines = claim.lines.map((ln) => taxonomyDenialLine(ln.code, ln.charge, ln.pos, svcDate));
     scenarios.push(claim);
   }
@@ -894,13 +985,12 @@ function buildTaxonomyScenarios(startSeq = 29) {
     const cn = claimNo();
     const templates = [SERVICE_LINES[5], SERVICE_LINES[6]];
     const lines837 = templates.map((t) => line(t.code, t.charge, 0, 1, t.pos));
-    const claim = {
+    const claim = withDshsMedicaid({
       ...taxonomyDenialMeta,
       claimNo: cn,
       serviceDate: svcDate,
       submitDate: submit,
       provider: { ...PROVIDERS[3] },
-      payer: PAYERS[3],
       patient: PATIENTS[3],
       diagnosis: DIAGNOSES[3],
       frequency: "1",
@@ -909,24 +999,23 @@ function buildTaxonomyScenarios(startSeq = 29) {
       taxonomyIssue: "missing_taxonomy_multi_line",
       lines: lines837,
       remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: lines837 }, "CHK900004", addDays(submit, 20))],
-    };
+    });
     claim.remits[0].lines = lines837.map((ln) => taxonomyDenialLine(ln.code, ln.charge, ln.pos, svcDate));
     scenarios.push(claim);
   }
 
-  // 5. Pending — 837 with bad taxonomy, no 835 yet
+  // 5. Pending — 837 with bad taxonomy, no 835 yet (stays Pend 277; not Automation=1)
   {
     const svc = SERVICE_LINES[7];
     const svcDate = addDays(base, 16);
     const submit = addDays(svcDate, 1);
     const cn = claimNo();
-    scenarios.push({
+    scenarios.push(withDshsMedicaid({
       ...taxonomyDenialMeta,
       claimNo: cn,
       serviceDate: svcDate,
       submitDate: submit,
       provider: { ...PROVIDERS[0] },
-      payer: PAYERS[1],
       patient: PATIENTS[4],
       diagnosis: DIAGNOSES[4],
       frequency: "1",
@@ -934,7 +1023,7 @@ function buildTaxonomyScenarios(startSeq = 29) {
       taxonomyIssue: "invalid_taxonomy_pending_remit",
       lines: [line(svc.code, svc.charge, 0, 1, svc.pos)],
       remits: [],
-    });
+    }));
   }
 
   // 6. Base matching claim for negative controls (valid match reference)
@@ -944,36 +1033,36 @@ function buildTaxonomyScenarios(startSeq = 29) {
     const submit = addDays(svcDate, 2);
     const cn = claimNo();
     const lines837 = [line(svc.code, svc.charge, 0, 1, svc.pos)];
-    const claim = {
+    const claim = withDshsMedicaid({
       ...taxonomyDenialMeta,
       claimNo: cn,
       serviceDate: svcDate,
       submitDate: submit,
       provider: { ...PROVIDERS[1] },
-      payer: PAYERS[4],
       patient: PATIENTS[5],
       diagnosis: DIAGNOSES[5],
       frequency: "1",
       includeTaxonomy: false,
       taxonomyIssue: "missing_prv_with_negative_controls",
       lines: lines837,
-      remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: lines837 }, "CHK900006", addDays(submit, 15))],
+      remits: [buildTaxonomyDenialRemit({ claimNo: cn, serviceDate: svcDate, lines: lines837 }, "CHK900006", addDays(submit, 25))],
       negativeControl835s: [
         {
+          // Break platform match keys (charge) so these stay true NOMATCH files and cannot win rn=1.
           checkNumber: "CHK900061",
           checkDate: addDays(submit, 17),
-          note: "Wrong CARC — CO-197 instead of CO-16; should NOT match taxonomy denial logic",
+          note: "Wrong CARC (CO-197) and charge +0.01 — must not join via matching_837_835",
           expected_match: false,
           reason: "wrong_carc",
-          lines: [line(svc.code, svc.charge, 0, 1, svc.pos, [{ group: "CO", reason: "197", amount: svc.charge }], ["N255"], svcDate)],
+          lines: [line(svc.code, svc.charge + 0.01, 0, 1, svc.pos, [{ group: "CO", reason: "197", amount: svc.charge + 0.01 }], ["N255"], svcDate)],
         },
         {
           checkNumber: "CHK900062",
           checkDate: addDays(submit, 18),
-          note: "Wrong RARC — N522 instead of N255; should NOT match taxonomy denial logic",
+          note: "Wrong RARC (N522) and charge +0.01 — must not join via matching_837_835",
           expected_match: false,
           reason: "wrong_rarc",
-          lines: [line(svc.code, svc.charge, 0, 1, svc.pos, [{ group: "CO", reason: "16", amount: svc.charge }], ["N522"], svcDate)],
+          lines: [line(svc.code, svc.charge + 0.01, 0, 1, svc.pos, [{ group: "CO", reason: "16", amount: svc.charge + 0.01 }], ["N522"], svcDate)],
         },
         {
           checkNumber: "CHK900063",
@@ -993,7 +1082,7 @@ function buildTaxonomyScenarios(startSeq = 29) {
           lines: [taxonomyDenialLine(svc.code, svc.charge + 50, svc.pos, svcDate)],
         },
       ],
-    };
+    });
     claim.remits[0].lines = lines837.map((ln) => taxonomyDenialLine(ln.code, ln.charge, ln.pos, svcDate));
     scenarios.push(claim);
   }

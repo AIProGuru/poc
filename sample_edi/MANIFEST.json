@@ -14,8 +14,8 @@
         "id": "service_date",
         "sql": "CUSTOM_EDI_PaidClaims_CLONE.ServiceDate = CUSTOM_EDI_Claims_CLONE.ServiceDate",
         "edi_837": "MAX(EDI_ClaimDetail.ServiceDateFrom) per claim — latest line date (servicedate_837)",
-        "edi_835": "MAX(COALESCE(STR_TO_DATE(ServiceDate,'%m/%d/%Y'), ServicePeriodStart, ServicePeriodEnd)) per paid claim — latest line date (servicedate_835)",
-        "note": "Not the 835 check/ERA date. Use the same latest service line date on both sides."
+        "edi_835": "MAX(COALESCE(parse ServiceDate as mm/dd/yyyy|yyyy-mm-dd|yyyymmdd, ServicePeriodStart, ServicePeriodEnd)) per paid claim (servicedate_835)",
+        "note": "Not the 835 check/ERA date. Emit matching DTM*150/151 (+ DTP*472) on every SVC line using the same latest service date as the 837."
       },
       {
         "id": "charge_amount",
@@ -28,7 +28,7 @@
     "multiple_835_per_837": "Each 835 that satisfies all three predicates links to the same id_837. matching_837_835.rn=1 (latest CheckDate) is used for CUSTOM_ALL; get_claim_detail returns all linked 835 rows.",
     "plb_provider_level_adjustments": "PLB*ProviderID*FiscalDate*Reason:ReferenceID*Amount before SE (composite PLB03/05). Maps to EDI_ProviderLevelAdjustments.",
     "claim_level_adjustments": "EDI_ClaimLevelAdjustments: CAS*Group(2)*Reason(3)*Amount*Qty after claim DTM/DTP, before SVC. Reason zero-padded (045, 016, 002). AdjustmentQty = CAS04.",
-    "paid_claim_lines": "Loop 2110 SVC with HC composite + modifiers, submitted composite (SVC07), DTP*472/150/151, REF*6R/G1/BB, NM1*82+REF*TJ, AMT*B6/F5/T, QTY*ZK/NE, LQ*HE — populates EDI_PaidClaimLines.",
+    "paid_claim_lines": "Loop 2110 SVC with HC composite + modifiers, DTM*150/151 + DTP*472, REF*6R/G1/BB, NM1*82+REF*TJ, AMT*B6/F5/T, QTY*ZK/NE, LQ*HE — populates EDI_PaidClaimLines.",
     "hipaa_suite_reference": {
       "source_837": "HIPAA 837 samples/837P_5010.837, TXMedicaid_837P_Professional.edi, Medicare_837P_Professional.edi",
       "source_835": "HIPAA 835 samples/835_5010.edi, 835I1.edi",
@@ -43,7 +43,7 @@
         "claim_dates": "DTM*232, DTM*233 (service period), DTM*050 (received) before service lines",
         "claim_service_date": "DTP*472*D8 retained for platform matching",
         "service_line": "SVC*HC:code*charge*paid**units",
-        "line_service_date": "DTP*472*D8 per SVC (5010)",
+        "line_service_date": "DTM*150 + DTM*151 per SVC (HIPAA Suite reference) plus DTP*472*D8",
         "adjustments": "Claim-level CAS*group*reason*amount*qty (aggregated) plus line-level CAS for detail — populates EDI_ClaimLevelAdjustments and EDI_PaidClaimLineAdj",
         "plb": "PLB*providerId*fiscalDate*reason:referenceId*amount — composite PLB03/05 (extension for EDI_ProviderLevelAdjustments)"
       }
@@ -1208,7 +1208,8 @@
         "charge_amount": "1850.00"
       },
       "835_files": [],
-      "835_count": 0
+      "835_count": 0,
+      "scenario_type": "unmatched_no_835_pend277"
     },
     {
       "claim_no": "CLM202500025",
@@ -1232,8 +1233,25 @@
         "service_date": "2026-01-22",
         "charge_amount": "4200.00"
       },
-      "835_files": [],
-      "835_count": 0
+      "835_files": [
+        {
+          "file": "835_CHK850001_CLM202500025.edi",
+          "check_number": "CHK850001",
+          "check_date": "2026-02-08",
+          "claim_status": "1",
+          "paid_amount": "3444.00",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500025",
+            "claim_id_first": "CLM202500025",
+            "service_date": "2026-01-22",
+            "charge_amount": "4200.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
     },
     {
       "claim_no": "CLM202500026",
@@ -1257,8 +1275,25 @@
         "service_date": "2026-01-25",
         "charge_amount": "180.00"
       },
-      "835_files": [],
-      "835_count": 0
+      "835_files": [
+        {
+          "file": "835_CHK850002_CLM202500026.edi",
+          "check_number": "CHK850002",
+          "check_date": "2026-02-11",
+          "claim_status": "1",
+          "paid_amount": "147.60",
+          "expected_match": true,
+          "match_validation": {
+            "claim_no_first": "CLM202500026",
+            "claim_id_first": "CLM202500026",
+            "service_date": "2026-01-25",
+            "charge_amount": "180.00",
+            "valid": true,
+            "errors": []
+          }
+        }
+      ],
+      "835_count": 1
     },
     {
       "claim_no": "CLM202500027",
@@ -1388,7 +1423,7 @@
       "total_charge": "150.00",
       "diagnosis": "M25512",
       "patient": "Emily Johnson",
-      "payer": "Regence BlueShield",
+      "payer": "WA DSHS Medicaid",
       "provider": "Summit Orthopedic Associates",
       "service_lines": [
         {
@@ -1427,7 +1462,7 @@
         "carc_description": "Claim/service lacks information or has submission/billing error(s)",
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
-        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+        "platform_note": "db_refresh.sql sets Automation=1 (Taxonomy Missing) when RemarkCode=N255, CO-16, InsuranceType=MC, and PayerName LIKE '%DSHS%'"
       },
       "taxonomy_issue": "missing_prv_segment",
       "taxonomy_on_837": "(PRV segment omitted)"
@@ -1440,7 +1475,7 @@
       "total_charge": "210.00",
       "diagnosis": "M5450",
       "patient": "Michael Chen",
-      "payer": "Blue Cross Blue Shield of Oregon",
+      "payer": "WA DSHS Medicaid",
       "provider": "Cascade Family Medicine",
       "service_lines": [
         {
@@ -1479,7 +1514,7 @@
         "carc_description": "Claim/service lacks information or has submission/billing error(s)",
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
-        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+        "platform_note": "db_refresh.sql sets Automation=1 (Taxonomy Missing) when RemarkCode=N255, CO-16, InsuranceType=MC, and PayerName LIKE '%DSHS%'"
       },
       "taxonomy_issue": "invalid_taxonomy_code",
       "taxonomy_on_837": "INVALIDTX"
@@ -1492,7 +1527,7 @@
       "total_charge": "85.00",
       "diagnosis": "J069",
       "patient": "Sarah Martinez",
-      "payer": "UnitedHealthcare",
+      "payer": "WA DSHS Medicaid",
       "provider": "Pacific Spine & Rehab",
       "service_lines": [
         {
@@ -1531,7 +1566,7 @@
         "carc_description": "Claim/service lacks information or has submission/billing error(s)",
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
-        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+        "platform_note": "db_refresh.sql sets Automation=1 (Taxonomy Missing) when RemarkCode=N255, CO-16, InsuranceType=MC, and PayerName LIKE '%DSHS%'"
       },
       "taxonomy_issue": "truncated_taxonomy_code",
       "taxonomy_on_837": "207X00000"
@@ -1544,7 +1579,7 @@
       "total_charge": "395.00",
       "diagnosis": "E119",
       "patient": "David Thompson",
-      "payer": "Cigna Healthcare",
+      "payer": "WA DSHS Medicaid",
       "provider": "Northwest Urgent Care PLLC",
       "service_lines": [
         {
@@ -1588,7 +1623,7 @@
         "carc_description": "Claim/service lacks information or has submission/billing error(s)",
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
-        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+        "platform_note": "db_refresh.sql sets Automation=1 (Taxonomy Missing) when RemarkCode=N255, CO-16, InsuranceType=MC, and PayerName LIKE '%DSHS%'"
       },
       "taxonomy_issue": "missing_taxonomy_multi_line",
       "taxonomy_on_837": "(PRV segment omitted)"
@@ -1601,7 +1636,7 @@
       "total_charge": "95.00",
       "diagnosis": "I10",
       "patient": "Jessica Williams",
-      "payer": "Aetna Better Health",
+      "payer": "WA DSHS Medicaid",
       "provider": "Summit Orthopedic Associates",
       "service_lines": [
         {
@@ -1623,7 +1658,7 @@
         "carc_description": "Claim/service lacks information or has submission/billing error(s)",
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
-        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+        "platform_note": "db_refresh.sql sets Automation=1 (Taxonomy Missing) when RemarkCode=N255, CO-16, InsuranceType=MC, and PayerName LIKE '%DSHS%'"
       },
       "taxonomy_issue": "invalid_taxonomy_pending_remit",
       "taxonomy_on_837": "BADCODE99"
@@ -1636,7 +1671,7 @@
       "total_charge": "175.00",
       "diagnosis": "S83201A",
       "patient": "Robert Anderson",
-      "payer": "Medicare Part B",
+      "payer": "WA DSHS Medicaid",
       "provider": "Cascade Family Medicine",
       "service_lines": [
         {
@@ -1654,7 +1689,7 @@
         {
           "file": "835_CHK900006_CLM202500034.edi",
           "check_number": "CHK900006",
-          "check_date": "2026-04-06",
+          "check_date": "2026-04-16",
           "claim_status": "4",
           "paid_amount": "0.00",
           "expected_match": true,
@@ -1675,7 +1710,7 @@
         "carc_description": "Claim/service lacks information or has submission/billing error(s)",
         "rarc": "N255",
         "rarc_description": "Missing/incomplete/invalid taxonomy code",
-        "platform_note": "db_refresh.sql flags Automation when RemarkCode=N255 and AdjustmentGroup=CO, AdjustmentReason=16"
+        "platform_note": "db_refresh.sql sets Automation=1 (Taxonomy Missing) when RemarkCode=N255, CO-16, InsuranceType=MC, and PayerName LIKE '%DSHS%'"
       },
       "taxonomy_issue": "missing_prv_with_negative_controls",
       "taxonomy_on_837": "(PRV segment omitted)"
@@ -1683,11 +1718,11 @@
   ],
   "stats": {
     "total_837_files": 34,
-    "total_835_files": 43,
+    "total_835_files": 45,
     "multi_date_scenarios": 2,
     "negative_control_835_files": 5,
     "claims_with_multiple_835": 6,
-    "claims_without_835": 4,
+    "claims_without_835": 2,
     "taxonomy_denial_scenarios": 6,
     "taxonomy_denial_negative_controls": 4
   },
@@ -1708,7 +1743,7 @@
       "claim_no": "CLM202500034",
       "expected_match": false,
       "reason": "wrong_carc",
-      "note": "Wrong CARC — CO-197 instead of CO-16; should NOT match taxonomy denial logic",
+      "note": "Wrong CARC (CO-197) and charge +0.01 — must not join via matching_837_835",
       "wrong_service_date": null
     },
     {
@@ -1717,7 +1752,7 @@
       "claim_no": "CLM202500034",
       "expected_match": false,
       "reason": "wrong_rarc",
-      "note": "Wrong RARC — N522 instead of N255; should NOT match taxonomy denial logic",
+      "note": "Wrong RARC (N522) and charge +0.01 — must not join via matching_837_835",
       "wrong_service_date": null
     },
     {

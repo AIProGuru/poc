@@ -74,6 +74,12 @@ from api.platform.ai_automation.update_automation_status import (
     pilotcustomer_api_status,
     betacustomer_api_status,
 )
+from api.platform.ai_automation.taxonomy_missing_agent import (
+    rebound_api_taxonomy,
+    medevolve_api_taxonomy,
+    pilotcustomer_api_taxonomy,
+    betacustomer_api_taxonomy,
+)
 from api.platform.statistics.recoverable_view import (
     rebound_api_recoverable,
     medevolve_api_recoverable,
@@ -213,6 +219,10 @@ def create_app():
     app.register_blueprint(medevolve_api_status)
     app.register_blueprint(pilotcustomer_api_status)
     app.register_blueprint(betacustomer_api_status)
+    app.register_blueprint(rebound_api_taxonomy)
+    app.register_blueprint(medevolve_api_taxonomy)
+    app.register_blueprint(pilotcustomer_api_taxonomy)
+    app.register_blueprint(betacustomer_api_taxonomy)
     app.register_blueprint(rebound_api_appeal)
     app.register_blueprint(medevolve_api_appeal)
     app.register_blueprint(rebound_api_action)

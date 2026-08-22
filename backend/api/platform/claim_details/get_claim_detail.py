@@ -538,23 +538,24 @@ def get_rebound_claim():
         ret['Document'] = cursor.fetchone()
 
         ret['Appeal'] = ["", "", "", "", "", "", ""]
+        ret["TaxonomyAgent"] = None
         flag = False
 
+        def _service_has_n255(service_line: dict) -> bool:
+            raw = f"{service_line.get('RemarkCodes') or ''}"
+            remarks = service_line.get("Remark") or []
+            codes = parse_remark_codes(raw) + [str(c).strip() for c in remarks]
+            return any(c.upper().replace("HE:", "") == "N255" for c in codes if c)
+
+        has_n255 = False
         if len(ret['Remit']) > 0:
             for service in ret['Remit'][0]['ServiceLine']:
-                if service['RemarkCodes'] == 'HE:N255':
+                if _service_has_n255(service):
+                    has_n255 = True
                     flag = True
-                    q = f"SELECT * FROM n255 WHERE Code='{ret['Claim']['Data']['RendTaxonomy']}'"
-                    cursor.execute(q)
-                    row = cursor.fetchone()
-                    if row != None:
-                        ret["Appeal"][2] = row["rationale"]
-                        ret["Appeal"][4] = f"Billing Provider Taxonomy is missing."
-                        ret["Appeal"][
-                            5
-                        ] = f"Resubmit the claim with Billing Taxonomy code '{row['BillingTaxonomy']}'."
                     break
-                elif service['RemarkCodes'] == "M77":
+                raw_remark = f"{service.get('RemarkCodes') or ''}"
+                if raw_remark == "M77" or "M77" in parse_remark_codes(raw_remark):
                     flag = True
                     q = f"SELECT * FROM denial_actions WHERE ClaimNo='{claim_no}' limit 1"
                     cursor.execute(q)
@@ -569,6 +570,87 @@ def get_rebound_claim():
                         ret["Appeal"][5] = row["recommendation"]
                         ret["Appeal"][6] = 0
                     break
+
+        # Taxonomy Missing AI agent (Automation=1 or N255): compare S3 837 vs Client Management facility config
+        automation_val = ret["Claim"]["Data"].get("Automation")
+        try:
+            automation_int = int(automation_val) if automation_val is not None else 0
+        except (TypeError, ValueError):
+            automation_int = 0
+        if has_n255 or automation_int == 1:
+            flag = True
+            try:
+                from services.taxonomy_agent import build_taxonomy_agent_result
+
+                path = (request.path or "").lower()
+                platform_tenant = "betacustomer"
+                for name in ("betacustomer", "pilotcustomer", "rebound", "medevolve"):
+                    if f"/{name}/" in path:
+                        platform_tenant = name
+                        break
+                client_id = (request.args.get("clientId") or request.headers.get("X-Client-Id") or "").strip() or None
+                agent = build_taxonomy_agent_result(
+                    platform_tenant=platform_tenant,
+                    claim_no=claim_no,
+                    claim_npi=str(ret["Claim"]["Data"].get("ProvNPI") or ""),
+                    claim_tax_id=str(ret["Claim"]["Data"].get("ProvTaxID") or ""),
+                    claim_bill_taxonomy=str(ret["Claim"]["Data"].get("BillTaxonomy") or ""),
+                    claim_rend_taxonomy=str(ret["Claim"]["Data"].get("RendTaxonomy") or ""),
+                    client_id=client_id,
+                    persist_corrected=False,
+                )
+                ret["TaxonomyAgent"] = agent
+                diagnosis = (agent or {}).get("diagnosis") or {}
+                facility = (agent or {}).get("facility") or {}
+                configured = (facility.get("taxonomyCode") or "").strip()
+                current = ((agent or {}).get("before") or {}).get("taxonomy") or ""
+                ret["Appeal"][2] = (
+                    diagnosis.get("summary")
+                    or "Claim denied for missing/incomplete/invalid billing taxonomy (CARC CO-16 / RARC N255)."
+                )
+                ret["Appeal"][4] = (
+                    "Billing Provider Taxonomy is missing or incorrect on the 837 (Loop 2000A/2010AA PRV*BI)."
+                    if diagnosis.get("issue") in ("missing", "incorrect", "config_missing")
+                    else ret["Appeal"][4] or "Billing Provider Taxonomy issue detected."
+                )
+                if configured:
+                    ret["Appeal"][5] = (
+                        f"Resubmit the claim with Billing Taxonomy code '{configured}' "
+                        f"from Client Management"
+                        + (f" (facility {facility.get('name')})." if facility.get("name") else ".")
+                    )
+                else:
+                    # Fallback to legacy n255 table if facility config is unavailable
+                    tax_lookup = ret["Claim"]["Data"].get("RendTaxonomy") or ret["Claim"]["Data"].get("BillTaxonomy") or ""
+                    q = f"SELECT * FROM n255 WHERE Code='{tax_lookup}'"
+                    try:
+                        cursor.execute(q)
+                        row = cursor.fetchone()
+                    except Exception:
+                        row = None
+                    if row is not None:
+                        if row.get("rationale"):
+                            ret["Appeal"][2] = row["rationale"]
+                        ret["Appeal"][4] = "Billing Provider Taxonomy is missing."
+                        ret["Appeal"][5] = (
+                            f"Resubmit the claim with Billing Taxonomy code '{row['BillingTaxonomy']}'."
+                        )
+                    else:
+                        ret["Appeal"][5] = (
+                            "Configure taxonomyCode for this facility in Client Management "
+                            "(match Tax ID / NPI), then re-run the Taxonomy Missing agent."
+                        )
+                if current or configured:
+                    ret["Appeal"][3] = (
+                        f"Before: {current or '(missing PRV*BI)'} → After: {configured or '(not configured)'}"
+                    )
+            except Exception as taxonomy_exc:
+                logger.warning("Taxonomy agent enrichment failed for %s: %s", claim_no, taxonomy_exc)
+                ret["Appeal"][4] = ret["Appeal"][4] or "Billing Provider Taxonomy is missing."
+                ret["Appeal"][5] = ret["Appeal"][5] or (
+                    "Open the Taxonomy Missing agent panel to load the raw 837 and apply the configured taxonomy."
+                )
+
         if flag == False:
             q = f"SELECT * FROM denial_actions WHERE ClaimNo='{claim_no}' limit 1"
             cursor.execute(q)

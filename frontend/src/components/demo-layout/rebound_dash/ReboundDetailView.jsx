@@ -15,6 +15,7 @@ import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import Description from "./Description";
 import DetailSection from "./DetailSection";
 import Recommendation from "./Recommendation";
+import TaxonomyMissingAgent from "./TaxonomyMissingAgent";
 import { samplifyDouble, samplifyString, samplifyInteger, SERVER_URL } from "../../../utils/config";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { useSelector, useDispatch } from "react-redux";
@@ -1731,6 +1732,17 @@ const ReboundDetailView = () => {
                 />
               </SectionCard>
 
+              {(Number(currentClaim?.Claim?.Data?.Automation) === 1 || currentClaim?.TaxonomyAgent) ? (
+                <div className="mt-6">
+                  <TaxonomyMissingAgent
+                    apiUrl={apiUrl}
+                    claimNo={claimNo}
+                    initialAgent={currentClaim?.TaxonomyAgent}
+                    isDark={isDark}
+                  />
+                </div>
+              ) : null}
+
               <SectionCard title="Diagnosis" showBorder={false}>
                 <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
                   <table className="w-full text-sm border-separate border-spacing-0">
@@ -2724,6 +2736,17 @@ const ReboundDetailView = () => {
           )}
 
           {detailShowStatus == 999 && <>
+
+            {(Number(currentClaim?.Claim?.Data?.Automation) === 1 || currentClaim?.TaxonomyAgent) ? (
+              <div className="my-6">
+                <TaxonomyMissingAgent
+                  apiUrl={apiUrl}
+                  claimNo={claimNo}
+                  initialAgent={currentClaim?.TaxonomyAgent}
+                  isDark={isDark}
+                />
+              </div>
+            ) : null}
 
             <div
               className="flex my-10   sm:flex-row flex-col gap-4 justify-evenly"

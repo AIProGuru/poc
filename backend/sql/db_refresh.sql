@@ -32,8 +32,25 @@ LEFT JOIN
   FROM (
     SELECT
       EDI_PaidClaimLines.ClaimID,
-      COALESCE(STR_TO_DATE(EDI_PaidClaimLines.ServiceDate, '%m/%d/%Y'), EDI_PaidClaimLines.ServicePeriodStart, EDI_PaidClaimLines.ServicePeriodEnd) ServiceDate,
-      ROW_NUMBER() OVER (PARTITION BY EDI_PaidClaimLines.ClaimID ORDER BY STR_TO_DATE(EDI_PaidClaimLines.ServiceDate, '%m/%d/%Y') DESC) rn
+      COALESCE(
+        STR_TO_DATE(EDI_PaidClaimLines.ServiceDate, '%m/%d/%Y'),
+        STR_TO_DATE(EDI_PaidClaimLines.ServiceDate, '%Y-%m-%d'),
+        STR_TO_DATE(EDI_PaidClaimLines.ServiceDate, '%Y%m%d'),
+        DATE(EDI_PaidClaimLines.ServiceDate),
+        EDI_PaidClaimLines.ServicePeriodStart,
+        EDI_PaidClaimLines.ServicePeriodEnd
+      ) ServiceDate,
+      ROW_NUMBER() OVER (
+        PARTITION BY EDI_PaidClaimLines.ClaimID
+        ORDER BY COALESCE(
+          STR_TO_DATE(EDI_PaidClaimLines.ServiceDate, '%m/%d/%Y'),
+          STR_TO_DATE(EDI_PaidClaimLines.ServiceDate, '%Y-%m-%d'),
+          STR_TO_DATE(EDI_PaidClaimLines.ServiceDate, '%Y%m%d'),
+          DATE(EDI_PaidClaimLines.ServiceDate),
+          EDI_PaidClaimLines.ServicePeriodStart,
+          EDI_PaidClaimLines.ServicePeriodEnd
+        ) DESC
+      ) rn
     FROM
       EDI_PaidClaimLines) subquery
   WHERE
@@ -72,9 +89,11 @@ SELECT
   ID, ClaimNo,
   SUBSTRING_INDEX(ClaimNo, '-', 1) AS ClaimNoFirst,
   SUBSTRING_INDEX(ClaimNo, '-', -1) AS ClaimNoLast,
-  servicedate_837.ServiceDate,
+  DATE(servicedate_837.ServiceDate) AS ServiceDate,
   InsuranceType,
-  FedTaxID, BillProvNPI, PayerName, PayerID, PayerResponsibility, PatientFirst, PatientLast, PlaceOfService, Amount, PrincipalDiagnosis, ClaimFrequency, TransactionDate, TransactionType, PatientID, PayerAddress, PayerCity, PayerState, PayerZip, BillProvLast, BillProvAddress, BillProvCity, BillProvState, BillProvZip, BillProvSpecialty, RendProvSpecialty, PriorAuthorization, PatientPaid
+  FedTaxID, BillProvNPI, PayerName, PayerID, PayerResponsibility, PatientFirst, PatientLast, PlaceOfService,
+  CAST(Amount AS DECIMAL(12,2)) AS Amount,
+  PrincipalDiagnosis, ClaimFrequency, TransactionDate, TransactionType, PatientID, PayerAddress, PayerCity, PayerState, PayerZip, BillProvLast, BillProvAddress, BillProvCity, BillProvState, BillProvZip, BillProvSpecialty, RendProvSpecialty, PriorAuthorization, PatientPaid
 FROM EDI_Claims
 LEFT JOIN servicedate_837 ON servicedate_837.id_837=EDI_Claims.ID;
 
@@ -85,9 +104,10 @@ SELECT
   EDI_PaidClaims.ID, EDI_PaidClaims.ClaimID,
   SUBSTRING_INDEX(EDI_PaidClaims.ClaimID, '-', 1) AS ClaimIDFirst,
   SUBSTRING_INDEX(EDI_PaidClaims.ClaimID, '-', -1) AS ClaimIDLast,
-  servicedate_835.ServiceDate, InsuranceType,
+  DATE(servicedate_835.ServiceDate) AS ServiceDate,
+  InsuranceType,
   ClaimStatus, PayersClaimID,
-  CUSTOM_PAID_AMOUNT.ChargeAmount,
+  CAST(CUSTOM_PAID_AMOUNT.ChargeAmount AS DECIMAL(12,2)) AS ChargeAmount,
   CoverageAmount, ClaimPaid,
   CUSTOM_PAID_AMOUNT.PatientResp AS PatientResp,
   PaymentID,
@@ -132,7 +152,14 @@ FROM (
   LEFT JOIN EDI_PaidClaims ON matching_837_835.id_835=EDI_PaidClaims.ID
   LEFT JOIN EDI_PaidClaimLines ON EDI_PaidClaimLines.ClaimID=EDI_PaidClaims.ID
   LEFT JOIN EDI_PaidClaimLineAdj ON EDI_PaidClaimLineAdj.LineID=EDI_PaidClaimLines.ID
-  LEFT JOIN carc ON carc.Code=EDI_PaidClaimLineAdj.AdjustmentReason
+  LEFT JOIN carc ON (
+    carc.Code = EDI_PaidClaimLineAdj.AdjustmentReason
+    OR (
+      EDI_PaidClaimLineAdj.AdjustmentReason REGEXP '^[0-9]+$'
+      AND carc.Code REGEXP '^[0-9]+$'
+      AND CAST(carc.Code AS UNSIGNED) = CAST(EDI_PaidClaimLineAdj.AdjustmentReason AS UNSIGNED)
+    )
+  )
 ) AS subquery1
 WHERE subquery1.rn=1;
 
@@ -545,7 +572,23 @@ CREATE INDEX idx_ActionTaken ON CUSTOM_ALL(ActionTaken);
 CREATE INDEX idx_Category ON CUSTOM_ALL(Category);
 CREATE INDEX idx_Automation ON CUSTOM_ALL(Automation);
 CREATE INDEX idx_ServiceDate ON CUSTOM_ALL(ServiceDate);
-CREATE INDEX idx_actions_ClaimNo ON actions(ClaimNo);
+-- `actions` is a persistent app table (not rebuilt by this proc). Re-runs fail with
+-- "Duplicate key name 'idx_actions_ClaimNo'" unless the index is created only when missing.
+SET @idx_actions_claimno_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.statistics
+  WHERE table_schema = DATABASE()
+    AND table_name = 'actions'
+    AND index_name = 'idx_actions_ClaimNo'
+);
+SET @idx_actions_claimno_sql := IF(
+  @idx_actions_claimno_exists > 0,
+  'SELECT 1',
+  'CREATE INDEX idx_actions_ClaimNo ON actions(ClaimNo)'
+);
+PREPARE stmt_idx_actions_claimno FROM @idx_actions_claimno_sql;
+EXECUTE stmt_idx_actions_claimno;
+DEALLOCATE PREPARE stmt_idx_actions_claimno;
 
 
 DROP TABLE IF EXISTS TEMP;
@@ -565,9 +608,9 @@ UPDATE CUSTOM_ALL SET Recovery=1 WHERE EXISTS (SELECT 1 FROM TEMP WHERE TEMP.Cla
 
 DROP TABLE IF EXISTS TEMP;
 
-UPDATE CUSTOM_ALL SET Automation=1 WHERE EXISTS ( SELECT 1 FROM CUSTOM_PAID_SERVICE_REMARK WHERE CUSTOM_PAID_SERVICE_REMARK.id_837=CUSTOM_ALL.ID AND CUSTOM_PAID_SERVICE_REMARK.id_835=CUSTOM_ALL.id_835 AND CUSTOM_PAID_SERVICE_REMARK.RemarkCode='N255' ) AND EXISTS ( SELECT 1 FROM CUSTOM_SERVICE_CODE_FOR_TABLE WHERE CUSTOM_SERVICE_CODE_FOR_TABLE.id_837=CUSTOM_ALL.ID AND CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentGroup='CO' AND CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentReason='16' ) AND CUSTOM_ALL.InsuranceType='MC' AND CUSTOM_ALL.PayerName LIKE '%DSHS%';
+UPDATE CUSTOM_ALL SET Automation=1 WHERE EXISTS ( SELECT 1 FROM CUSTOM_PAID_SERVICE_REMARK WHERE CUSTOM_PAID_SERVICE_REMARK.id_837=CUSTOM_ALL.ID AND CUSTOM_PAID_SERVICE_REMARK.id_835=CUSTOM_ALL.id_835 AND CUSTOM_PAID_SERVICE_REMARK.RemarkCode='N255' ) AND EXISTS ( SELECT 1 FROM CUSTOM_SERVICE_CODE_FOR_TABLE WHERE CUSTOM_SERVICE_CODE_FOR_TABLE.id_837=CUSTOM_ALL.ID AND CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentGroup='CO' AND TRIM(LEADING '0' FROM CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentReason)='16' ) AND CUSTOM_ALL.InsuranceType='MC' AND CUSTOM_ALL.PayerName LIKE '%DSHS%';
 
-UPDATE CUSTOM_ALL SET Automation=3 WHERE EXISTS ( SELECT 1 FROM CUSTOM_PAID_SERVICE_REMARK WHERE CUSTOM_PAID_SERVICE_REMARK.id_837=CUSTOM_ALL.ID AND CUSTOM_PAID_SERVICE_REMARK.id_835=CUSTOM_ALL.id_835 AND CUSTOM_PAID_SERVICE_REMARK.RemarkCode='M77' ) AND EXISTS ( SELECT 1 FROM CUSTOM_SERVICE_CODE_FOR_TABLE cst WHERE cst.id_837=CUSTOM_ALL.ID AND cst.AdjustmentGroup='CO' AND cst.AdjustmentReason='16' AND EXISTS ( SELECT 1 FROM denial_actions da WHERE da.ClaimNo=CUSTOM_ALL.ClaimNo ) ) AND (CUSTOM_ALL.PayerName LIKE 'REGENCE%' OR CUSTOM_ALL.PayerName LIKE '%UNITED HEALTH CARE%' OR CUSTOM_ALL.PayerName LIKE '%Humana%') AND PayerSeq='P' AND CUSTOM_ALL.Automation=0;
+UPDATE CUSTOM_ALL SET Automation=3 WHERE EXISTS ( SELECT 1 FROM CUSTOM_PAID_SERVICE_REMARK WHERE CUSTOM_PAID_SERVICE_REMARK.id_837=CUSTOM_ALL.ID AND CUSTOM_PAID_SERVICE_REMARK.id_835=CUSTOM_ALL.id_835 AND CUSTOM_PAID_SERVICE_REMARK.RemarkCode='M77' ) AND EXISTS ( SELECT 1 FROM CUSTOM_SERVICE_CODE_FOR_TABLE cst WHERE cst.id_837=CUSTOM_ALL.ID AND cst.AdjustmentGroup='CO' AND TRIM(LEADING '0' FROM cst.AdjustmentReason)='16' AND EXISTS ( SELECT 1 FROM denial_actions da WHERE da.ClaimNo=CUSTOM_ALL.ClaimNo ) ) AND (CUSTOM_ALL.PayerName LIKE 'REGENCE%' OR CUSTOM_ALL.PayerName LIKE '%UNITED HEALTH CARE%' OR CUSTOM_ALL.PayerName LIKE '%Humana%') AND PayerSeq='P' AND CUSTOM_ALL.Automation=0;
 
 UPDATE CUSTOM_ALL SET Automation=4 WHERE EXISTS ( SELECT 1 FROM CUSTOM_SERVICE_CODE_FOR_TABLE WHERE CUSTOM_SERVICE_CODE_FOR_TABLE.id_837=CUSTOM_ALL.ID AND EXISTS ( SELECT 1 FROM denial_actions da WHERE da.ClaimNo=CUSTOM_ALL.ClaimNo ) AND CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentGroup='CO' AND CUSTOM_SERVICE_CODE_FOR_TABLE.AdjustmentReason='22' ) AND CUSTOM_ALL.PayerSeq='P' AND CUSTOM_ALL.Automation=0;
 
