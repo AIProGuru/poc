@@ -343,6 +343,13 @@ const ReboundDetailView = () => {
     [currentClaim]
   );
 
+  const showTaxonomyMissingAgent = useMemo(
+    () =>
+      Number(currentClaim?.Claim?.Data?.Automation) === 1 ||
+      Boolean(currentClaim?.TaxonomyAgent),
+    [currentClaim]
+  );
+
   const firstSubmitDate = useMemo(
     () => getFirstSubmitDate(currentClaim?.Action || []),
     [currentClaim?.Action]
@@ -1741,17 +1748,6 @@ const ReboundDetailView = () => {
                 />
               </SectionCard>
 
-              {(Number(currentClaim?.Claim?.Data?.Automation) === 1 || currentClaim?.TaxonomyAgent) ? (
-                <div className="mt-6">
-                  <TaxonomyMissingAgent
-                    apiUrl={apiUrl}
-                    claimNo={claimNo}
-                    initialAgent={currentClaim?.TaxonomyAgent}
-                    isDark={isDark}
-                  />
-                </div>
-              ) : null}
-
               <SectionCard title="Diagnosis" showBorder={false}>
                 <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
                   <table className="w-full text-sm border-separate border-spacing-0">
@@ -2272,6 +2268,16 @@ const ReboundDetailView = () => {
                     )}
                   </div>
                 </div>
+
+                {showTaxonomyMissingAgent ? (
+                  <TaxonomyMissingAgent
+                    apiUrl={apiUrl}
+                    claimNo={claimNo}
+                    initialAgent={currentClaim?.TaxonomyAgent}
+                    isDark={isDark}
+                  />
+                ) : null}
+
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
                   <div className={`${triageGlassPanelClass} h-full`}>
                     <p className="text-sm font-semibold mb-3">Actions</p>
@@ -2754,17 +2760,6 @@ const ReboundDetailView = () => {
           )}
 
           {detailShowStatus == 999 && <>
-
-            {(Number(currentClaim?.Claim?.Data?.Automation) === 1 || currentClaim?.TaxonomyAgent) ? (
-              <div className="my-6">
-                <TaxonomyMissingAgent
-                  apiUrl={apiUrl}
-                  claimNo={claimNo}
-                  initialAgent={currentClaim?.TaxonomyAgent}
-                  isDark={isDark}
-                />
-              </div>
-            ) : null}
 
             <div
               className="flex my-10   sm:flex-row flex-col gap-4 justify-evenly"
