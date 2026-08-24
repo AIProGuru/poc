@@ -16,6 +16,7 @@ import Description from "./Description";
 import DetailSection from "./DetailSection";
 import Recommendation from "./Recommendation";
 import TaxonomyMissingAgent from "./TaxonomyMissingAgent";
+import AppealGenerationAgent from "./AppealGenerationAgent";
 import { samplifyDouble, samplifyString, samplifyInteger, SERVER_URL } from "../../../utils/config";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { useSelector, useDispatch } from "react-redux";
@@ -258,6 +259,7 @@ const ReboundDetailView = () => {
   const [matchedAppealTemplate, setMatchedAppealTemplate] = useState(null);
   const [appealTemplateContact, setAppealTemplateContact] = useState(null);
   const [appealTemplateLoading, setAppealTemplateLoading] = useState(false);
+  const [createAppealChecked, setCreateAppealChecked] = useState(false);
   const workflowTitle = `${routeTitle || appTitle || ""}`.toLowerCase();
   const showTriageDocumentUpload =
     workflowTitle.includes("denials") || workflowTitle.includes("payment variance");
@@ -378,6 +380,7 @@ const ReboundDetailView = () => {
       setDocumentForm(claim.Document);
       setAppeal([...claim.Appeal]);
       setThumb(claim.rate);
+      setCreateAppealChecked(false);
 
       const claimDataCategory =
         claim?.Claim?.Data?.Category ||
@@ -1322,7 +1325,12 @@ const ReboundDetailView = () => {
       setShowOptumDetails(false);
       setShowEligibilityDetails(false);
     }
-  }
+  };
+
+  const openAppealAgent = () => {
+    setCreateAppealChecked(true);
+    onDetailShowStatusChange(5);
+  };
 
 
 
@@ -1564,6 +1572,7 @@ const ReboundDetailView = () => {
                 { id: 2, label: "Payments (835)" },
                 { id: 3, label: "Related Encounters" },
                 { id: 4, label: "Triage" },
+                { id: 5, label: "AI Appeal" },
               ].map((tab) => {
                 const active = detailShowStatus === tab.id;
                 return (
@@ -2425,6 +2434,39 @@ const ReboundDetailView = () => {
                           </div>
                         );
                       })}
+                      <div className="flex flex-col gap-2 pt-1">
+                        <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none min-w-0">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={createAppealChecked}
+                            onChange={() => setCreateAppealChecked((prev) => !prev)}
+                          />
+                          <span
+                            className={`relative h-7 w-7 rounded-lg border transition-all duration-200
+                            ${isDark ? "border-[#4B4F5A] bg-[#2B2F36]" : "border-gray-300 bg-white"}
+                            peer-checked:border-[#6f7074] peer-checked:bg-[#24252a] peer-checked:shadow-[0_2px_6px_rgba(0,0,0,0.35)]
+                            peer-checked:[&>svg]:opacity-100
+                            `}
+                          >
+                            <svg
+                              className="absolute inset-0 m-auto h-4 w-4 opacity-0 transition-opacity duration-150"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              stroke="#F4F4F4"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
+                            </svg>
+                          </span>
+                          <span className={isDark ? "text-gray-200" : "text-gray-700"}>Create Appeal</span>
+                        </label>
+                        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                          Auto-generate a templated appeal letter and AI argument from this denial.
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -2494,6 +2536,16 @@ const ReboundDetailView = () => {
                   </div>
                 </div>
               </div>
+
+              {createAppealChecked ? (
+                <AppealGenerationAgent
+                  apiUrl={apiUrl}
+                  claimNo={claimNo}
+                  isDark={isDark}
+                  autoGenerate
+                  compact
+                />
+              ) : null}
 
               {showTriageDocumentUpload && (
                 <div className={`flex flex-col gap-3 ${triageGlassPanelClass}`}>
@@ -2733,6 +2785,15 @@ const ReboundDetailView = () => {
                 )}
               </div>
             </div>
+          )}
+
+          {detailShowStatus == 5 && (
+            <AppealGenerationAgent
+              apiUrl={apiUrl}
+              claimNo={claimNo}
+              isDark={isDark}
+              autoGenerate={createAppealChecked}
+            />
           )}
 
           {detailShowStatus == 999 && <>
@@ -3059,7 +3120,7 @@ const ReboundDetailView = () => {
                   </div>
                   <div className="flex px-1 py-3 mt-3">
                     <div className='flex flex-row justify-between items-center w-full'>
-                      <button className='bg-[#202123] text-white text-[14px] px-4 py-3 rounded-lg' onClick={() => setShowAppealModal(true)}>Generate Appeal Letter</button>
+                      <button className='bg-[#202123] text-white text-[14px] px-4 py-3 rounded-lg' onClick={openAppealAgent}>Generate Appeal Letter</button>
                       <button className='bg-[#3b3f46] text-white text-[14px] px-4 py-3 rounded-lg' onClick={onSubmitClaim}>Save Changes</button>
                     </div>
                   </div>
@@ -3482,7 +3543,7 @@ const ReboundDetailView = () => {
             </div>
             <div className="flex w-full rounded-b-lg border-[#CACBCB] border-b-[1px] border-l-[1px] border-r-[1px] bg-white justify-between py-[16px] px-[24px] gap-2">
               <div className="font-semibold bg-[#3a3f46] rounded-lg font-inter text-[16px] px-[20px] py-[12px] text-white cursor-pointer select-none"
-                onClick={() => setShowAppealModal(true)}
+                onClick={openAppealAgent}
               >Generate Appeal Letter</div>
               <div className="font-semibold bg-[#3a3f46] rounded-lg font-inter text-[16px] px-[20px] py-[12px] text-white cursor-pointer select-none"
                 onClick={onSubmitClaim}>Save</div>

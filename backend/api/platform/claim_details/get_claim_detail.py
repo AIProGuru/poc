@@ -252,6 +252,7 @@ def get_rebound_claim():
                 CUSTOM_ALL.PlaceOfService,
                 CUSTOM_ALL.PayerName,
                 CUSTOM_ALL.PatientID,
+                CUSTOM_ALL.PatientName,
                 CUSTOM_ALL.PayerSeq,
                 CUSTOM_ALL.PayerID,
                 CUSTOM_ALL.PayerAddress,
