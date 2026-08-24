@@ -361,7 +361,12 @@ def _load_dataset(cursor, conn, db_name: str, dataset: str) -> List[Dict[str, An
     order_sql = ", ".join(order_parts) if order_parts else "1"
     cursor.execute(f"SELECT * FROM `{table_name}`{where_sql} ORDER BY {order_sql}")
     rows = cursor.fetchall() or []
-    return [_serialize_row(row, field_columns, primary_key) for row in rows]
+    serialized = [_serialize_row(row, field_columns, primary_key) for row in rows]
+    if dataset == "actionCodes":
+        serialized = [
+            row for row in serialized if not _is_other_action_label(row.get("actionCode"))
+        ]
+    return serialized
 
 
 def list_governance_rows(dataset: str):
@@ -405,6 +410,10 @@ def create_governance_row(dataset: str):
             action_label = (db_values.get(action_col) or "").strip()
             if not category or not action_label:
                 return jsonify({"error": "Action Code and Category are required."}), 400
+            if _is_other_action_label(action_label):
+                return jsonify({
+                    "error": "Other is a built-in default for every category and cannot be created here."
+                }), 400
             if "sort_order" in col_map and col_map["sort_order"] not in db_values:
                 db_values[col_map["sort_order"]] = _next_action_sort_order(cursor, table_name, category)
             _apply_action_code_sort_order(db_values, field_columns, col_map)
@@ -476,6 +485,11 @@ def update_governance_row(dataset: str, row_id: str):
         if dataset == "actionCodes":
             columns = ctx["columns"]
             col_map = {name.lower(): name for name in columns}
+            action_col = field_columns.get("actionCode")
+            if action_col and _is_other_action_label(db_values.get(action_col)):
+                return jsonify({
+                    "error": "Other is a built-in default for every category and cannot be saved here."
+                }), 400
             _apply_action_code_sort_order(db_values, field_columns, col_map)
 
         set_sql = ", ".join(f"`{col}` = %s" for col in db_values.keys())

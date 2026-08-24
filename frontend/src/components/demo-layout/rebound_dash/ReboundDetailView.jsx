@@ -2434,39 +2434,6 @@ const ReboundDetailView = () => {
                           </div>
                         );
                       })}
-                      <div className="flex flex-col gap-2 pt-1">
-                        <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none min-w-0">
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={createAppealChecked}
-                            onChange={() => setCreateAppealChecked((prev) => !prev)}
-                          />
-                          <span
-                            className={`relative h-7 w-7 rounded-lg border transition-all duration-200
-                            ${isDark ? "border-[#4B4F5A] bg-[#2B2F36]" : "border-gray-300 bg-white"}
-                            peer-checked:border-[#6f7074] peer-checked:bg-[#24252a] peer-checked:shadow-[0_2px_6px_rgba(0,0,0,0.35)]
-                            peer-checked:[&>svg]:opacity-100
-                            `}
-                          >
-                            <svg
-                              className="absolute inset-0 m-auto h-4 w-4 opacity-0 transition-opacity duration-150"
-                              viewBox="0 0 16 16"
-                              fill="none"
-                              stroke="#F4F4F4"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
-                            </svg>
-                          </span>
-                          <span className={isDark ? "text-gray-200" : "text-gray-700"}>Create Appeal</span>
-                        </label>
-                        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                          Auto-generate a templated appeal letter and AI argument from this denial.
-                        </p>
-                      </div>
                     </div>
                   </div>
 
@@ -2536,16 +2503,6 @@ const ReboundDetailView = () => {
                   </div>
                 </div>
               </div>
-
-              {createAppealChecked ? (
-                <AppealGenerationAgent
-                  apiUrl={apiUrl}
-                  claimNo={claimNo}
-                  isDark={isDark}
-                  autoGenerate
-                  compact
-                />
-              ) : null}
 
               {showTriageDocumentUpload && (
                 <div className={`flex flex-col gap-3 ${triageGlassPanelClass}`}>

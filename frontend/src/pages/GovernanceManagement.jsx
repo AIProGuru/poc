@@ -280,6 +280,9 @@ const GovernanceManagement = () => {
   const sortedActiveRows = useMemo(() => {
     let draftRows = activeRows.filter((row) => row.isDraft);
     let savedRows = activeRows.filter((row) => !row.isDraft);
+    if (activeTab === "actionCodes") {
+      savedRows = savedRows.filter((row) => !isOtherActionLabel(row.actionCode));
+    }
 
     if (activeTab === "actionCodes" && categoryFilter) {
       const matchesCategory = (row) =>
@@ -397,6 +400,10 @@ const GovernanceManagement = () => {
     if (!apiUrl) return;
     const config = CONFIG_TABS.find((tab) => tab.id === tabId);
     const payload = rowPayload(config, row);
+    if (tabId === "actionCodes" && isOtherActionLabel(payload.actionCode)) {
+      toast.error("Other is a built-in default for every category and cannot be saved here.");
+      return;
+    }
 
     setDatasets((current) => ({
       ...current,
@@ -495,7 +502,7 @@ const GovernanceManagement = () => {
   const persistActionOrder = async (reorderedRows) => {
     if (!apiUrl || !categoryFilter || reordering) return;
 
-    const otherRow = sortedActiveRows.find(
+    const otherRow = activeRows.find(
       (row) =>
         !row.isDraft &&
         row.isActive !== false &&
@@ -579,14 +586,26 @@ const GovernanceManagement = () => {
     try {
       const parsedRecords = await parseUploadFile(file);
       const mappedRows = mapUploadedRows(parsedRecords, config);
+      const skippedOtherCount =
+        tabId === "actionCodes"
+          ? mappedRows.filter((row) => isOtherActionLabel(row.actionCode)).length
+          : 0;
+      const importRows =
+        tabId === "actionCodes"
+          ? mappedRows.filter((row) => !isOtherActionLabel(row.actionCode))
+          : mappedRows;
 
-      if (!mappedRows.length) {
-        toast.error(`No usable ${config.label} rows were found in ${file.name}.`);
+      if (!importRows.length) {
+        toast.error(
+          skippedOtherCount
+            ? "Other is a built-in default per category and was skipped. No other rows were found to import."
+            : `No usable ${config.label} rows were found in ${file.name}.`
+        );
         return;
       }
 
       const savedRows = [];
-      for (const mappedRow of mappedRows) {
+      for (const mappedRow of importRows) {
         const response = await axios.post(`${apiUrl}/governance/${tabId}`, mappedRow, {
           withCredentials: true,
         });
@@ -603,7 +622,11 @@ const GovernanceManagement = () => {
         ...current,
         [tabId]: [...current[tabId], ...savedRows],
       }));
-      toast.success(`Imported ${savedRows.length} row${savedRows.length === 1 ? "" : "s"}.`);
+      toast.success(
+        skippedOtherCount
+          ? `Imported ${savedRows.length} row${savedRows.length === 1 ? "" : "s"} and skipped ${skippedOtherCount} Other row${skippedOtherCount === 1 ? "" : "s"}.`
+          : `Imported ${savedRows.length} row${savedRows.length === 1 ? "" : "s"}.`
+      );
     } catch (error) {
       toast.error(error?.response?.data?.error || error.message || "Upload failed.");
     } finally {
@@ -711,7 +734,7 @@ const GovernanceManagement = () => {
                   </label>
                   {categoryFilter ? (
                     <p className={`text-sm ${subduedText}`}>
-                      Drag and drop rows to reorder actions for this category. Other always appears last on Triage.
+                      Drag and drop rows to reorder actions for this category. Other is hidden here because it is a built-in default and always appears last on Triage.
                     </p>
                   ) : (
                     <p className={`text-sm ${subduedText}`}>
