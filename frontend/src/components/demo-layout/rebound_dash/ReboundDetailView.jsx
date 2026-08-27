@@ -271,10 +271,7 @@ const ReboundDetailView = () => {
       ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100'
       : 'bg-gray-100 border-gray-200 text-gray-800'
     }`;
-  const saveAndSubmitButtonClass = `px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${isDark
-      ? 'bg-[#3b3f46] text-white hover:bg-[#4a4f57] focus-visible:ring-2 focus-visible:ring-white/20 shadow-[0_8px_20px_rgba(0,0,0,0.25)]'
-      : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57] focus-visible:ring-2 focus-visible:ring-slate-300 shadow-sm'
-    }`;
+  const saveAndSubmitButtonClass = `px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed bg-orange-500 hover:bg-orange-600 text-white focus-visible:ring-2 focus-visible:ring-orange-300 shadow-sm`;
 
   let { token } = useParams()
   useEffect(() => {
