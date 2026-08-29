@@ -13,13 +13,15 @@ body{
 }
 
 .dark-mode {
-  --helio-app-bg: #121722;
-  --helio-sidebar-bg: #0f131b;
+  --helio-app-bg: #0f172b;
+  --helio-sidebar-bg: #0f172b;
   --helio-surface: #1b1f29;
   --helio-surface-muted: #141824;
   --helio-border: #1f2433;
   --helio-border-strong: #2d3348;
   color-scheme: dark;
+  background-color: #0f172b;
+  color: #e5e7eb;
 }
 
 .dark-mode ::-webkit-scrollbar-track {
