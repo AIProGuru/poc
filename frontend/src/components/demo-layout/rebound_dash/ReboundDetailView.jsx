@@ -1472,9 +1472,13 @@ const ReboundDetailView = () => {
         if (!summary) return null;
         return (
           <div
-            className={`rounded-2xl border m-4 p-4 ${isDark ? 'border-transparent text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]' : 'bg-white border-gray-200 text-[#0f172a]'}`}
-            style={isDark ? { background: 'linear-gradient(90deg, #4B9187 0%, #6911AC 100%)' } : undefined}
+            className="shrink-0 rounded-2xl border-0 m-4 text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+            style={{
+              backgroundColor: '#4B9187',
+              backgroundImage: 'linear-gradient(90deg, #4B9187 0%, #6911AC 100%)',
+            }}
           >
+            <div className="p-4 pb-4">
             <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
               {[
                 { label: 'Count', value: samplifyInteger(summary.count) },
@@ -1487,12 +1491,13 @@ const ReboundDetailView = () => {
               ].map((item) => (
                 <div
                   key={item.label}
-                  className={`rounded-xl px-4 py-3 text-sm ${isDark ? 'bg-black/15 text-white border border-white/20 shadow-[0_4px_4px_rgba(0,0,0,0.25)]' : 'bg-slate-50 text-slate-900 border border-gray-200'}`}
+                  className="rounded-xl px-4 py-3 text-sm bg-black/15 text-white border border-white/20 shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
                 >
-                  <p className={`text-xs uppercase tracking-wide ${isDark ? 'text-white/70' : 'text-slate-500'}`}>{item.label}</p>
+                  <p className="text-xs uppercase tracking-wide text-white/70">{item.label}</p>
                   <p className="mt-1 text-lg font-semibold">{item.value}</p>
                 </div>
               ))}
+            </div>
             </div>
           </div>
         );

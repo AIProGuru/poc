@@ -356,12 +356,15 @@ const ReboundDash = () => {
     const basePayload = navExtraFilters[navId] || {};
     const filterPayload = { ...basePayload };
     let tagOverride = navTagFilters[navId];
-    const isDenialsNav = navId === 'denials' || navId.startsWith('denials:');
     const isAiLibrary = navId === 'ai-library';
-    if (!tagOverride && navId === 'denials') {
-      tagOverride = tags.filter(
-        (tag) => tag && tag !== 'Contractual Adj' && tag !== 'Patient Resp'
-      );
+    if (navId === 'denials') {
+      dispatch(setSelectedTags([]));
+      dispatch(setTabIndex(6));
+      dispatch(setExtraFilter(filterPayload));
+      dispatch(setCurrentPage(1));
+      dispatch(setTableData([]));
+      dispatch(setTableLoading(false));
+      return;
     }
     if (isAiLibrary) {
       dispatch(setSelectedTags(tags));

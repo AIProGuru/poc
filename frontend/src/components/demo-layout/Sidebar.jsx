@@ -12,9 +12,13 @@ import HelioBrand from "../layout/HelioBrand";
 import {
   applyWorklistNavFilters,
   getInitialWorklistNavId,
+  getPermittedWorklistChildren,
   getWorklistTitle,
   normalizeTagKey,
+  persistDenialTabIds,
+  readStoredDenialTabIds,
   resolveFilterTags,
+  selectWorklistNav,
   WORKLIST_NAV_CHILDREN,
   WORKLIST_TAG_FILTERS,
   WORKLIST_TAB_INDEX,
@@ -48,7 +52,9 @@ const Sidebar = () => {
   const username = useSelector((state) => state.auth.username);
   const isPrivilegedRole = ["admin", "super-admin", "manager", "internal-admin"].includes(role);
   const selectedNav = useSelector((state) => state.app.selectedNav) || "home";
+  const denialTabIds = useSelector((state) => state.app.denialTabIds) || [];
   const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [denialsExpanded, setDenialsExpanded] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
   const sidebarExpanded = useSelector((state) => state.menu.menuState);
   const showLabels = isMobileView ? mobileExpanded : sidebarExpanded;
@@ -470,9 +476,62 @@ const Sidebar = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    const permitted = getPermittedWorklistChildren(
+      "denials",
+      accessDenialCategory,
+      isPrivilegedRole
+    );
+    const stored = readStoredDenialTabIds(username).filter((id) =>
+      permitted.some((child) => child.id === id)
+    );
+    persistDenialTabIds(dispatch, username, stored);
+  }, [username, accessDenialCategory, isPrivilegedRole, dispatch]);
+
+  useEffect(() => {
+    const inDenials = selectedNav === "denials" || `${selectedNav}`.startsWith("denials:");
+    if (!inDenials) {
+      setDenialsExpanded(false);
+    }
+  }, [selectedNav]);
+
   const handleClick = (item) => {
     if (isMobileView && !mobileExpanded) {
       setMobileExpanded(true);
+      return;
+    }
+    if (item.id === "denials") {
+      const alreadyInDenials =
+        selectedNav === "denials" || `${selectedNav}`.startsWith("denials:");
+      if (!showLabels && !isMobileView) {
+        dispatch(setToggleMenu(true));
+        setDenialsExpanded(true);
+        if (alreadyInDenials) return;
+      } else if (alreadyInDenials) {
+        setDenialsExpanded((prev) => !prev);
+        return;
+      } else {
+        setDenialsExpanded(true);
+      }
+      const permitted = getPermittedWorklistChildren(
+        "denials",
+        accessDenialCategory,
+        isPrivilegedRole
+      );
+      const stored = (denialTabIds.length > 0 ? denialTabIds : readStoredDenialTabIds(username)).filter(
+        (id) => permitted.some((child) => child.id === id)
+      );
+      if (stored.length !== denialTabIds.length) {
+        persistDenialTabIds(dispatch, username, stored);
+      }
+      const targetId = stored[0] || "denials";
+      dispatch(setSelectedNav(targetId));
+      dispatch(setAppTitle(getWorklistTitle(targetId) || item.title));
+      applyFilters(targetId);
+      navigate(basePath);
+      if (isMobileView) {
+        setMobileExpanded(false);
+      }
       return;
     }
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
@@ -496,6 +555,57 @@ const Sidebar = () => {
     if (isMobileView) {
       setMobileExpanded(false);
     }
+  };
+
+  const handleDenialCategoryToggle = (child, checked) => {
+    const permitted = getPermittedWorklistChildren(
+      "denials",
+      accessDenialCategory,
+      isPrivilegedRole
+    );
+    const permittedIds = new Set(permitted.map((item) => item.id));
+    const currentIds = denialTabIds.filter((id) => permittedIds.has(id));
+    const nextIds = checked
+      ? [...currentIds.filter((id) => id !== child.id), child.id]
+      : currentIds.filter((id) => id !== child.id);
+    persistDenialTabIds(dispatch, username, nextIds);
+
+    if (checked) {
+      dispatch(setSelectedNav(child.id));
+      selectWorklistNav({
+        dispatch,
+        navId: child.id,
+        tags,
+        title: getWorklistTitle(child.id) || child.title,
+      });
+    } else if (selectedNav === child.id) {
+      const fallbackId = nextIds[0] || "denials";
+      dispatch(setSelectedNav(fallbackId));
+      selectWorklistNav({
+        dispatch,
+        navId: fallbackId,
+        tags,
+        title: getWorklistTitle(fallbackId) || "Denials",
+      });
+    }
+    navigate(basePath);
+  };
+
+  const handleDenialCategoryActivate = (child) => {
+    const alreadyOpen = denialTabIds.includes(child.id);
+    if (!alreadyOpen) {
+      handleDenialCategoryToggle(child, true);
+      return;
+    }
+    if (selectedNav === child.id) return;
+    dispatch(setSelectedNav(child.id));
+    selectWorklistNav({
+      dispatch,
+      navId: child.id,
+      tags,
+      title: getWorklistTitle(child.id) || child.title,
+    });
+    navigate(basePath);
   };
 
   useLayoutEffect(() => {
@@ -550,6 +660,11 @@ const Sidebar = () => {
         </div>
         <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden sidebar-scrollbar ${showLabels ? "pr-1" : "pr-0"}`}>
           {navItems.map((item) => {
+            const isDenials = item.id === "denials";
+            const denialChildren = isDenials
+              ? getPermittedWorklistChildren("denials", accessDenialCategory, isPrivilegedRole)
+              : [];
+            const showDenialChildren = isDenials && showLabels && denialsExpanded && denialChildren.length > 0;
             const hasChildren = Array.isArray(item.children) && item.children.length > 0;
             const childActive = hasChildren && activeId.startsWith(`${item.id}:`);
             const isActive = activeId === item.id || childActive;
@@ -591,6 +706,7 @@ const Sidebar = () => {
                 <button
                   type="button"
                   aria-label={item.title}
+                  aria-expanded={isDenials ? denialsExpanded : undefined}
                   className={`w-full flex items-center rounded-2xl transition-colors bg-transparent border-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 ${
                     showLabels ? "px-2 py-2" : "px-0 py-1.5 justify-center"
                   } ${navStateClass}`}
@@ -612,15 +728,88 @@ const Sidebar = () => {
                         {item.title}
                       </span>
                     </span>
-                    {computedBadge !== null && computedBadge !== undefined && (
-                      <span
-                        className={`${showLabels ? "inline-flex" : "hidden"} text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}
-                      >
-                        {formatCount(computedBadge)}
-                      </span>
-                    )}
+                    <span className={`${showLabels ? "inline-flex" : "hidden"} items-center gap-1 shrink-0`}>
+                      {computedBadge !== null && computedBadge !== undefined && (
+                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}>
+                          {formatCount(computedBadge)}
+                        </span>
+                      )}
+                      {isDenials && (
+                        <svg
+                          className={`h-4 w-4 transition-transform ${denialsExpanded ? "rotate-90" : ""} ${
+                            isDark ? "text-white/60" : "text-slate-500"
+                          }`}
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M7 5l6 5-6 5" />
+                        </svg>
+                      )}
+                    </span>
                   </span>
                 </button>
+                {showDenialChildren && (
+                  <div className="mt-1 mb-1 space-y-0.5">
+                    {denialChildren.map((child) => {
+                      const checked = denialTabIds.includes(child.id);
+                      const childIsActive = activeId === child.id;
+                      const childBadge = navBadges[child.id];
+                      return (
+                        <div
+                          key={child.id}
+                          className={`flex items-center gap-2 rounded-xl pl-[52px] pr-2 py-1.5 ${
+                            childIsActive
+                              ? isDark
+                                ? "bg-white/10 text-white"
+                                : "bg-slate-100 text-slate-900"
+                              : isDark
+                                ? "text-[rgba(244,244,244,0.7)] hover:bg-white/5"
+                                : "text-slate-600 hover:bg-slate-100"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5 shrink-0 rounded border-slate-400 accent-[#4B9187]"
+                            checked={checked}
+                            onChange={(event) =>
+                              handleDenialCategoryToggle(child, event.target.checked)
+                            }
+                            aria-label={`Show ${child.title} as a tab`}
+                          />
+                          <button
+                            type="button"
+                            className="flex min-w-0 flex-1 items-center justify-between gap-2 bg-transparent border-0 p-0 text-left"
+                            onClick={() => handleDenialCategoryActivate(child)}
+                          >
+                            <span className="truncate text-sm" title={child.title}>
+                              {child.title}
+                            </span>
+                            {typeof childBadge === "number" && (
+                              <span
+                                className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                                  childIsActive
+                                    ? isDark
+                                      ? "bg-white/20 text-white"
+                                      : "bg-slate-200 text-slate-800"
+                                    : isDark
+                                      ? "bg-[var(--helio-surface-muted)] text-[rgba(244,244,244,0.5)]"
+                                      : "bg-slate-200 text-slate-700"
+                                }`}
+                              >
+                                {formatCount(childBadge)}
+                              </span>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}

@@ -2,6 +2,7 @@ import {
   setAppTitle,
   setCode,
   setCurrentPage,
+  setDenialTabIds,
   setEndDate,
   setExtraFilter,
   setKeyword,
@@ -233,6 +234,12 @@ export const writeStoredDenialTabIds = (username, ids) => {
   }
 };
 
+export const persistDenialTabIds = (dispatch, username, ids) => {
+  const nextIds = Array.isArray(ids) ? ids : [];
+  writeStoredDenialTabIds(username, nextIds);
+  dispatch(setDenialTabIds(nextIds));
+};
+
 export const getInitialWorklistNavId = ({
   parentId,
   accessDenialCategory,
@@ -318,11 +325,12 @@ export const applyWorklistNavFilters = ({ dispatch, navId, tags }) => {
     dispatch(setSelectedTags(resolveFilterTags(tags, tags)));
     dispatch(setTabIndex(6));
   } else if (navId === "denials") {
-    const defaultTags = resolveFilterTags(tags, tags).filter(
-      (tag) => tag && tag !== "Contractual Adj" && tag !== "Patient Resp" && tag !== "Delinquent"
-    );
-    dispatch(setSelectedTags(defaultTags));
+    dispatch(setSelectedTags([]));
     dispatch(setTabIndex(6));
+    dispatch(setCurrentPage(1));
+    dispatch(setTableData([]));
+    dispatch(setTableLoading(false));
+    return;
   } else {
     dispatch(setSelectedTags([]));
     if (typeof worklistTabIndex === "number") {

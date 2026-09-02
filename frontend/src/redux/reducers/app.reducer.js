@@ -36,6 +36,7 @@ const initialState = {
   arByCategory: [],
   worklistSummary: null,
   selectedNav: "home",
+  denialTabIds: [],
 };
 
 const appReducer = createSlice({
@@ -169,6 +170,9 @@ const appReducer = createSlice({
     setSelectedNav: (state, action) => {
       state.selectedNav = action.payload || "home";
     },
+    setDenialTabIds: (state, action) => {
+      state.denialTabIds = Array.isArray(action.payload) ? action.payload : [];
+    },
     clearSelectedClaimIds: (state) => {
       state.selectedClaimIds = [];
     },
@@ -222,6 +226,7 @@ const appReducer = createSlice({
       state.arByCategory = [];
       state.worklistSummary = null;
       state.selectedNav = "home";
+      state.denialTabIds = [];
     }
   },
 });
@@ -268,6 +273,7 @@ export const {
   setArByCategory,
   setWorklistSummary,
   setSelectedNav,
+  setDenialTabIds,
   clearSelectedClaimIds,
   setTabDefaults,
   resetViewState,
