@@ -243,7 +243,7 @@ const BulkDenialsPanel = ({
   return (
     <>
       <div
-        className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? "border-[#2d3348] bg-[#1b1f29] text-white" : "bg-white border-gray-200 text-slate-900"}`}
+        className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? "border-[#2A4A70] bg-[#111F35] text-white" : "bg-white border-gray-200 text-slate-900"}`}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -261,7 +261,7 @@ const BulkDenialsPanel = ({
               !denialCategory
                 ? "bg-gray-400 text-white cursor-not-allowed"
                 : isDarkMode
-                  ? "bg-[#2d3348] text-white hover:bg-[#39415c]"
+                  ? "bg-[#2A4A70] text-white hover:bg-[#39415c]"
                   : "bg-slate-900 text-white hover:bg-slate-800"
             }`}
           >
@@ -274,7 +274,7 @@ const BulkDenialsPanel = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div
             className={`w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border p-6 shadow-xl ${
-              isDarkMode ? "border-[#2d3348] bg-[#1b1f29] text-white" : "bg-white border-gray-200 text-slate-900"
+              isDarkMode ? "border-[#2A4A70] bg-[#111F35] text-white" : "bg-white border-gray-200 text-slate-900"
             }`}
           >
             <div className="mb-4 flex items-start justify-between gap-4">
@@ -333,7 +333,7 @@ const BulkDenialsPanel = ({
                               placeholder="Describe other action"
                               className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm ${
                                 isDarkMode
-                                  ? "border-[#2d3348] bg-[#27282D] text-white"
+                                  ? "border-[#2A4A70] bg-[#1C3050] text-white"
                                   : "border-gray-200 bg-white text-slate-900"
                               }`}
                             />
@@ -354,7 +354,7 @@ const BulkDenialsPanel = ({
                   placeholder="This note will be attached to every selected account."
                   className={`w-full rounded-lg border px-3 py-2 text-sm ${
                     isDarkMode
-                      ? "border-[#2d3348] bg-[#27282D] text-white"
+                      ? "border-[#2A4A70] bg-[#1C3050] text-white"
                       : "border-gray-200 bg-white text-slate-900"
                   }`}
                 />
@@ -368,7 +368,7 @@ const BulkDenialsPanel = ({
                     onChange={(event) => setAutomation(event.target.value)}
                     className={`w-full rounded-lg border px-3 py-2 text-sm ${
                       isDarkMode
-                        ? "border-[#2d3348] bg-[#27282D] text-white"
+                        ? "border-[#2A4A70] bg-[#1C3050] text-white"
                         : "border-gray-200 bg-white text-slate-900"
                     }`}
                   >
@@ -390,7 +390,7 @@ const BulkDenialsPanel = ({
                     }}
                     className={`w-full rounded-lg border px-3 py-2 text-sm ${
                       isDarkMode
-                        ? "border-[#2d3348] bg-[#27282D] text-white"
+                        ? "border-[#2A4A70] bg-[#1C3050] text-white"
                         : "border-gray-200 bg-white text-slate-900"
                     }`}
                   />
@@ -434,7 +434,7 @@ const BulkDenialsPanel = ({
                 disabled={loading}
                 className={`rounded-xl px-4 py-2 text-sm font-semibold ${
                   isDarkMode
-                    ? "bg-[#27282D] text-white hover:bg-[#32343a]"
+                    ? "bg-[#1C3050] text-white hover:bg-[#32343a]"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >

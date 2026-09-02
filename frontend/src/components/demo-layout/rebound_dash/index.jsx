@@ -19,6 +19,7 @@ import {
   setExtraFilter,
   setTabDefaults,
   clearAdvancedFilters,
+  setSelectedNav,
 } from "../../../redux/reducers/app.reducer";
 import { setSelectedTags } from "../../../redux/reducers/tag.reducer";
 import { setTableData, setTheme } from '../../../redux/reducers/app.reducer';
@@ -54,19 +55,15 @@ const ReboundDash = () => {
   const isUserEditRoute = /^\/management\/users\/[^/]+\/edit$/.test(location.pathname);
   const editUserId = isUserEditRoute ? location.pathname.split('/')[3] : null;
   const isUserListRoute = location.pathname.startsWith('/management/users') && !isUserAddRoute && !isUserEditRoute;
-  const [selectedNav, setSelectedNav] = useState(() => {
-    if (isManagementRoute) return 'user-management';
-    return location.pathname.includes('/denials') ? 'denials' : 'home';
-  });
-  const [expandedNav, setExpandedNav] = useState(() => new Set());
+  const dispatch = useDispatch();
+  const theme = useSelector((state) => state.app.theme);
+  const selectedNav = useSelector((state) => state.app.selectedNav) || "home";
   const [aiLibraryDrilldown, setAiLibraryDrilldown] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const inputKeywordRef = useRef();
   const navigate = useNavigate();
   const { logout } = useContext(AccountContext);
 
-  const dispatch = useDispatch();
-  const theme = useSelector((state) => state.app.theme);
   const appType = useSelector((state) => state.app.type);
   const tenant = useSelector((state) => state.auth.tenant);
   const role = useSelector((state) => state.auth.role);
@@ -111,15 +108,7 @@ const ReboundDash = () => {
   const isAiTitle = appTitle === 'AI Agents' || appTitle === 'AI Automation';
   const showAiModels = !isUserManagementView && isAiTitle && !aiLibraryDrilldown;
   const placeholderNavs = [
-    'settings',
     'support',
-    'dashboard',
-    'claim-edits',
-    'claim-edits:ch-rejection',
-    'claim-edits:payer-rejection',
-    'payment-variance',
-    'payment-variance:payer-overpaid',
-    'payment-variance:payer-underpaid',
   ];
   const showPlaceholder = placeholderNavs.includes(selectedNav);
   const showHomeView = appTitle === 'Home';
@@ -154,29 +143,26 @@ const ReboundDash = () => {
 
   useEffect(() => {
     const onDenialsRoute = location.pathname.includes('/denials');
-    if (onDenialsRoute) {
+    if (isManagementRoute) {
+      if (selectedNav !== 'user-management') {
+        dispatch(setSelectedNav('user-management'));
+      }
+    } else if (selectedNav === 'user-management') {
+      dispatch(setSelectedNav('home'));
+    } else if (onDenialsRoute) {
       if (aiLibraryDrilldown) {
         if (selectedNav !== 'ai-library') {
-          setSelectedNav('ai-library');
+          dispatch(setSelectedNav('ai-library'));
         }
-      } else if (!selectedNav.startsWith('denials')) {
-        setSelectedNav('denials');
+      } else if (!`${selectedNav}`.startsWith('denials')) {
+        dispatch(setSelectedNav('denials'));
       }
-    } else if (isManagementRoute) {
-      if (selectedNav !== 'user-management') {
-        setSelectedNav('user-management');
-      }
-    } else if (
-      selectedNav === 'denials' ||
-      selectedNav === 'user-management'
-    ) {
-      setSelectedNav('home');
     }
 
     if (!onDenialsRoute && aiLibraryDrilldown) {
       setAiLibraryDrilldown(false);
     }
-  }, [location.pathname, selectedNav, isManagementRoute, aiLibraryDrilldown]);
+  }, [location.pathname, selectedNav, isManagementRoute, aiLibraryDrilldown, dispatch]);
 
   const formatDisplay = (value, type = 'number') => {
     const numeric = Number(value ?? 0);
@@ -424,11 +410,11 @@ const ReboundDash = () => {
   useEffect(() => {
     if (isManagementRoute) return;
     if ((appTitle === 'AI Agents' || appTitle === 'AI Automation') && selectedNav !== 'ai-library') {
-      setSelectedNav('ai-library');
+      dispatch(setSelectedNav('ai-library'));
       setAiLibraryDrilldown(false);
       applyNavFilters('ai-library');
     }
-  }, [appTitle, selectedNav, applyNavFilters, isManagementRoute]);
+  }, [appTitle, selectedNav, applyNavFilters, isManagementRoute, dispatch]);
 
   // When tags finish loading, re-apply filters for denials views once (avoid duplicate data_all).
   const prevTagsLengthRef = useRef(0);
@@ -645,7 +631,7 @@ const ReboundDash = () => {
       }
       if (decodedToken.source === 'ai-library') {
         setAiLibraryDrilldown(true);
-        setSelectedNav('ai-library');
+        dispatch(setSelectedNav('ai-library'));
       }
       dispatch(setTableLoading(true));
       dispatch(setPart1Loading(true));
@@ -686,27 +672,6 @@ const ReboundDash = () => {
     dispatch(setSelectedTags(tagsToApply));
   }
 
-  const toggleExpand = (id) => {
-    setExpandedNav((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  const ensureExpanded = (id) => {
-    setExpandedNav((prev) => {
-      if (prev.has(id)) return prev;
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-  };
-
   const handleNavSelection = (item) => {
     if (item.id !== 'ai-library') {
       setAiLibraryDrilldown(false);
@@ -715,7 +680,7 @@ const ReboundDash = () => {
       resetFilters();
     }
     if (placeholderNavs.includes(item.id)) {
-      setSelectedNav(item.id);
+      dispatch(setSelectedNav(item.id));
       dispatch(setSelectedTags([]));
       dispatch(setExtraFilter({}));
       dispatch(setTableData([]));
@@ -728,7 +693,7 @@ const ReboundDash = () => {
       if (location.pathname.includes('/denials') || location.pathname.includes('/management')) {
         navigate(baseAppPath);
       }
-      setSelectedNav('home');
+      dispatch(setSelectedNav('home'));
       dispatch(setTabIndex(0));
       dispatch(setSelectedTags([]));
       dispatch(setExtraFilter({ IncludeAllCategories: true }));
@@ -741,13 +706,13 @@ const ReboundDash = () => {
       if (location.pathname !== denialsBase) {
         navigate(denialsBase);
       }
-      setSelectedNav('denials');
+      dispatch(setSelectedNav('denials'));
       applyNavFilters('denials');
       return;
     }
     if (item.id === 'user-management') {
       navigate('/management');
-      setSelectedNav('user-management');
+      dispatch(setSelectedNav('user-management'));
       return;
     }
     if (location.pathname.includes('/denials') || location.pathname.includes('/management')) {
@@ -756,15 +721,14 @@ const ReboundDash = () => {
     if (typeof item.tab === 'number') {
       changeTab(item.tab);
     }
-    setSelectedNav(item.id);
+    dispatch(setSelectedNav(item.id));
     applyNavFilters(item.id);
   };
 
   const handleChildSelection = (parentId, child) => {
     setAiLibraryDrilldown(false);
     resetFilters();
-    setSelectedNav(child.id);
-    ensureExpanded(parentId);
+    dispatch(setSelectedNav(child.id));
     const parentItem = navItems.find((nav) => nav.id === parentId);
     if (parentId === 'denials' && location.pathname.includes('/denials')) {
       navigate(baseAppPath);

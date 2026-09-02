@@ -111,12 +111,10 @@ const ReboundDetailView = () => {
   const theme = useSelector((state) => state.app.theme);
   const appTitle = useSelector((state) => state.app.title);
   const isDark = theme === 'dark';
-  const detailTabActiveClass = isDark
-    ? 'bg-white/10 text-white border border-white/20'
-    : 'bg-slate-100 text-slate-900 border border-slate-300 shadow-sm';
-  const detailTabInactiveClass = isDark
-    ? 'text-gray-400 border border-transparent hover:border-[#2e364a] hover:bg-[#141824]'
-    : 'text-slate-600 border border-transparent hover:bg-slate-100';
+  const zebraRowClass = (index) =>
+    isDark
+      ? (index % 2 === 0 ? "bg-[#111F35]" : "bg-[#1C3050]")
+      : (index % 2 === 0 ? "bg-white" : "bg-slate-100");
   const mutedLabelClass = isDark ? 'text-gray-400' : 'text-slate-600';
   const bodyTextClass = isDark ? 'text-gray-300' : 'text-slate-700';
   const emphasisTextClass = isDark ? 'text-gray-200' : 'text-slate-800';
@@ -268,7 +266,7 @@ const ReboundDetailView = () => {
       : "bg-white/70 shadow-[0_18px_45px_rgba(15,23,42,0.14)]"
     }`;
   const triageFieldClass = `w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] ${isDark
-      ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100'
+      ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100'
       : 'bg-gray-100 border-gray-200 text-gray-800'
     }`;
   const saveAndSubmitButtonClass = `px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed bg-orange-500 hover:bg-orange-600 text-white focus-visible:ring-2 focus-visible:ring-orange-300 shadow-sm`;
@@ -926,6 +924,17 @@ const ReboundDetailView = () => {
     return value;
   };
 
+  const formatIdValue = (value, fallback = "N/A") => {
+    const formatted = formatValue(value, fallback);
+    if (formatted === fallback) return formatted;
+    return `${formatted}`.toUpperCase();
+  };
+
+  const isIdentifierLabel = (label) =>
+    /\b(id|npi|tax id|taxonomy|policy|control #|claim number|dx|authorization|type of bill)\b/i.test(
+      `${label || ""}`
+    );
+
   const formatDateValue = (value) => {
     if (!value) return "N/A";
     const parsed = new Date(Date.parse(value));
@@ -1099,7 +1108,7 @@ const ReboundDetailView = () => {
           <span
             key={`${entry.label}-${index}`}
             title={entry.title || entry.label}
-            className={`inline-flex w-fit max-w-[140px] items-center rounded-md px-2 py-0.5 text-xs font-medium ${isDark ? 'bg-[#303544] text-gray-200' : 'bg-gray-100 text-gray-700'}`}
+            className={`inline-flex w-fit max-w-[140px] items-center rounded-md px-2 py-0.5 text-xs font-medium ${isDark ? 'bg-[#2A4A70] text-gray-200' : 'bg-gray-100 text-gray-700'}`}
           >
             <span className="truncate">{entry.label}</span>
           </span>
@@ -1246,11 +1255,11 @@ const ReboundDetailView = () => {
     const [collapsed, setCollapsed] = useState(startCollapsed);
 
     const containerClass = `rounded-2xl overflow-hidden ${isDark
-      ? `${showBorder ? 'border border-[#1f2433]' : 'border-0'} bg-[#27282D]`
+      ? `${showBorder ? 'border border-[#2A4A70]' : 'border-0'} bg-[#111F35]`
       : `${showBorder ? 'border border-gray-200' : 'border-0'} bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]`
       }`;
-    const borderStyle = showBorder ? (isDark ? 'border-[#1f2433]' : 'border-gray-200') : 'border-transparent';
-    const headerClasses = `w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b-0 ${borderStyle} ${isDark ? 'hover:bg-[#353639]' : 'hover:bg-gray-50'} transition`;
+    const borderStyle = showBorder ? (isDark ? 'border-[#2A4A70]' : 'border-gray-200') : 'border-transparent';
+    const headerClasses = `w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b-0 ${borderStyle} ${isDark ? 'hover:bg-[#1C3050]' : 'hover:bg-gray-50'} transition`;
     const dividerClass = isDark ? 'bg-[#CDCDCD]' : 'bg-gray-200';
     const titleClasses = `text-sm font-semibold text-left ${isDark ? 'text-[#F4F4F4]' : 'text-gray-800'}`;
 
@@ -1315,7 +1324,7 @@ const ReboundDetailView = () => {
           <span className={`font-semibold whitespace-nowrap ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
             {field.label}:
           </span>
-          <span className={`break-words ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
+          <span className={`break-words ${isDark ? 'text-gray-300' : 'text-slate-700'} ${isIdentifierLabel(field.label) ? 'uppercase tracking-wide' : ''}`}>
             {field.value}
           </span>
         </div>
@@ -1500,20 +1509,20 @@ const ReboundDetailView = () => {
           <p className=" text-[32px] font-semibold text-gray-100">Claim ID: {currentClaim.Claim.Data.ClaimNo}</p>
         </div> */}
 
-          {/* <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 p-3 rounded-2xl border ${isDark ? 'bg-[#0b0f16] border-[#1f2433] shadow-[0_12px_30px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 shadow-[0_10px_28px_rgba(0,0,0,0.08)]'}`}>
-          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+          {/* <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 p-3 rounded-2xl border ${isDark ? 'bg-[#0b0f16] border-[#2A4A70] shadow-[0_12px_30px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 shadow-[0_10px_28px_rgba(0,0,0,0.08)]'}`}>
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#2A4A70] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
             <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Service Date(s)</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
               {formatDateValue(currentClaim.Claim.Data.ServiceDate)}
             </div>
           </div>
 
-          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#2A4A70] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
             <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Charges</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.Amount)}</div>
           </div>
 
-          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#2A4A70] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
             <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Allowed Amt</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
               {formatCurrency(
@@ -1524,17 +1533,17 @@ const ReboundDetailView = () => {
             </div>
           </div>
 
-          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#2A4A70] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
             <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Paid Amt</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.PaidAmount)}</div>
           </div>
 
-          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#2A4A70] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
             <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Patient Resp</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.PatientResp)}</div>
           </div>
 
-          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#2A4A70] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
             <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Contractual Adj</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
               {formatCurrency(
@@ -1548,7 +1557,7 @@ const ReboundDetailView = () => {
             </div>
           </div>
 
-          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#1f2433] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
+          <div className={`h-full w-full rounded-xl border px-3 py-3 flex flex-col gap-1 justify-between ${isDark ? 'border-[#2A4A70] bg-[#121722]' : 'border-gray-200 bg-white shadow-sm'}`}>
             <div className={`text-[12px] uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>Denied Amt</div>
             <div className={`text-[16px] font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(currentClaim.Claim.Data.DeniedAmount)}</div>
           </div>
@@ -1562,18 +1571,12 @@ const ReboundDetailView = () => {
               <span className="text-gray-400 text-xs">▼</span>
             </button> */}
           </div>
-          <div className={`flex flex-col gap-3 rounded-2xl ${isDark ? 'bg-[#1f2025] shadow-[0_12px_30px_rgba(0,0,0,0.35)]' : 'bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)]'}`}>
-
-            <div
-              className={`flex items-center rounded-2xl ${isDark
-                ? 'bg-[#26272C]/20 shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
-                : 'bg-white border-gray-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)]'
-                }`}
-            >
+          <div className={`overflow-x-auto border-b ${isDark ? "border-white/10" : "border-slate-200"}`}>
+            <div className="flex items-end gap-6 min-w-max">
               {[
                 { id: 0, label: "Insights" },
-                { id: 1, label: "Claim (837)" },
-                { id: 2, label: "Payments (835)" },
+                { id: 1, label: "Claim", badge: "837" },
+                { id: 2, label: "Payments", badge: "835" },
                 { id: 3, label: "Related Encounters" },
                 { id: 4, label: "Triage" },
                 { id: 5, label: "AI Appeal" },
@@ -1582,13 +1585,30 @@ const ReboundDetailView = () => {
                 return (
                   <button
                     key={tab.id}
+                    type="button"
                     onClick={() => onDetailShowStatusChange(tab.id)}
-                    className={`flex-1 text-center px-4 py-2 text-sm font-semibold rounded-xl transition ${active
-                      ? detailTabActiveClass
-                      : detailTabInactiveClass
-                      }`}
+                    className={`shrink-0 inline-flex items-center gap-2 whitespace-nowrap pb-3 text-sm font-medium border-b-2 transition-colors ${
+                      active
+                        ? isDark
+                          ? "text-white border-[#14B8A6]"
+                          : "text-slate-900 border-[#14B8A6]"
+                        : isDark
+                          ? "text-[rgba(244,244,244,0.55)] border-transparent hover:text-white/80"
+                          : "text-slate-500 border-transparent hover:text-slate-800"
+                    }`}
                   >
                     {tab.label}
+                    {tab.badge ? (
+                      <span
+                        className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 text-[11px] font-semibold leading-none ${
+                          isDark
+                            ? "bg-[#2A4A70] text-white"
+                            : "bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        {tab.badge}
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
@@ -1596,7 +1616,7 @@ const ReboundDetailView = () => {
           </div>
 
           {detailShowStatus == 0 && (
-            <div className={`rounded-2xl border p-6 ${isDark ? 'bg-[#27282D] border-[#1f2433] text-gray-100 shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 text-slate-900 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
+            <div className={`rounded-2xl border p-6 ${isDark ? 'bg-[#111F35] border-[#2A4A70] text-gray-100 shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 text-slate-900 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
               <p className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-slate-900'}`}>Insights</p>
               <div className={`mt-3 h-px w-full ${isDark ? 'bg-white/20' : 'bg-gray-200'}`} />
               {isPend277 ? (
@@ -1746,14 +1766,14 @@ const ReboundDetailView = () => {
               </SectionCard>
 
               <SectionCard title="Diagnosis" showBorder={false}>
-                <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
+                <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#2A4A70] bg-[#111F35]' : 'border-gray-200 bg-white'}`}>
                   <table className="w-full text-sm border-separate border-spacing-0">
                     <thead>
-                      <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
+                      <tr className={isDark ? 'bg-[#1C3050] text-gray-100' : 'bg-gray-100 text-gray-700'}>
                         {['Diagnosis', 'Description'].map((col, idx, arr) => (
                           <th
                             key={col}
-                            className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
+                            className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#2A4A70]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
                           >
                             {col}
                           </th>
@@ -1762,11 +1782,11 @@ const ReboundDetailView = () => {
                     </thead>
                     <tbody>
                       {(currentClaim?.Claim?.Diagnosis || []).map((row, index, arr) => (
-                        <tr key={`${row.Code || index}-${index}`} className={isDark ? (index % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
-                          {[formatValue(row.Code), formatValue(row.Description)].map((val, idx) => (
+                        <tr key={`${row.Code || index}-${index}`} className={zebraRowClass(index)}>
+                          {[formatIdValue(row.Code), formatValue(row.Description)].map((val, idx) => (
                             <td
                               key={`${index}-${idx}`}
-                              className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== 1 ? 'border-r' : ''} ${index === arr.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === 1 ? 'rounded-br-2xl' : '') : ''}`}
+                              className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} border-b ${idx !== 1 ? 'border-r' : ''} ${index === arr.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === 1 ? 'rounded-br-2xl' : '') : ''}`}
                             >
                               {renderTruncated(val, idx === 0 ? '140px' : '320px')}
                             </td>
@@ -1784,10 +1804,10 @@ const ReboundDetailView = () => {
               </SectionCard>
 
               <SectionCard title="Service Lines" showBorder={false}>
-                <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
+                <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#2A4A70] bg-[#111F35]' : 'border-gray-200 bg-white'}`}>
                   <table className="w-full text-sm border-separate border-spacing-0">
                     <thead>
-                      <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
+                      <tr className={isDark ? 'bg-[#1C3050] text-gray-100' : 'bg-gray-100 text-gray-700'}>
                         {[
                           'Rev Code',
                           'Proc Code',
@@ -1799,7 +1819,7 @@ const ReboundDetailView = () => {
                         ].map((col, idx, arr) => (
                           <th
                             key={col}
-                            className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
+                            className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#2A4A70]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
                           >
                             {col}
                           </th>
@@ -1809,8 +1829,6 @@ const ReboundDetailView = () => {
                     <tbody>
                       {(currentClaim?.Claim?.ServiceLine || []).map((line, lineIndex, arr) => {
                         const modifiers = extractModifiers(line.Modifier || line.Modifiers || line.ModifierCodes || line.Mods || line);
-                        const revCode = formatValue(line.RevCode || line.RevenueCode || line.Revenue || line.Rev);
-                        const procCode = formatValue(line.ProcedureCode || line.Code);
                         const procDescription = formatValue(
                           line.Description || line.ProcedureDescription || line.ProcDescription
                         );
@@ -1822,20 +1840,20 @@ const ReboundDetailView = () => {
                           line.Billed
                         );
                         const cells = [
-                          revCode,
-                          procCode,
-                          formatValue(modifiers[0]),
-                          formatValue(modifiers[1]),
-                          formatValue(modifiers[2]),
+                          formatIdValue(line.RevCode || line.RevenueCode || line.Revenue || line.Rev),
+                          formatIdValue(line.ProcedureCode || line.Code),
+                          formatIdValue(modifiers[0]),
+                          formatIdValue(modifiers[1]),
+                          formatIdValue(modifiers[2]),
                           charge,
                           procDescription,
                         ];
                         return (
-                          <tr key={`${line.Code || lineIndex}-${lineIndex}`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                          <tr key={`${line.Code || lineIndex}-${lineIndex}`} className={zebraRowClass(lineIndex)}>
                             {cells.map((val, idx) => (
                               <td
                                 key={`${lineIndex}-${idx}`}
-                                className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== cells.length - 1 ? 'border-r' : ''} ${lineIndex === arr.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === cells.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                                className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} border-b ${idx !== cells.length - 1 ? 'border-r' : ''} ${lineIndex === arr.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === cells.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
                               >
                                 {renderTruncated(val, ['90px', '110px', '80px', '80px', '80px', '120px', '260px'][idx] || '180px')}
                               </td>
@@ -1857,10 +1875,10 @@ const ReboundDetailView = () => {
           )}
 
           {detailShowStatus == 2 && (
-            // <div className={`flex flex-col p-4 gap-4 rounded-2xl border ${isDark ? 'bg-[#0f131b] border-[#1f2433] text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
+            // <div className={`flex flex-col p-4 gap-4 rounded-2xl border ${isDark ? 'bg-[#0f131b] border-[#2A4A70] text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
             <>
               {currentClaim.Remit.length === 0 ? (
-                <div className={`rounded-xl text-center ${isDark ? 'bg-[#27282D] text-gray-400 border border-[#1f2433]' : 'bg-white text-gray-500 border-gray-200'}`}>
+                <div className={`rounded-xl text-center ${isDark ? 'bg-[#111F35] text-gray-400 border border-[#2A4A70]' : 'bg-white text-gray-500 border-gray-200'}`}>
                   No data available
                 </div>
               ) : (
@@ -1886,7 +1904,7 @@ const ReboundDetailView = () => {
                           });
                         }}
                         className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-6 text-left transition w-full ${isDark
-                          ? 'bg-[#27282d] hover:bg-[#353639]'
+                          ? 'bg-[#1C3050] hover:bg-[#2A4A70]'
                           : 'bg-white hover:bg-gray-50'
                           }`}
                       >
@@ -1985,10 +2003,10 @@ const ReboundDetailView = () => {
                           </SectionCard>
 
                           <SectionCard title="Service Line Detail" showBorder={false}>
-                            <div className={`overflow-x-auto rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
+                            <div className={`overflow-x-auto rounded-2xl border ${isDark ? 'border-[#2A4A70] bg-[#111F35]' : 'border-gray-200 bg-white'}`}>
                               <table className="w-full min-w-[960px] text-sm border-separate border-spacing-0">
                                 <thead>
-                                  <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
+                                  <tr className={isDark ? 'bg-[#1C3050] text-gray-100' : 'bg-gray-100 text-gray-700'}>
                                     {[
                                       'Service Line #',
                                       'Service Date',
@@ -2003,7 +2021,7 @@ const ReboundDetailView = () => {
                                     ].map((col, idx, arr) => (
                                       <th
                                         key={col}
-                                        className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b whitespace-nowrap ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''} ${idx >= 8 ? 'min-w-[120px]' : ''}`}
+                                        className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b whitespace-nowrap ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#2A4A70]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''} ${idx >= 8 ? 'min-w-[120px]' : ''}`}
                                       >
                                         {col}
                                       </th>
@@ -2024,7 +2042,7 @@ const ReboundDetailView = () => {
                                     const baseCells = [
                                       lineIndex + 1,
                                       formatDateValue(line.ServiceDate),
-                                      formatValue(line.ProcedureCode || line.Code),
+                                      formatIdValue(line.ProcedureCode || line.Code),
                                       formatUnitsValue(line.UnitsPaid || line.Units || line.Quantity),
                                       formatCurrency(line.ChargedAmount || line.ChargeAmount || line.Amount),
                                       formatCurrency(line.AllowedAmount),
@@ -2032,22 +2050,22 @@ const ReboundDetailView = () => {
                                       formatCurrency(line.Deductible),
                                     ];
                                     return (
-                                      <tr key={`${line.Code || lineIndex}-${lineIndex}`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                                      <tr key={`${line.Code || lineIndex}-${lineIndex}`} className={zebraRowClass(lineIndex)}>
                                         {baseCells.map((val, idx) => (
                                           <td
                                             key={`${lineIndex}-${idx}`}
-                                            className={`px-4 py-3 text-sm align-top ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b border-r ${isLastRow && idx === 0 ? 'rounded-bl-2xl' : ''}`}
+                                            className={`px-4 py-3 text-sm align-top ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} border-b border-r ${isLastRow && idx === 0 ? 'rounded-bl-2xl' : ''}`}
                                           >
                                             {renderTruncated(val, ['72px', '120px', '140px', '100px', '120px', '120px', '120px', '120px'][idx] || '180px')}
                                           </td>
                                         ))}
                                         <td
-                                          className={`px-4 py-3 text-sm align-top ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b border-r`}
+                                          className={`px-4 py-3 text-sm align-top ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} border-b border-r`}
                                         >
                                           {renderCodeChipList(carcEntries)}
                                         </td>
                                         <td
-                                          className={`px-4 py-3 text-sm align-top ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${isLastRow ? 'rounded-br-2xl' : ''}`}
+                                          className={`px-4 py-3 text-sm align-top ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} border-b ${isLastRow ? 'rounded-br-2xl' : ''}`}
                                         >
                                           {renderCodeChipList(rarcEntries)}
                                         </td>
@@ -2065,10 +2083,10 @@ const ReboundDetailView = () => {
                           </SectionCard>
 
                           <SectionCard title="Supplement/Adjustment Information" showBorder={false}>
-                            <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
+                            <div className={`overflow-hidden rounded-2xl border ${isDark ? 'border-[#2A4A70] bg-[#111F35]' : 'border-gray-200 bg-white'}`}>
                               <table className="w-full text-sm border-separate border-spacing-0">
                                 <thead>
-                                  <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
+                                  <tr className={isDark ? 'bg-[#1C3050] text-gray-100' : 'bg-gray-100 text-gray-700'}>
                                     {[
                                       'Service Line #',
                                       'Adj Code',
@@ -2077,7 +2095,7 @@ const ReboundDetailView = () => {
                                     ].map((col, idx, arr) => (
                                       <th
                                         key={col}
-                                        className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
+                                        className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#2A4A70]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
                                       >
                                         {col}
                                       </th>
@@ -2089,7 +2107,7 @@ const ReboundDetailView = () => {
                                     const adjustments = getLineAdjustmentSummary(line);
                                     if (adjustments.length === 0) {
                                       return (
-                                        <tr key={`supp-${lineIndex}-none`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                                        <tr key={`supp-${lineIndex}-none`} className={zebraRowClass(lineIndex)}>
                                           {[
                                             lineIndex + 1,
                                             'N/A',
@@ -2098,7 +2116,7 @@ const ReboundDetailView = () => {
                                           ].map((val, idx, arr) => (
                                             <td
                                               key={`${lineIndex}-none-${idx}`}
-                                              className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${lineIndex === (row.ServiceLine || []).length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                                              className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${lineIndex === (row.ServiceLine || []).length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
                                             >
                                               {renderTruncated(val, ['72px', '180px', '120px', '260px'][idx] || '180px')}
                                             </td>
@@ -2112,7 +2130,7 @@ const ReboundDetailView = () => {
                                       const isLastLine = lineIndex === (row.ServiceLine || []).length - 1;
                                       const isLastAdj = adjIndex === adjustments.length - 1;
                                       return (
-                                        <tr key={`supp-${lineIndex}-${adjIndex}`} className={isDark ? (lineIndex % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (lineIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
+                                        <tr key={`supp-${lineIndex}-${adjIndex}`} className={zebraRowClass(lineIndex)}>
                                           {[
                                             lineIndex + 1,
                                             label || 'N/A',
@@ -2121,7 +2139,7 @@ const ReboundDetailView = () => {
                                           ].map((val, idx, arr) => (
                                             <td
                                               key={`${lineIndex}-${adjIndex}-${idx}`}
-                                              className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${isLastLine && isLastAdj ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                                              className={`px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${isLastLine && isLastAdj ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
                                             >
                                               {renderTruncated(val, ['72px', '180px', '120px', '260px'][idx] || '180px')}
                                             </td>
@@ -2149,13 +2167,13 @@ const ReboundDetailView = () => {
           )}
           {detailShowStatus == 3 && (
 
-            <div className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark ? 'text-gray-100 bg-[#27282D] border-[#1f2433] shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'text-slate-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
+            <div className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark ? 'text-gray-100 bg-[#111F35] border-[#2A4A70] shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'text-slate-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
 
-              <div className={`rounded-2xl border ${isDark ? 'border-[#3f4558] bg-[#1b1f29]' : 'border-gray-200 bg-white'}`}>
+              <div className={`rounded-2xl border ${isDark ? 'border-[#2A4A70] bg-[#111F35]' : 'border-gray-200 bg-white'}`}>
                 <div className="max-h-[360px] overflow-auto datatable-scroll">
                   <table className="w-full text-sm border-separate border-spacing-0">
                     <thead>
-                      <tr className={isDark ? 'bg-[#2d3038] text-gray-100' : 'bg-gray-100 text-gray-700'}>
+                      <tr className={isDark ? 'bg-[#1C3050] text-gray-100' : 'bg-gray-100 text-gray-700'}>
                         {[
                           '#',
                           'Claim No',
@@ -2171,7 +2189,7 @@ const ReboundDetailView = () => {
                         ].map((col, idx, arr) => (
                           <th
                             key={col}
-                            className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#3f4558]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
+                            className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-b ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} ${idx !== arr.length - 1 ? (isDark ? 'border-r border-[#2A4A70]' : 'border-r border-gray-200') : ''} ${idx === 0 ? 'rounded-tl-2xl' : ''} ${idx === arr.length - 1 ? 'rounded-tr-2xl' : ''}`}
                           >
                             {col}
                           </th>
@@ -2183,15 +2201,15 @@ const ReboundDetailView = () => {
                         <tr
                           key={index}
                           onClick={() => showDetail(row.ClaimNo)}
-                          className={`${isDark ? (index % 2 === 0 ? 'bg-[#262a33]' : 'bg-[#2c303a]') : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')} transition-colors cursor-pointer`}
+                          className={`${zebraRowClass(index)} transition-colors cursor-pointer`}
                         >
                           {[
                             index + 1,
-                            row.ClaimNo,
+                            formatIdValue(row.ClaimNo),
                             formatDate(row.ServiceDate),
                             formatDate(row.TransactionDate),
                             samplifyString(row.TransactionType),
-                            samplifyString(row.PayerID),
+                            formatIdValue(row.PayerID),
                             samplifyString(row.PayerName),
                             row.PayerSeq == 'P' ? 'Primary' : (row.PayerSeq == 'S' ? 'Secondary' : '-'),
                             row.Frequency,
@@ -2200,7 +2218,7 @@ const ReboundDetailView = () => {
                           ].map((val, idx, arr) => (
                             <td
                               key={`${index}-${idx}`}
-                              className={`whitespace-nowrap px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#3f4558]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${index === currentClaim.RelatedEncounters.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
+                              className={`whitespace-nowrap px-4 py-3 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'} ${isDark ? 'border-[#2A4A70]' : 'border-gray-200'} border-b ${idx !== arr.length - 1 ? 'border-r' : ''} ${index === currentClaim.RelatedEncounters.length - 1 ? (idx === 0 ? 'rounded-bl-2xl' : idx === arr.length - 1 ? 'rounded-br-2xl' : '') : ''}`}
                             >
                               {renderTruncated(val, ['64px', '140px', '120px', '140px', '160px', '120px', '160px', '140px', '140px', '120px', '160px'][idx] || '160px')}
                             </td>
@@ -2223,7 +2241,7 @@ const ReboundDetailView = () => {
           {detailShowStatus == 4 && (
             <div
               className={`flex flex-col gap-4 p-4 sm:p-6 rounded-2xl border ${isDark
-                ? 'text-[#F4F4F4] bg-[#27282D] border-[#1f2433]'
+                ? 'text-[#F4F4F4] bg-[#111F35] border-[#2A4A70]'
                 : 'text-slate-900 bg-white border-gray-200 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'
                 }`}
             >
@@ -2244,7 +2262,7 @@ const ReboundDetailView = () => {
                         type="button"
                         onClick={showRaw270}
                         className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${isDark
-                          ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                          ? 'bg-[#2A4A70] text-white hover:bg-[#4A6080]'
                           : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                           }`}
                       >
@@ -2256,7 +2274,7 @@ const ReboundDetailView = () => {
                         type="button"
                         onClick={showRaw277}
                         className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${isDark
-                          ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                          ? 'bg-[#2A4A70] text-white hover:bg-[#4A6080]'
                           : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                           }`}
                       >
@@ -2287,7 +2305,7 @@ const ReboundDetailView = () => {
                           className={`self-start px-4 py-2 rounded-xl text-xs font-semibold transition ${eligibilityLoading || !eligibilityRequest
                             ? 'bg-gray-400 text-white cursor-not-allowed'
                             : isDark
-                              ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                              ? 'bg-[#2A4A70] text-white hover:bg-[#4A6080]'
                               : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                             }`}
                         >
@@ -2302,7 +2320,7 @@ const ReboundDetailView = () => {
                           className={`self-start px-4 py-2 rounded-xl text-xs font-semibold transition ${optumLoading || !optumRequest
                             ? 'bg-gray-400 text-white cursor-not-allowed'
                             : isDark
-                              ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                              ? 'bg-[#2A4A70] text-white hover:bg-[#4A6080]'
                               : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                             }`}
                         >
@@ -2343,8 +2361,8 @@ const ReboundDetailView = () => {
                                 />
                                 <span
                                   className={`relative h-7 w-7 rounded-lg border transition-all duration-200
-                                  ${isDark ? 'border-[#4B4F5A] bg-[#2B2F36]' : 'border-gray-300 bg-white'}
-                                  peer-checked:border-[#6f7074] peer-checked:bg-[#24252a] peer-checked:shadow-[0_2px_6px_rgba(0,0,0,0.35)]
+                                  ${isDark ? 'border-[#2A4A70] bg-[#1C3050]' : 'border-gray-300 bg-white'}
+                                  peer-checked:border-[#14B8A6] peer-checked:bg-[#2A4A70] peer-checked:shadow-[0_2px_6px_rgba(0,0,0,0.25)]
                                   peer-checked:[&>svg]:opacity-100
                                   `}
                                 >
@@ -2379,7 +2397,7 @@ const ReboundDetailView = () => {
                                         prev === idx ? null : idx
                                       )
                                     }
-                                    className={`w-full rounded-lg border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#6f7074] focus:border-[#6f7074] disabled:opacity-60 flex items-center justify-between gap-2 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                                    className={`w-full rounded-lg border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6] disabled:opacity-60 flex items-center justify-between gap-2 ${isDark ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
                                   >
                                     <span className="truncate">
                                       {selectedOption?.label || "Select transaction code..."}
@@ -2398,7 +2416,7 @@ const ReboundDetailView = () => {
                                   </button>
                                   {openTriageDropdown === idx && action.checked && (
                                     <div
-                                      className={`triage-dropdown absolute z-20 mt-2 max-h-48 w-full overflow-y-auto rounded-lg border shadow-lg ${isDark ? 'border-[#1f2433] bg-[#24252a]' : 'border-gray-200 bg-white'}`}
+                                      className={`triage-dropdown absolute z-20 mt-2 max-h-48 w-full overflow-y-auto rounded-lg border shadow-lg ${isDark ? 'border-[#2A4A70] bg-[#111F35]' : 'border-gray-200 bg-white'}`}
                                     >
                                       {transactionOptions.map((option) => (
                                         <button
@@ -2431,7 +2449,7 @@ const ReboundDetailView = () => {
                                 onChange={(e) => setTriageOtherText(e.target.value)}
                                 disabled={!action.checked}
                                 placeholder="Enter other action..."
-                                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] focus:border-[#6f7074] disabled:opacity-60 ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#14B8A6] focus:border-[#14B8A6] disabled:opacity-60 ${isDark ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
                               />
                             )}
                           </div>
@@ -2444,7 +2462,7 @@ const ReboundDetailView = () => {
                     <p className="text-sm font-semibold">Notes</p>
                     <textarea
                       rows={8}
-                      className={`min-h-[260px] flex-1 w-full rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-gray-500 resize-none ${isDark ? 'bg-[#3C3D42] border-[#1f2433] text-gray-100' : 'bg-gray-100 border-gray-200 text-gray-800'}`}
+                      className={`min-h-[260px] flex-1 w-full rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#14B8A6] resize-none ${isDark ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100' : 'bg-gray-100 border-gray-200 text-gray-800'}`}
                       value={triageNotes}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -2455,7 +2473,7 @@ const ReboundDetailView = () => {
                       }}
                       placeholder={`${userInitials}: Add notes for this claim...`}
                     />
-                    <div className={`rounded-xl border px-3 py-3 ${isDark ? "border-[#1f2433] bg-[#1f2025]" : "border-gray-200 bg-white"}`}>
+                    <div className={`rounded-xl border px-3 py-3 ${isDark ? "border-[#2A4A70] bg-[#111F35]" : "border-gray-200 bg-white"}`}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-sm font-semibold">Tickle date</p>
                         {resolvedTickle.sourceLabel ? (
@@ -2521,7 +2539,7 @@ const ReboundDetailView = () => {
                     </p>
                   </div>
 
-                  {/* <div className={`rounded-xl border p-4 ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}>
+                  {/* <div className={`rounded-xl border p-4 ${isDark ? 'border-[#2A4A70] bg-[#111F35]' : 'border-gray-200 bg-white'}`}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold">Appeal template matched by 835 payer ID</p>
@@ -2587,7 +2605,7 @@ const ReboundDetailView = () => {
                   {triageDocRows.map((row) => (
                     <div
                       key={row.id}
-                      className={`grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-3 rounded-lg border ${isDark ? 'border-[#1f2433] bg-[#1f2025]' : 'border-gray-200 bg-white'}`}
+                      className={`grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-3 rounded-lg border ${isDark ? 'border-[#2A4A70] bg-[#111F35]' : 'border-gray-200 bg-white'}`}
                     >
                       <div className="sm:col-span-4">
                         <label className={`sm:hidden text-xs font-medium mb-1 block ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>File Name</label>
@@ -2663,7 +2681,7 @@ const ReboundDetailView = () => {
                       {supportingDocuments.map((doc) => (
                         <div
                           key={doc.id}
-                          className={`flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm ${isDark ? 'bg-[#1f2025] text-gray-200' : 'bg-white text-gray-800 border border-gray-200'}`}
+                          className={`flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm ${isDark ? 'bg-[#111F35] text-gray-200' : 'bg-white text-gray-800 border border-gray-200'}`}
                         >
                           <div className="min-w-0 flex-1">
                             <p className="font-medium truncate">{doc.file_name}</p>
@@ -2716,7 +2734,7 @@ const ReboundDetailView = () => {
                         <div
                           key={entry.id || `${entry.action_date}-${index}`}
                           className={`rounded-xl border px-4 py-3 ${isDark
-                            ? "border-[#2d3348] bg-[#1f2433]"
+                            ? "border-[#2A4A70] bg-[#1C3050]"
                             : "border-gray-200 bg-slate-50"
                             }`}
                         >
@@ -2765,11 +2783,11 @@ const ReboundDetailView = () => {
               <div className="flex flex-col w-full sm:w-[49.5%]">
                 <h1 className="mb-5 font-semibold ">General Information</h1>
                 <div
-                  className={`sm:w-full w-full h-auto  rounded-xl p-2 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} `}
+                  className={`sm:w-full w-full h-auto  rounded-xl p-2 ${theme === 'dark' ? 'bg-[#111F35]' : 'bg-[#EFF4FE]'} `}
                   style={{ display: 'flex', flexDirection: 'column' }}
 
                 >   <div className='flex sm:flex-row flex-col w-full gap-x-2  justify-evenly'>
-                    <div className={` p-6 flex flex-col w-full rounded-xl ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}`}>
+                    <div className={` p-6 flex flex-col w-full rounded-xl ${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'}`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Root Cause</h2>
                         <div className="text-[14px] mt-3">
@@ -2778,7 +2796,7 @@ const ReboundDetailView = () => {
                       </div>
                     </div>
 
-                    <div className={` p-6 sm:mt-0 mt-2 flex flex-col w-full rounded-xl ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'}`}>
+                    <div className={` p-6 sm:mt-0 mt-2 flex flex-col w-full rounded-xl ${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'}`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Rationale</h2>
                         <div className="text-[14px] mt-3">
@@ -2790,7 +2808,7 @@ const ReboundDetailView = () => {
                   </div>
 
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Evidence</h2>
                         <div className="text-[14px] mt-3">
@@ -2845,13 +2863,13 @@ const ReboundDetailView = () => {
                   </div>
 
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Prediction Score</h2>
                         <p className="text-[14px] mt-3">98%</p>
                       </div>
                     </div>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Procedure Code</h2>
                         <p className="text-[14px] mt-3">
@@ -2862,7 +2880,7 @@ const ReboundDetailView = () => {
                   </div>
 
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Diagnosis Code</h2>
                         <p className="text-[14px] mt-3">
@@ -2870,7 +2888,7 @@ const ReboundDetailView = () => {
                         </p>
                       </div>
                     </div>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Reason Code</h2>
                         <p className="text-[14px] mt-3">
@@ -2881,7 +2899,7 @@ const ReboundDetailView = () => {
                   </div>
 
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Payer ID</h2>
                         <p className="text-[14px] mt-3">
@@ -2889,7 +2907,7 @@ const ReboundDetailView = () => {
                         </p>
                       </div>
                     </div>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Claim State</h2>
                         <p className="text-[14px] mt-3">
@@ -2905,7 +2923,7 @@ const ReboundDetailView = () => {
                   </div>
 
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Category</h2>
                         <p className="text-[14px] mt-3">
@@ -2913,7 +2931,7 @@ const ReboundDetailView = () => {
                         </p>
                       </div>
                     </div>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Remark Code</h2>
                         <p className="text-[14px] mt-3">
@@ -2930,7 +2948,7 @@ const ReboundDetailView = () => {
 
 
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Action Date</h2>
                         <p className="text-[14px] mt-3">
@@ -2938,7 +2956,7 @@ const ReboundDetailView = () => {
                         </p>
                       </div>
                     </div>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Charges</h2>
                         <p className="text-[14px] mt-3">
@@ -2950,7 +2968,7 @@ const ReboundDetailView = () => {
 
 
                   <div className='flex flex-row mt-2 w-full gap-x-2 justify-evenly'>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Original Allowed Amt</h2>
                         <p className="text-[14px] mt-3">
@@ -2967,7 +2985,7 @@ const ReboundDetailView = () => {
                         </p>
                       </div>
                     </div>
-                    <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                       <div>
                         <h2 className={`text-[14px] ${mutedLabelClass}`}>Overturned Allowed Amt</h2>
                         <p className="text-[14px] mt-3">
@@ -2994,10 +3012,10 @@ const ReboundDetailView = () => {
               >
                 <h1 className="mb-5 font-semibold   ">Action</h1>
                 <div
-                  className={`sm:w-full w-full  sm:max-h-[750px] md:max-h-[710px] h-auto rounded-xl p-2 ${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'}`}
+                  className={`sm:w-full w-full  sm:max-h-[750px] md:max-h-[710px] h-auto rounded-xl p-2 ${theme === 'dark' ? 'bg-[#111F35]' : 'bg-[#EFF4FE]'}`}
                   style={{ display: 'flex', flexDirection: 'column' }}
                 >
-                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6  w-full rounded-lg`}>
+                  <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6  w-full rounded-lg`}>
                     <h2 className={`text-[14px] ${mutedLabelClass}`}>Recommendation</h2>
                     <p className="text-[14px] mt-3">{appeal[5]}</p>
                     <div className="flex flex-row mt-3 justify-evenly gap-x-3">
@@ -3026,18 +3044,18 @@ const ReboundDetailView = () => {
                     </div>
                   </div>
 
-                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                  <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                     <h2 className={`text-[14px] mb-2 ${mutedLabelClass}`}>Add Action</h2>
                     <div className="relative mt-3">
                       <label
                         htmlFor="action-dropdown"
-                        className={`${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  absolute -top-2.5 left-2  px-1 text-[12px] `}
+                        className={`${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  absolute -top-2.5 left-2  px-1 text-[12px] `}
                       >
                         Action
                       </label>
                       <select
                         id="action-dropdown"
-                        className={`w-full p-3 border border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  `}
+                        className={`w-full p-3 border border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  `}
                         ref={claimStatus}
                         defaultValue={currentClaim.Action.length > 0 ? currentClaim.Action[0].claim_status : ''}
                       >
@@ -3049,17 +3067,17 @@ const ReboundDetailView = () => {
                     </div>
                   </div>
 
-                  <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
+                  <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} p-6 flex flex-col w-full rounded-xl`}>
                     <div className='flex justify-between items-center'>
                       <h2 className={`text-[14px] mb-2 ${mutedLabelClass}`}>Notes</h2>
                       <button className='text-[14px] text-gray-500' onClick={handleOpenNotesHistory}>View Notes</button>
                     </div>
                     <div className="relative mt-5">
-                      <div className={`${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} absolute -top-2.5 left-2 px-1 text-[12px] ${mutedLabelClass}`}>
+                      <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} absolute -top-2.5 left-2 px-1 text-[12px] ${mutedLabelClass}`}>
                         Leave Note
                       </div>
                       <textarea
-                        className={`w-full p-3 border ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                        className={`w-full p-3 border ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  border-gray-300 rounded-lg text-[14px]   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                         rows="4"
                         placeholder="Enter your notes here..."
                         value={notes}
@@ -3090,22 +3108,22 @@ const ReboundDetailView = () => {
                   </div>
 
                   {showComment && (
-                    <div className={`${theme === 'dark' ? 'bg-[#191a1d]' : 'bg-[#EFF4FE]'} rounded-xl p-2`}>
-                      <div className={`flex flex-col w-full gap-4  p-6 rounded-xl shadow-sm ${theme === 'dark' ? 'bg-[#151619]' : 'bg-white'} `}>
+                    <div className={`${theme === 'dark' ? 'bg-[#111F35]' : 'bg-[#EFF4FE]'} rounded-xl p-2`}>
+                      <div className={`flex flex-col w-full gap-4  p-6 rounded-xl shadow-sm ${theme === 'dark' ? 'bg-[#111F35]' : 'bg-white'} `}>
                         <h1 className={`mb-4 ${mutedLabelClass}`}>Comments</h1>
                         <div className="space-y-4">
                           {/* Additional Info */}
                           <div className="relative">
                             <label
                               htmlFor="additional-info"
-                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
                             >
                               Additional Info
                             </label>
                             <input
                               id="additional-info"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Additional}
                               onChange={(e) => setComment({ ...comment, Additional: e.target.value })}
                             />
@@ -3115,14 +3133,14 @@ const ReboundDetailView = () => {
                           <div className="relative">
                             <label
                               htmlFor="cpt-code"
-                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
                             >
                               CPT Code Mismatch
                             </label>
                             <input
                               id="cpt-code"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.CPT}
                               onChange={(e) => setComment({ ...comment, CPT: e.target.value })}
                             />
@@ -3132,14 +3150,14 @@ const ReboundDetailView = () => {
                           <div className="relative">
                             <label
                               htmlFor="description"
-                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
                             >
                               Description Mismatch
                             </label>
                             <input
                               id="description"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Description}
                               onChange={(e) => setComment({ ...comment, Description: e.target.value })}
                             />
@@ -3149,13 +3167,13 @@ const ReboundDetailView = () => {
                           <div className="relative">
                             <label
                               htmlFor="recommendation"
-                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
                             >
                               Corrected Recommendation
                             </label>
                             <select
                               id="recommendation"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Recommendation}
                               onChange={(e) => setComment({ ...comment, Recommendation: e.target.value })}
                             >
@@ -3170,14 +3188,14 @@ const ReboundDetailView = () => {
                           <div className="relative">
                             <label
                               htmlFor="root-cause"
-                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
                             >
                               Updated Root Cause
                             </label>
                             <input
                               id="root-cause"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Root}
                               onChange={(e) => setComment({ ...comment, Root: e.target.value })}
                             />
@@ -3187,13 +3205,13 @@ const ReboundDetailView = () => {
                           <div className="relative">
                             <label
                               htmlFor="steps"
-                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
                             >
                               Steps to Solve
                             </label>
                             <textarea
                               id="steps"
-                              className={`w-full min-h-[120px] p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'} focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 font-mono resize-y`}
+                              className={`w-full min-h-[120px] p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'} focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 font-mono resize-y`}
                               placeholder="# Steps to resolve the issue
 1. First step
 2. Second step"
@@ -3206,14 +3224,14 @@ const ReboundDetailView = () => {
                           <div className="relative">
                             <label
                               htmlFor="evidence1"
-                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
                             >
                               Evidence #1
                             </label>
                             <input
                               id="evidence1"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Evidence1}
                               onChange={(e) => setComment({ ...comment, Evidence1: e.target.value })}
                             />
@@ -3223,14 +3241,14 @@ const ReboundDetailView = () => {
                           <div className="relative">
                             <label
                               htmlFor="evidence2"
-                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
+                              className={`absolute -top-2.5 left-2 ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  px-1 text-[12px] `}
                             >
                               Evidence #2
                             </label>
                             <input
                               id="evidence2"
                               type="text"
-                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#151619] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
+                              className={`w-full p-3 border border-gray-300 rounded-lg text-[14px] ${theme === 'dark' ? 'bg-[#111F35] text-white' : 'bg-white text-gray-700'}  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500`}
                               value={comment.Evidence2}
                               onChange={(e) => setComment({ ...comment, Evidence2: e.target.value })}
                             />
@@ -3508,7 +3526,7 @@ const ReboundDetailView = () => {
           onClose={() => setShowOptumDetails(false)}
           aria-labelledby="raw-277-title"
         >
-          <Box className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] w-[90vw] max-w-5xl overflow-y-auto rounded-2xl p-6 ${isDark ? 'bg-[#1b1f29] text-gray-100' : 'bg-white text-gray-900'}`}>
+          <Box className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] w-[90vw] max-w-5xl overflow-y-auto rounded-2xl p-6 ${isDark ? 'bg-[#111F35] text-gray-100' : 'bg-white text-gray-900'}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p id="raw-277-title" className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Claim Status (277)</p>
@@ -3522,7 +3540,7 @@ const ReboundDetailView = () => {
                   className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${optumLoading
                     ? 'bg-gray-400 text-white cursor-not-allowed'
                     : isDark
-                      ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                      ? 'bg-[#2A4A70] text-white hover:bg-[#4A6080]'
                       : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                     }`}
                 >
@@ -3547,7 +3565,7 @@ const ReboundDetailView = () => {
                   <input
                     value={optumRequest.controlNumber || ""}
                     onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), controlNumber: e.target.value }))}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3555,7 +3573,7 @@ const ReboundDetailView = () => {
                   <input
                     value={optumRequest.tradingPartnerServiceId || ""}
                     onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), tradingPartnerServiceId: e.target.value }))}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1 md:col-span-2">
@@ -3563,7 +3581,7 @@ const ReboundDetailView = () => {
                   <input
                     value={optumRequest.tradingPartnerName || ""}
                     onChange={(e) => setOptumRequest((prev) => ({ ...(prev || {}), tradingPartnerName: e.target.value }))}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3571,7 +3589,7 @@ const ReboundDetailView = () => {
                   <input
                     value={(optumRequest.providers && optumRequest.providers[0]?.providerType) || ""}
                     onChange={(e) => updateProviderField("providerType", e.target.value)}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3579,7 +3597,7 @@ const ReboundDetailView = () => {
                   <input
                     value={(optumRequest.providers && optumRequest.providers[0]?.npi) || ""}
                     onChange={(e) => updateProviderField("npi", e.target.value)}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3587,7 +3605,7 @@ const ReboundDetailView = () => {
                   <input
                     value={(optumRequest.providers && optumRequest.providers[0]?.taxId) || ""}
                     onChange={(e) => updateProviderField("taxId", e.target.value)}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3595,7 +3613,7 @@ const ReboundDetailView = () => {
                   <input
                     value={optumRequest.subscriber?.memberId || ""}
                     onChange={(e) => updateSubscriberField("memberId", e.target.value)}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3603,7 +3621,7 @@ const ReboundDetailView = () => {
                   <input
                     value={optumRequest.subscriber?.firstName || ""}
                     onChange={(e) => updateSubscriberField("firstName", e.target.value)}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3611,7 +3629,7 @@ const ReboundDetailView = () => {
                   <input
                     value={optumRequest.subscriber?.lastName || ""}
                     onChange={(e) => updateSubscriberField("lastName", e.target.value)}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3624,7 +3642,7 @@ const ReboundDetailView = () => {
                       updateEncounterField("endDateOfService", e.target.value);
                       updateServiceLineField("serviceLineDate", e.target.value);
                     }}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3632,7 +3650,7 @@ const ReboundDetailView = () => {
                   <input
                     value={optumRequest.encounter?.submittedAmount || ""}
                     onChange={(e) => updateEncounterField("submittedAmount", e.target.value)}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3640,7 +3658,7 @@ const ReboundDetailView = () => {
                   <input
                     value={optumRequest.serviceLineInformation?.procedureCode || ""}
                     onChange={(e) => updateServiceLineField("procedureCode", e.target.value)}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3651,7 +3669,7 @@ const ReboundDetailView = () => {
                       "procedureModifiers",
                       e.target.value.split(",").map((item) => item.trim()).filter(Boolean)
                     )}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
               </div>
@@ -3662,7 +3680,7 @@ const ReboundDetailView = () => {
               </div>
             )}
             {optumResponse && (
-              <div className={`mt-4 rounded-xl border p-4 ${isDark ? 'border-[#30354a] bg-[#10131b]' : 'border-gray-200 bg-white'}`}>
+              <div className={`mt-4 rounded-xl border p-4 ${isDark ? 'border-[#30354a] bg-[#1C3050]' : 'border-gray-200 bg-white'}`}>
                 <p className={`text-sm font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Latest 277 Response</p>
                 <div className={`mt-2 text-xs ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                   Control Number: {optumResponse.controlNumber || "N/A"}
@@ -3696,7 +3714,7 @@ const ReboundDetailView = () => {
           onClose={() => setShowEligibilityDetails(false)}
           aria-labelledby="raw-270-title"
         >
-          <Box className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] w-[90vw] max-w-4xl overflow-y-auto rounded-2xl p-6 ${isDark ? 'bg-[#1b1f29] text-gray-100' : 'bg-white text-gray-900'}`}>
+          <Box className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] w-[90vw] max-w-4xl overflow-y-auto rounded-2xl p-6 ${isDark ? 'bg-[#111F35] text-gray-100' : 'bg-white text-gray-900'}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p id="raw-270-title" className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Eligibility (270)</p>
@@ -3710,7 +3728,7 @@ const ReboundDetailView = () => {
                   className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${eligibilityLoading || !eligibilityRequest
                     ? 'bg-gray-400 text-white cursor-not-allowed'
                     : isDark
-                      ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                      ? 'bg-[#2A4A70] text-white hover:bg-[#4A6080]'
                       : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
                     }`}
                 >
@@ -3735,7 +3753,7 @@ const ReboundDetailView = () => {
                   <input
                     value={eligibilityRequest.payerId || ""}
                     onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), payerId: e.target.value }))}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3743,7 +3761,7 @@ const ReboundDetailView = () => {
                   <input
                     value={eligibilityRequest.payerName || ""}
                     onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), payerName: e.target.value }))}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3751,7 +3769,7 @@ const ReboundDetailView = () => {
                   <input
                     value={eligibilityRequest.memberId || ""}
                     onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), memberId: e.target.value }))}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3760,7 +3778,7 @@ const ReboundDetailView = () => {
                     type="date"
                     value={normalizeDateInput(eligibilityRequest.patientDob || "")}
                     onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), patientDob: e.target.value }))}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3768,7 +3786,7 @@ const ReboundDetailView = () => {
                   <input
                     value={eligibilityRequest.patientFirstName || ""}
                     onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), patientFirstName: e.target.value }))}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1">
@@ -3776,7 +3794,7 @@ const ReboundDetailView = () => {
                   <input
                     value={eligibilityRequest.patientLastName || ""}
                     onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), patientLastName: e.target.value }))}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
                 <label className="flex flex-col gap-1 md:col-span-2">
@@ -3785,7 +3803,7 @@ const ReboundDetailView = () => {
                     type="date"
                     value={normalizeDateInput(eligibilityRequest.serviceDate || "")}
                     onChange={(e) => setEligibilityRequest((prev) => ({ ...(prev || {}), serviceDate: e.target.value }))}
-                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#10131b] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                    className={`rounded-lg border px-3 py-2 ${isDark ? 'bg-[#1C3050] border-[#2f364a] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                   />
                 </label>
               </div>
@@ -3796,7 +3814,7 @@ const ReboundDetailView = () => {
               </div>
             )}
             {eligibilityResponse && (
-              <div className={`mt-4 rounded-xl border p-4 text-xs ${isDark ? 'border-[#30354a] bg-[#10131b] text-gray-200' : 'border-gray-200 bg-white text-gray-700'}`}>
+              <div className={`mt-4 rounded-xl border p-4 text-xs ${isDark ? 'border-[#30354a] bg-[#1C3050] text-gray-200' : 'border-gray-200 bg-white text-gray-700'}`}>
                 <div className="font-semibold mb-2">Latest 271 Response</div>
                 <pre className="whitespace-pre-wrap break-words">
                   {JSON.stringify(eligibilityResponse, null, 2)}

@@ -18,15 +18,17 @@ import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
 import { samplifyDouble, samplifyInteger, samplifyString } from "../../../utils/config";
 
 import DataTableFilter from "./DataTableFilter";
-import { setTableData, setTotalPage, setCurrentPage, setPageSize, setAppTitle, setTableLoading, setExtraFilter, setSelectedClaimIds, setWorklistSummary } from "../../../redux/reducers/app.reducer";
+import { setTableData, setTotalPage, setCurrentPage, setPageSize, setTableLoading, setExtraFilter, setSelectedClaimIds, setWorklistSummary } from "../../../redux/reducers/app.reducer";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { toast } from "react-toastify";
 import DataTableTags from "./DataTableTags";
 import BulkDenialsPanel from "./BulkDenialsPanel";
+import WorklistTabs from "./WorklistTabs";
 import { buildWorklistExtra } from "../../../utils/aiModelFilters";
 import { sanitizeAdvancedFilters, countActiveAdvancedFilters } from "../../../utils/advancedFilters";
 import { refreshWorklistFromAppState } from "../../../utils/worklistRefresh";
 import { formatTickleDueIn, getTickleDaysRemaining } from "../../../utils/triageHelpers";
+import { getWorklistChild, isWorklistNav } from "../../../utils/worklistNav";
 
 const DataTable = (props) => {
   const apiUrl = useApiEndpoint();
@@ -82,6 +84,7 @@ const DataTable = (props) => {
   );
   const isRecentClaimsView = Boolean(accessExtra?.RecentClaims);
   const appTitle = useSelector((state) => state.app.title);
+  const selectedNav = useSelector((state) => state.app.selectedNav) || "home";
   const [bulk277Loading, setBulk277Loading] = useState(false);
   const [bulk277Progress, setBulk277Progress] = useState({ total: 0, done: 0, failed: 0 });
   const [bulk277Errors, setBulk277Errors] = useState([]);
@@ -107,7 +110,7 @@ const DataTable = (props) => {
   }, [isRecentClaimsView]);
   const theme = useSelector((state) => state.app.theme);
   const isDarkMode = theme === 'dark';
-  const tableBackground = isDarkMode ? '#1b1f29' : '#ffffff';
+  const tableBackground = isDarkMode ? '#111F35' : '#ffffff';
   const formatDateSafe = (value) => {
     if (!value) return '';
     const dateObj = new Date(value);
@@ -267,7 +270,7 @@ const DataTable = (props) => {
       : charges - adjustment45 - payerPayments - patientPayment;
     return { count, charges, allowed, payerPayments, patientPayment, patientResp, adjustment45, balance };
   }, [isPatientRespView, tableData]);
-  const isClaimStatusView = (appTitle || "").toLowerCase().startsWith("claim status");
+  const isClaimStatusView = `${selectedNav}`.startsWith("claim-status") || (appTitle || "").toLowerCase().startsWith("claim status");
   const hasSummaryFilters = Boolean(
     keyword || startDate || endDate || code || remark || procedure || pos
       || countActiveAdvancedFilters(advancedFilters)
@@ -326,6 +329,17 @@ const DataTable = (props) => {
     const last4 = raw.slice(-4);
     return `****-${last4}`;
   };
+  const formatId = (value) => {
+    if (value === undefined || value === null || `${value}`.trim() === "") return "";
+    return `${value}`.toUpperCase();
+  };
+  const identifierCellClass = "uppercase tracking-wide";
+  const claimIdClass = isDarkMode
+    ? "uppercase tracking-wide font-medium text-[#4B9187]"
+    : "uppercase tracking-wide font-medium text-[#3d7a72]";
+  const evenRowBg = isDarkMode ? "#111F35" : "#ffffff";
+  const oddRowBg = isDarkMode ? "#1C3050" : "#f1f5f9";
+  const hoverRowBg = isDarkMode ? "rgba(75, 145, 135, 0.12)" : "#eef2ff";
   const headerCellStyle = {
     background: tableBackground,
     color: isDarkMode ? '#F4F4F4' : '#1A1D2B',
@@ -337,6 +351,7 @@ const DataTable = (props) => {
     color: isDarkMode ? '#F4F6FF' : '#1A1D2B',
     borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.04)' : '#E4E7EF'}`,
     fontSize: '0.9rem',
+    backgroundColor: 'transparent',
   };
 
   const showDetail = (claimNo, rowCategory) => {
@@ -368,14 +383,19 @@ const DataTable = (props) => {
     dispatch(setSelectedClaimIds([...nextSelected]));
   };
 
-  const showBulk277 = (appTitle || "").toLowerCase().includes("pend 277");
+  const showBulk277 = selectedNav === "claim-status:pend-277" || (appTitle || "").toLowerCase().includes("pend 277");
   const showBulkDenials =
     !isRecentClaimsView &&
     (location.pathname.includes("/denials") ||
+    selectedNav === "denials" ||
+    `${selectedNav}`.startsWith("denials:") ||
     (appTitle || "").toLowerCase().startsWith("denials"));
   const denialCategory = useMemo(() => {
     const tags = (selectedTags || []).filter(Boolean);
     if (tags.length === 1) return tags[0];
+
+    const child = getWorklistChild(selectedNav);
+    if (child?.category) return child.category;
 
     const title = `${appTitle || ""}`.toLowerCase();
     if (title.includes("pend 277")) return "Pend 277";
@@ -384,7 +404,7 @@ const DataTable = (props) => {
     if (title.includes("eligibility")) return "Eligibility";
 
     return "";
-  }, [selectedTags, appTitle]);
+  }, [selectedTags, appTitle, selectedNav]);
   const selectedIds = useMemo(
     () => (selectedClaimIds || []).filter((id) => id && `${id}`.trim() !== ""),
     [selectedClaimIds]
@@ -872,7 +892,7 @@ const DataTable = (props) => {
         </div>
       </div>
       {showBulk277 && (
-        <div className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? 'border-[#2d3348] bg-[#1b1f29] text-white' : 'bg-white border-gray-200 text-slate-900'}`}>
+        <div className={`mb-5 rounded-2xl border p-4 ${isDarkMode ? 'border-[#2A4A70] bg-[#111F35] text-white' : 'bg-white border-gray-200 text-slate-900'}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold">Bulk Action</p>
@@ -887,7 +907,7 @@ const DataTable = (props) => {
               className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${bulk277Loading || selectedIds.length === 0
                 ? 'bg-gray-400 text-white cursor-not-allowed'
                 : isDarkMode
-                  ? 'bg-[#2d3348] text-white hover:bg-[#39415c]'
+                  ? 'bg-[#2A4A70] text-white hover:bg-[#4A6080]'
                   : 'bg-slate-900 text-white hover:bg-slate-800'
                 }`}
             >
@@ -925,9 +945,13 @@ const DataTable = (props) => {
         />
       )}
       <div className={`rounded-[32px] border ${isDarkMode ? 'bg-[var(--helio-surface)] border-[var(--helio-border)] text-white' : 'bg-white border-[#E4E7EF] text-[#0f172a]'} p-6 flex flex-col h-full`}>
-        <div className={`mb-3 text-sm font-semibold ${isDarkMode ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
-          {appTitle || 'Home'}
-        </div>
+        {isWorklistNav(selectedNav) ? (
+          <WorklistTabs />
+        ) : (
+          <div className={`mb-3 text-sm font-semibold ${isDarkMode ? 'text-[#F4F4F4]' : 'text-slate-600'}`}>
+            {appTitle || 'Home'}
+          </div>
+        )}
         <div className="relative pb-4 pt-2">
         <button
           className={`p-1 absolute left-0 top-6 -translate-x-1/2 z-10 ${isDarkMode ? 'text-white/70 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
@@ -1151,11 +1175,12 @@ const DataTable = (props) => {
                   {
                     !tableLoading && rowsForTable.length !== 0 && rowsForTable.map((row, index) => <TableRow
                       key={index}
-                      className="transition-colors"
+                      className="transition-colors cursor-pointer"
                       sx={{
                         maxHeight: "100px",
+                        backgroundColor: index % 2 === 0 ? evenRowBg : oddRowBg,
                         '&:hover': {
-                          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : '#F3F4FF'
+                          backgroundColor: hoverRowBg
                         }
                       }}
                     >
@@ -1195,13 +1220,13 @@ const DataTable = (props) => {
                         {getFacility(row)}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
-                        {row.ProvTaxID || row.ProviderTaxID || ''}
+                        <span className={identifierCellClass}>{formatId(row.ProvTaxID || row.ProviderTaxID || '')}</span>
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                        {row.ClaimNo}
+                        <span className={claimIdClass}>{formatId(row.ClaimNo)}</span>
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "130px" }}>
-                        {row.PayerID}
+                        <span className={identifierCellClass}>{formatId(row.PayerID)}</span>
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
                         {row.PayerName}
@@ -1213,7 +1238,7 @@ const DataTable = (props) => {
                         {row.PatientName || row.Patient || ''}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                        {scrubPhi(getPatientAccountNumber(row))}
+                        <span className={identifierCellClass}>{formatId(scrubPhi(getPatientAccountNumber(row)))}</span>
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                         {formatDateSafe(row.ServiceDate)}
@@ -1250,7 +1275,7 @@ const DataTable = (props) => {
                           const group = ((row.PrimaryGroup ?? '') || '').trim();
                           const code = ((row.PrimaryCode ?? '') || '').trim();
                           const denialCode = [group, code].filter(Boolean).join(' ');
-                          return denialCode || '';
+                          return <span className={identifierCellClass}>{formatId(denialCode)}</span>;
                         })()}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
@@ -1262,11 +1287,11 @@ const DataTable = (props) => {
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
                         {(() => {
                           const primaryDx = (row.PrimaryDX || '').split("::")[0];
-                          return primaryDx;
+                          return <span className={identifierCellClass}>{formatId(primaryDx)}</span>;
                         })()}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "150px" }}>
-                        {row.PrimaryProcedure || ''}
+                        <span className={identifierCellClass}>{formatId(row.PrimaryProcedure || '')}</span>
                       </TableCell>
                       {isRecentClaimsView && (
                         <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>

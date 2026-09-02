@@ -35,6 +35,7 @@ const initialState = {
   navPendCounts: {},
   arByCategory: [],
   worklistSummary: null,
+  selectedNav: "home",
 };
 
 const appReducer = createSlice({
@@ -165,6 +166,9 @@ const appReducer = createSlice({
     setWorklistSummary: (state, action) => {
       state.worklistSummary = action.payload || null;
     },
+    setSelectedNav: (state, action) => {
+      state.selectedNav = action.payload || "home";
+    },
     clearSelectedClaimIds: (state) => {
       state.selectedClaimIds = [];
     },
@@ -217,6 +221,7 @@ const appReducer = createSlice({
       state.navPendCounts = {};
       state.arByCategory = [];
       state.worklistSummary = null;
+      state.selectedNav = "home";
     }
   },
 });
@@ -262,6 +267,7 @@ export const {
   setNavPendCounts,
   setArByCategory,
   setWorklistSummary,
+  setSelectedNav,
   clearSelectedClaimIds,
   setTabDefaults,
   resetViewState,

@@ -102,10 +102,10 @@ export default function TaxonomyMissingAgent({
   const afterTaxonomy = after.taxonomy || "(not configured)";
 
   const panelClass = isDark
-    ? "border-[#3f4558] bg-[#1b1f29] text-gray-100"
+    ? "border-[#2A4A70] bg-[#111F35] text-gray-100"
     : "border-slate-200 bg-white text-slate-900";
   const muted = isDark ? "text-gray-400" : "text-slate-500";
-  const cardClass = `rounded-lg border p-2.5 ${isDark ? "border-[#3f4558]" : "border-slate-200"}`;
+  const cardClass = `rounded-lg border p-2.5 ${isDark ? "border-[#2A4A70] bg-[#1C3050]" : "border-slate-200"}`;
   const chipOk = isDark ? "bg-emerald-900/40 text-emerald-300" : "bg-emerald-50 text-emerald-800";
   const chipWarn = isDark ? "bg-amber-900/40 text-amber-200" : "bg-amber-50 text-amber-900";
   const chipBad = isDark ? "bg-rose-900/40 text-rose-200" : "bg-rose-50 text-rose-800";
@@ -197,12 +197,12 @@ export default function TaxonomyMissingAgent({
           </div>
 
           {(agent.correctedContent || raw.content || agent.saved?.url) ? (
-            <div className={`rounded-lg border overflow-hidden ${isDark ? "border-[#3f4558]" : "border-slate-200"}`}>
-              <div className={`px-2.5 py-1.5 text-[11px] font-semibold ${isDark ? "bg-[#262a33]" : "bg-slate-50"}`}>
+            <div className={`rounded-lg border overflow-hidden ${isDark ? "border-[#2A4A70]" : "border-slate-200"}`}>
+              <div className={`px-2.5 py-1.5 text-[11px] font-semibold ${isDark ? "bg-[#1C3050]" : "bg-slate-50"}`}>
                 Before | After Snapshot
               </div>
               <div className="grid grid-cols-2 text-xs">
-                <div className={`px-2.5 py-2 border-r ${isDark ? "border-[#3f4558] bg-rose-950/20" : "border-slate-200 bg-rose-50/50"}`}>
+                <div className={`px-2.5 py-2 border-r ${isDark ? "border-[#2A4A70] bg-rose-950/20" : "border-slate-200 bg-rose-50/50"}`}>
                   <p className={`text-[10px] font-semibold uppercase ${muted}`}>Before</p>
                   <p className="mt-1 font-mono">{beforeTaxonomy}</p>
                 </div>
@@ -243,7 +243,7 @@ export default function TaxonomyMissingAgent({
                 href={raw.url}
                 target="_blank"
                 rel="noreferrer"
-                className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#202123] text-white"
+                className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#2A4A70] text-white"
               >
                 Open original file
               </a>
@@ -271,7 +271,7 @@ export default function TaxonomyMissingAgent({
             transform: "translate(-50%, -50%)",
             width: "min(960px, 94vw)",
             maxHeight: "85vh",
-            bgcolor: isDark ? "#151619" : "background.paper",
+            bgcolor: isDark ? "#111F35" : "background.paper",
             color: isDark ? "#f3f4f6" : "inherit",
             borderRadius: 2,
             boxShadow: 24,
@@ -291,7 +291,7 @@ export default function TaxonomyMissingAgent({
               Close
             </button>
           </div>
-          <pre className={`text-[11px] font-mono whitespace-pre-wrap break-all rounded-lg p-2 max-h-[70vh] overflow-auto ${isDark ? "bg-[#0f1012]" : "bg-slate-50"}`}>
+          <pre className={`text-[11px] font-mono whitespace-pre-wrap break-all rounded-lg p-2 max-h-[70vh] overflow-auto ${isDark ? "bg-[#1C3050]" : "bg-slate-50"}`}>
             {fileMode === "after" ? agent?.correctedContent || "" : raw.content || ""}
           </pre>
         </Box>

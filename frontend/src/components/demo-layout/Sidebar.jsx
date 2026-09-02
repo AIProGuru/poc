@@ -3,24 +3,22 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   setAppTitle,
-  setTheme,
   setTabIndex,
-  setExtraFilter,
-  setCurrentPage,
-  setTableLoading,
-  setTableData,
-  setKeyword,
-  setCode,
-  setRemark,
-  setProcedure,
-  setPOS,
-  setStartDate,
-  setEndDate,
+  setSelectedNav,
 } from "../../redux/reducers/app.reducer";
-import { setSelectedTags } from "../../redux/reducers/tag.reducer";
 import { canAccessWorklists } from "../../utils/roles";
 import { setToggleMenu } from "../../redux/reducers/menu.reducer";
 import HelioBrand from "../layout/HelioBrand";
+import {
+  applyWorklistNavFilters,
+  getInitialWorklistNavId,
+  getWorklistTitle,
+  normalizeTagKey,
+  resolveFilterTags,
+  WORKLIST_NAV_CHILDREN,
+  WORKLIST_TAG_FILTERS,
+  WORKLIST_TAB_INDEX,
+} from "../../utils/worklistNav";
 const readStoredTenantBase = () => {
   try {
     const value = localStorage.getItem("lastTenantBase");
@@ -47,21 +45,9 @@ const Sidebar = () => {
   const navGrouped = useSelector((state) => state.app.navGrouped) || {};
   const navPendCounts = useSelector((state) => state.app.navPendCounts) || {};
   const [navBadges, setNavBadges] = useState({});
+  const username = useSelector((state) => state.auth.username);
   const isPrivilegedRole = ["admin", "super-admin", "manager", "internal-admin"].includes(role);
-  const placeholderNavs = useMemo(() => ([
-    "dashboard",
-    "support",
-    "settings",
-    "claim-edits",
-    "claim-edits:ch-rejection",
-    "claim-edits:payer-rejection",
-    "payment-variance",
-    "payment-variance:payer-overpaid",
-    "payment-variance:payer-underpaid",
-  ]), []);
-
-  const [selectedNav, setSelectedNav] = useState("home");
-  const [expandedNav, setExpandedNav] = useState(() => new Set());
+  const selectedNav = useSelector((state) => state.app.selectedNav) || "home";
   const [mobileExpanded, setMobileExpanded] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
   const sidebarExpanded = useSelector((state) => state.menu.menuState);
@@ -127,41 +113,21 @@ const Sidebar = () => {
         title: "Claim Edits",
         icon: "clipboard",
         badge: 0,
-        children: [
-          { id: "claim-edits:ch-rejection", title: "CH Rejection", badge: 0 },
-          { id: "claim-edits:payer-rejection", title: "Payer Rejection", badge: 0 },
-        ],
+        children: WORKLIST_NAV_CHILDREN["claim-edits"],
       },
       {
         id: "claim-status",
         title: "Claim Status",
         icon: "list",
         badge: 0,
-        children: [
-          { id: "claim-status:pend-277", title: "Pend 277", badge: 0 },
-          { id: "claim-status:pend-835", title: "Pend 835", badge: 0 },
-        ],
+        children: WORKLIST_NAV_CHILDREN["claim-status"],
       },
       {
         id: "denials",
         title: "Denials",
         icon: "shield-x",
         badge: denialsCount || null,
-        children: [
-          { id: "denials:authorization", title: "Authorization", badge: 0 },
-          { id: "denials:billing", title: "Billing", badge: 0 },
-          { id: "denials:cob", title: "Coordination of Benefits", badge: 0 },
-          { id: "denials:documentation", title: "Documentation", badge: 0 },
-          { id: "denials:duplicate", title: "Duplicate", badge: 0 },
-          { id: "denials:eligibility", title: "Eligibility", badge: 0 },
-          { id: "denials:loc", title: "Level of Care", badge: 0 },
-          { id: "denials:medical-coding", title: "Medical Coding", badge: 0 },
-          { id: "denials:medical-necessity", title: "Medical Necessity", badge: 0 },
-          { id: "denials:non-covered", title: "Non-Covered", badge: 0 },
-          { id: "denials:other", title: "Other Non-Specific", badge: 0 },
-          { id: "denials:provider", title: "Provider", badge: 0 },
-          { id: "denials:timely-filing", title: "Timely Filing", badge: 0 },
-        ],
+        children: WORKLIST_NAV_CHILDREN.denials,
       },
       {
         id: "patient-responsibility",
@@ -169,7 +135,7 @@ const Sidebar = () => {
         icon: "user",
         badge: patientResponsibilityCount,
         tab: 2,
-        children: [{ id: "patient-responsibility:bal-due", title: "Bal Due from PT", badge: 0 }],
+        children: WORKLIST_NAV_CHILDREN["patient-responsibility"],
       },
       {
         id: "payment-variance",
@@ -177,10 +143,7 @@ const Sidebar = () => {
         icon: "chart",
         badge: 0,
         tab: 4,
-        children: [
-          { id: "payment-variance:payer-overpaid", title: "Payer Overpaid", badge: 0 },
-          { id: "payment-variance:payer-underpaid", title: "Payer Underpaid", badge: 0 },
-        ],
+        children: WORKLIST_NAV_CHILDREN["payment-variance"],
       },
       {
         id: "payment-posting",
@@ -188,12 +151,7 @@ const Sidebar = () => {
         icon: "card",
         badge: 0,
         tab: 1,
-        children: [
-          { id: "payment-posting:contractual-adj", title: "Contractual Adj", badge: 0 },
-          { id: "payment-posting:payment", title: "Payment", badge: 0 },
-          { id: "payment-posting:writeoff", title: "Write-off", badge: 0 },
-          { id: "payment-posting:refund", title: "Refund", badge: 0 },
-        ],
+        children: WORKLIST_NAV_CHILDREN["payment-posting"],
       },
       {
         id: "ai-library",
@@ -210,92 +168,6 @@ const Sidebar = () => {
     return baseItems;
   }, [denialsCount, models, patientResponsibilityCount, role, accessDenialCategory, isPrivilegedRole]);
 
-  const navExtraFilters = useMemo(
-    () => ({
-      "recent-claims": { RecentClaims: true, IncludeAllCategories: true },
-      "payment-variance": { IncludeAllCategories: true },
-      "claim-status:pend-277": { IncludeAllCategories: true, Pend277: true },
-      "claim-status:pend-835": { IncludeAllCategories: true, Pend835: true },
-    }),
-    []
-  );
-
-  const navTagFilters = useMemo(
-    () => ({
-      "claim-status": ["Pend 277", "Delinquent"],
-      "claim-status:pend-277": [],
-      "claim-status:pend-835": [],
-      "denials": [
-        "Authorization",
-        "Billing",
-        "Coordination of Benefits",
-        "Documentation",
-        "Duplicate",
-        "Eligibility",
-        "Level of Care",
-        "Medical Coding",
-        "Medical Necessity",
-        "Non-Covered",
-        "Other Non-Specific",
-        "Provider",
-        "Timely Filing",
-      ],
-      "denials:authorization": ["Authorization"],
-      "denials:billing": ["Billing"],
-      "denials:cob": ["Coordination of Benefits"],
-      "denials:documentation": ["Documentation"],
-      "denials:duplicate": ["Duplicate"],
-      "denials:eligibility": ["Eligibility"],
-      "denials:loc": ["Level of Care"],
-      "denials:medical-coding": ["Medical Coding"],
-      "denials:medical-necessity": ["Medical Necessity"],
-      "denials:non-covered": ["Non-Covered"],
-      "denials:other": ["Other Non-Specific"],
-      "denials:provider": ["Provider"],
-      "denials:timely-filing": ["Timely Filing"],
-      "patient-responsibility": ["Patient Resp"],
-      "patient-responsibility:bal-due": ["Patient Resp"],
-      "payment-posting:contractual-adj": ["Contractual Adj"],
-      "payment-posting:payment": ["Payment"],
-      "payment-posting:writeoff": ["Write-off"],
-      "payment-posting:refund": ["Refund"],
-      "payment-posting": ["Contractual Adj", "Payment", "Write-off", "Refund"],
-    }),
-    []
-  );
-  const normalizeTagKey = useCallback((value) => `${value || ""}`.trim().toLowerCase(), []);
-  const availableTagLookup = useMemo(() => {
-    const lookup = new Map();
-    (tags || []).forEach((tag) => {
-      const normalized = normalizeTagKey(tag);
-      if (!normalized || lookup.has(normalized)) return;
-      lookup.set(normalized, tag);
-    });
-    return lookup;
-  }, [tags, normalizeTagKey]);
-  const resolveFilterTags = useCallback(
-    (tagList) => {
-      const aliasMap = {
-        "patient responsibility": "Patient Resp",
-        "bal due from pt": "Patient Resp",
-        "pend 835": "Delinquent",
-      };
-      const resolved = (tagList || [])
-        .map((tag) => {
-          const normalized = normalizeTagKey(tag);
-          if (!normalized) return "";
-          const aliased = aliasMap[normalized] || tag;
-          return (
-            availableTagLookup.get(normalizeTagKey(aliased)) ||
-            availableTagLookup.get(normalized) ||
-            aliased
-          );
-        })
-        .filter((tag) => `${tag || ""}`.trim() !== "");
-      return [...new Set(resolved)];
-    },
-    [availableTagLookup, normalizeTagKey]
-  );
   const canSeeWorklists = canAccessWorklists(role);
   const navBootstrapReady = useMemo(() => {
     if (!canSeeWorklists) return true;
@@ -532,75 +404,10 @@ const Sidebar = () => {
   };
 
   const applyFilters = useCallback(
-    (navId, fallbackTab) => {
-      // Always clear ad-hoc filters when switching nav so AI drill-down payloads don't leak.
-      dispatch(setKeyword(""));
-      dispatch(setCode(""));
-      dispatch(setRemark(""));
-      dispatch(setProcedure(""));
-      dispatch(setPOS(""));
-      dispatch(setStartDate(null));
-      dispatch(setEndDate(null));
-
-      if (placeholderNavs.includes(navId)) {
-        dispatch(setSelectedTags([]));
-        dispatch(setExtraFilter({}));
-        dispatch(setTableData([]));
-        dispatch(setTableLoading(false));
-        return;
-      }
-      const isAiLibrary = navId === "ai-library";
-      let extra = navExtraFilters[navId] || navExtraFilters[fallbackTab] || {};
-      let tagOverride = resolveFilterTags(navTagFilters[navId]);
-
-      if (navId === "home") {
-        extra = { IncludeAllCategories: true };
-        tagOverride = [];
-      }
-
-      if (navId === "recent-claims") {
-        extra = { RecentClaims: true, IncludeAllCategories: true };
-        tagOverride = [];
-      }
-
-      const tabOverrideMap = {
-        "patient-responsibility": 2,
-        "patient-responsibility:bal-due": 2,
-        "payment-posting": 1,
-        "payment-posting:contractual-adj": 1,
-        "payment-posting:payment": 1,
-        "payment-posting:writeoff": 1,
-        "payment-posting:refund": 1,
-      };
-
-      dispatch(setExtraFilter(extra));
-
-      if (tagOverride && tagOverride.length > 0) {
-        dispatch(setSelectedTags(tagOverride));
-        dispatch(setTabIndex(tabOverrideMap[navId] ?? 6));
-      } else if (navId === "ai-library") {
-        // Keep denial categories visible when browsing AI Agents
-        dispatch(setSelectedTags(resolveFilterTags(tags)));
-        dispatch(setTabIndex(6));
-      } else if (navId === "denials") {
-        const defaultTags = resolveFilterTags(tags).filter(
-          (tag) => tag && tag !== "Contractual Adj" && tag !== "Patient Resp" && tag !== "Delinquent"
-        );
-        dispatch(setSelectedTags(defaultTags));
-        dispatch(setTabIndex(6));
-      } else {
-        dispatch(setSelectedTags([]));
-      }
-
-      dispatch(setCurrentPage(1));
-      if (!isAiLibrary) {
-        dispatch(setTableData([]));
-        dispatch(setTableLoading(true));
-      } else {
-        dispatch(setTableLoading(false));
-      }
+    (navId) => {
+      applyWorklistNavFilters({ dispatch, navId, tags });
     },
-    [dispatch, navExtraFilters, navTagFilters, placeholderNavs, resolveFilterTags, tags]
+    [dispatch, tags]
   );
 
   useEffect(() => {
@@ -608,17 +415,8 @@ const Sidebar = () => {
       setNavBadges({});
       return;
     }
-    const tabOverrideMap = {
-      "patient-responsibility": 2,
-      "patient-responsibility:bal-due": 2,
-      "payment-posting": 1,
-      "payment-posting:contractual-adj": 1,
-      "payment-posting:payment": 1,
-      "payment-posting:writeoff": 1,
-      "payment-posting:refund": 1,
-    };
 
-    const navTagKeys = Object.keys(navTagFilters);
+    const navTagKeys = Object.keys(WORKLIST_TAG_FILTERS);
     if (navTagKeys.length === 0) return;
     const cache = {};
     const getMapForTab = (tab) => {
@@ -635,7 +433,7 @@ const Sidebar = () => {
     };
     const sumTags = (tagList, tab) => {
       const map = getMapForTab(tab);
-      return resolveFilterTags(tagList).reduce(
+      return resolveFilterTags(tagList, tags).reduce(
         (sum, tag) => sum + (map[normalizeTagKey(tag)] || 0),
         0
       );
@@ -644,9 +442,9 @@ const Sidebar = () => {
     navTagKeys.forEach((navId) => {
       const fallbackTab = navItems.find((item) => item.id === navId)?.tab;
       const tabIndex =
-        tabOverrideMap[navId] ??
+        WORKLIST_TAB_INDEX[navId] ??
         (typeof fallbackTab === "number" ? fallbackTab : 6);
-      const tagList = navTagFilters[navId] || [];
+      const tagList = WORKLIST_TAG_FILTERS[navId] || [];
       next[navId] = sumTags(tagList, tabIndex);
     });
     const pend277 = Number(navPendCounts?.pend277 || 0);
@@ -657,7 +455,7 @@ const Sidebar = () => {
       next["claim-status"] = pend277 + pend835;
     }
     setNavBadges(next);
-  }, [navGrouped, navItems, navTagFilters, canSeeWorklists, navPendCounts, normalizeTagKey, resolveFilterTags]);
+  }, [navGrouped, navItems, canSeeWorklists, navPendCounts, tags]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -677,60 +475,27 @@ const Sidebar = () => {
       setMobileExpanded(true);
       return;
     }
-    dispatch(setAppTitle(item.title));
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
-    if (hasChildren) {
-      setExpandedNav((prev) => {
-        const next = new Set(prev);
-        if (next.has(item.id) && selectedNav === item.id) {
-          next.delete(item.id);
-        } else {
-          next.add(item.id);
-        }
-        return next;
-      });
-    }
-    setSelectedNav(item.id);
+    const targetId = hasChildren
+      ? getInitialWorklistNavId({
+          parentId: item.id,
+          accessDenialCategory,
+          isPrivilegedRole,
+          username,
+        })
+      : item.id;
+    dispatch(setSelectedNav(targetId));
+    dispatch(setAppTitle(getWorklistTitle(targetId) || item.title));
     if (item.id === "home") {
       dispatch(setTabIndex(0));
-    } else if (typeof item.tab === "number") {
+    } else if (typeof item.tab === "number" && !hasChildren) {
       dispatch(setTabIndex(item.tab));
     }
-    applyFilters(item.id, item.id);
+    applyFilters(targetId);
     navigate(basePath);
     if (isMobileView) {
       setMobileExpanded(false);
     }
-  };
-
-  const handleChildClick = (parent, child) => {
-    if (isMobileView && !mobileExpanded) {
-      setMobileExpanded(true);
-      return;
-    }
-    dispatch(setAppTitle(`${parent.title} > ${child.title}`));
-    setSelectedNav(child.id);
-    if (typeof parent.tab === "number") {
-      dispatch(setTabIndex(parent.tab));
-    }
-    applyFilters(child.id, parent.id);
-    setExpandedNav((prev) => new Set(prev).add(parent.id));
-    navigate(basePath);
-    if (isMobileView) {
-      setMobileExpanded(false);
-    }
-  };
-
-  const toggleExpand = (id) => {
-    setExpandedNav((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
   };
 
   useLayoutEffect(() => {
@@ -788,7 +553,6 @@ const Sidebar = () => {
             const hasChildren = Array.isArray(item.children) && item.children.length > 0;
             const childActive = hasChildren && activeId.startsWith(`${item.id}:`);
             const isActive = activeId === item.id || childActive;
-            const isExpanded = expandedNav.has(item.id) || childActive;
             const childSum = hasChildren
               ? item.children.reduce((sum, child) => sum + (navBadges[child.id] ?? 0), 0)
               : 0;
@@ -824,19 +588,15 @@ const Sidebar = () => {
                 : "bg-slate-200 text-slate-700";
             return (
               <div key={item.id}>
-                <div
-                  className={`w-full flex items-center rounded-2xl transition-colors ${
+                <button
+                  type="button"
+                  aria-label={item.title}
+                  className={`w-full flex items-center rounded-2xl transition-colors bg-transparent border-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 ${
                     showLabels ? "px-2 py-2" : "px-0 py-1.5 justify-center"
                   } ${navStateClass}`}
+                  onClick={() => handleClick(item)}
                 >
-                  <button
-                    type="button"
-                    aria-label={item.title}
-                    className={`flex items-center text-left bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 ${
-                      showLabels ? "flex-1 justify-between gap-2" : "justify-center"
-                    }`}
-                    onClick={() => handleClick(item)}
-                  >
+                  <span className={`flex items-center min-w-0 ${showLabels ? "flex-1 justify-between gap-2" : "justify-center"}`}>
                     <span className={`flex items-center min-w-0 ${showLabels ? "gap-3" : "justify-center"}`}>
                       <span
                         className={`rounded-xl flex items-center justify-center border shrink-0 ${
@@ -846,7 +606,7 @@ const Sidebar = () => {
                         {renderIcon(item.icon, isActive)}
                       </span>
                       <span
-                        className={`${showLabels ? "inline" : "hidden"} text-sm font-medium truncate max-w-[100px]`}
+                        className={`${showLabels ? "inline" : "hidden"} text-sm font-medium truncate max-w-[120px]`}
                         title={item.title}
                       >
                         {item.title}
@@ -859,66 +619,8 @@ const Sidebar = () => {
                         {formatCount(computedBadge)}
                       </span>
                     )}
-                  </button>
-                  {hasChildren && (
-                    <button
-                      type="button"
-                      className={`${showLabels ? "flex" : "hidden"} p-1 rounded-full ml-2 ${isDark ? 'text-white/60 hover:bg-white/10' : 'text-slate-500 hover:bg-slate-100'}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleExpand(item.id);
-                      }}
-                    >
-                      <svg
-                        className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        viewBox="0 0 20 20"
-                        fill="none"
-                      >
-                        <path d="M6 8L10 12L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-                {hasChildren && (
-                  <div
-                    className={`${showLabels ? "block" : "hidden"} ml-14 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'mt-1 mb-2 opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-1 pointer-events-none'}`}
-                    style={{
-                      maxHeight: isExpanded ? `${(item.children?.length || 1) * 44}px` : 0,
-                    }}
-                  >
-                    {item.children.map((child) => {
-                      const childIsActive = activeId === child.id;
-                      const childBadge =
-                        navBadges[child.id] ??
-                        child.badge ??
-                        (navBootstrapReady ? navBadges[item.id] ?? null : null);
-                      return (
-                        <button
-                          type="button"
-                          key={child.id}
-                          className={`w-full flex items-center justify-between text-left text-xs font-medium px-3 py-2 rounded-xl transition-colors ${childIsActive
-                              ? (isDark ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-900 border border-slate-200')
-                              : (isDark ? 'text-[rgba(244,244,244,0.5)] hover:bg-white/5' : 'text-slate-500 hover:bg-slate-100')
-                            }`}
-                          onClick={() => handleChildClick(item, child)}
-                        >
-                          <span className="truncate" title={child.title}>{child.title}</span>
-                          {childBadge !== null && childBadge !== undefined && (
-                            <span
-                              className={`ml-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${childIsActive
-                                  ? (isDark ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800')
-                                  : (isDark ? 'bg-[var(--helio-surface-muted)] text-[rgba(244,244,244,0.5)]' : 'bg-slate-200 text-slate-700')
-                                }`}
-                            >
-                              {formatCount(childBadge)}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                  </span>
+                </button>
               </div>
             );
           })}

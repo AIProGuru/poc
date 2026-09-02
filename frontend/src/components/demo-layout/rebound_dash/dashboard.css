@@ -8,7 +8,7 @@
 }
 
 .triage-dropdown::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #2A4A70;
   border-radius: 999px;
 }
 
@@ -18,7 +18,7 @@
 
 .triage-dropdown-item:hover,
 .triage-dropdown-item:focus {
-  background: #353639;
+  background: #2A4A70;
   color: #f4f4f4;
 }
 

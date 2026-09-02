@@ -29,12 +29,12 @@ export default function AppealGenerationAgent({
   const autoStartedRef = useRef("");
 
   const panelClass = isDark
-    ? "border-[#3f4558] bg-[#1b1f29] text-gray-100"
+    ? "border-[#2A4A70] bg-[#111F35] text-gray-100"
     : "border-slate-200 bg-white text-slate-900";
   const muted = isDark ? "text-gray-400" : "text-slate-500";
   const fieldClass = `w-full rounded-lg border px-3 py-2 text-sm focus:outline-none ${
     isDark
-      ? "border-[#3f4558] bg-[#11141b] text-gray-100 placeholder-gray-500"
+      ? "border-[#2A4A70] bg-[#1C3050] text-gray-100 placeholder-gray-500"
       : "border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400"
   }`;
   const ghostBtn = `px-3 py-2 rounded-lg text-sm font-medium ${
@@ -179,7 +179,7 @@ export default function AppealGenerationAgent({
           </button>
           <button
             type="button"
-            className="px-3 py-2 rounded-lg text-sm font-medium bg-[#072F40] text-white hover:opacity-90 disabled:opacity-60"
+            className="px-3 py-2 rounded-lg text-sm font-medium bg-[#14B8A6] text-white hover:opacity-90 disabled:opacity-60"
             onClick={generate}
             disabled={busy}
           >
@@ -192,7 +192,7 @@ export default function AppealGenerationAgent({
 
       <div className={`mt-4 grid gap-4 ${compact ? "grid-cols-1" : "grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]"}`}>
         <div className="space-y-4">
-          <div className={`rounded-xl border p-3 ${isDark ? "border-[#3f4558]" : "border-slate-200"}`}>
+          <div className={`rounded-xl border p-3 ${isDark ? "border-[#2A4A70] bg-[#1C3050]" : "border-slate-200"}`}>
             <p className={`text-xs font-semibold uppercase tracking-wide ${muted}`}>Physician notes (optional)</p>
             <textarea
               className={`${fieldClass} mt-2 min-h-[88px] resize-y`}
@@ -202,8 +202,8 @@ export default function AppealGenerationAgent({
             />
           </div>
 
-          <div className={`rounded-xl border overflow-hidden ${isDark ? "border-[#3f4558]" : "border-slate-200"}`}>
-            <div className={`flex items-center justify-between gap-2 px-3 py-2 ${isDark ? "bg-[#262a33]" : "bg-slate-50"}`}>
+          <div className={`rounded-xl border overflow-hidden ${isDark ? "border-[#2A4A70]" : "border-slate-200"}`}>
+            <div className={`flex items-center justify-between gap-2 px-3 py-2 ${isDark ? "bg-[#1C3050]" : "bg-slate-50"}`}>
               <p className="text-xs font-semibold uppercase tracking-wide">Appeal letter</p>
               <div className="flex gap-2">
                 <button type="button" className={ghostBtn} onClick={copyLetter} disabled={!letter}>
@@ -216,7 +216,7 @@ export default function AppealGenerationAgent({
             </div>
             <pre
               className={`px-4 py-3 text-sm font-mono whitespace-pre-wrap break-words max-h-[640px] overflow-auto leading-6 ${
-                isDark ? "bg-[#0f1012] text-gray-100" : "bg-white text-slate-800"
+                isDark ? "bg-[#1C3050] text-gray-100" : "bg-white text-slate-800"
               }`}
             >
               {letter || (loading ? "Loading claim fields…" : "Generate an appeal to populate this letter.")}
@@ -225,7 +225,7 @@ export default function AppealGenerationAgent({
         </div>
 
         <div className="space-y-4">
-          <div className={`rounded-xl border p-3 text-sm ${isDark ? "border-[#3f4558]" : "border-slate-200"}`}>
+          <div className={`rounded-xl border p-3 text-sm ${isDark ? "border-[#2A4A70] bg-[#1C3050]" : "border-slate-200"}`}>
             <p className={`text-xs font-semibold uppercase tracking-wide ${muted}`}>Claim snapshot</p>
             <dl className="mt-2 grid grid-cols-1 gap-1.5">
               {[
@@ -245,7 +245,7 @@ export default function AppealGenerationAgent({
           </div>
 
           {supportingDocs.length > 0 ? (
-            <div className={`rounded-xl border p-3 ${isDark ? "border-[#3f4558]" : "border-slate-200"}`}>
+            <div className={`rounded-xl border p-3 ${isDark ? "border-[#2A4A70] bg-[#1C3050]" : "border-slate-200"}`}>
               <p className={`text-xs font-semibold uppercase tracking-wide ${muted}`}>Supporting documentation</p>
               <ul className="mt-2 space-y-1.5 text-sm">
                 {supportingDocs.map((doc) => (
@@ -259,8 +259,8 @@ export default function AppealGenerationAgent({
             </div>
           ) : null}
 
-          <div className={`rounded-xl border flex flex-col min-h-[320px] ${isDark ? "border-[#3f4558]" : "border-slate-200"}`}>
-            <div className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide ${isDark ? "bg-[#262a33]" : "bg-slate-50"}`}>
+          <div className={`rounded-xl border flex flex-col min-h-[320px] ${isDark ? "border-[#2A4A70] bg-[#1C3050]" : "border-slate-200"}`}>
+            <div className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide ${isDark ? "bg-[#2A4A70]" : "bg-slate-50"}`}>
               Ask April
             </div>
             <div className="flex-1 overflow-auto px-3 py-3 space-y-3 max-h-[360px]">
@@ -275,7 +275,7 @@ export default function AppealGenerationAgent({
                     className={`rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
                       msg.role === "user"
                         ? isDark
-                          ? "bg-[#072F40] text-white ml-6"
+                          ? "bg-[#2A4A70] text-white ml-6"
                           : "bg-[#072F40] text-white ml-6"
                         : isDark
                           ? "bg-white/5 mr-4"
@@ -303,7 +303,7 @@ export default function AppealGenerationAgent({
               ))}
             </div>
             <form
-              className={`border-t p-3 flex gap-2 ${isDark ? "border-[#3f4558]" : "border-slate-200"}`}
+              className={`border-t p-3 flex gap-2 ${isDark ? "border-[#2A4A70]" : "border-slate-200"}`}
               onSubmit={(e) => {
                 e.preventDefault();
                 sendChat(chatInput);
@@ -318,7 +318,7 @@ export default function AppealGenerationAgent({
               />
               <button
                 type="submit"
-                className="px-3 py-2 rounded-lg text-sm font-medium bg-[#072F40] text-white disabled:opacity-60 shrink-0"
+                className="px-3 py-2 rounded-lg text-sm font-medium bg-[#14B8A6] text-white disabled:opacity-60 shrink-0"
                 disabled={busy || !session?.generated || !chatInput.trim()}
               >
                 Send
