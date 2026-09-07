@@ -32,7 +32,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+      <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl" style={{ colorScheme: "light" }}>
         <div className="mb-6">
           <button onClick={() => navigate('/signin')} className="text-gray-600 hover:text-gray-800">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -61,7 +61,7 @@ export default function ForgotPassword() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Ex: abc@example.com"
-                    className="w-full pl-12 pr-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-500 focus:outline-none transition-colors"
+                    className="w-full pl-12 pr-4 py-3 border-2 border-orange-200 rounded-xl bg-white text-slate-900 caret-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none transition-colors [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#ffffff]"
                   />
                 </div>
               </div>

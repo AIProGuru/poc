@@ -265,11 +265,11 @@ const ReboundDetailView = () => {
       ? "bg-white/10 shadow-[0_18px_45px_rgba(0,0,0,0.38)]"
       : "bg-white/70 shadow-[0_18px_45px_rgba(15,23,42,0.14)]"
     }`;
-  const triageFieldClass = `w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#6f7074] ${isDark
+  const triageFieldClass = `w-full rounded-lg border px-3 py-2 text-base focus:outline-none focus:ring-1 focus:ring-[#6f7074] ${isDark
       ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100'
       : 'bg-gray-100 border-gray-200 text-gray-800'
     }`;
-  const saveAndSubmitButtonClass = `px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed bg-orange-500 hover:bg-orange-600 text-white focus-visible:ring-2 focus-visible:ring-orange-300 shadow-sm`;
+  const saveAndSubmitButtonClass = `px-5 py-2.5 text-base font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed bg-orange-500 hover:bg-orange-600 text-white focus-visible:ring-2 focus-visible:ring-orange-300 shadow-sm`;
 
   let { token } = useParams()
   useEffect(() => {
@@ -1577,7 +1577,7 @@ const ReboundDetailView = () => {
             </button> */}
           </div>
           <div className={`overflow-x-auto border-b ${isDark ? "border-white/10" : "border-slate-200"}`}>
-            <div className="flex items-end gap-6 min-w-max">
+            <div className="helio-tab-row">
               {[
                 { id: 0, label: "Insights" },
                 { id: 1, label: "Claim", badge: "837" },
@@ -1592,7 +1592,7 @@ const ReboundDetailView = () => {
                     key={tab.id}
                     type="button"
                     onClick={() => onDetailShowStatusChange(tab.id)}
-                    className={`shrink-0 inline-flex items-center gap-2 whitespace-nowrap pb-3 text-sm font-medium border-b-2 transition-colors ${
+                    className={`helio-tab transition-colors ${
                       active
                         ? isDark
                           ? "text-white border-[#14B8A6]"
@@ -2252,7 +2252,7 @@ const ReboundDetailView = () => {
             >
               <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-lg font-semibold">Triage</p>
+                  <p className="text-xl font-semibold">Triage</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
@@ -2300,7 +2300,7 @@ const ReboundDetailView = () => {
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
                   <div className={`${triageGlassPanelClass} h-full`}>
-                    <p className="text-sm font-semibold mb-3">Actions</p>
+                    <p className="text-base font-semibold mb-3">Actions</p>
                     <div className="flex flex-col gap-3">
                       {isEligibility && (
                         <button
@@ -2345,7 +2345,7 @@ const ReboundDetailView = () => {
                         return (
                           <div key={`triage-${idx}`} className="flex flex-col gap-2">
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                              <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none min-w-0 sm:flex-1">
+                              <label className="inline-flex items-center gap-3 text-base cursor-pointer select-none min-w-0 sm:flex-1">
                                 <input
                                   type="checkbox"
                                   className="sr-only peer"
@@ -2402,7 +2402,7 @@ const ReboundDetailView = () => {
                                         prev === idx ? null : idx
                                       )
                                     }
-                                    className={`w-full rounded-lg border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6] disabled:opacity-60 flex items-center justify-between gap-2 ${isDark ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                                    className={`w-full rounded-lg border px-3 py-1.5 text-left text-base focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6] disabled:opacity-60 flex items-center justify-between gap-2 ${isDark ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
                                   >
                                     <span className="truncate">
                                       {selectedOption?.label || "Select transaction code..."}
@@ -2437,7 +2437,7 @@ const ReboundDetailView = () => {
                                             );
                                             setOpenTriageDropdown(null);
                                           }}
-                                          className={`triage-dropdown-item w-full px-3 py-2 text-left text-sm ${isDark ? 'text-[#F4F4F4]' : 'text-gray-800'}`}
+                                          className={`triage-dropdown-item w-full px-3 py-2 text-left text-base ${isDark ? 'text-[#F4F4F4]' : 'text-gray-800'}`}
                                         >
                                           {option.label}
                                         </button>
@@ -2454,7 +2454,7 @@ const ReboundDetailView = () => {
                                 onChange={(e) => setTriageOtherText(e.target.value)}
                                 disabled={!action.checked}
                                 placeholder="Enter other action..."
-                                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#14B8A6] focus:border-[#14B8A6] disabled:opacity-60 ${isDark ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
+                                className={`w-full rounded-lg border px-3 py-2 text-base focus:outline-none focus:ring-1 focus:ring-[#14B8A6] focus:border-[#14B8A6] disabled:opacity-60 ${isDark ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}
                               />
                             )}
                           </div>
@@ -2464,10 +2464,10 @@ const ReboundDetailView = () => {
                   </div>
 
                   <div className={`flex h-full flex-col gap-2 ${triageGlassPanelClass}`}>
-                    <p className="text-sm font-semibold">Notes</p>
+                    <p className="text-base font-semibold">Notes</p>
                     <textarea
                       rows={8}
-                      className={`min-h-[260px] flex-1 w-full rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#14B8A6] resize-none ${isDark ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100' : 'bg-gray-100 border-gray-200 text-gray-800'}`}
+                      className={`min-h-[260px] flex-1 w-full rounded-xl border px-3 py-3 text-base focus:outline-none focus:ring-1 focus:ring-[#14B8A6] resize-none ${isDark ? 'bg-[#1C3050] border-[#2A4A70] text-gray-100' : 'bg-gray-100 border-gray-200 text-gray-800'}`}
                       value={triageNotes}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -2480,7 +2480,7 @@ const ReboundDetailView = () => {
                     />
                     <div className={`rounded-xl border px-3 py-3 ${isDark ? "border-[#2A4A70] bg-[#111F35]" : "border-gray-200 bg-white"}`}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm font-semibold">Tickle date</p>
+                        <p className="text-base font-semibold">Tickle date</p>
                         {resolvedTickle.sourceLabel ? (
                           <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                             Based on: {resolvedTickle.sourceLabel}
@@ -2534,8 +2534,8 @@ const ReboundDetailView = () => {
                 <div className={`flex flex-col gap-3 ${triageGlassPanelClass}`}>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="text-lg font-semibold">Documents</p>
-                      <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                      <p className="text-xl font-semibold">Documents</p>
+                      <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                         Attach clinical documentation to support the appeal. Files upload when you save and submit.
                       </p>
                     </div>
@@ -2722,13 +2722,13 @@ const ReboundDetailView = () => {
 
               <div className={`${triageGlassPanelClass}`}>
                 <div className="flex items-center justify-between gap-3 mb-3">
-                  <p className="text-sm font-semibold">Notes History</p>
+                  <p className="text-base font-semibold">Notes History</p>
                   <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     {triageNotesHistory.length} {triageNotesHistory.length === 1 ? "entry" : "entries"}
                   </span>
                 </div>
                 {triageNotesHistory.length === 0 ? (
-                  <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  <p className={`text-base ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     No triage notes yet. Submit a note to start the history for this claim.
                   </p>
                 ) : (
@@ -2752,12 +2752,12 @@ const ReboundDetailView = () => {
                             </span>
                           </div>
                           {actionSummary ? (
-                            <p className={`mt-2 text-xs font-medium ${isDark ? "text-gray-300" : "text-slate-600"}`}>
+                            <p className={`mt-2 text-sm font-medium ${isDark ? "text-gray-300" : "text-slate-600"}`}>
                               Actions: {actionSummary}
                             </p>
                           ) : null}
                           {entry.notes ? (
-                            <p className={`mt-2 text-sm whitespace-pre-wrap ${isDark ? "text-gray-200" : "text-slate-700"}`}>
+                            <p className={`mt-2 text-base whitespace-pre-wrap ${isDark ? "text-gray-200" : "text-slate-700"}`}>
                               {entry.notes}
                             </p>
                           ) : null}

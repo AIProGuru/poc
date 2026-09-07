@@ -41,6 +41,26 @@ function friendlySummary(diagnosis, agentError) {
   }
 }
 
+const EdiFileIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M7 3.5h7.2L19.5 9v11.5A1 1 0 0 1 18.5 21.5h-11A1 1 0 0 1 6.5 20.5v-16A1 1 0 0 1 7.5 3.5H7Z"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+    <path d="M14.2 3.5V9h5.3" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    <path d="M9 13.2h6.5M9 16.4h4.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <path
+      d="M8.2 10.4 9.6 9l1.4 1.4M14.4 10.4 13 9l-1.4 1.4"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 /**
  * Taxonomy Missing AI Agent — triage workflow panel.
  */
@@ -105,12 +125,14 @@ export default function TaxonomyMissingAgent({
     ? "border-[#2A4A70] bg-[#111F35] text-gray-100"
     : "border-slate-200 bg-white text-slate-900";
   const muted = isDark ? "text-gray-400" : "text-slate-500";
-  const cardClass = `rounded-lg border p-2.5 ${isDark ? "border-[#2A4A70] bg-[#1C3050]" : "border-slate-200"}`;
+  const cardClass = `rounded-lg border px-3 py-2 ${isDark ? "border-[#2A4A70] bg-[#1C3050]" : "border-slate-200"}`;
   const chipOk = isDark ? "bg-emerald-900/40 text-emerald-300" : "bg-emerald-50 text-emerald-800";
   const chipWarn = isDark ? "bg-amber-900/40 text-amber-200" : "bg-amber-50 text-amber-900";
   const chipBad = isDark ? "bg-rose-900/40 text-rose-200" : "bg-rose-50 text-rose-800";
   const chip =
     diagnosis.issue === "match" ? chipOk : diagnosis.issue === "config_missing" ? chipWarn : chipBad;
+  const ediBtnBase =
+    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed";
 
   const reanalyzeTooltip =
     "Re-runs the taxonomy review using the latest claim file and your Client Management facility settings.";
@@ -121,15 +143,15 @@ export default function TaxonomyMissingAgent({
     <div className={`rounded-xl border p-3 sm:p-4 ${panelClass}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">AI Agent</p>
-          <h3 className="text-base font-semibold leading-tight">{AGENT_TITLE}</h3>
+          <p className="text-xs font-semibold uppercase tracking-wide opacity-70">AI Agent</p>
+          <h3 className="text-lg font-semibold leading-tight">{AGENT_TITLE}</h3>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Tooltip title={reanalyzeTooltip} arrow placement="top">
             <span>
               <button
                 type="button"
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${isDark ? "bg-white/10 hover:bg-white/15" : "bg-slate-100 hover:bg-slate-200"}`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${isDark ? "bg-white/10 hover:bg-white/15" : "bg-slate-100 hover:bg-slate-200"}`}
                 onClick={() => refresh()}
                 disabled={loading || saving}
               >
@@ -140,101 +162,85 @@ export default function TaxonomyMissingAgent({
           {diagnosis.canFix ? (
             <button
               type="button"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#14B8A6] hover:bg-[#0D9488] text-white transition-colors"
               onClick={() => refresh({ persist: true })}
               disabled={loading || saving}
             >
-              {saving ? "Saving…" : "Approve Taxonomy Update"}
+              {saving ? "Saving…" : "Approve Update"}
             </button>
           ) : null}
         </div>
       </div>
 
-      {error ? <p className="mt-2 text-xs text-rose-500">{error}</p> : null}
+      {error ? <p className="mt-2 text-sm text-rose-500">{error}</p> : null}
 
       {!agent && !loading ? (
-        <p className={`mt-2 text-xs ${muted}`}>
+        <p className={`mt-2 text-sm ${muted}`}>
           Select Analyze to compare this claim against Client Management facility settings.
         </p>
       ) : null}
 
       {agent ? (
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${chip}`}>
+            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${chip}`}>
               {issueLabel}
             </span>
-            {summaryText ? <p className="text-xs flex-1 min-w-[12rem]">{summaryText}</p> : null}
+            {summaryText ? <p className="text-sm flex-1 min-w-[12rem]">{summaryText}</p> : null}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-start">
             <div className={cardClass}>
-              <p className={`text-[10px] uppercase font-semibold ${muted}`}>Before</p>
-              <p className="mt-0.5 text-sm font-mono">{beforeTaxonomy}</p>
+              <p className={`text-xs uppercase font-semibold ${muted}`}>Before</p>
+              <p className="mt-0.5 text-base font-mono leading-snug">{beforeTaxonomy}</p>
             </div>
             <div className={cardClass}>
-              <p className={`text-[10px] uppercase font-semibold ${muted}`}>After</p>
-              <p className="mt-0.5 text-sm font-mono text-emerald-600 dark:text-emerald-300">{afterTaxonomy}</p>
+              <p className={`text-xs uppercase font-semibold ${muted}`}>After</p>
+              <p className="mt-0.5 text-base font-mono leading-snug text-emerald-600 dark:text-emerald-300">{afterTaxonomy}</p>
             </div>
             <div className={cardClass}>
-              <p className={`text-[10px] uppercase font-semibold ${muted}`}>Matched Facility</p>
+              <p className={`text-xs uppercase font-semibold ${muted}`}>Matched Facility</p>
               {facility ? (
                 <>
-                  <p className="mt-0.5 text-sm font-medium truncate">{facility.name || facility.id}</p>
-                  <p className={`text-[11px] ${muted}`}>
+                  <p className="mt-0.5 text-base font-medium truncate leading-snug">{facility.name || facility.id}</p>
+                  <p className={`text-sm ${muted}`}>
                     NPI {facility.npi || "—"} · Tax ID {facility.taxId || "—"}
                   </p>
-                  <p className={`text-[11px] ${muted}`}>
+                  <p className={`text-sm ${muted}`}>
                     Taxonomy Code: <span className="font-mono">{facility.taxonomyCode || "—"}</span>
                   </p>
                 </>
               ) : (
-                <p className={`mt-0.5 text-xs ${muted}`}>
+                <p className={`mt-0.5 text-sm ${muted}`}>
                   No match — align Tax ID and NPI in Client Management.
                 </p>
               )}
             </div>
           </div>
 
-          {(agent.correctedContent || raw.content || agent.saved?.url) ? (
-            <div className={`rounded-lg border overflow-hidden ${isDark ? "border-[#2A4A70]" : "border-slate-200"}`}>
-              <div className={`px-2.5 py-1.5 text-[11px] font-semibold ${isDark ? "bg-[#1C3050]" : "bg-slate-50"}`}>
-                Before | After Snapshot
-              </div>
-              <div className="grid grid-cols-2 text-xs">
-                <div className={`px-2.5 py-2 border-r ${isDark ? "border-[#2A4A70] bg-rose-950/20" : "border-slate-200 bg-rose-50/50"}`}>
-                  <p className={`text-[10px] font-semibold uppercase ${muted}`}>Before</p>
-                  <p className="mt-1 font-mono">{beforeTaxonomy}</p>
-                </div>
-                <div className={`px-2.5 py-2 ${isDark ? "bg-emerald-950/20" : "bg-emerald-50/50"}`}>
-                  <p className={`text-[10px] font-semibold uppercase ${muted}`}>After</p>
-                  <p className="mt-1 font-mono text-emerald-600 dark:text-emerald-300">{afterTaxonomy}</p>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium ${isDark ? "bg-white/10" : "bg-slate-100"}`}
+              className={`${ediBtnBase} ${isDark ? "bg-[#2A4A70] text-white hover:bg-[#4A6080]" : "bg-[#1C3050] text-white hover:bg-[#2A4A70]"}`}
               onClick={() => {
                 setFileMode("before");
                 setShowFile(true);
               }}
               disabled={!raw.content}
             >
+              <EdiFileIcon />
               View Original 837
             </button>
             {agent.correctedContent ? (
               <button
                 type="button"
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium ${isDark ? "bg-white/10" : "bg-slate-100"}`}
+                className={`${ediBtnBase} bg-[#14B8A6] text-white hover:bg-[#0D9488]`}
                 onClick={() => {
                   setFileMode("after");
                   setShowFile(true);
                 }}
               >
+                <EdiFileIcon />
                 View Corrected 837
               </button>
             ) : null}
@@ -243,8 +249,9 @@ export default function TaxonomyMissingAgent({
                 href={raw.url}
                 target="_blank"
                 rel="noreferrer"
-                className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#2A4A70] text-white"
+                className={`${ediBtnBase} ${isDark ? "bg-[#2A4A70] text-white hover:bg-[#4A6080]" : "bg-[#1C3050] text-white hover:bg-[#2A4A70]"}`}
               >
+                <EdiFileIcon />
                 Open original file
               </a>
             ) : null}
@@ -253,8 +260,9 @@ export default function TaxonomyMissingAgent({
                 href={agent.saved.url}
                 target="_blank"
                 rel="noreferrer"
-                className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-emerald-700 text-white"
+                className={`${ediBtnBase} bg-emerald-700 text-white hover:bg-emerald-800`}
               >
+                <EdiFileIcon />
                 Open corrected file
               </a>
             ) : null}
@@ -280,18 +288,18 @@ export default function TaxonomyMissingAgent({
           }}
         >
           <div className="flex items-center justify-between gap-3 mb-2">
-            <h4 className="text-sm font-semibold">
+            <h4 className="text-base font-semibold">
               {fileMode === "after" ? "Corrected 837" : "Original 837"} · {claimNo}
             </h4>
             <button
               type="button"
-              className={`px-3 py-1 rounded-lg text-xs ${isDark ? "bg-white/10" : "bg-slate-100"}`}
+              className={`px-3 py-1.5 rounded-lg text-sm ${isDark ? "bg-white/10" : "bg-slate-100"}`}
               onClick={() => setShowFile(false)}
             >
               Close
             </button>
           </div>
-          <pre className={`text-[11px] font-mono whitespace-pre-wrap break-all rounded-lg p-2 max-h-[70vh] overflow-auto ${isDark ? "bg-[#1C3050]" : "bg-slate-50"}`}>
+          <pre className={`text-sm font-mono whitespace-pre-wrap break-all rounded-lg p-2 max-h-[70vh] overflow-auto ${isDark ? "bg-[#1C3050]" : "bg-slate-50"}`}>
             {fileMode === "after" ? agent?.correctedContent || "" : raw.content || ""}
           </pre>
         </Box>

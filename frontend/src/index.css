@@ -558,6 +558,31 @@ body{
   color: #14B8A6; /* Fallback color for better contrast */
 }
 
+.helio-tab-row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: max-content;
+}
+
+.helio-tab {
+  flex: 1 0 11.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 500;
+  white-space: nowrap;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  text-align: center;
+  cursor: pointer;
+}
+
 .hover-lift {
   transition: all 0.3s ease;
 }

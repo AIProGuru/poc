@@ -92,13 +92,13 @@ const DetailView = (props) => {
           </div>
         </div>
       </div>
-      <div className="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
-        <ul className="flex flex-wrap -mb-px">
-          <li className="me-2">
+      <div className="text-base font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
+        <ul className="helio-tab-row">
+          <li className="flex-1 min-w-[11.5rem]">
             <a
               href="#"
-              className={`inline-block p-4 border-b-2 ${detailShowStatus === 0
-                ? "text-gray-600 border-b-2 border-gray-600 rounded-t-lg active dark:text-gray-500 dark:border-gray-500"
+              className={`helio-tab ${detailShowStatus === 0
+                ? "text-gray-600 border-[#14B8A6] rounded-t-lg active dark:text-gray-200"
                 : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                 }`}
               onClick={() => setDetailShowStatus(0)}
@@ -106,11 +106,11 @@ const DetailView = (props) => {
               Claim
             </a>
           </li>
-          <li className="me-2">
+          <li className="flex-1 min-w-[11.5rem]">
             <a
               href="#"
-              className={`inline-block p-4 border-b-2 ${detailShowStatus === 1
-                ? "text-gray-600 border-b-2 border-gray-600 rounded-t-lg active dark:text-gray-500 dark:border-gray-500"
+              className={`helio-tab ${detailShowStatus === 1
+                ? "text-gray-600 border-[#14B8A6] rounded-t-lg active dark:text-gray-200"
                 : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
@@ -119,11 +119,11 @@ const DetailView = (props) => {
               Remit
             </a>
           </li>
-          <li className="me-2">
+          <li className="flex-1 min-w-[11.5rem]">
             <a
               href="#"
-              className={`inline-block p-4 border-b-2 ${detailShowStatus === 2
-                ? "text-gray-600 border-b-2 border-gray-600 rounded-t-lg active dark:text-gray-500 dark:border-gray-500"
+              className={`helio-tab ${detailShowStatus === 2
+                ? "text-gray-600 border-[#14B8A6] rounded-t-lg active dark:text-gray-200"
                 : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
@@ -132,11 +132,11 @@ const DetailView = (props) => {
               Related Encounters
             </a>
           </li>
-          <li className="me-2">
+          <li className="flex-1 min-w-[11.5rem]">
             <a
               href="#"
-              className={`inline-block p-4 border-b-2 ${detailShowStatus === 3
-                ? "text-gray-600 border-b-2 border-gray-600 rounded-t-lg active dark:text-gray-500 dark:border-gray-500"
+              className={`helio-tab ${detailShowStatus === 3
+                ? "text-gray-600 border-[#14B8A6] rounded-t-lg active dark:text-gray-200"
                 : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
@@ -145,11 +145,11 @@ const DetailView = (props) => {
               Documentation
             </a>
           </li>
-          <li className="me-2">
+          <li className="flex-1 min-w-[11.5rem]">
             <a
               href="#"
-              className={`inline-block p-4 border-b-2 ${detailShowStatus === 4
-                ? "text-gray-600 border-b-2 border-gray-600 rounded-t-lg active dark:text-gray-500 dark:border-gray-500"
+              className={`helio-tab ${detailShowStatus === 4
+                ? "text-gray-600 border-[#14B8A6] rounded-t-lg active dark:text-gray-200"
                 : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
                 }`}
               aria-current="page"

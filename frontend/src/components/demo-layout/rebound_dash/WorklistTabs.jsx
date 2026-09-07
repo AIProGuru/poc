@@ -70,7 +70,7 @@ const WorklistTabs = () => {
     <div className="mb-4">
       {visibleTabs.length > 0 && (
         <div
-          className={`flex items-end gap-6 overflow-x-auto border-b ${
+          className={`helio-tab-row overflow-x-auto border-b ${
             isDark ? "border-white/10" : "border-slate-200"
           }`}
         >
@@ -82,7 +82,7 @@ const WorklistTabs = () => {
                 key={child.id}
                 type="button"
                 onClick={() => activateTab(child.id)}
-                className={`shrink-0 whitespace-nowrap pb-3 text-sm font-medium border-b-2 transition-colors ${tabClass(active)}`}
+                className={`helio-tab transition-colors ${tabClass(active)}`}
               >
                 {child.title} ({formatCount(count)})
               </button>
