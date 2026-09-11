@@ -542,19 +542,8 @@ def get_rebound_claim():
         ret["TaxonomyAgent"] = None
         flag = False
 
-        def _service_has_n255(service_line: dict) -> bool:
-            raw = f"{service_line.get('RemarkCodes') or ''}"
-            remarks = service_line.get("Remark") or []
-            codes = parse_remark_codes(raw) + [str(c).strip() for c in remarks]
-            return any(c.upper().replace("HE:", "") == "N255" for c in codes if c)
-
-        has_n255 = False
         if len(ret['Remit']) > 0:
             for service in ret['Remit'][0]['ServiceLine']:
-                if _service_has_n255(service):
-                    has_n255 = True
-                    flag = True
-                    break
                 raw_remark = f"{service.get('RemarkCodes') or ''}"
                 if raw_remark == "M77" or "M77" in parse_remark_codes(raw_remark):
                     flag = True
@@ -572,13 +561,13 @@ def get_rebound_claim():
                         ret["Appeal"][6] = 0
                     break
 
-        # Taxonomy Missing AI agent (Automation=1 or N255): compare S3 837 vs Client Management facility config
+        # Taxonomy Missing AI agent: only for Automation=1 (true taxonomy cases)
         automation_val = ret["Claim"]["Data"].get("Automation")
         try:
             automation_int = int(automation_val) if automation_val is not None else 0
         except (TypeError, ValueError):
             automation_int = 0
-        if has_n255 or automation_int == 1:
+        if automation_int == 1:
             flag = True
             try:
                 from services.taxonomy_agent import build_taxonomy_agent_result

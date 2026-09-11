@@ -339,9 +339,7 @@ const ReboundDetailView = () => {
   );
 
   const showTaxonomyMissingAgent = useMemo(
-    () =>
-      Number(currentClaim?.Claim?.Data?.Automation) === 1 ||
-      Boolean(currentClaim?.TaxonomyAgent),
+    () => Number(currentClaim?.Claim?.Data?.Automation) === 1,
     [currentClaim]
   );
 

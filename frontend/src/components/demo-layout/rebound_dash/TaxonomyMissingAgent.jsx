@@ -4,30 +4,13 @@ import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";
 
-const AGENT_TITLE = "Missing or Incorrect Taxonomy Code";
-
-function friendlyIssueLabel(issue) {
-  switch (issue) {
-    case "missing":
-      return "Missing taxonomy";
-    case "incorrect":
-      return "Incorrect taxonomy";
-    case "config_missing":
-      return "Taxonomy not configured";
-    case "facility_not_matched":
-      return "No facility match";
-    case "match":
-      return "Already correct";
-    default:
-      return "Review required";
-  }
-}
+const AGENT_TITLE = "Missing or incorrect taxonomy code";
 
 function friendlySummary(diagnosis, agentError) {
   if (agentError) return agentError;
   switch (diagnosis?.issue) {
     case "missing":
-      return "The billing provider taxonomy code is missing on this claim.";
+      return "The billing provider taxonomy code is missing on this claim, which will cause the payer to reject it on submission.";
     case "incorrect":
       return "The billing provider taxonomy code on this claim does not match Client Management.";
     case "config_missing":
@@ -41,8 +24,8 @@ function friendlySummary(diagnosis, agentError) {
   }
 }
 
-const EdiFileIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+const EdiFileIcon = ({ className = "" }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
     <path
       d="M7 3.5h7.2L19.5 9v11.5A1 1 0 0 1 18.5 21.5h-11A1 1 0 0 1 6.5 20.5v-16A1 1 0 0 1 7.5 3.5H7Z"
       stroke="currentColor"
@@ -51,13 +34,38 @@ const EdiFileIcon = () => (
     />
     <path d="M14.2 3.5V9h5.3" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
     <path d="M9 13.2h6.5M9 16.4h4.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+);
+
+const RefreshIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
-      d="M8.2 10.4 9.6 9l1.4 1.4M14.4 10.4 13 9l-1.4 1.4"
+      d="M4.5 12a7.5 7.5 0 0 1 12.7-5.4L19.5 9M19.5 12a7.5 7.5 0 0 1-12.7 5.4L4.5 15"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
+    <path d="M19.5 4.5V9h-4.5M4.5 19.5V15H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const BuildingIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M4 20.5V6.5A1.5 1.5 0 0 1 5.5 5h8A1.5 1.5 0 0 1 15 6.5V20.5M15 10h3.5A1.5 1.5 0 0 1 20 11.5V20.5M2.5 20.5h19"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M7.5 8.5h2M7.5 12h2M7.5 15.5h2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
   </svg>
 );
 
@@ -108,11 +116,6 @@ export default function TaxonomyMissingAgent({
   const before = agent?.before || {};
   const after = agent?.after || {};
 
-  const issueLabel = useMemo(
-    () => (agent?.available === false ? "Unavailable" : friendlyIssueLabel(diagnosis.issue)),
-    [diagnosis.issue, agent?.available]
-  );
-
   const summaryText = useMemo(
     () => friendlySummary(diagnosis, agent?.error),
     [diagnosis, agent?.error]
@@ -120,19 +123,18 @@ export default function TaxonomyMissingAgent({
 
   const beforeTaxonomy = before.taxonomy || "(missing)";
   const afterTaxonomy = after.taxonomy || "(not configured)";
+  const beforeSegment = before.segment || `PRV*BI*PXC*${beforeTaxonomy}`;
+  const afterSegment = after.segment || (after.taxonomy ? `PRV*BI*PXC*${after.taxonomy}` : null);
 
-  const panelClass = isDark
-    ? "border-[#2A4A70] bg-[#111F35] text-gray-100"
-    : "border-slate-200 bg-white text-slate-900";
   const muted = isDark ? "text-gray-400" : "text-slate-500";
-  const cardClass = `rounded-lg border px-3 py-2 ${isDark ? "border-[#2A4A70] bg-[#1C3050]" : "border-slate-200"}`;
-  const chipOk = isDark ? "bg-emerald-900/40 text-emerald-300" : "bg-emerald-50 text-emerald-800";
-  const chipWarn = isDark ? "bg-amber-900/40 text-amber-200" : "bg-amber-50 text-amber-900";
-  const chipBad = isDark ? "bg-rose-900/40 text-rose-200" : "bg-rose-50 text-rose-800";
-  const chip =
-    diagnosis.issue === "match" ? chipOk : diagnosis.issue === "config_missing" ? chipWarn : chipBad;
-  const ediBtnBase =
-    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed";
+  const surface = isDark ? "bg-[#111F35] border-[#2A4A70]" : "bg-white border-slate-200";
+  const sideCard = isDark ? "bg-[#1C3050] border-[#2A4A70]" : "bg-slate-50 border-slate-200";
+  const ghostBtn = isDark
+    ? "bg-white/10 hover:bg-white/15 text-gray-100 border border-white/10"
+    : "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200";
+  const softPill = isDark
+    ? "bg-[#1C3050] border border-[#2A4A70] text-gray-100 hover:bg-[#2A4A70]"
+    : "bg-white border border-slate-200 text-slate-800 hover:bg-slate-50";
 
   const reanalyzeTooltip =
     "Re-runs the taxonomy review using the latest claim file and your Client Management facility settings.";
@@ -140,135 +142,178 @@ export default function TaxonomyMissingAgent({
   if (!claimNo) return null;
 
   return (
-    <div className={`rounded-xl border p-3 sm:p-4 ${panelClass}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className={`rounded-2xl border p-4 sm:p-5 ${surface} text-inherit`}>
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.85fr)] gap-4 xl:gap-5">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-70">AI Agent</p>
-          <h3 className="text-lg font-semibold leading-tight">{AGENT_TITLE}</h3>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <Tooltip title={reanalyzeTooltip} arrow placement="top">
-            <span>
-              <button
-                type="button"
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${isDark ? "bg-white/10 hover:bg-white/15" : "bg-slate-100 hover:bg-slate-200"}`}
-                onClick={() => refresh()}
-                disabled={loading || saving}
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className={`text-xs font-medium ${muted}`}>Flagged by claims agent</p>
+              <h3 className="mt-1 text-xl sm:text-2xl font-semibold leading-tight tracking-tight">
+                {AGENT_TITLE}
+              </h3>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Tooltip title={reanalyzeTooltip} arrow placement="top">
+                <span>
+                  <button
+                    type="button"
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition ${ghostBtn}`}
+                    onClick={() => refresh()}
+                    disabled={loading || saving}
+                  >
+                    <RefreshIcon />
+                    {loading ? "Reviewing…" : agent ? "Re-analyze" : "Analyze"}
+                  </button>
+                </span>
+              </Tooltip>
+              {diagnosis.canFix ? (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold bg-[#0F766E] hover:bg-[#0D9488] text-white transition-colors"
+                  onClick={() => refresh({ persist: true })}
+                  disabled={loading || saving}
+                >
+                  <CheckIcon />
+                  {saving ? "Saving…" : "Approve update"}
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          {error ? <p className="mt-3 text-sm text-rose-500">{error}</p> : null}
+
+          {!agent && !loading ? (
+            <p className={`mt-3 text-sm ${muted}`}>
+              Select Analyze to compare this claim against Client Management facility settings.
+            </p>
+          ) : null}
+
+          {agent ? (
+            <div className="mt-3 space-y-4">
+              {summaryText ? (
+                <p className={`text-sm sm:text-base leading-relaxed ${muted}`}>{summaryText}</p>
+              ) : null}
+
+              <div
+                className={`overflow-hidden rounded-xl border font-mono text-sm sm:text-[15px] ${
+                  isDark ? "border-[#2A4A70] bg-[#0D1829]" : "border-slate-200 bg-slate-950"
+                }`}
               >
-                {loading ? "Reviewing…" : agent ? "Re-analyze" : "Analyze"}
-              </button>
-            </span>
-          </Tooltip>
-          {diagnosis.canFix ? (
-            <button
-              type="button"
-              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#14B8A6] hover:bg-[#0D9488] text-white transition-colors"
-              onClick={() => refresh({ persist: true })}
-              disabled={loading || saving}
-            >
-              {saving ? "Saving…" : "Approve Update"}
-            </button>
+                <div className="flex items-stretch bg-[#7F1D1D]/80 text-rose-100">
+                  <div className="flex w-10 shrink-0 items-center justify-center border-r border-white/10 text-base font-semibold">
+                    −
+                  </div>
+                  <div className="min-w-0 flex-1 px-3 py-2.5 break-all">
+                    {beforeSegment}
+                  </div>
+                </div>
+                <div className="flex items-stretch bg-[#14532D]/85 text-emerald-100">
+                  <div className="flex w-10 shrink-0 items-center justify-center border-r border-white/10 text-base font-semibold">
+                    +
+                  </div>
+                  <div className="min-w-0 flex-1 px-3 py-2.5 break-all">
+                    {afterSegment || `PRV*BI*PXC*${afterTaxonomy}`}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${softPill}`}
+                  onClick={() => {
+                    setFileMode("before");
+                    setShowFile(true);
+                  }}
+                  disabled={!raw.content}
+                >
+                  <EdiFileIcon />
+                  View original 837
+                </button>
+                {agent.correctedContent ? (
+                  <button
+                    type="button"
+                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${softPill}`}
+                    onClick={() => {
+                      setFileMode("after");
+                      setShowFile(true);
+                    }}
+                  >
+                    <EdiFileIcon />
+                    View corrected 837
+                  </button>
+                ) : null}
+                {raw.url ? (
+                  <a
+                    href={raw.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${softPill}`}
+                  >
+                    <EdiFileIcon />
+                    Open original file
+                  </a>
+                ) : null}
+                {agent.saved?.url ? (
+                  <a
+                    href={agent.saved.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${softPill}`}
+                  >
+                    <EdiFileIcon />
+                    Open corrected file
+                  </a>
+                ) : null}
+              </div>
+            </div>
           ) : null}
         </div>
+
+        <aside className={`rounded-2xl border p-4 h-fit ${sideCard}`}>
+          <div className={`flex items-center gap-2 text-sm font-medium ${muted}`}>
+            <BuildingIcon />
+            Matched facility
+          </div>
+          {facility ? (
+            <>
+              <p className={`mt-3 text-base sm:text-lg font-medium leading-snug ${isDark ? "text-[#A8C5E2]" : "text-slate-700"}`}>
+                {facility.name || facility.id}
+              </p>
+              <dl className="mt-4 space-y-2.5 text-sm sm:text-base">
+                {[
+                  { label: "NPI", value: facility.npi || "—" },
+                  { label: "Tax ID", value: facility.taxId || "—" },
+                  {
+                    label: "Taxonomy",
+                    value: facility.taxonomyCode || "—",
+                    accent: true,
+                  },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-baseline justify-between gap-3">
+                    <dt className={muted}>{row.label}</dt>
+                    <dd
+                      className={`font-mono text-right ${
+                        row.accent
+                          ? "text-emerald-400 font-semibold"
+                          : isDark
+                            ? "text-gray-100"
+                            : "text-slate-900"
+                      }`}
+                    >
+                      {row.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          ) : (
+            <p className={`mt-3 text-sm ${muted}`}>
+              No match — align Tax ID and NPI in Client Management.
+            </p>
+          )}
+        </aside>
       </div>
-
-      {error ? <p className="mt-2 text-sm text-rose-500">{error}</p> : null}
-
-      {!agent && !loading ? (
-        <p className={`mt-2 text-sm ${muted}`}>
-          Select Analyze to compare this claim against Client Management facility settings.
-        </p>
-      ) : null}
-
-      {agent ? (
-        <div className="mt-3 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${chip}`}>
-              {issueLabel}
-            </span>
-            {summaryText ? <p className="text-sm flex-1 min-w-[12rem]">{summaryText}</p> : null}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-start">
-            <div className={cardClass}>
-              <p className={`text-xs uppercase font-semibold ${muted}`}>Before</p>
-              <p className="mt-0.5 text-base font-mono leading-snug">{beforeTaxonomy}</p>
-            </div>
-            <div className={cardClass}>
-              <p className={`text-xs uppercase font-semibold ${muted}`}>After</p>
-              <p className="mt-0.5 text-base font-mono leading-snug text-emerald-600 dark:text-emerald-300">{afterTaxonomy}</p>
-            </div>
-            <div className={cardClass}>
-              <p className={`text-xs uppercase font-semibold ${muted}`}>Matched Facility</p>
-              {facility ? (
-                <>
-                  <p className="mt-0.5 text-base font-medium truncate leading-snug">{facility.name || facility.id}</p>
-                  <p className={`text-sm ${muted}`}>
-                    NPI {facility.npi || "—"} · Tax ID {facility.taxId || "—"}
-                  </p>
-                  <p className={`text-sm ${muted}`}>
-                    Taxonomy Code: <span className="font-mono">{facility.taxonomyCode || "—"}</span>
-                  </p>
-                </>
-              ) : (
-                <p className={`mt-0.5 text-sm ${muted}`}>
-                  No match — align Tax ID and NPI in Client Management.
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={`${ediBtnBase} ${isDark ? "bg-[#2A4A70] text-white hover:bg-[#4A6080]" : "bg-[#1C3050] text-white hover:bg-[#2A4A70]"}`}
-              onClick={() => {
-                setFileMode("before");
-                setShowFile(true);
-              }}
-              disabled={!raw.content}
-            >
-              <EdiFileIcon />
-              View Original 837
-            </button>
-            {agent.correctedContent ? (
-              <button
-                type="button"
-                className={`${ediBtnBase} bg-[#14B8A6] text-white hover:bg-[#0D9488]`}
-                onClick={() => {
-                  setFileMode("after");
-                  setShowFile(true);
-                }}
-              >
-                <EdiFileIcon />
-                View Corrected 837
-              </button>
-            ) : null}
-            {raw.url ? (
-              <a
-                href={raw.url}
-                target="_blank"
-                rel="noreferrer"
-                className={`${ediBtnBase} ${isDark ? "bg-[#2A4A70] text-white hover:bg-[#4A6080]" : "bg-[#1C3050] text-white hover:bg-[#2A4A70]"}`}
-              >
-                <EdiFileIcon />
-                Open original file
-              </a>
-            ) : null}
-            {agent.saved?.url ? (
-              <a
-                href={agent.saved.url}
-                target="_blank"
-                rel="noreferrer"
-                className={`${ediBtnBase} bg-emerald-700 text-white hover:bg-emerald-800`}
-              >
-                <EdiFileIcon />
-                Open corrected file
-              </a>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
 
       <Modal open={showFile} onClose={() => setShowFile(false)}>
         <Box
