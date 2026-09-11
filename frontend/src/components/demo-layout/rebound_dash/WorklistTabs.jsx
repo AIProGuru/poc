@@ -58,22 +58,23 @@ const WorklistTabs = () => {
   const tabClass = (active) => {
     if (active) {
       return isDark
-        ? "text-white border-[#4B9187]"
-        : "text-slate-900 border-[#4B9187]";
+        ? "is-active text-white"
+        : "is-active text-slate-900";
     }
     return isDark
-      ? "text-[rgba(244,244,244,0.55)] border-transparent hover:text-white/80"
-      : "text-slate-500 border-transparent hover:text-slate-800";
+      ? "text-[rgba(244,244,244,0.55)] hover:text-white/80"
+      : "text-slate-500 hover:text-slate-800";
   };
 
   return (
     <div className="mb-4">
       {visibleTabs.length > 0 && (
         <div
-          className={`helio-tab-row overflow-x-auto border-b ${
+          className={`overflow-x-auto border-b ${
             isDark ? "border-white/10" : "border-slate-200"
           }`}
         >
+          <div className="helio-tab-row">
           {visibleTabs.map((child) => {
             const active = selectedNav === child.id;
             const count = getChildBadgeCount(child, navGrouped, navPendCounts);
@@ -88,6 +89,7 @@ const WorklistTabs = () => {
               </button>
             );
           })}
+          </div>
         </div>
       )}
 

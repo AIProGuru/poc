@@ -94,24 +94,24 @@ const DetailView = (props) => {
       </div>
       <div className="text-base font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
         <ul className="helio-tab-row">
-          <li className="flex-1 min-w-[11.5rem]">
+          <li>
             <a
               href="#"
               className={`helio-tab ${detailShowStatus === 0
-                ? "text-gray-600 border-[#14B8A6] rounded-t-lg active dark:text-gray-200"
-                : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                ? "is-active text-gray-600 dark:text-gray-200"
+                : "hover:text-gray-600 dark:hover:text-gray-300"
                 }`}
               onClick={() => setDetailShowStatus(0)}
             >
               Claim
             </a>
           </li>
-          <li className="flex-1 min-w-[11.5rem]">
+          <li>
             <a
               href="#"
               className={`helio-tab ${detailShowStatus === 1
-                ? "text-gray-600 border-[#14B8A6] rounded-t-lg active dark:text-gray-200"
-                : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                ? "is-active text-gray-600 dark:text-gray-200"
+                : "hover:text-gray-600 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
               onClick={() => setDetailShowStatus(1)}
@@ -119,12 +119,12 @@ const DetailView = (props) => {
               Remit
             </a>
           </li>
-          <li className="flex-1 min-w-[11.5rem]">
+          <li>
             <a
               href="#"
               className={`helio-tab ${detailShowStatus === 2
-                ? "text-gray-600 border-[#14B8A6] rounded-t-lg active dark:text-gray-200"
-                : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                ? "is-active text-gray-600 dark:text-gray-200"
+                : "hover:text-gray-600 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
               onClick={() => setDetailShowStatus(2)}
@@ -132,12 +132,12 @@ const DetailView = (props) => {
               Related Encounters
             </a>
           </li>
-          <li className="flex-1 min-w-[11.5rem]">
+          <li>
             <a
               href="#"
               className={`helio-tab ${detailShowStatus === 3
-                ? "text-gray-600 border-[#14B8A6] rounded-t-lg active dark:text-gray-200"
-                : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                ? "is-active text-gray-600 dark:text-gray-200"
+                : "hover:text-gray-600 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
               onClick={() => setDetailShowStatus(3)}
@@ -145,12 +145,12 @@ const DetailView = (props) => {
               Documentation
             </a>
           </li>
-          <li className="flex-1 min-w-[11.5rem]">
+          <li>
             <a
               href="#"
               className={`helio-tab ${detailShowStatus === 4
-                ? "text-gray-600 border-[#14B8A6] rounded-t-lg active dark:text-gray-200"
-                : "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                ? "is-active text-gray-600 dark:text-gray-200"
+                : "hover:text-gray-600 dark:hover:text-gray-300"
                 }`}
               aria-current="page"
               onClick={() => setDetailShowStatus(4)}

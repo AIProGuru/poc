@@ -1593,11 +1593,11 @@ const ReboundDetailView = () => {
                     className={`helio-tab transition-colors ${
                       active
                         ? isDark
-                          ? "text-white border-[#14B8A6]"
-                          : "text-slate-900 border-[#14B8A6]"
+                          ? "is-active text-white"
+                          : "is-active text-slate-900"
                         : isDark
-                          ? "text-[rgba(244,244,244,0.55)] border-transparent hover:text-white/80"
-                          : "text-slate-500 border-transparent hover:text-slate-800"
+                          ? "text-[rgba(244,244,244,0.55)] hover:text-white/80"
+                          : "text-slate-500 hover:text-slate-800"
                     }`}
                   >
                     {tab.label}
