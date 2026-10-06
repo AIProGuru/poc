@@ -7,18 +7,17 @@ import "./About.css";
 const About = () => {
   return (
     <div className="about-page">
-      <div className="about-glow" aria-hidden />
       <SiteHeader variant="overlay" />
 
       <main className="about-main">
         <div className="about-hero">
           <div className="about-hero__portrait">
+            <div className="about-hero__glow" aria-hidden />
             <img
               src="/Vanessa.png"
               alt="Vanessa Dzialakiewicz, founder of Helio RCM"
               className="about-hero__image"
             />
-            <div className="about-hero__veil" aria-hidden />
           </div>
 
           <div className="about-hero__card">

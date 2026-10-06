@@ -8,45 +8,6 @@
   flex-direction: column;
 }
 
-/*
-  Soft slate-blue spotlight sits on the page (under the transparent header)
-  so it can wash into the nav, matching the design.
-*/
-.about-glow {
-  position: absolute;
-  z-index: 0;
-  left: max(0px, calc(50% - 580px));
-  top: -1.5rem;
-  width: min(680px, 78vw);
-  height: min(760px, 88vh);
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse 64% 62% at 45% 54%,
-    #a8b4c6 0%,
-    #7e8ea4 22%,
-    #4d5e76 46%,
-    #24344c 68%,
-    #0f172b 86%,
-    transparent 100%
-  );
-  filter: blur(42px);
-  opacity: 0.92;
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    #000 0%,
-    #000 48%,
-    rgba(0, 0, 0, 0.35) 70%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    180deg,
-    #000 0%,
-    #000 48%,
-    rgba(0, 0, 0, 0.35) 70%,
-    transparent 100%
-  );
-}
-
 .about-main {
   position: relative;
   z-index: 1;
@@ -74,6 +35,29 @@
   width: min(460px, 90vw);
   overflow: visible;
   background: transparent;
+  isolation: isolate;
+}
+
+/* Spotlight is tied to the portrait, always behind her */
+.about-hero__glow {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 38%;
+  width: 92%;
+  height: 86%;
+  transform: translate(-54%, -50%);
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 70% 75% at 50% 42%,
+    #a8b4c6 0%,
+    #7e8ea4 28%,
+    #4d5e76 55%,
+    #0f172b 78%,
+    transparent 100%
+  );
+  filter: blur(44px);
+  opacity: 0.82;
 }
 
 .about-hero__image {
@@ -84,26 +68,15 @@
   height: auto;
   object-fit: contain;
   background: transparent;
-}
-
-/* Navy wash covers Vanessa from the bottom — soft, not a photo blur */
-.about-hero__veil {
-  position: absolute;
-  left: -20%;
-  right: -20%;
-  bottom: -12%;
-  height: 55%;
-  z-index: 3;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(15, 23, 43, 0.2) 28%,
-    rgba(15, 23, 43, 0.65) 58%,
-    #0f172b 82%,
-    #0f172b 100%
-  );
-  filter: blur(16px);
+  mix-blend-mode: normal;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, #000 9%, #000 100%),
+    linear-gradient(180deg, #000 0%, #000 52%, rgba(0, 0, 0, 0.55) 72%, transparent 94%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent 0%, #000 9%, #000 100%),
+    linear-gradient(180deg, #000 0%, #000 52%, rgba(0, 0, 0, 0.55) 72%, transparent 94%);
+  mask-composite: intersect;
 }
 
 .about-hero__card {
@@ -131,12 +104,6 @@
 }
 
 @media (min-width: 900px) {
-  .about-glow {
-    left: max(0px, calc(50% - 600px));
-    width: 600px;
-    height: 760px;
-  }
-
   .about-main {
     padding: 7rem 2rem 3.5rem;
   }
