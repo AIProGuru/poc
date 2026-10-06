@@ -176,7 +176,7 @@ const routesConfig = [
   },
   {
     path: "/about",
-    element: suspense(<PrivateRoute role={AUTH_ROLES} element={About} />),
+    element: suspense(<About />),
   },
   {
     path: "/calculate_savings",

@@ -1,90 +1,115 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import HelioBrand from "../components/layout/HelioBrand";
+import SiteHeader from "../components/layout/SiteHeader";
+import SiteFooter from "../components/layout/SiteFooter";
+import "./Home.css";
+
+const MARQUEE_ITEMS = [
+  "Hospital Systems",
+  "Ambulatory Providers",
+  "Clinics",
+  "Services Organizations",
+];
+
+const MISSION_CARDS = [
+  "Identify hidden financial losses before they impact your bottom line.",
+  "Reduce write-offs and recover revenue from denied claims.",
+  "Find reimbursement you're owed but never received.",
+];
 
 const Home = () => {
+  const marqueeLoop = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800">
-      {/* Header */}
-      <header className="bg-transparent">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Link to="/">
-                <HelioBrand variant="onDark" size="lg" markSize="h-11 w-11" />
-              </Link>
-            </div>
-
-            <nav className="hidden md:flex space-x-8">
-              <a href="#" className="text-white font-medium">Home</a>
-              <a href="#" className="text-gray-300 hover:text-white">About</a>
-              <a href="#" className="text-gray-300 hover:text-white">Products</a>
-              <a href="#" className="text-gray-300 hover:text-white">Innovation Suite</a>
-              <a href="#" className="text-gray-300 hover:text-white">Resources</a>
-            </nav>
-
-            <div className="flex items-center space-x-4">
-              <Link to="/signin" className="text-gray-200 hover:text-white">Login</Link>
-              <Link 
-                to="/contact" 
-                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-              >
-                Contact Us
-              </Link>
-            </div>
-          </div>
+    <div className="home-page">
+      <section className="home-hero">
+        <div className="home-hero__media" aria-hidden>
+          <img src="/ai-hand.gif" alt="" className="home-hero__image" />
+          <div className="home-hero__shade" />
         </div>
-      </header>
 
-      {/* Hero Section */}
-      <main className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content - AI Hand Image */}
-            <div className="relative">
-              <div className="w-full h-96 bg-gradient-to-br from-slate-800 to-gray-900 rounded-2xl overflow-hidden">
-                <div className="w-full h-full bg-cover bg-center" 
-                     style={{
-                       backgroundImage: "url('/ai-hand-image.png')"
-                     }}>
-                </div>
-              </div>
-            </div>
+        <SiteHeader variant="overlay" />
 
-            {/* Right Content - Text */}
-            <div className="text-white">
-              <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-6">
-                Simple RCM, <span className="text-orange-500">AI</span>
-                <br />
-                <span className="text-orange-500">Precision</span>, Powerful
-                <br />
-                Results
-              </h1>
-              
-              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-                We Provide a Single Solution That Handles Claim 
-                Scrubbing, Denials, and Payments With 
-                Unmatched Accuracy
+        <div className="home-hero__content">
+          <div className="home-hero__spacer" />
+          <div className="home-hero__copy">
+            <h1 className="home-hero__title">
+              Simple RCM
+              <br />
+              AI Precision
+              <br />
+              Powerful Results
+            </h1>
+
+            <p className="home-hero__tagline">
+              The modern, AI-native revenue cycle management platform for
+              healthcare providers and RCM organizations.
+            </p>
+
+            <div className="home-hero__block">
+              <h2 className="home-hero__subtitle">Helio RCM</h2>
+              <p className="home-hero__text">
+                The AI-native, end-to-end SaaS platform built to transform the
+                healthcare revenue cycle.
               </p>
+            </div>
 
-              <button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors shadow-lg">
-                Get a Custom RCM Solution
-              </button>
+            <div className="home-hero__block">
+              <h2 className="home-hero__subtitle">What We Do</h2>
+              <p className="home-hero__text">
+                HelioRCM replaces fragmented revenue cycle tools with a single
+                AI-native platform that seamlessly integrates with virtually any
+                EHR, API, and existing clearinghouse infrastructure.
+              </p>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-          <div className="absolute top-40 right-20 w-1 h-1 bg-orange-500 rounded-full animate-pulse delay-500"></div>
-          <div className="absolute bottom-40 left-20 w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse delay-1000"></div>
-          <div className="absolute bottom-20 right-40 w-1 h-1 bg-gray-500 rounded-full animate-pulse delay-1500"></div>
+      <div className="home-mission-wrap">
+        <div className="home-marquee" aria-hidden>
+          <div className="home-marquee__media">
+            <img src="/mission_bg.png" alt="" />
+            <div className="home-marquee__shade" />
+          </div>
+          <div className="home-marquee__track">
+            {marqueeLoop.map((item, index) => (
+              <span key={`${item}-${index}`} className="home-marquee__item">
+                {item}
+                <span className="home-marquee__diamond">✧</span>
+              </span>
+            ))}
+          </div>
         </div>
-      </main>
+
+        <section className="home-mission">
+          <div className="home-mission__media" aria-hidden>
+            <img src="/mission_bg.png" alt="" className="home-mission__image" />
+            <div className="home-mission__gradient" />
+          </div>
+          <div className="home-mission__content">
+            <h2 className="home-mission__title">Our Mission</h2>
+            <p className="home-mission__body">
+              We ensure providers are fully reimbursed for the care they deliver.
+              Through advanced analytics, AI-powered insights, and decades of
+              revenue cycle expertise, we help healthcare organizations identify
+              missed revenue, reduce denials, recover underpayments, and
+              strengthen financial performance.
+            </p>
+
+            <div className="home-mission__cards">
+              {MISSION_CARDS.map((text) => (
+                <div key={text} className="home-mission__card">
+                  <p>{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <SiteFooter />
     </div>
   );
 };
 
 export default Home;
-

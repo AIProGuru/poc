@@ -73,6 +73,7 @@ const isPublicPath = (pathname = "") => {
     "/signup",
     "/forgot-password",
     "/contact",
+    "/about",
     "/privacy",
     "/verify_email",
     "/update_password",
@@ -314,7 +315,7 @@ function App() {
   const shouldShowRoutes = !isMaintaining && (publicPath || (isLoading === 0 && !bootstrapLoading));
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full h-screen overflow-hidden">
       <ToastContainer position="top-right" autoClose={3000} />
       {isMaintaining && <div className="flex bg-indigo-400 w-full h-full">
         <div
@@ -345,8 +346,8 @@ function App() {
         </div>
       )}
       {shouldShowRoutes && (
-        <div className="flex flex-col h-full">
-          <div className="flex-1">{routes}</div>
+        <div className="flex flex-col h-full min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">{routes}</div>
         </div>
       )}
     </div>
