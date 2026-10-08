@@ -4,8 +4,6 @@ import SiteFooter from "../components/layout/SiteFooter";
 import "./Home.css";
 import "./Contact.css";
 
-const DEMO_PHOTO = encodeURI("/request a demo.jpg");
-
 const Contact = () => {
   const [form, setForm] = useState({
     name: "",
@@ -35,11 +33,6 @@ const Contact = () => {
       <main className="contact-main">
         <div className="contact-stage">
           <section className="contact-intro">
-            <div className="contact-intro__media" aria-hidden>
-              <img src={DEMO_PHOTO} alt="" className="contact-intro__image" />
-              <div className="contact-intro__wash" />
-            </div>
-
             <div className="contact-intro__copy">
               <p className="contact-intro__eyebrow">Schedule our AI Demo</p>
               <h1 className="contact-intro__title">Evaluate your revenue</h1>

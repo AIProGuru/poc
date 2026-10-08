@@ -74,6 +74,8 @@ const isPublicPath = (pathname = "") => {
     "/forgot-password",
     "/contact",
     "/about",
+    "/features",
+    "/resources",
     "/privacy",
     "/verify_email",
     "/update_password",

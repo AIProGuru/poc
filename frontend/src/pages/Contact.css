@@ -1,5 +1,5 @@
-.contact-page {
-  --contact-bg: #0f172b;
+﻿.contact-page {
+  --contact-bg: #070d18;
   position: relative;
   min-height: 100%;
   background: var(--contact-bg);
@@ -12,94 +12,55 @@
   position: relative;
   z-index: 1;
   flex: 1;
-  padding: 6.5rem 1.5rem 3rem;
+  padding: 6.75rem 1.5rem 3rem;
 }
 
 .contact-stage {
-  max-width: 1180px;
+  width: 100%;
+  max-width: 1320px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: 1.25rem;
   align-items: stretch;
 }
 
 .contact-intro {
-  position: relative;
-  min-height: 420px;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  min-height: 0;
   border-radius: 1.25rem;
-}
-
-.contact-intro__media {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.contact-intro__image {
-  width: 140%;
-  height: 140%;
-  max-width: none;
-  object-fit: cover;
-  /* Show the tower / right-center of the photo, not the full sky */
-  object-position: 72% 42%;
-  transform: translate(-8%, -6%);
-  filter: saturate(0.72) contrast(1.05) brightness(0.72);
-}
-
-.contact-intro__wash {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(15, 23, 43, 0.88) 0%,
-      rgba(15, 23, 43, 0.55) 38%,
-      rgba(15, 23, 43, 0.42) 62%,
-      rgba(15, 23, 43, 0.7) 100%
-    ),
-    linear-gradient(
-      90deg,
-      rgba(15, 23, 43, 0.55) 0%,
-      rgba(15, 23, 43, 0.12) 55%,
-      rgba(15, 23, 43, 0.5) 100%
-    );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #121a2b;
 }
 
 .contact-intro__copy {
-  position: relative;
-  z-index: 1;
-  padding: 1.75rem 1.25rem 2rem;
-  max-width: 34rem;
+  padding: 2rem 1.5rem;
+  max-width: none;
 }
 
 .contact-intro__eyebrow {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.7rem;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.92);
+  color: #fb923c;
 }
 
 .contact-intro__title {
-  margin: 0 0 0.55rem;
-  font-size: clamp(1.85rem, 4vw, 2.55rem);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  line-height: 1.12;
+  margin: 0 0 0.45rem;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
 }
 
 .contact-intro__kicker {
-  margin: 0 0 1.5rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 1.6rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.78);
 }
 
 .contact-intro__list {
@@ -108,39 +69,37 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.95rem;
+  gap: 1rem;
 }
 
 .contact-intro__list li {
   display: flex;
   align-items: flex-start;
-  gap: 0.7rem;
-  font-size: 0.92rem;
+  gap: 0.75rem;
+  font-size: 0.98rem;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .contact-intro__list svg {
   flex-shrink: 0;
   margin-top: 0.15rem;
-  color: #ffffff;
+  color: #fb923c;
 }
 
 .contact-form-card {
-  background: rgba(10, 16, 32, 0.92);
-  border: 1px solid rgba(180, 205, 240, 0.42);
-  border-radius: 1.5rem;
-  box-shadow:
-    0 0 22px rgba(140, 180, 255, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: #121a2b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
   padding: 1.75rem 1.4rem 1.6rem;
 }
 
 .contact-form-card__title {
   margin: 0 0 1.35rem;
-  text-align: center;
+  text-align: left;
   font-size: 1.55rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .contact-form {
@@ -160,19 +119,24 @@
   flex-direction: column;
   gap: 0.35rem;
   font-size: 0.88rem;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .contact-field input,
 .contact-field textarea {
   width: 100%;
-  border: none;
-  border-radius: 0.35rem;
-  background: #ffffff;
-  color: #0f172b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.7rem;
+  background: #0b1220;
+  color: #ffffff;
   font: inherit;
-  padding: 0.55rem 0.7rem;
+  padding: 0.7rem 0.8rem;
   outline: none;
+}
+
+.contact-field input:focus,
+.contact-field textarea:focus {
+  border-color: #fb923c;
 }
 
 .contact-field textarea {
@@ -185,7 +149,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.88rem;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .contact-check input {
@@ -195,15 +159,15 @@
 }
 
 .contact-submit {
-  align-self: center;
-  margin-top: 0.5rem;
+  align-self: flex-start;
+  margin-top: 0.35rem;
   background: #f97316;
   color: #ffffff;
   border: none;
-  border-radius: 0.65rem;
+  border-radius: 0.7rem;
   font-size: 0.95rem;
   font-weight: 700;
-  padding: 0.7rem 2.4rem;
+  padding: 0.75rem 1.6rem;
   cursor: pointer;
 }
 
@@ -213,26 +177,21 @@
 
 @media (min-width: 960px) {
   .contact-main {
-    padding: 7rem 2rem 3.25rem;
+    padding: 7rem 1.75rem 3rem;
   }
 
   .contact-stage {
-    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
-    gap: 2.25rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.25rem;
     align-items: stretch;
   }
 
-  .contact-intro {
-    min-height: 560px;
-    border-radius: 0;
-  }
-
   .contact-intro__copy {
-    padding: 0.5rem 1.5rem 2rem 0.25rem;
+    padding: 2.5rem 2.25rem;
   }
 
   .contact-form-card {
-    padding: 2rem 1.85rem 1.75rem;
+    padding: 2.25rem 2rem 2rem;
   }
 
   .contact-form__row {

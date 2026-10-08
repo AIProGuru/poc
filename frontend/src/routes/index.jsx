@@ -12,7 +12,8 @@ const SignIn = lazy(() => import("../pages/SignIn"));
 const SignUp = lazy(() => import("../pages/SignUp"));
 const CalculateSavingsPage = lazy(() => import("../pages/CalculageSaving"));
 const About = lazy(() => import("../pages/About"));
-const Feature = lazy(() => import("../pages/Feature"));
+const Platform = lazy(() => import("../pages/Platform"));
+const Resources = lazy(() => import("../pages/Resources"));
 const VerifyPage = lazy(() => import("../pages/VerifyPage"));
 const Error404 = lazy(() => import("../pages/Error404"));
 const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
@@ -87,6 +88,10 @@ const routesConfig = [
     children: reboundRoutes,
   },
 
+  {
+    path: "/resources",
+    element: suspense(<Resources />),
+  },
   {
     path: "/blog",
     element: suspense(<PrivateRoute role={AUTH_ROLES} element={Blog} />),
@@ -172,7 +177,7 @@ const routesConfig = [
   },
   {
     path: "/features",
-    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Feature} />),
+    element: suspense(<Platform />),
   },
   {
     path: "/about",

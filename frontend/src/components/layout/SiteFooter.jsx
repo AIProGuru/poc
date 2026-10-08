@@ -32,21 +32,6 @@ export default function SiteFooter() {
             </a>
           </div>
         </div>
-
-        <div className="home-footer__contact">
-          <p>
-            <strong>Address:</strong> 100 Innovation Way, Suite 400,
-            <br />
-            Austin, TX 78701
-          </p>
-          <p className="home-footer__phones">
-            Standard US: (555) 019-2834
-            <br />
-            Toll-Free: (800) 555-0199
-            <br />
-            Formatted: +1 (555) 123-4567
-          </p>
-        </div>
       </div>
     </footer>
   );
