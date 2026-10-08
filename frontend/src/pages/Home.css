@@ -533,7 +533,7 @@
 
 .home-footer__inner {
   width: 100%;
-  max-width: none;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 0 clamp(0.25rem, 2vw, 2.5rem);
   display: flex;

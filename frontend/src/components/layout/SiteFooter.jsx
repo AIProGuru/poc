@@ -32,6 +32,14 @@ export default function SiteFooter() {
             </a>
           </div>
         </div>
+
+        <div className="home-footer__contact">
+          <p>
+            <strong>Address:</strong> 5194 Beckman Terrace,
+            <br />
+            Palm Beach Gardens, FL 33418
+          </p>
+        </div>
       </div>
     </footer>
   );
