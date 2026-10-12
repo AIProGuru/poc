@@ -68,6 +68,10 @@ export const WORKLIST_NAV_CHILDREN = {
 };
 
 export const WORKLIST_PARENT_TITLES = {
+  "price-transparency": "Price Transparency",
+  cdi: "Clinical Documentation Integrity (CDI)",
+  "coding-accuracy": "Coding Accuracy",
+  "charge-capture": "Charge Capture",
   "claim-edits": "Claim Edits",
   "claim-status": "Claim Status",
   denials: "Denials",
@@ -84,6 +88,10 @@ export const WORKLIST_EXTRA_FILTERS = {
 };
 
 export const WORKLIST_TAG_FILTERS = {
+  "price-transparency": ["Price Transparency"],
+  cdi: ["Clinical Documentation Integrity (CDI)"],
+  "coding-accuracy": ["Coding Accuracy"],
+  "charge-capture": ["Charge Capture"],
   "claim-status": ["Pend 277", "Delinquent"],
   "claim-status:pend-277": [],
   "claim-status:pend-835": [],

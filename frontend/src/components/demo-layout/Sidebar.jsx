@@ -7,6 +7,7 @@ import {
   setSelectedNav,
 } from "../../redux/reducers/app.reducer";
 import { canAccessWorklists } from "../../utils/roles";
+import { isNavModuleAllowed, getAccessibleModelCount } from "../../utils/moduleCatalog";
 import { setToggleMenu } from "../../redux/reducers/menu.reducer";
 import HelioBrand from "../layout/HelioBrand";
 import {
@@ -43,6 +44,7 @@ const Sidebar = () => {
   const role = useSelector((state) => state.auth.role);
   const tenant = useSelector((state) => state.auth.tenant);
   const accessDenialCategory = useSelector((state) => state.auth.denialCategory);
+  const accessModules = useSelector((state) => state.auth.modules);
   const counts = useSelector((state) => state.count.count);
   const tags = useSelector((state) => state.tags.allTags);
   const models = useSelector((state) => state.app.models) || [];
@@ -92,28 +94,43 @@ const Sidebar = () => {
   }, [counts, navBadges]);
 
   const navItems = useMemo(() => {
-    const normalizeCategory = (category) => {
-      if (!category) return "";
-      if (category === "Delinquent") return "Pend 835";
-      return category;
+    const skillAccess = {
+      modules: accessModules,
+      denialCategory: accessDenialCategory,
+      privileged: isPrivilegedRole,
     };
-    const allowedCategories = Array.isArray(accessDenialCategory)
-      ? accessDenialCategory
-      : [];
-    const restrictCategories = allowedCategories.length > 0 && !isPrivilegedRole;
-    const aiBadge = models.reduce((sum, row) => {
-      const normalizedCategory = normalizeCategory(row.Category);
-      const matchesCategory =
-        !restrictCategories ||
-        !normalizedCategory ||
-        allowedCategories.includes(normalizedCategory);
-      if (!matchesCategory) return sum;
-      return sum + (Number(row.Count) || 0);
-    }, 0);
+    const aiBadge = models.reduce(
+      (sum, row) => sum + getAccessibleModelCount(row, skillAccess),
+      0
+    );
     const baseItems = [
       { id: "home", title: "Home", icon: "home", badge: null, tab: 0 },
       { id: "recent-claims", title: "Recent Claims", icon: "clock", badge: null },
       { id: "dashboard", title: "Dashboard", icon: "dashboard", badge: null },
+      {
+        id: "price-transparency",
+        title: "Price Transparency",
+        icon: "chart",
+        badge: 0,
+      },
+      {
+        id: "cdi",
+        title: "Clinical Documentation Integrity (CDI)",
+        icon: "clipboard",
+        badge: 0,
+      },
+      {
+        id: "coding-accuracy",
+        title: "Coding Accuracy",
+        icon: "list",
+        badge: 0,
+      },
+      {
+        id: "charge-capture",
+        title: "Charge Capture",
+        icon: "card",
+        badge: 0,
+      },
       {
         id: "claim-edits",
         title: "Claim Edits",
@@ -171,8 +188,10 @@ const Sidebar = () => {
       const allowedIds = new Set(["home", "dashboard", "ai-library", "settings"]);
       return baseItems.filter((item) => allowedIds.has(item.id));
     }
-    return baseItems;
-  }, [denialsCount, models, patientResponsibilityCount, role, accessDenialCategory, isPrivilegedRole]);
+    return baseItems.filter((item) =>
+      isNavModuleAllowed(item.id, accessModules, isPrivilegedRole)
+    );
+  }, [denialsCount, models, patientResponsibilityCount, role, accessDenialCategory, accessModules, isPrivilegedRole]);
 
   const canSeeWorklists = canAccessWorklists(role);
   const navBootstrapReady = useMemo(() => {

@@ -20,6 +20,8 @@ import { useApiEndpoint } from '../../../ApiEndpointContext';
 import { setSelectedTags } from '../../../redux/reducers/tag.reducer';
 import AgentAvatar from './AgentAvatar';
 import { formatAgentDisplayTitle } from '../../../utils/aiAgentAvatars';
+import { getAccessibleModelCount } from '../../../utils/moduleCatalog';
+import { isPrivilegedRole } from '../../../utils/accessFilters';
 
 const ArIntel = ({ onModelSelect }) => {
   const apiUrl = useApiEndpoint();
@@ -31,6 +33,12 @@ const ArIntel = ({ onModelSelect }) => {
   const tags = useSelector((state) => state.tags.allTags);
   const role = useSelector((state) => state.auth.role);
   const allowedCategories = useSelector((state) => state.auth.denialCategory);
+  const allowedModules = useSelector((state) => state.auth.modules);
+  const privileged = isPrivilegedRole(role);
+  const skillAccess = useMemo(
+    () => ({ modules: allowedModules, denialCategory: allowedCategories, privileged }),
+    [allowedModules, allowedCategories, privileged]
+  );
   const isDark = theme === 'dark';
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -100,22 +108,15 @@ const ArIntel = ({ onModelSelect }) => {
   const filteredModels = useMemo(() => {
     const needle = searchTerm.trim().toLowerCase();
     const selectedSet = new Set(selectedFilters);
-    const restrictCategories = Array.isArray(allowedCategories) && allowedCategories.length > 0
-      && !['admin', 'super-admin', 'manager', 'internal-admin'].includes(role);
     return (models || []).filter((row) => {
-      const normalizedCategory = row.Category === 'Delinquent' ? 'Pend 835' : row.Category;
-      const matchesCategory =
-        !restrictCategories ||
-        !normalizedCategory ||
-        allowedCategories.includes(normalizedCategory);
       const matchesSearch = !needle || getModelSearchText(row).includes(needle);
       const categoryLabel = `${row.ModelTitle || row.model_title || ''}`.trim();
       const matchesFilters =
         selectedSet.size === 0 ||
         (categoryLabel && selectedSet.has(categoryLabel));
-      return matchesCategory && matchesSearch && matchesFilters;
+      return matchesSearch && matchesFilters;
     });
-  }, [models, searchTerm, selectedFilters, allowedCategories, role]);
+  }, [models, searchTerm, selectedFilters]);
 
   const groupedModels = useMemo(() => {
     const groups = new Map();
@@ -173,15 +174,18 @@ const ArIntel = ({ onModelSelect }) => {
     });
   };
 
-  const buildTooltip = (row) => [
+  const buildTooltip = (row) => {
+    const accessibleCount = getAccessibleModelCount(row, skillAccess);
+    return [
     `Status: ${row.Status ?? 'N/A'}`,
-    `Count: ${row.Count ?? '0'}`,
-    `Charges: ${formatAmount(row.Amount)}`,
+    `Count: ${accessibleCount}`,
+    `Charges: ${formatAmount(accessibleCount ? row.Amount : 0)}`,
     `Claim State: ${row.Group ?? 'N/A'}`,
     `Category: ${row.Category ?? 'N/A'}`,
     `CARC: ${row.Code ?? 'N/A'}`,
     `RARC: ${row.Remark ?? 'N/A'}`
   ].join('\n');
+  };
 
   const handleModelClick = (row) => {
     if (row?.Status === 'draft') {
@@ -394,7 +398,7 @@ const ArIntel = ({ onModelSelect }) => {
                           )}
                         </div>
                         <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border self-center ${isDark ? 'border-white/15 bg-white/5 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
-                          {row.Count ?? 0}
+                          {getAccessibleModelCount(row, skillAccess)}
                         </span>
                       </button>
                     ))}

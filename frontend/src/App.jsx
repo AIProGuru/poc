@@ -43,6 +43,7 @@ import {
   setNavGrouped,
   setNavPendCounts,
   setLoading,
+  retryBootstrap,
   setPart1Loading,
   setPart2Loading,
   setTableLoading,
@@ -92,6 +93,7 @@ function App() {
   const routes = useRoutes(routesConfig);
   const isLoading = useSelector((state) => state.app.loading);
   const bootstrapLoading = useSelector((state) => state.app.bootstrapLoading);
+  const bootstrapError = useSelector((state) => state.app.bootstrapError);
   const getAuth = useSelector((state) => state.auth.isAuthenticated);
   const authReady = useSelector((state) => state.auth.authReady);
   const tenant = useSelector((state) => state.auth.tenant);
@@ -349,6 +351,23 @@ function App() {
       )}
       {shouldShowRoutes && (
         <div className="flex flex-col h-full min-h-0">
+          {bootstrapError && !publicPath && (
+            <div
+              role="alert"
+              className="shrink-0 border-b border-amber-400/40 bg-amber-950 px-4 py-3 text-amber-50"
+            >
+              <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4">
+                <p className="text-sm leading-5">{bootstrapError}</p>
+                <button
+                  type="button"
+                  onClick={() => dispatch(retryBootstrap())}
+                  className="shrink-0 rounded-full border border-amber-200/40 px-3 py-1 text-sm font-medium text-amber-50 hover:bg-amber-900"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">{routes}</div>
         </div>
       )}

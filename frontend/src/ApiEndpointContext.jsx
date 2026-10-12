@@ -6,6 +6,7 @@ import {
   setTableLoading,
   setType,
   setBootstrapLoading,
+  setBootstrapError,
   setTagLoading,
   setCountLoading,
   setStatisticsLoading,
@@ -37,13 +38,29 @@ import { setSelectedTags } from './redux/reducers/tag.reducer';
 import { setCount, setRecovery } from './redux/reducers/count.reducer';
 import { setCategoryLabel, setCategoryValue } from './redux/reducers/statistics.reducer';
 import { buildAccessExtra } from './utils/accessFilters';
-
 import { useDispatch, useSelector } from 'react-redux';
-
 import {
   PLATFORM_TENANTS,
   resolvePlatformTenantFromHint,
 } from './utils/platformTenant';
+
+const describeBootstrapFailure = (error) => {
+  const status = error?.response?.status;
+  const data = error?.response?.data || {};
+  const code = data.code || "";
+  const serverMessage = typeof data.error === "string" ? data.error : "";
+  if (
+    status === 503
+    || code === "database_unavailable"
+    || /database connection|pool exhausted|can't connect|lost connection|mysql/i.test(serverMessage)
+  ) {
+    return "Claim counts did not load because the database connection failed.";
+  }
+  if (!error?.response) {
+    return "Claim counts did not load because the server could not be reached.";
+  }
+  return "Claim counts did not load. The numbers on screen may be incomplete.";
+};
 
 const ApiEndpointContext = createContext();
 const LAST_APP_TYPE_KEY = 'lastAppType';
@@ -105,7 +122,8 @@ export const ApiEndpointProvider = ({ children }) => {
   const [apiUrl, setApiUrl] = useState('');
   const lastTenantRef = useRef('');
   const didInitRef = useRef(false);
-  const bootstrapRef = useRef({ key: '', id: 0 });
+  const bootstrapRef = useRef({ key: '', id: 0, retry: 0 });
+  const bootstrapRetry = useSelector((state) => state.app.bootstrapRetry);
 
   useEffect(() => {
     const tenantValue = resolvePlatformTenantFromHint(tenant, { defaultTenant: '' });
@@ -125,7 +143,7 @@ export const ApiEndpointProvider = ({ children }) => {
       dispatch(setModels([]));
       dispatch(setTabIndex(0));
       setApiUrl('');
-      bootstrapRef.current = { key: '', id: 0 };
+      bootstrapRef.current = { key: '', id: 0, retry: bootstrapRef.current.retry };
     }
     lastTenantRef.current = tenantValue;
   }, [authReady, tenant, dispatch]);
@@ -141,14 +159,14 @@ export const ApiEndpointProvider = ({ children }) => {
       setApiUrl('');
       dispatch(setBootstrapLoading(false));
       didInitRef.current = false;
-      bootstrapRef.current = { key: '', id: 0 };
+      bootstrapRef.current = { key: '', id: 0, retry: bootstrapRef.current.retry };
       return;
     }
     if (!tenantValue && !hasTenantRoute && !hasTenantScopedAdminRoute) {
       setApiUrl('');
       dispatch(setBootstrapLoading(false));
       didInitRef.current = false;
-      bootstrapRef.current = { key: '', id: 0 };
+      bootstrapRef.current = { key: '', id: 0, retry: bootstrapRef.current.retry };
       return;
     }
     const desiredBase = PLATFORM_TENANTS.includes(tenantValue)
@@ -336,12 +354,15 @@ export const ApiEndpointProvider = ({ children }) => {
   useEffect(() => {
     if (!apiUrl || !authReady) return;
     const bootstrapKey = `${apiUrl}::${JSON.stringify(accessExtra || {})}`;
-    if (bootstrapRef.current.key === bootstrapKey) {
+    const retryChanged = bootstrapRef.current.retry !== bootstrapRetry;
+    if (!retryChanged && bootstrapRef.current.key === bootstrapKey) {
       return;
     }
     bootstrapRef.current.key = bootstrapKey;
+    bootstrapRef.current.retry = bootstrapRetry;
     const requestId = ++bootstrapRef.current.id;
 
+    dispatch(setBootstrapError(""));
     dispatch(setBootstrapLoading(true));
     dispatch(setTableLoading(true));
     dispatch(setTagLoading(true));
@@ -369,6 +390,17 @@ export const ApiEndpointProvider = ({ children }) => {
           return;
         }
         const data = res?.data || {};
+        if (data.code === "database_unavailable") {
+          dispatch(setBootstrapError(describeBootstrapFailure({ response: { status: 503, data } })));
+          dispatch(setTableLoading(false));
+          dispatch(setTagLoading(false));
+          dispatch(setCountLoading(false));
+          dispatch(setStatisticsLoading(false));
+          dispatch(setPayerLoading(false));
+          dispatch(setRecoveryLoading(false));
+          dispatch(setBootstrapLoading(false));
+          return;
+        }
         dispatch(setTags(data.tags || []));
         dispatch(setAllPayers(data.payers || []));
         dispatch(setNavGrouped(data.grouped || {}));
@@ -411,6 +443,7 @@ export const ApiEndpointProvider = ({ children }) => {
             })(),
           }));
         dispatch(setModels(mapModels(data.models || [])));
+        dispatch(setBootstrapError(""));
 
         dispatch(setTagLoading(false));
         dispatch(setCountLoading(false));
@@ -419,10 +452,12 @@ export const ApiEndpointProvider = ({ children }) => {
         dispatch(setRecoveryLoading(false));
         dispatch(setBootstrapLoading(false));
       })
-      .catch(() => {
+      .catch((error) => {
         if (bootstrapRef.current.id !== requestId || bootstrapRef.current.key !== bootstrapKey) {
           return;
         }
+        dispatch(setBootstrapError(describeBootstrapFailure(error)));
+        dispatch(setTableLoading(false));
         dispatch(setTagLoading(false));
         dispatch(setCountLoading(false));
         dispatch(setStatisticsLoading(false));
@@ -430,7 +465,7 @@ export const ApiEndpointProvider = ({ children }) => {
         dispatch(setRecoveryLoading(false));
         dispatch(setBootstrapLoading(false));
       });
-  }, [apiUrl, accessExtra, authReady, dispatch])
+  }, [apiUrl, accessExtra, authReady, bootstrapRetry, dispatch])
 
   return (
     <ApiEndpointContext.Provider value={apiUrl}>

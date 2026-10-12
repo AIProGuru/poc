@@ -27,6 +27,10 @@ const NON_CLAIM_APP_TITLES = new Set([
 ]);
 
 const WORKLIST_ROOT_TITLES = new Set([
+  "Price Transparency",
+  "Clinical Documentation Integrity (CDI)",
+  "Coding Accuracy",
+  "Charge Capture",
   "Claim Edits",
   "Claim Status",
   "Denials",

@@ -31,7 +31,8 @@ import DashboardScreen from "./DashboardScreen";
 import SettingsScreen from "./SettingsScreen";
 import { AccountContext } from "../../../utils/Account";
 import { canAccessUserManagement } from "../../../utils/roles";
-import { buildAccessExtra } from "../../../utils/accessFilters";
+import { buildAccessExtra, isPrivilegedRole } from "../../../utils/accessFilters";
+import { getAccessibleModelCount } from "../../../utils/moduleCatalog";
 import { buildExcludeAiModels } from "../../../utils/aiModelFilters";
 
 const readStoredTenantBase = () => {
@@ -188,7 +189,17 @@ const ReboundDash = () => {
 
   const models = useSelector((state) => state.app.models);
   const excludeAiModels = useMemo(() => buildExcludeAiModels(models), [models]);
-  const denialCount = models.reduce((sum, row) => sum + (Number(row.Count) || 0), 0);
+  const denialCount = useMemo(
+    () => (models || []).reduce(
+      (sum, row) => sum + getAccessibleModelCount(row, {
+        modules: accessModules,
+        denialCategory: accessDenialCategory,
+        privileged: isPrivilegedRole(role),
+      }),
+      0
+    ),
+    [models, accessModules, accessDenialCategory, role]
+  );
 
   const accessExtra = useMemo(
     () => buildAccessExtra({}, access, role),
@@ -214,6 +225,10 @@ const ReboundDash = () => {
   const navItems = useMemo(() => [
     { id: 'home', label: 'Home', badge: null, icon: 'home', tab: 0 },
     { id: 'dashboard', label: 'Dashboard', badge: null, icon: 'dashboard' },
+    { id: 'price-transparency', label: 'Price Transparency', badge: null, icon: 'chart' },
+    { id: 'cdi', label: 'Clinical Documentation Integrity (CDI)', badge: null, icon: 'clipboard' },
+    { id: 'coding-accuracy', label: 'Coding Accuracy', badge: null, icon: 'list' },
+    { id: 'charge-capture', label: 'Charge Capture', badge: null, icon: 'card' },
     {
       id: 'claim-edits',
       label: 'Claim Edits',

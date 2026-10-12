@@ -23,6 +23,8 @@ const initialState = {
   payerLoading: true,
   loading: 0,
   bootstrapLoading: false,
+  bootstrapError: "",
+  bootstrapRetry: 0,
   type: 0,
   models: [],
   code: '',
@@ -118,6 +120,12 @@ const appReducer = createSlice({
     },
     setBootstrapLoading: (state, action) => {
       state.bootstrapLoading = action.payload;
+    },
+    setBootstrapError: (state, action) => {
+      state.bootstrapError = action.payload || "";
+    },
+    retryBootstrap: (state) => {
+      state.bootstrapRetry += 1;
     },
     setType: (state, action) => {
       state.type = action.payload;
@@ -215,6 +223,7 @@ const appReducer = createSlice({
       state.payerLoading = false;
       state.loading = 0;
       state.bootstrapLoading = false;
+      state.bootstrapError = "";
       state.models = [];
       state.code = '';
       state.remark = '';
@@ -256,6 +265,8 @@ export const {
   setTableLoading,
   setLoading,
   setBootstrapLoading,
+  setBootstrapError,
+  retryBootstrap,
   setType,
   setTagLoading,
   setCountLoading,

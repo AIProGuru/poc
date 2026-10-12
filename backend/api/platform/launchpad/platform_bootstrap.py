@@ -4,6 +4,7 @@ import logging
 import json
 import re
 import os
+from mysql.connector.errors import InterfaceError, OperationalError, PoolError
 from db import get_connection, close_connection
 from core.gen_sql_platform.Generate_Platform_SQL import (
     generate_sql as newGenerateSQL,
@@ -597,6 +598,20 @@ def platform_bootstrap():
         return jsonify(result), 200
     except Exception as e:
         logger.error(f"[ERROR]: {e}")
+        message = str(e)
+        lowered = message.lower()
+        is_database = (
+            isinstance(e, (InterfaceError, OperationalError, PoolError))
+            or "database connection" in lowered
+            or "pool exhausted" in lowered
+            or "can't connect" in lowered
+            or "lost connection" in lowered
+        )
+        if is_database:
+            return jsonify({
+                "error": "Database connection failed. Claim counts are unavailable.",
+                "code": "database_unavailable",
+            }), 503
         return jsonify({"error": "Internal server Error"}), 500
     finally:
         close_connection(cursor, conn)
