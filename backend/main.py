@@ -135,6 +135,12 @@ from api.platform.claim_status.optum_claim_status import (
     pilotcustomer_api_claim_status,
     betacustomer_api_claim_status,
 )
+from api.platform.claim_status.insurance_discovery import (
+    rebound_api_insurance_discovery,
+    medevolve_api_insurance_discovery,
+    pilotcustomer_api_insurance_discovery,
+    betacustomer_api_insurance_discovery,
+)
 
 from api.platform.demo.demo import demo_api
 from api.client_management import client_management_bp
@@ -285,6 +291,10 @@ def create_app():
     app.register_blueprint(medevolve_api_claim_status)
     app.register_blueprint(pilotcustomer_api_claim_status)
     app.register_blueprint(betacustomer_api_claim_status)
+    app.register_blueprint(rebound_api_insurance_discovery)
+    app.register_blueprint(medevolve_api_insurance_discovery)
+    app.register_blueprint(pilotcustomer_api_insurance_discovery)
+    app.register_blueprint(betacustomer_api_insurance_discovery)
     app.register_blueprint(client_management_bp)
     app.register_blueprint(rebound_api_appeal_templates)
     app.register_blueprint(medevolve_api_appeal_templates)

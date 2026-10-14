@@ -14,6 +14,7 @@ const CalculateSavingsPage = lazy(() => import("../pages/CalculageSaving"));
 const About = lazy(() => import("../pages/About"));
 const Platform = lazy(() => import("../pages/Platform"));
 const Resources = lazy(() => import("../pages/Resources"));
+const Pricing = lazy(() => import("../pages/Pricing"));
 const VerifyPage = lazy(() => import("../pages/VerifyPage"));
 const Error404 = lazy(() => import("../pages/Error404"));
 const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
@@ -91,6 +92,10 @@ const routesConfig = [
   {
     path: "/resources",
     element: suspense(<Resources />),
+  },
+  {
+    path: "/pricing",
+    element: suspense(<Pricing />),
   },
   {
     path: "/blog",
@@ -215,7 +220,7 @@ const routesConfig = [
   ...profileRoutes,
   {
     path: "*",
-    element: suspense(<PrivateRoute role={AUTH_ROLES} element={Notfound} />),
+    element: suspense(<Notfound />),
   },
 ];
 

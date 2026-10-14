@@ -7,7 +7,7 @@ const NAV_LINKS = [
   { label: "Home", to: "/" },
   { label: "Platform", to: "/features" },
   { label: "Resources", to: "/resources" },
-  { label: "Pricing" },
+  { label: "Pricing", to: "/pricing" },
   { label: "About Us", to: "/about" },
 ];
 

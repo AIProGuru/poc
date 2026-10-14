@@ -18,17 +18,40 @@
   --home-orange: #f97316;
   --home-orange-hover: #ea580c;
   position: absolute;
-  top: 0;
+  top: 1.25rem;
   left: 0;
   right: 0;
   z-index: 20;
-  padding: 0.85rem 1.75rem;
+  padding: 0 1.75rem;
+  isolation: isolate;
+}
+
+.home-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(18, 34, 58, 0.66) 0%,
+    rgba(30, 52, 82, 0.48) 30%,
+    rgba(42, 68, 104, 0.36) 50%,
+    rgba(30, 52, 82, 0.48) 70%,
+    rgba(18, 34, 58, 0.66) 100%
+  );
+  backdrop-filter: blur(36px) saturate(1.35);
+  -webkit-backdrop-filter: blur(36px) saturate(1.35);
 }
 
 .home-header.site-header--static {
   position: relative;
   inset: auto;
   background: #0f172b;
+}
+
+.home-header.site-header--static::before {
+  display: none;
 }
 
 .home-header__link.is-active {
@@ -38,7 +61,7 @@
 .home-header__inner {
   position: relative;
   width: 100%;
-  max-width: 1320px;
+  max-width: 1920px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -109,7 +132,7 @@
   font-weight: 600;
   line-height: 1;
   padding: 0.62rem 1.15rem;
-  border-radius: 0.65rem;
+  border-radius: 999px;
   text-decoration: none;
   transition: background-color 0.2s ease;
   white-space: nowrap;
@@ -226,7 +249,7 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 1320px;
+  max-width: 1920px;
   margin: 0 auto;
   padding: 6.5rem clamp(1.5rem, 5vw, 6rem) 4.5rem;
   display: grid;
@@ -392,7 +415,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.75rem;
-  max-width: 1320px;
+  max-width: 1920px;
   margin: 0 auto 2.75rem;
 }
 
@@ -443,7 +466,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.15rem;
-  max-width: 1320px;
+  max-width: 1920px;
   margin: 0 auto;
 }
 
@@ -533,7 +556,7 @@
 
 .home-footer__inner {
   width: 100%;
-  max-width: 1320px;
+  max-width: 1920px;
   margin: 0 auto;
   padding: 0 clamp(0.25rem, 2vw, 2.5rem);
   display: flex;
@@ -600,7 +623,7 @@
     display: flex;
     flex-direction: column;
     position: fixed;
-    top: 4.6rem;
+    top: 6.4rem;
     right: 1rem;
     z-index: 30;
     width: min(18.5rem, calc(100vw - 2rem));
@@ -725,7 +748,7 @@
     color: #ffffff;
     font-size: 0.95rem;
     font-weight: 600;
-    border-radius: 0.7rem;
+    border-radius: 999px;
     padding: 0.7rem 1rem;
     text-decoration: none;
   }

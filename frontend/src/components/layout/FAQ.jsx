@@ -112,8 +112,8 @@ export default function FAQ() {
               <button className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-8 py-4 rounded-2xl font-semibold shadow-medium hover:shadow-large transition-all duration-300 hover-lift">
                 Contact Sales
               </button>
-              <button className="bg-white border-2 border-primary-500 hover:bg-primary-50 text-primary-600 hover:text-primary-700 px-8 py-4 rounded-2xl font-semibold shadow-soft hover:shadow-medium transition-all duration-300 hover-lift">
-                Schedule Demo
+              <button className="bg-[#f97316] hover:bg-[#ea580c] text-white px-8 py-4 rounded-full font-semibold transition-colors duration-300">
+                Request a Demo
               </button>
             </div>
           </div>

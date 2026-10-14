@@ -179,6 +179,10 @@ const ReboundDetailView = () => {
   const [eligibilityLoading, setEligibilityLoading] = useState(false);
   const [eligibilityError, setEligibilityError] = useState("");
   const [showEligibilityDetails, setShowEligibilityDetails] = useState(false);
+  const [discoveryResponse, setDiscoveryResponse] = useState(null);
+  const [discoveryLoading, setDiscoveryLoading] = useState(false);
+  const [discoveryError, setDiscoveryError] = useState("");
+  const [showDiscoveryDetails, setShowDiscoveryDetails] = useState(false);
   const [triageActions, setTriageActions] = useState([]);
   const [triageOtherText, setTriageOtherText] = useState("");
   const [triageNotes, setTriageNotes] = useState("");
@@ -1425,6 +1429,50 @@ const ReboundDetailView = () => {
       });
   };
 
+  const handleInsuranceDiscovery = async () => {
+    const claimId =
+      currentClaim?.Claim?.Data?.ClaimNo ||
+      currentClaim?.ClaimNo ||
+      claimNo ||
+      "";
+    if (!claimId || !apiUrl) return;
+    setDiscoveryLoading(true);
+    setDiscoveryError("");
+    setDiscoveryResponse(null);
+    setShowDiscoveryDetails(true);
+    try {
+      let response = await axios.post(`${apiUrl}/insurance-discovery`, { claimId });
+      let data = response?.data || {};
+      for (let attempt = 0; attempt < 8 && data.status === "processing" && data.id; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 15000));
+        response = await axios.get(`${apiUrl}/insurance-discovery`, {
+          params: { id: data.id, claimId },
+        });
+        data = response?.data || {};
+      }
+      setDiscoveryResponse(data);
+      if (data.status === "processing") {
+        toast.info("Insurance Discovery is still processing.");
+      } else if (data.mode === "preview") {
+        toast.info("Insurance Discovery request is ready to review.");
+      } else {
+        toast.success("Insurance Discovery response received.");
+      }
+    } catch (err) {
+      const detail =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Insurance Discovery failed.";
+      const preview = err?.response?.data;
+      if (preview?.request) setDiscoveryResponse(preview);
+      setDiscoveryError(detail);
+      toast.error("Insurance Discovery failed.");
+    } finally {
+      setDiscoveryLoading(false);
+    }
+  };
+
   const [openNotesHistoryModal, setOpenNotesHistoryModal] = useState(false)
 
   const handleOpenNotesHistory = () => {
@@ -1456,6 +1504,13 @@ const ReboundDetailView = () => {
   const isEligibility = [routeTitle, appTitle, routeCategory, claimCategory]
     .filter(Boolean)
     .some((value) => normalizePend(value).includes("eligibility"));
+  const isCob = [routeTitle, appTitle, routeCategory, claimCategory]
+    .filter(Boolean)
+    .some((value) => {
+      const normalized = normalizePend(value);
+      return normalized.includes("coordinationofbenefits") || normalized === "cob";
+    });
+  const isInsuranceDiscovery = isEligibility || isCob;
   const showRaw277 = () => {
     setShowOptumDetails(true);
   };
@@ -2313,6 +2368,21 @@ const ReboundDetailView = () => {
                             }`}
                         >
                           {eligibilityLoading ? 'Requesting 270...' : 'Request 270'}
+                        </button>
+                      )}
+                      {isInsuranceDiscovery && (
+                        <button
+                          type="button"
+                          onClick={handleInsuranceDiscovery}
+                          disabled={discoveryLoading}
+                          className={`self-start px-4 py-2 rounded-xl text-xs font-semibold transition ${discoveryLoading
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : isDark
+                              ? 'bg-[#2A4A70] text-white hover:bg-[#4A6080]'
+                              : 'bg-[#3b3f46] text-white hover:bg-[#4a4f57]'
+                            }`}
+                        >
+                          {discoveryLoading ? 'Discovering coverage...' : 'Insurance Discovery'}
                         </button>
                       )}
                       {isPend277 && (
@@ -3707,6 +3777,65 @@ const ReboundDetailView = () => {
                   );
                 })}
               </div>
+            )}
+          </Box>
+        </Modal>
+      )}
+      {isInsuranceDiscovery && (
+        <Modal
+          open={showDiscoveryDetails}
+          onClose={() => setShowDiscoveryDetails(false)}
+          aria-labelledby="insurance-discovery-title"
+        >
+          <Box className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] w-[90vw] max-w-4xl overflow-y-auto rounded-2xl p-6 ${isDark ? 'bg-[#111F35] text-gray-100' : 'bg-white text-gray-900'}`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p id="insurance-discovery-title" className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Insurance Discovery</p>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Coverage lookup for Coordination of Benefits and Eligibility denials.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDiscoveryDetails(false)}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${isDark
+                  ? 'bg-[#2b2f36] text-gray-200 hover:bg-[#3a3f4a]'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+              >
+                Close
+              </button>
+            </div>
+            {discoveryLoading && (
+              <p className={`mt-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                Checking coverage. A processing response is polled every 15 seconds.
+              </p>
+            )}
+            {discoveryError && (
+              <div className={`mt-4 text-sm ${isDark ? 'text-red-300' : 'text-red-600'}`}>{discoveryError}</div>
+            )}
+            {discoveryResponse?.message && (
+              <p className={`mt-4 text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{discoveryResponse.message}</p>
+            )}
+            {(discoveryResponse?.missing || []).length > 0 && (
+              <div className={`mt-4 rounded-xl border p-4 text-sm ${isDark ? 'border-amber-400/40 bg-amber-950/40' : 'border-amber-200 bg-amber-50'}`}>
+                <p className="font-semibold">Missing 837 fields</p>
+                <p className="mt-1">{discoveryResponse.missing.join(", ")}</p>
+              </div>
+            )}
+            {(discoveryResponse?.results || []).map((result, index) => (
+              <div key={`discovery-result-${index}`} className={`mt-4 rounded-xl border p-4 text-sm ${isDark ? 'border-[#30354a] bg-[#1C3050]' : 'border-gray-200 bg-white'}`}>
+                <p className="font-semibold">{result.coverageStatus || "Coverage result"}</p>
+                <p className={`mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{result.payerName || "Payer not returned"}{result.payerId ? ` (${result.payerId})` : ""}</p>
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Member ID: {result.memberId || "N/A"}</p>
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Coverage: {result.coverageStartDate || "N/A"} to {result.coverageEndDate || "N/A"}</p>
+                {result.fundType && (
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Funding type: {result.fundType}{result.fundTypeScore ? ` (${result.fundTypeScore})` : ""}</p>
+                )}
+              </div>
+            ))}
+            {discoveryResponse?.request && (
+              <pre className={`mt-4 overflow-x-auto rounded-xl border p-4 text-xs ${isDark ? 'border-[#30354a] bg-[#1C3050] text-gray-200' : 'border-gray-200 bg-slate-50 text-slate-700'}`}>
+                {JSON.stringify(discoveryResponse.request, null, 2)}
+              </pre>
             )}
           </Box>
         </Modal>

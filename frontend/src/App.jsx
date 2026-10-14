@@ -67,21 +67,36 @@ import {
   resolvePlatformTenant,
 } from "./utils/platformTenant";
 
+const APP_PATH_PREFIXES = [
+  "/management",
+  "/demo",
+  "/rebound",
+  "/pilotcustomer",
+  "/betacustomer",
+  "/blog",
+  "/train",
+  "/careers",
+  "/clients",
+  "/whitepaper",
+  "/apply",
+  "/integrations",
+  "/calculate_savings",
+  "/waiting",
+  "/error-404",
+  "/clientmanagement",
+  "/client",
+  "/governance-management",
+  "/appeal-templates",
+  "/account-settings",
+];
+
+const isAppPath = (pathname = "") =>
+  APP_PATH_PREFIXES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+
 const isPublicPath = (pathname = "") => {
   if (pathname === "/") return true;
-  return [
-    "/signin",
-    "/signup",
-    "/forgot-password",
-    "/contact",
-    "/about",
-    "/features",
-    "/resources",
-    "/privacy",
-    "/verify_email",
-    "/update_password",
-    "/verify_error",
-  ].some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  if (isAppPath(pathname)) return false;
+  return true;
 };
 
 function App() {
@@ -356,7 +371,7 @@ function App() {
               role="alert"
               className="shrink-0 border-b border-amber-400/40 bg-amber-950 px-4 py-3 text-amber-50"
             >
-              <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4">
+              <div className="mx-auto flex max-w-[1920px] items-center justify-between gap-4">
                 <p className="text-sm leading-5">{bootstrapError}</p>
                 <button
                   type="button"

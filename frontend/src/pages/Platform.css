@@ -125,7 +125,7 @@
   color: #ffffff;
   font-weight: 700;
   text-decoration: none;
-  border-radius: 0.55rem;
+  border-radius: 999px;
   padding: 0.72rem 1.15rem;
 }
 
@@ -137,17 +137,18 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1320px;
+  max-width: 1920px;
   margin: 0 auto;
 }
 
 .platform-banner {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.85rem;
-  background: #16324a;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  color: #102033;
+  border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 1rem;
   padding: 0.7rem 1.15rem;
   margin-bottom: 0.9rem;
@@ -156,9 +157,14 @@
 
 .platform-banner p {
   margin: 0;
+  text-align: center;
   font-size: clamp(1.15rem, 2vw, 1.55rem);
   font-weight: 700;
   letter-spacing: -0.02em;
+}
+
+.platform-banner__balance {
+  width: 2rem;
 }
 
 .platform-grid {
@@ -239,7 +245,7 @@
   color: #ffffff;
   font-weight: 700;
   text-decoration: none;
-  border-radius: 0.7rem;
+  border-radius: 999px;
   padding: 0.7rem 1.15rem;
 }
 
@@ -248,12 +254,35 @@
 }
 
 .platform-opp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
   background: #f97316;
   color: #ffffff;
   text-align: center;
-  font-weight: 700;
   border-radius: 0.75rem;
-  padding: 0.72rem 1rem;
+  padding: 0.95rem 1.25rem;
+}
+
+.platform-opp__title,
+.platform-opp__tagline {
+  margin: 0;
+}
+
+.platform-opp__title {
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.platform-opp__tagline {
+  font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
 }
 
 .platform-chips {
@@ -262,15 +291,53 @@
   gap: 0.7rem;
 }
 
+.platform-chip,
+.platform-cash {
+  --accent: #5eead4;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 16px 30px rgba(2, 8, 20, 0.28);
+}
+
+.platform-chip::before,
+.platform-cash::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    90% 70% at 50% 0%,
+    color-mix(in srgb, var(--accent) 34%, transparent),
+    transparent 62%
+  );
+}
+
+.platform-chip > *,
+.platform-cash > * {
+  position: relative;
+  z-index: 1;
+}
+
+.platform-chip--teal { --accent: #2dd4bf; }
+.platform-chip--cyan { --accent: #38bdf8; }
+.platform-chip--gold { --accent: #facc15; }
+.platform-chip--amber { --accent: #fbbf24; }
+.platform-chip--violet { --accent: #a78bfa; }
+
 .platform-chip {
-  padding: 0.8rem 0.75rem 0.9rem;
-  min-height: 7.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.05rem 0.7rem 1rem;
 }
 
 .platform-chip h3 {
   font-size: 0.86rem;
   line-height: 1.25;
-  margin-top: 0.55rem;
+  margin-top: 0.35rem;
 }
 
 .platform-chip p {
@@ -279,12 +346,19 @@
 }
 
 .platform-icon {
-  width: 1.7rem;
-  height: 1.7rem;
-  display: inline-flex;
+  width: 4.6rem;
+  height: 4.6rem;
+  display: flex;
   align-items: center;
   justify-content: center;
-  color: #e8f4ff;
+  margin: 0 auto;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.28));
+}
+
+.platform-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .platform-move h3 {
@@ -293,7 +367,9 @@
 }
 
 .platform-end {
-  background: linear-gradient(180deg, rgba(90, 104, 122, 0.55), rgba(55, 68, 86, 0.5));
+  background: #f97316;
+  border-color: transparent;
+  color: #ffffff;
 }
 
 .platform-end h3 {
@@ -315,21 +391,26 @@
 }
 
 .platform-cash {
-  background: linear-gradient(180deg, #fb923c 0%, #f97316 55%, #ea580c 100%);
-  border-color: rgba(255, 255, 255, 0.28);
+  --accent: #fb923c;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.platform-cash .platform-icon {
+  width: 6.2rem;
+  height: 6.2rem;
 }
 
 .platform-cash h3 {
   font-size: 1.45rem;
-  margin-top: 0;
+  margin-top: 0.35rem;
 }
 
 .platform-cash p {
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.platform-icon--light {
-  color: #ffffff;
+  color: rgba(226, 236, 246, 0.86);
 }
 
 @media (min-width: 760px) {

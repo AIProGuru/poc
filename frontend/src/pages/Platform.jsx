@@ -32,29 +32,34 @@ const TOOLS = [
 
 const OPPORTUNITIES = [
   {
-    title: "Claim scrubbing / edits",
-    detail: "CH rejection, payer rejection",
+    title: "Claim Scrubbing & Edits",
+    detail: "Reconcile Clearinghouse and Payer Rejections",
     icon: "doc",
+    tone: "teal",
   },
   {
-    title: "Claim status / delinquent",
-    detail: "Pend 277, pend 835",
+    title: "Claim Status & Delinquent Claims",
+    detail: "Proactive Inquiries of Delayed Adjudication",
     icon: "clock",
+    tone: "cyan",
   },
   {
-    title: "Denials / appeals",
-    detail: "Billing, coding, med necessity",
+    title: "Denials & Appeals Management",
+    detail: "Resolve Denials Faster with AI-Driven Insights",
     icon: "alert",
+    tone: "gold",
   },
   {
-    title: "Patient responsibility",
-    detail: "Balance due from patient",
+    title: "Automated Patient Balances",
+    detail: "Accurate Patient Payment Collections",
     icon: "user",
+    tone: "amber",
   },
   {
-    title: "Expected reimbursement",
-    detail: "Payer over/under paid",
+    title: "Payment Integrity",
+    detail: "Identify and Recover Underpayments and Reconcile Overpayments",
     icon: "card",
+    tone: "violet",
   },
 ];
 
@@ -68,6 +73,7 @@ const Platform = () => {
           <div className="platform-banner">
             <HelioBrand variant="onLight" showWordmark={false} size="sm" />
             <p>HelioRCM AI Platform.</p>
+            <span className="platform-banner__balance" aria-hidden />
           </div>
 
           <div className="platform-grid">
@@ -78,16 +84,19 @@ const Platform = () => {
                   <li key={item}>{item}</li>
                 ))}
               </ul>
-              <Link to="/contact" className="platform-assess">
-                Request Assessment
+              <Link to="/pricing" className="platform-assess">
+                Request Pricing
               </Link>
             </article>
 
-            <div className="platform-opp">Recoverable opportunities ($)</div>
+            <div className="platform-opp">
+              <p className="platform-opp__title">Recoverable Revenue</p>
+              <p className="platform-opp__tagline">End-to-End AI-Native Automation</p>
+            </div>
 
             <div className="platform-chips">
               {OPPORTUNITIES.map((item) => (
-                <article key={item.title} className="platform-chip">
+                <article key={item.title} className={`platform-chip platform-chip--${item.tone}`}>
                   <OpportunityIcon name={item.icon} />
                   <h3>{item.title}</h3>
                   <p>{item.detail}</p>
@@ -101,7 +110,7 @@ const Platform = () => {
             </article>
 
             <article className="platform-card platform-end">
-              <h3>End state</h3>
+              <h3>Final State</h3>
               <p>Non-recoverable</p>
             </article>
 
@@ -134,8 +143,8 @@ const Platform = () => {
             <article className="platform-card platform-cash">
               <OpportunityIcon name="cash" />
               <div>
-                <h3>Cash posting</h3>
-                <p>Contractual, payment, write-off, refund</p>
+                <h3>Automated Cash Posting</h3>
+                <p>Automate Posting of Payments, Contractual Adjustments, &amp; Write-Offs Directly into your EHR</p>
               </div>
             </article>
           </div>
@@ -245,11 +254,10 @@ function ToolIcon({ name }) {
 }
 
 function OpportunityIcon({ name }) {
-  const common = {
-    width: 22,
-    height: 22,
-    viewBox: "0 0 24 24",
-    fill: "none",
+  const svg = {
+    width: "100%",
+    height: "100%",
+    viewBox: "0 0 80 80",
     xmlns: "http://www.w3.org/2000/svg",
     "aria-hidden": true,
   };
@@ -257,9 +265,13 @@ function OpportunityIcon({ name }) {
   if (name === "clock") {
     return (
       <span className="platform-icon">
-        <svg {...common}>
-          <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.6" />
-          <path d="M12 8v4.2l2.6 1.6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <svg {...svg}>
+          <circle cx="40" cy="42" r="22" fill="#0ea5e9" />
+          <circle cx="40" cy="42" r="16" fill="#e0f2fe" />
+          <circle cx="40" cy="42" r="2.2" fill="#0369a1" />
+          <path d="M40 30.5v12.2l8 4.6" stroke="#0369a1" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="56" cy="24" r="9" fill="#22d3ee" />
+          <path d="M56 19.5v5l3 1.8" stroke="#083344" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       </span>
     );
@@ -268,10 +280,11 @@ function OpportunityIcon({ name }) {
   if (name === "alert") {
     return (
       <span className="platform-icon">
-        <svg {...common}>
-          <path d="M12 4.5 20 19H4L12 4.5z" stroke="currentColor" strokeWidth="1.6" />
-          <path d="M12 10v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          <circle cx="12" cy="16.2" r="0.8" fill="currentColor" />
+        <svg {...svg}>
+          <path d="M40 12 66 58H14L40 12z" fill="#facc15" />
+          <path d="M40 18.5 60.5 54H19.5L40 18.5z" fill="#fef3c7" />
+          <path d="M40 30v14" stroke="#a16207" strokeWidth="3.4" strokeLinecap="round" />
+          <circle cx="40" cy="49" r="2.1" fill="#a16207" />
         </svg>
       </span>
     );
@@ -280,9 +293,12 @@ function OpportunityIcon({ name }) {
   if (name === "user") {
     return (
       <span className="platform-icon">
-        <svg {...common}>
-          <circle cx="12" cy="9" r="3" stroke="currentColor" strokeWidth="1.6" />
-          <path d="M6.5 18.5c1.2-2.4 3-3.5 5.5-3.5s4.3 1.1 5.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <svg {...svg}>
+          <circle cx="40" cy="40" r="24" fill="#fbbf24" />
+          <circle cx="40" cy="33" r="8" fill="#fff7ed" />
+          <path d="M24 54c2.4-7 8-10.5 16-10.5S53.6 47 56 54" fill="#fff7ed" />
+          <circle cx="56" cy="24" r="9" fill="#f97316" />
+          <path d="M56 20.2v7.6M52.2 24h7.6" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </span>
     );
@@ -291,9 +307,13 @@ function OpportunityIcon({ name }) {
   if (name === "card") {
     return (
       <span className="platform-icon">
-        <svg {...common}>
-          <rect x="3.5" y="6" width="17" height="12" rx="2" stroke="currentColor" strokeWidth="1.6" />
-          <path d="M3.5 10h17" stroke="currentColor" strokeWidth="1.6" />
+        <svg {...svg}>
+          <rect x="14" y="22" width="46" height="34" rx="8" fill="#8b5cf6" />
+          <rect x="14" y="22" width="46" height="12" rx="8" fill="#c4b5fd" />
+          <rect x="14" y="28" width="46" height="6" fill="#c4b5fd" />
+          <rect x="22" y="42" width="16" height="4" rx="2" fill="#ede9fe" />
+          <circle cx="54" cy="50" r="11" fill="#34d399" />
+          <path d="M49 50.2 52.4 53.6 59.2 46" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
     );
@@ -301,10 +321,15 @@ function OpportunityIcon({ name }) {
 
   if (name === "cash") {
     return (
-      <span className="platform-icon platform-icon--light">
-        <svg {...common}>
-          <rect x="5" y="3.5" width="14" height="17" rx="2" stroke="currentColor" strokeWidth="1.6" />
-          <path d="M12 8v6M9.8 9.2c.4-.7 1.2-1 2.2-1 1.3 0 2.2.6 2.2 1.6 0 2.4-4.4 1.2-4.4 3.4 0 1 .9 1.6 2.2 1.6 1 0 1.8-.3 2.2-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <span className="platform-icon">
+        <svg {...svg}>
+          <ellipse cx="34" cy="52" rx="16" ry="7" fill="#c2410c" />
+          <ellipse cx="34" cy="48" rx="16" ry="7" fill="#fb923c" />
+          <ellipse cx="34" cy="44" rx="16" ry="7" fill="#fdba74" />
+          <ellipse cx="34" cy="40" rx="16" ry="7" fill="#fff7ed" />
+          <ellipse cx="34" cy="40" rx="8" ry="3.2" fill="#fb923c" />
+          <path d="M54 18v22" stroke="#22c55e" strokeWidth="4" strokeLinecap="round" />
+          <path d="M46 26 54 17l8 9" stroke="#22c55e" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
     );
@@ -312,9 +337,12 @@ function OpportunityIcon({ name }) {
 
   return (
     <span className="platform-icon">
-      <svg {...common}>
-        <rect x="6" y="3.5" width="12" height="16" rx="1.6" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M9 8h6M9 11.5h6M9 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <svg {...svg}>
+        <path d="M24 14h22l12 12v36a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z" fill="#5eead4" />
+        <path d="M46 14v10a4 4 0 0 0 4 4h8" fill="#99f6e4" />
+        <path d="M28 38h18M28 46h14" stroke="#134e4a" strokeWidth="3" strokeLinecap="round" />
+        <circle cx="52" cy="52" r="12" fill="#22c55e" />
+        <path d="M46.2 52.2 50.2 56.2 58 47.6" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </span>
   );

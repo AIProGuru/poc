@@ -61,7 +61,7 @@ const Home = () => {
             </p>
 
             <Link to="/contact" className="home-hero__cta">
-              Schedule Demo
+              Request a Demo
             </Link>
           </div>
         </div>
