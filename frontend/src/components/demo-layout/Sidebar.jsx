@@ -111,25 +111,25 @@ const Sidebar = () => {
         id: "price-transparency",
         title: "Price Transparency",
         icon: "chart",
-        badge: 0,
+        badge: null,
       },
       {
         id: "cdi",
         title: "Clinical Documentation Integrity (CDI)",
         icon: "clipboard",
-        badge: 0,
+        badge: null,
       },
       {
         id: "coding-accuracy",
         title: "Coding Accuracy",
         icon: "list",
-        badge: 0,
+        badge: null,
       },
       {
         id: "charge-capture",
         title: "Charge Capture",
         icon: "card",
-        badge: 0,
+        badge: null,
       },
       {
         id: "claim-edits",
@@ -731,8 +731,8 @@ const Sidebar = () => {
                   } ${navStateClass}`}
                   onClick={() => handleClick(item)}
                 >
-                  <span className={`flex items-center min-w-0 ${showLabels ? "flex-1 justify-between gap-2" : "justify-center"}`}>
-                    <span className={`flex items-center min-w-0 ${showLabels ? "gap-3" : "justify-center"}`}>
+                  <span className={`flex items-center min-w-0 ${showLabels ? "flex-1 gap-2" : "justify-center"}`}>
+                    <span className={`flex items-center min-w-0 ${showLabels ? "flex-1 gap-3" : "justify-center"}`}>
                       <span
                         className={`rounded-xl flex items-center justify-center border shrink-0 ${
                           showLabels ? "w-9 h-9" : "w-10 h-10"
@@ -741,14 +741,14 @@ const Sidebar = () => {
                         {renderIcon(item.icon, isActive)}
                       </span>
                       <span
-                        className={`${showLabels ? "inline" : "hidden"} text-sm font-medium truncate max-w-[120px]`}
+                        className={`${showLabels ? "block min-w-0 flex-1 truncate text-left" : "hidden"} text-sm font-medium`}
                         title={item.title}
                       >
                         {item.title}
                       </span>
                     </span>
                     <span className={`${showLabels ? "inline-flex" : "hidden"} items-center gap-1 shrink-0`}>
-                      {computedBadge !== null && computedBadge !== undefined && (
+                      {Number(computedBadge) > 0 && (
                         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}>
                           {formatCount(computedBadge)}
                         </span>
@@ -808,7 +808,7 @@ const Sidebar = () => {
                             <span className="truncate text-sm" title={child.title}>
                               {child.title}
                             </span>
-                            {typeof childBadge === "number" && (
+                            {Number(childBadge) > 0 && (
                               <span
                                 className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                                   childIsActive

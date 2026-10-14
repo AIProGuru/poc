@@ -24,13 +24,13 @@ const NON_CLAIM_APP_TITLES = new Set([
   "Governance Management",
   "Appeal Templates",
   "Account Settings",
-]);
-
-const WORKLIST_ROOT_TITLES = new Set([
   "Price Transparency",
   "Clinical Documentation Integrity (CDI)",
   "Coding Accuracy",
   "Charge Capture",
+]);
+
+const WORKLIST_ROOT_TITLES = new Set([
   "Claim Edits",
   "Claim Status",
   "Denials",

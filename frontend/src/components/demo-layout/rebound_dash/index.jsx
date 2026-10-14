@@ -34,6 +34,8 @@ import { canAccessUserManagement } from "../../../utils/roles";
 import { buildAccessExtra, isPrivilegedRole } from "../../../utils/accessFilters";
 import { getAccessibleModelCount } from "../../../utils/moduleCatalog";
 import { buildExcludeAiModels } from "../../../utils/aiModelFilters";
+import { isPointOfCareNav } from "../../../utils/worklistNav";
+import PointOfCareBoard from "./PointOfCareBoard";
 
 const readStoredTenantBase = () => {
   try {
@@ -359,7 +361,7 @@ const ReboundDash = () => {
       return;
     }
     // Placeholder sections should not trigger data loading; show static content instead.
-    if (placeholderNavs.includes(navId)) {
+    if (isPointOfCareNav(navId) || placeholderNavs.includes(navId)) {
       dispatch(setSelectedTags([]));
       dispatch(setExtraFilter({}));
       dispatch(setTableData([]));
@@ -832,6 +834,8 @@ const ReboundDash = () => {
                 <SettingsScreen isDark={isDark} />
               ) : showAiModels ? (
                 <ArIntel onModelSelect={() => setAiLibraryDrilldown(true)} />
+              ) : isPointOfCareNav(selectedNav) ? (
+                <PointOfCareBoard navId={selectedNav} isDark={isDark} />
               ) : showPlaceholder ? (
                 <div
                   className={`rounded-2xl border px-6 py-10 text-center text-lg font-semibold ${isDark ? 'bg-[var(--helio-surface)] border-[var(--helio-border)] text-gray-200' : 'bg-white border-gray-200 text-gray-700'

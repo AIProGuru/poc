@@ -16,6 +16,15 @@ import {
 } from "../redux/reducers/app.reducer";
 import { setSelectedTags } from "../redux/reducers/tag.reducer";
 
+export const POINT_OF_CARE_NAV_IDS = [
+  "price-transparency",
+  "cdi",
+  "coding-accuracy",
+  "charge-capture",
+];
+
+export const isPointOfCareNav = (navId) => POINT_OF_CARE_NAV_IDS.includes(navId);
+
 export const WORKLIST_PLACEHOLDER_IDS = [
   "dashboard",
   "support",
@@ -300,7 +309,7 @@ export const applyWorklistNavFilters = ({ dispatch, navId, tags }) => {
   dispatch(setStartDate(null));
   dispatch(setEndDate(null));
 
-  if (WORKLIST_PLACEHOLDER_IDS.includes(navId)) {
+  if (isPointOfCareNav(navId) || WORKLIST_PLACEHOLDER_IDS.includes(navId)) {
     dispatch(setSelectedTags([]));
     dispatch(setExtraFilter({}));
     dispatch(setTableData([]));
