@@ -36,6 +36,7 @@ import { getAccessibleModelCount } from "../../../utils/moduleCatalog";
 import { buildExcludeAiModels } from "../../../utils/aiModelFilters";
 import { isPointOfCareNav } from "../../../utils/worklistNav";
 import PointOfCareBoard from "./PointOfCareBoard";
+import PriceTransparency from "./PriceTransparency";
 
 const readStoredTenantBase = () => {
   try {
@@ -821,7 +822,7 @@ const ReboundDash = () => {
               </div>
             </div> */}
 
-            <div className="flex flex-col min-w-0">
+            <div className={`flex flex-col min-w-0 ${isPointOfCareNav(selectedNav) ? "flex-1 min-h-0 overflow-y-auto" : ""}`}>
               {showHomeView ? (
                 <HomeScreen isDark={isDark} />
               ) : showDashboardView ? (
@@ -834,9 +835,11 @@ const ReboundDash = () => {
                 <SettingsScreen isDark={isDark} />
               ) : showAiModels ? (
                 <ArIntel onModelSelect={() => setAiLibraryDrilldown(true)} />
-              ) : isPointOfCareNav(selectedNav) ? (
+              ) : selectedNav === "price-transparency" ? (
+                <PriceTransparency isDark={isDark} />
+              ) : selectedNav === "charge-capture" ? (
                 <PointOfCareBoard navId={selectedNav} isDark={isDark} />
-              ) : showPlaceholder ? (
+              ) : selectedNav === "cdi" || selectedNav === "coding-accuracy" ? null : showPlaceholder ? (
                 <div
                   className={`rounded-2xl border px-6 py-10 text-center text-lg font-semibold ${isDark ? 'bg-[var(--helio-surface)] border-[var(--helio-border)] text-gray-200' : 'bg-white border-gray-200 text-gray-700'
                     }`}

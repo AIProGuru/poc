@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import HelioBrand from "../components/layout/HelioBrand";
@@ -63,7 +63,21 @@ const OPPORTUNITIES = [
   },
 ];
 
+const SECTION_COPY = {
+  "pre-care": {
+    title: "Pre-Care",
+    copy: "What happens before the visit, from scheduling through an estimate.",
+  },
+  "point-of-care": {
+    title: "Point-of-Care",
+    copy: "What happens during the visit, while the patient is still in front of the team.",
+  },
+};
+
 const Platform = () => {
+  const { section } = useParams();
+  const activeSection = section === "post-care" || SECTION_COPY[section] ? section : null;
+
   return (
     <div className="platform-page">
       <SiteHeader variant="overlay" />
@@ -72,10 +86,10 @@ const Platform = () => {
         <div className="platform-stage">
           <div className="platform-banner">
             <HelioBrand variant="onLight" showWordmark={false} size="sm" />
-            <p>HelioRCM AI Platform.</p>
-            <span className="platform-banner__balance" aria-hidden />
+            <p>HelioRCM AI Platform</p>
           </div>
 
+          {activeSection === "post-care" ? (
           <div className="platform-grid">
             <article className="platform-card platform-can">
               <h2>What Our Platform Can Do?</h2>
@@ -148,9 +162,16 @@ const Platform = () => {
               </div>
             </article>
           </div>
+          ) : activeSection ? (
+            <section className="platform-section">
+              <h2>{SECTION_COPY[activeSection].title}</h2>
+              <p>{SECTION_COPY[activeSection].copy}</p>
+            </section>
+          ) : null}
         </div>
       </main>
 
+      {activeSection === "post-care" ? (
       <section className="platform-team" aria-label="AI agents">
         <div className="platform-stage">
           <div className="platform-roster">
@@ -192,6 +213,7 @@ const Platform = () => {
           </div>
         </div>
       </section>
+      ) : null}
 
       <SiteFooter />
     </div>

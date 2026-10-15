@@ -3,13 +3,21 @@ import { Link, useLocation } from "react-router-dom";
 import HelioBrand from "./HelioBrand";
 import "../../pages/Home.css";
 
+const PLATFORM_SECTIONS = [
+  { label: "Pre-Care", to: "/features/pre-care" },
+  { label: "Point-of-Care", to: "/features/point-of-care" },
+  { label: "Post-Care", to: "/features/post-care" },
+];
+
 const NAV_LINKS = [
   { label: "Home", to: "/" },
-  { label: "Platform", to: "/features" },
+  { label: "Platform", to: "/features", children: PLATFORM_SECTIONS },
   { label: "Resources", to: "/resources" },
   { label: "Pricing", to: "/pricing" },
   { label: "About Us", to: "/about" },
 ];
+
+const isPlatformSectionActive = (pathname, to) => pathname === to;
 
 /**
  * Marketing site header shared by Home, About, etc.
@@ -21,11 +29,31 @@ const isActivePath = (pathname, to) =>
 export default function SiteHeader({ variant = "static" }) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [platformOpen, setPlatformOpen] = useState(false);
   const headerRef = useRef(null);
 
   useEffect(() => {
     setOpen(false);
+    setPlatformOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!platformOpen) return undefined;
+    const onKey = (event) => {
+      if (event.key === "Escape") setPlatformOpen(false);
+    };
+    const onPointer = (event) => {
+      if (headerRef.current && !headerRef.current.contains(event.target)) {
+        setPlatformOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onPointer);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onPointer);
+    };
+  }, [platformOpen]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -57,7 +85,35 @@ export default function SiteHeader({ variant = "static" }) {
 
         <nav className="home-header__nav" aria-label="Primary">
           {NAV_LINKS.map((link) =>
-            link.to ? (
+            link.children ? (
+              <div key={link.label} className={`home-header__item${platformOpen ? " is-open" : ""}`}>
+                <button
+                  type="button"
+                  className={`home-header__link${isActivePath(pathname, link.to) ? " is-active" : ""}`}
+                  aria-haspopup="true"
+                  aria-expanded={platformOpen}
+                  onClick={() => setPlatformOpen((value) => !value)}
+                >
+                  {link.label}
+                </button>
+                <div className="home-header__panel">
+                  <div className="home-header__panel-card">
+                    <p className="home-header__panel-label">Platform</p>
+                    <div className="home-header__panel-links">
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.label}
+                          to={child.to}
+                          className={`home-header__panel-link${isPlatformSectionActive(pathname, child.to) ? " is-active" : ""}`}
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
               <Link
                 key={link.label}
                 to={link.to}
@@ -65,10 +121,6 @@ export default function SiteHeader({ variant = "static" }) {
               >
                 {link.label}
               </Link>
-            ) : (
-              <button key={link.label} type="button" className="home-header__link">
-                {link.label}
-              </button>
             )
           )}
         </nav>
@@ -152,9 +204,9 @@ function MobileItem({ item, pathname, onNavigate }) {
   return (
     <div className={`home-header__group${expanded ? " is-open" : ""}`}>
       <div className={`home-header__menu-link home-header__menu-parent${active ? " is-active" : ""}`}>
-        <Link to={item.to} onClick={onNavigate}>
+        <button type="button" onClick={() => setExpanded((value) => !value)}>
           {item.label}
-        </Link>
+        </button>
         <button
           type="button"
           className="home-header__menu-chevron"
@@ -172,7 +224,7 @@ function MobileItem({ item, pathname, onNavigate }) {
           <Link
             key={child.label}
             to={child.to}
-            className={`home-header__submenu-link${isActivePath(pathname, child.to) ? " is-active" : ""}`}
+            className={`home-header__submenu-link${isPlatformSectionActive(pathname, child.to) ? " is-active" : ""}`}
             onClick={onNavigate}
           >
             {child.label}

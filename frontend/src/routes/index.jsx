@@ -181,7 +181,7 @@ const routesConfig = [
     element: suspense(<SignIn />),
   },
   {
-    path: "/features",
+    path: "/features/:section?",
     element: suspense(<Platform />),
   },
   {

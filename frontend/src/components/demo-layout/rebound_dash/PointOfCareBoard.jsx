@@ -9,30 +9,6 @@ const MODULES = {
     actionLabel: "Send to coding",
     codeLabel: "Charge",
   },
-  "coding-accuracy": {
-    title: "Coding accuracy",
-    subtitle: "Confirm codes before the claim moves forward",
-    reviewLabel: "To review",
-    doneLabel: "Confirmed",
-    actionLabel: "Confirm codes",
-    codeLabel: "Code under review",
-  },
-  cdi: {
-    title: "Clinical Documentation Integrity",
-    subtitle: "Documentation to clarify before coding",
-    reviewLabel: "To review",
-    doneLabel: "Query sent",
-    actionLabel: "Send query",
-    codeLabel: "Documentation gap",
-  },
-  "price-transparency": {
-    title: "Price transparency",
-    subtitle: "Estimates to review before they are shared",
-    reviewLabel: "To review",
-    doneLabel: "Shared",
-    actionLabel: "Mark shared",
-    codeLabel: "Estimated service",
-  },
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -76,27 +52,9 @@ const INITIAL_ENCOUNTERS = [
   { id: "cc-9", moduleId: "charge-capture", status: "done", serviceDate: localDate(14), name: "C. Walsh", diagnosisCode: "S83.511A", diagnosis: "Sprain of ACL, right knee", facility: "Mayo Clinic", code: "29888-RT", provider: "Dr. Patel", visit: "Surgery" },
   { id: "cc-10", moduleId: "charge-capture", status: "review", serviceDate: localDate(12), name: "H. Diaz", diagnosisCode: "M75.102", diagnosis: "Rotator cuff tear, left", facility: "Mayo Clinic", code: "29827-LT", provider: "Dr. Shah", visit: "Surgery" },
   { id: "cc-11", moduleId: "charge-capture", status: "review", serviceDate: localDate(20), name: "E. Novak", diagnosisCode: "M51.26", diagnosis: "Other intervertebral disc displacement", facility: "Mayo Clinic", code: "63047", provider: "Dr. Patel", visit: "Surgery" },
-
-  { id: "ca-1", moduleId: "coding-accuracy", status: "review", serviceDate: localDate(0), name: "R. Alvarez", diagnosisCode: "M54.16", diagnosis: "Radiculopathy, lumbar region", facility: "Mayo Clinic", code: "62323", provider: "Dr. Patel", visit: "Office visit" },
-  { id: "ca-2", moduleId: "coding-accuracy", status: "review", serviceDate: localDate(1), name: "N. Ibarra", diagnosisCode: "M19.011", diagnosis: "Primary osteoarthritis, right shoulder", facility: "Mayo Clinic", code: "23472-RT", provider: "Dr. Shah", visit: "Surgery" },
-  { id: "ca-3", moduleId: "coding-accuracy", status: "done", serviceDate: localDate(4), name: "L. Brandt", diagnosisCode: "M75.121", diagnosis: "Rotator cuff tear, right", facility: "Mayo Clinic", code: "29827-RT", provider: "Dr. Shah", visit: "Surgery" },
-  { id: "ca-4", moduleId: "coding-accuracy", status: "review", serviceDate: localDate(9), name: "T. Nguyen", diagnosisCode: "M48.061", diagnosis: "Lumbar spinal stenosis", facility: "Mayo Clinic", code: "63047", provider: "Dr. Shah", visit: "Surgery" },
-  { id: "ca-5", moduleId: "coding-accuracy", status: "review", serviceDate: localDate(16), name: "M. Okafor", diagnosisCode: "M17.11", diagnosis: "Osteoarthritis of right knee", facility: "Mayo Clinic", code: "27447-RT", provider: "Dr. Patel", visit: "Surgery" },
-
-  { id: "cdi-1", moduleId: "cdi", status: "review", serviceDate: localDate(0), name: "A. Brooks", diagnosisCode: "M25.561", diagnosis: "Pain in right knee", facility: "Mayo Clinic", code: "Laterality", provider: "Dr. Patel", visit: "Query" },
-  { id: "cdi-2", moduleId: "cdi", status: "review", serviceDate: localDate(2), name: "J. Morales", diagnosisCode: "M54.2", diagnosis: "Cervicalgia", facility: "Mayo Clinic", code: "Acuity", provider: "Dr. Shah", visit: "Query" },
-  { id: "cdi-3", moduleId: "cdi", status: "done", serviceDate: localDate(5), name: "S. Kim", diagnosisCode: "M16.11", diagnosis: "Osteoarthritis of right hip", facility: "Mayo Clinic", code: "Specificity", provider: "Dr. Patel", visit: "Query" },
-  { id: "cdi-4", moduleId: "cdi", status: "review", serviceDate: localDate(11), name: "P. Singh", diagnosisCode: "M47.816", diagnosis: "Spondylosis, lumbar region", facility: "Mayo Clinic", code: "Causation", provider: "Dr. Shah", visit: "Query" },
-  { id: "cdi-5", moduleId: "cdi", status: "review", serviceDate: localDate(18), name: "C. Walsh", diagnosisCode: "S83.511A", diagnosis: "Sprain of ACL, right knee", facility: "Mayo Clinic", code: "Laterality", provider: "Dr. Patel", visit: "Query" },
-
-  { id: "pt-1", moduleId: "price-transparency", status: "review", serviceDate: localDate(0), name: "L. Brandt", diagnosisCode: "M75.121", diagnosis: "Rotator cuff tear, right", facility: "Mayo Clinic", code: "29827-RT", provider: "Dr. Shah", visit: "Estimate" },
-  { id: "pt-2", moduleId: "price-transparency", status: "review", serviceDate: localDate(1), name: "M. Okafor", diagnosisCode: "M17.11", diagnosis: "Osteoarthritis of right knee", facility: "Mayo Clinic", code: "27447-RT", provider: "Dr. Patel", visit: "Estimate" },
-  { id: "pt-3", moduleId: "price-transparency", status: "done", serviceDate: localDate(3), name: "R. Alvarez", diagnosisCode: "M54.16", diagnosis: "Radiculopathy, lumbar region", facility: "Mayo Clinic", code: "62323", provider: "Dr. Patel", visit: "Estimate" },
-  { id: "pt-4", moduleId: "price-transparency", status: "review", serviceDate: localDate(7), name: "H. Diaz", diagnosisCode: "M75.102", diagnosis: "Rotator cuff tear, left", facility: "Mayo Clinic", code: "29827-LT", provider: "Dr. Shah", visit: "Estimate" },
-  { id: "pt-5", moduleId: "price-transparency", status: "review", serviceDate: localDate(15), name: "E. Novak", diagnosisCode: "M51.26", diagnosis: "Other intervertebral disc displacement", facility: "Mayo Clinic", code: "63047", provider: "Dr. Patel", visit: "Estimate" },
 ];
 
-const buildColumns = (encounters) => {
+const buildColumns = (encounters, oldestFirst) => {
   const today = startOfToday();
   const cutoff = new Date(today.getTime() - 5 * DAY_MS);
   const recent = new Map();
@@ -114,7 +72,7 @@ const buildColumns = (encounters) => {
   });
 
   const recentColumns = [...recent.entries()]
-    .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+    .sort((a, b) => (oldestFirst ? a[0] > b[0] : a[0] < b[0]) ? 1 : -1)
     .map(([serviceDate, items]) => ({
       id: serviceDate,
       title: formatServiceDate(serviceDate),
@@ -126,15 +84,14 @@ const buildColumns = (encounters) => {
 
   older.sort((a, b) => (a.serviceDate < b.serviceDate ? -1 : a.serviceDate > b.serviceDate ? 1 : a.name.localeCompare(b.name)));
 
-  return [
-    ...recentColumns,
-    {
-      id: "older",
-      title: "Older than 5 days",
-      older: true,
-      items: older,
-    },
-  ];
+  const olderColumn = {
+    id: "older",
+    title: "Older than 5 days",
+    older: true,
+    items: older,
+  };
+
+  return oldestFirst ? [olderColumn, ...recentColumns] : [...recentColumns, olderColumn];
 };
 
 export default function PointOfCareBoard({ navId, isDark }) {
@@ -157,7 +114,8 @@ export default function PointOfCareBoard({ navId, isDark }) {
   const reviewCount = moduleEncounters.filter((encounter) => encounter.status === "review").length;
   const doneCount = moduleEncounters.length - reviewCount;
   const visible = moduleEncounters.filter((encounter) => encounter.status === tab);
-  const columns = useMemo(() => buildColumns(visible), [visible]);
+  const oldestFirst = navId === "charge-capture";
+  const columns = useMemo(() => buildColumns(visible, oldestFirst), [visible, oldestFirst]);
   const columnKey = columns.map((column) => column.id).join("|");
   const activeColumn = columns.find((column) => column.id === activeColumnId) || columns[0] || null;
   const selected = moduleEncounters.find((encounter) => encounter.id === selectedId) || null;
@@ -189,7 +147,7 @@ export default function PointOfCareBoard({ navId, isDark }) {
   }
 
   return (
-    <section className="flex min-h-0 flex-col gap-4">
+    <section className="flex min-h-0 flex-col gap-4 pb-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className={`text-2xl font-bold tracking-tight sm:text-3xl ${isDark ? "text-white" : "text-slate-950"}`}>
@@ -223,6 +181,11 @@ export default function PointOfCareBoard({ navId, isDark }) {
         </p>
       ) : (
         <div className="flex min-h-0 flex-col gap-4">
+          {oldestFirst ? (
+            <p className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+              Dates run oldest to newest.
+            </p>
+          ) : null}
           <div className="flex flex-wrap gap-2" role="tablist" aria-label="Dates of service">
             {columns.map((column) => {
               const selectedDate = activeColumn?.id === column.id;
@@ -251,7 +214,7 @@ export default function PointOfCareBoard({ navId, isDark }) {
           </div>
           {activeColumn?.older ? (
             <p className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-              Listed from oldest to newest.
+              Patients in this group are listed oldest to newest.
             </p>
           ) : null}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -346,10 +309,12 @@ function PatientDetail({ encounter, module, isDark, onBack, onComplete }) {
       <button
         type="button"
         onClick={onBack}
-        className={`inline-flex w-fit items-center gap-1 text-sm font-semibold ${isDark ? "text-slate-300" : "text-slate-600"}`}
+        className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold ${
+          isDark ? "bg-[#111F35] text-white hover:bg-[#1C3050]" : "bg-white text-slate-800 ring-1 ring-slate-200 hover:bg-slate-50"
+        }`}
       >
         <ChevronIcon className="rotate-180" />
-        Patients
+        Back to list
       </button>
       <div className={`rounded-2xl border p-5 sm:p-6 ${isDark ? "border-white/10 bg-[#15263C]" : "border-slate-200 bg-white"}`}>
         <p className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
