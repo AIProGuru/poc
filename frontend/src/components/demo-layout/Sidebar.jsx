@@ -19,11 +19,21 @@ import {
   persistDenialTabIds,
   readStoredDenialTabIds,
   resolveFilterTags,
+  isPointOfCareNav,
   selectWorklistNav,
   WORKLIST_NAV_CHILDREN,
   WORKLIST_TAG_FILTERS,
   WORKLIST_TAB_INDEX,
 } from "../../utils/worklistNav";
+import { priceTransparencyItemCount } from "./rebound_dash/PriceTransparency";
+import { chargeCaptureItemCount } from "./rebound_dash/PointOfCareBoard";
+
+const POINT_OF_CARE_CONTENT_COUNTS = {
+  "price-transparency": priceTransparencyItemCount,
+  cdi: 0,
+  "coding-accuracy": 0,
+  "charge-capture": chargeCaptureItemCount,
+};
 const readStoredTenantBase = () => {
   try {
     const value = localStorage.getItem("lastTenantBase");
@@ -111,25 +121,25 @@ const Sidebar = () => {
         id: "price-transparency",
         title: "Price Transparency",
         icon: "chart",
-        badge: null,
+        badge: POINT_OF_CARE_CONTENT_COUNTS["price-transparency"],
       },
       {
         id: "cdi",
         title: "Clinical Documentation Integrity (CDI)",
         icon: "clipboard",
-        badge: null,
+        badge: POINT_OF_CARE_CONTENT_COUNTS.cdi,
       },
       {
         id: "coding-accuracy",
         title: "Coding Accuracy",
         icon: "list",
-        badge: null,
+        badge: POINT_OF_CARE_CONTENT_COUNTS["coding-accuracy"],
       },
       {
         id: "charge-capture",
         title: "Charge Capture",
         icon: "card",
-        badge: null,
+        badge: POINT_OF_CARE_CONTENT_COUNTS["charge-capture"],
       },
       {
         id: "claim-edits",
@@ -465,6 +475,7 @@ const Sidebar = () => {
     };
     const next = {};
     navTagKeys.forEach((navId) => {
+      if (isPointOfCareNav(navId)) return;
       const fallbackTab = navItems.find((item) => item.id === navId)?.tab;
       const tabIndex =
         WORKLIST_TAB_INDEX[navId] ??
@@ -691,8 +702,14 @@ const Sidebar = () => {
               ? item.children.reduce((sum, child) => sum + (navBadges[child.id] ?? 0), 0)
               : 0;
             const parentBadge = navBadges[item.id];
-            const computedBadge =
-              typeof parentBadge === "number" && parentBadge > 0
+            const contentCount = POINT_OF_CARE_CONTENT_COUNTS[item.id];
+            const isContentCount = Object.prototype.hasOwnProperty.call(
+              POINT_OF_CARE_CONTENT_COUNTS,
+              item.id
+            );
+            const computedBadge = isContentCount
+              ? contentCount
+              : typeof parentBadge === "number" && parentBadge > 0
                 ? parentBadge
                 : childSum > 0
                   ? childSum
@@ -748,7 +765,7 @@ const Sidebar = () => {
                       </span>
                     </span>
                     <span className={`${showLabels ? "inline-flex" : "hidden"} items-center gap-1 shrink-0`}>
-                      {Number(computedBadge) > 0 && (
+                      {(isContentCount || Number(computedBadge) > 0) && (
                         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeClass}`}>
                           {formatCount(computedBadge)}
                         </span>

@@ -54,6 +54,8 @@ const INITIAL_ENCOUNTERS = [
   { id: "cc-11", moduleId: "charge-capture", status: "review", serviceDate: localDate(20), name: "E. Novak", diagnosisCode: "M51.26", diagnosis: "Other intervertebral disc displacement", facility: "Mayo Clinic", code: "63047", provider: "Dr. Patel", visit: "Surgery" },
 ];
 
+export const chargeCaptureItemCount = INITIAL_ENCOUNTERS.length;
+
 const buildColumns = (encounters, oldestFirst) => {
   const today = startOfToday();
   const cutoff = new Date(today.getTime() - 5 * DAY_MS);

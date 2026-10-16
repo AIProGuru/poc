@@ -30,6 +30,8 @@ const PATIENTS = [
   { id: "pt-5", name: "L. Brandt", facility: "Mayo Clinic", serviceDate: localDate(0), memberId: "MCK220194", payerId: "60054" },
 ].sort((a, b) => (a.serviceDate < b.serviceDate ? -1 : 1));
 
+export const priceTransparencyItemCount = PATIENTS.length;
+
 const ESTIMATES = {
   27447: {
     description: "Total Knee Replacement",
