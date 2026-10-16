@@ -284,7 +284,7 @@ const DashboardScreen = ({ isDark }) => {
     <div className={`space-y-6 ${isDark ? "text-gray-100" : "text-slate-900"}`}>
       {/* Header */}
       <div>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Client Dashboard</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Executive Dashboard</h2>
         <p className={`mt-1 text-sm ${muted}`}>Real-time overview of your revenue cycle performance</p>
       </div>
 
