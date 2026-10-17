@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { maskWithStars } from "../../../utils/maskValue";
 import axios from "axios";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
@@ -278,7 +279,7 @@ export default function TaxonomyMissingAgent({
           {facility ? (
             <>
               <p className={`mt-3 text-base sm:text-lg font-medium leading-snug ${isDark ? "text-[#A8C5E2]" : "text-slate-700"}`}>
-                {facility.name || facility.id}
+                {maskWithStars(facility.name || facility.id)}
               </p>
               <dl className="mt-4 space-y-2.5 text-sm sm:text-base">
                 {[

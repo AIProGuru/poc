@@ -16,6 +16,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
 import { samplifyDouble, samplifyInteger, samplifyString } from "../../../utils/config";
+import { maskWithStars } from "../../../utils/maskValue";
 
 import DataTableFilter from "./DataTableFilter";
 import { setTableData, setTotalPage, setCurrentPage, setPageSize, setTableLoading, setExtraFilter, setSelectedClaimIds, setWorklistSummary } from "../../../redux/reducers/app.reducer";
@@ -288,7 +289,6 @@ const DataTable = (props) => {
       ? claimStatusBootstrapCount
       : (worklistSummary ?? summaryTotals)?.count ?? emptySummary.count;
   const displayedSummary = worklistSummary ?? summaryTotals ?? emptySummary;
-  // Mirror the facility value used in the Claim (837) detail view.
   const getFacility = (row) => {
     const claimData =
       (row.Claim && row.Claim.Data) ||
@@ -306,29 +306,19 @@ const DataTable = (props) => {
       row.ProviderName ||
       claimData.BillProv ||
       row.BillProv ||
-      ''
+      ""
     );
   };
-  const getPatientAccountNumber = (row) => {
-    return (
-      row.PatientAccountNumber ||
-      row.PatientAccountNo ||
-      row.PatientAccount ||
-      row.PatientAcct ||
-      row.AccountNumber ||
-      row.AccountNo ||
-      row.ClaimNo ||
-      row.ClaimID ||
-      ''
-    );
-  };
-  const scrubPhi = (value) => {
-    if (value === undefined || value === null) return '';
-    const raw = `${value}`.trim();
-    if (!raw) return '';
-    const last4 = raw.slice(-4);
-    return `****-${last4}`;
-  };
+  const getPatientAccountNumber = (row) =>
+    row.PatientAccountNumber ||
+    row.PatientAccountNo ||
+    row.PatientAccount ||
+    row.PatientAcct ||
+    row.AccountNumber ||
+    row.AccountNo ||
+    row.ClaimNo ||
+    row.ClaimID ||
+    "";
   const formatId = (value) => {
     if (value === undefined || value === null || `${value}`.trim() === "") return "";
     return `${value}`.toUpperCase();
@@ -748,7 +738,7 @@ const DataTable = (props) => {
       'Payer Name',
       'Payer Seq',
       'Patient Name',
-      'Patient Account # (Masked)',
+      'Patient Account #',
       'Service Date',
       'Place of Service',
       'Charges',
@@ -775,14 +765,14 @@ const DataTable = (props) => {
       const allowed = Number(row.AllowedAmt) || 0;
       const balance = getArBalanceValue(row);
       const sharedValues = [
-        getFacility(row),
+        maskWithStars(getFacility(row)),
         row.ProvTaxID || row.ProviderTaxID || '',
-        row.ClaimNo || row.ClaimID || '',
+        formatId(row.ClaimNo),
         row.PayerID || '',
         row.PayerName || '',
         row.PayerSeq === 'P' ? "Primary" : (row.PayerSeq === 'S' ? 'Secondary' : (row.PayerSeq || '')),
         row.PatientName || row.Patient || '',
-        scrubPhi(getPatientAccountNumber(row)),
+        maskWithStars(getPatientAccountNumber(row)),
         formatDateSafe(row.ServiceDate),
         row.PlaceOfService || '',
         charges ? `$${charges}` : '$0',
@@ -1222,7 +1212,7 @@ const DataTable = (props) => {
                         {isRecentClaimsView ? formatTickleDueCell(row.TickleDate) : (row.Priority || '')}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                        {getFacility(row)}
+                        <span className={identifierCellClass}>{maskWithStars(getFacility(row))}</span>
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "160px" }}>
                         <span className={identifierCellClass}>{formatId(row.ProvTaxID || row.ProviderTaxID || '')}</span>
@@ -1243,7 +1233,7 @@ const DataTable = (props) => {
                         {row.PatientName || row.Patient || ''}
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "170px" }}>
-                        <span className={identifierCellClass}>{formatId(scrubPhi(getPatientAccountNumber(row)))}</span>
+                        <span className={identifierCellClass}>{maskWithStars(getPatientAccountNumber(row))}</span>
                       </TableCell>
                       <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                         {formatDateSafe(row.ServiceDate)}

@@ -18,6 +18,7 @@ import Recommendation from "./Recommendation";
 import TaxonomyMissingAgent from "./TaxonomyMissingAgent";
 import AppealGenerationAgent from "./AppealGenerationAgent";
 import { samplifyDouble, samplifyString, samplifyInteger, SERVER_URL } from "../../../utils/config";
+import { maskWithStars } from "../../../utils/maskValue";
 import { useApiEndpoint } from "../../../ApiEndpointContext";
 import { useSelector, useDispatch } from "react-redux";
 import { buildWorklistExtra } from "../../../utils/aiModelFilters";
@@ -932,7 +933,8 @@ const ReboundDetailView = () => {
     return `${formatted}`.toUpperCase();
   };
 
-  const isIdentifierLabel = (label) =>
+  const shouldMaskField = (label) => /^(facility|patient control #|patient account #)$/i.test(`${label || ""}`.trim());
+  const isIdentifierLabel = (label) => {
     /\b(id|npi|tax id|taxonomy|policy|control #|claim number|dx|authorization|type of bill)\b/i.test(
       `${label || ""}`
     );
@@ -1327,7 +1329,7 @@ const ReboundDetailView = () => {
             {field.label}:
           </span>
           <span className={`break-words ${isDark ? 'text-gray-300' : 'text-slate-700'} ${isIdentifierLabel(field.label) ? 'uppercase tracking-wide' : ''}`}>
-            {field.value}
+            {shouldMaskField(field.label) ? maskWithStars(field.value) : field.value}
           </span>
         </div>
       ))}

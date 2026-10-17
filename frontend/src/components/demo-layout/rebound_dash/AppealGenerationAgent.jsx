@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import AgentAvatar from "./AgentAvatar";
+import { maskWithStars } from "../../../utils/maskValue";
 
 const SUGGESTED_PROMPTS = [
   "Make the argument more clinical",
@@ -123,14 +124,20 @@ export default function AppealGenerationAgent({
   }, [session?.messages, chatting]);
 
   const letter = session?.letter || "";
+  const hideInText = (text, secret) => {
+    const value = `${secret || ""}`.trim();
+    if (!text || value.length < 2) return text;
+    return text.split(value).join(maskWithStars(value));
+  };
   const messages = session?.messages || [];
   const supportingDocs = session?.supportingDocs || [];
   const populated = session?.populated || {};
+  const visibleLetter = hideInText(hideInText(letter, populated.claimNumber), populated.facility);
 
   const copyLetter = async () => {
     if (!letter) return;
     try {
-      await navigator.clipboard.writeText(letter);
+      await navigator.clipboard.writeText(visibleLetter);
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     } catch {
@@ -140,11 +147,11 @@ export default function AppealGenerationAgent({
 
   const downloadLetter = () => {
     if (!letter) return;
-    const blob = new Blob([letter], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([visibleLetter], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `appeal-${claimNo || "letter"}.txt`;
+    link.download = "appeal-letter.txt";
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -219,7 +226,7 @@ export default function AppealGenerationAgent({
                 isDark ? "bg-[#1C3050] text-gray-100" : "bg-white text-slate-800"
               }`}
             >
-              {letter || (loading ? "Loading claim fields…" : "Generate an appeal to populate this letter.")}
+              {visibleLetter || (loading ? "Loading claim fields…" : "Generate an appeal to populate this letter.")}
             </pre>
           </div>
         </div>
@@ -231,7 +238,7 @@ export default function AppealGenerationAgent({
               {[
                 ["Payer", populated.payerName],
                 ["Patient", populated.patientName],
-                ["Claim", populated.claimNumber],
+                ["Claim", maskWithStars(populated.claimNumber)],
                 ["DOS", populated.dateOfService],
                 ["CARC", populated.carc],
                 ["RARC", populated.rarc],

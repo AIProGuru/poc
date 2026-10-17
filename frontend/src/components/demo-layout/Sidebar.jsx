@@ -27,10 +27,11 @@ import {
 } from "../../utils/worklistNav";
 import { priceTransparencyItemCount } from "./rebound_dash/PriceTransparency";
 import { chargeCaptureItemCount } from "./rebound_dash/PointOfCareBoard";
+import { clinicalIntelligenceItemCount } from "./rebound_dash/ClinicalIntelligence";
 
 const POINT_OF_CARE_CONTENT_COUNTS = {
   "price-transparency": priceTransparencyItemCount,
-  cdi: 0,
+  cdi: clinicalIntelligenceItemCount,
   "coding-accuracy": 0,
   "charge-capture": chargeCaptureItemCount,
 };
@@ -125,7 +126,7 @@ const Sidebar = () => {
       },
       {
         id: "cdi",
-        title: "Clinical Documentation Integrity (CDI)",
+        title: "Clinical Intelligence",
         icon: "clipboard",
         badge: POINT_OF_CARE_CONTENT_COUNTS.cdi,
       },

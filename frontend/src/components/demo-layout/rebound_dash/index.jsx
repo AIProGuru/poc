@@ -37,6 +37,7 @@ import { buildExcludeAiModels } from "../../../utils/aiModelFilters";
 import { isPointOfCareNav } from "../../../utils/worklistNav";
 import PointOfCareBoard from "./PointOfCareBoard";
 import PriceTransparency from "./PriceTransparency";
+import ClinicalIntelligence from "./ClinicalIntelligence";
 
 const readStoredTenantBase = () => {
   try {
@@ -229,7 +230,7 @@ const ReboundDash = () => {
     { id: 'home', label: 'Home', badge: null, icon: 'home', tab: 0 },
     { id: 'dashboard', label: 'Dashboard', badge: null, icon: 'dashboard' },
     { id: 'price-transparency', label: 'Price Transparency', badge: null, icon: 'chart' },
-    { id: 'cdi', label: 'Clinical Documentation Integrity (CDI)', badge: null, icon: 'clipboard' },
+    { id: 'cdi', label: 'Clinical Intelligence', badge: null, icon: 'clipboard' },
     { id: 'coding-accuracy', label: 'Coding Accuracy', badge: null, icon: 'list' },
     { id: 'charge-capture', label: 'Charge Capture', badge: null, icon: 'card' },
     {
@@ -839,7 +840,9 @@ const ReboundDash = () => {
                 <PriceTransparency isDark={isDark} />
               ) : selectedNav === "charge-capture" ? (
                 <PointOfCareBoard navId={selectedNav} isDark={isDark} />
-              ) : selectedNav === "cdi" || selectedNav === "coding-accuracy" ? null : showPlaceholder ? (
+              ) : selectedNav === "cdi" ? (
+                <ClinicalIntelligence isDark={isDark} />
+              ) : selectedNav === "coding-accuracy" ? null : showPlaceholder ? (
                 <div
                   className={`rounded-2xl border px-6 py-10 text-center text-lg font-semibold ${isDark ? 'bg-[var(--helio-surface)] border-[var(--helio-border)] text-gray-200' : 'bg-white border-gray-200 text-gray-700'
                     }`}

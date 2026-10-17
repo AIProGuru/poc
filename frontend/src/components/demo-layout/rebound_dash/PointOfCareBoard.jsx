@@ -295,6 +295,40 @@ function PatientCard({ encounter, isDark, showDate, onOpen }) {
   );
 }
 
+const MISSED_CHARGE_REVIEWS = {
+  63047: [
+    {
+      id: "implants",
+      prompt: "Were all applicable instruments and implants captured?",
+      codes: [
+        { code: "22840", label: "Posterior non-segmental instrumentation" },
+        { code: "22842", label: "Posterior segmental instrumentation, 3–6 vertebral segments" },
+        { code: "22853", label: "Interbody biomechanical device insertion" },
+      ],
+    },
+    {
+      id: "imaging",
+      prompt: "Was all separately reportable imaging captured?",
+      codes: [
+        { code: "76000", label: "Fluoroscopy, up to one hour" },
+        { code: "72100", label: "Lumbar spine X-ray, 2–3 views" },
+        { code: "72148", label: "MRI lumbar spine without contrast" },
+      ],
+    },
+    {
+      id: "levels",
+      prompt: "Were all documented decompression levels captured?",
+      codes: [
+        { code: "63047", label: "Lumbar decompression, first segment" },
+        { code: "63048", label: "Each additional lumbar decompression segment" },
+        { code: "63030", label: "Lumbar laminotomy with nerve-root decompression, including discectomy when performed" },
+      ],
+    },
+  ],
+};
+
+const procedureBase = (code) => `${code || ""}`.split("-")[0].replace(/[A-Za-z]+$/, "");
+
 function PatientDetail({ encounter, module, isDark, onBack, onComplete }) {
   const rows = [
     ["Date of service", formatServiceDate(encounter.serviceDate)],
@@ -305,9 +339,10 @@ function PatientDetail({ encounter, module, isDark, onBack, onComplete }) {
     ["Visit", encounter.visit],
     ["Status", encounter.status === "review" ? module.reviewLabel : module.doneLabel],
   ];
+  const review = MISSED_CHARGE_REVIEWS[procedureBase(encounter.code)] || null;
 
   return (
-    <section className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+    <section className="flex w-full flex-col gap-4">
       <button
         type="button"
         onClick={onBack}
@@ -318,36 +353,132 @@ function PatientDetail({ encounter, module, isDark, onBack, onComplete }) {
         <ChevronIcon className="rotate-180" />
         Back to list
       </button>
-      <div className={`rounded-2xl border p-5 sm:p-6 ${isDark ? "border-white/10 bg-[#15263C]" : "border-slate-200 bg-white"}`}>
-        <p className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-          {formatServiceDate(encounter.serviceDate)}
-        </p>
-        <h2 className={`mt-1 text-2xl font-bold ${isDark ? "text-white" : "text-slate-950"}`}>
-          {encounter.name}
-        </h2>
-        <p className="mt-2 text-sm">
-          <span className="font-semibold text-[#0f9f8f]">{encounter.diagnosisCode}</span>{" "}
-          <span className={isDark ? "text-slate-300" : "text-slate-600"}>{encounter.diagnosis}</span>
-        </p>
-        <dl className="mt-5 divide-y divide-slate-200/80 dark:divide-white/10">
-          {rows.map(([label, value]) => (
-            <div key={label} className="flex items-start justify-between gap-4 py-3 text-sm">
-              <dt className={isDark ? "text-slate-400" : "text-slate-500"}>{label}</dt>
-              <dd className={`text-right font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>{value}</dd>
-            </div>
-          ))}
-        </dl>
-        {encounter.status === "review" ? (
-          <button
-            type="button"
-            onClick={onComplete}
-            className="mt-4 rounded-full bg-[#0f9f8f] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0c8a7c]"
-          >
-            {module.actionLabel}
-          </button>
-        ) : null}
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
+        <div className={`rounded-2xl border p-5 sm:p-6 ${isDark ? "border-white/10 bg-[#15263C]" : "border-slate-200 bg-white"}`}>
+          <p className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+            {formatServiceDate(encounter.serviceDate)}
+          </p>
+          <h2 className={`mt-1 text-2xl font-bold ${isDark ? "text-white" : "text-slate-950"}`}>
+            {encounter.name}
+          </h2>
+          <p className="mt-2 text-sm">
+            <span className="font-semibold text-[#0f9f8f]">{encounter.diagnosisCode}</span>{" "}
+            <span className={isDark ? "text-slate-300" : "text-slate-600"}>{encounter.diagnosis}</span>
+          </p>
+          <dl className="mt-5 divide-y divide-slate-200/80 dark:divide-white/10">
+            {rows.map(([label, value]) => (
+              <div key={label} className="flex items-start justify-between gap-4 py-3 text-sm">
+                <dt className={isDark ? "text-slate-400" : "text-slate-500"}>{label}</dt>
+                <dd className={`text-right font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>{value}</dd>
+              </div>
+            ))}
+          </dl>
+          {encounter.status === "review" ? (
+            <button
+              type="button"
+              onClick={onComplete}
+              className="mt-4 rounded-full bg-[#0f9f8f] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0c8a7c]"
+            >
+              {module.actionLabel}
+            </button>
+          ) : null}
+        </div>
+        <MissedCharges encounter={encounter} review={review} isDark={isDark} />
       </div>
     </section>
+  );
+}
+
+function MissedCharges({ encounter, review, isDark }) {
+  const [selected, setSelected] = useState([]);
+  const [added, setAdded] = useState([]);
+  const card = isDark ? "border-white/10 bg-[#15263C]" : "border-slate-200 bg-white";
+  const muted = isDark ? "text-slate-400" : "text-slate-500";
+  const title = isDark ? "text-white" : "text-slate-950";
+
+  const toggle = (code) => {
+    setSelected((current) => (
+      current.includes(code) ? current.filter((item) => item !== code) : [...current, code]
+    ));
+  };
+
+  const addSelected = () => {
+    setAdded((current) => [...current, ...selected.filter((code) => !current.includes(code))]);
+    setSelected([]);
+  };
+
+  return (
+    <div className={`rounded-2xl border p-5 sm:p-6 ${card}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className={`text-lg font-bold ${title}`}>Potential Missed Charges</h3>
+          <p className={`mt-1 text-sm ${muted}`}>
+            CPT {procedureBase(encounter.code) || encounter.code} · Diagnosis {encounter.diagnosisCode}
+          </p>
+        </div>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+          isDark ? "bg-white/10 text-slate-300" : "bg-slate-100 text-slate-600"
+        }`}
+        >
+          {selected.length} selected
+        </span>
+      </div>
+
+      {review ? (
+        <>
+          <p className={`mt-4 text-sm ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+            Select the codes that require further review based on the operative report.
+          </p>
+          <div className="mt-4 divide-y divide-slate-200 dark:divide-white/10">
+            {review.map((group, index) => (
+              <fieldset key={group.id} className="py-4 first:pt-0">
+                <legend className={`text-sm font-semibold ${title}`}>
+                  {index + 1}. {group.prompt}
+                </legend>
+                <div className="mt-3 flex flex-col gap-3">
+                  {group.codes.map((item) => {
+                    const checked = selected.includes(item.code) || added.includes(item.code);
+                    const alreadyAdded = added.includes(item.code);
+                    return (
+                      <label key={item.code} className={`flex items-start gap-3 ${alreadyAdded ? "opacity-60" : "cursor-pointer"}`}>
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 accent-[#0f9f8f]"
+                          checked={checked}
+                          disabled={alreadyAdded}
+                          onChange={() => toggle(item.code)}
+                        />
+                        <span>
+                          <span className={`block text-sm font-semibold ${title}`}>{item.code}</span>
+                          <span className={`mt-0.5 block text-sm ${muted}`}>{item.label}</span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            ))}
+          </div>
+          {added.length > 0 ? (
+            <p className={`text-sm ${muted}`}>
+              Added for this review: {added.join(", ")}. These stay on the encounter until you leave the page.
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={addSelected}
+            disabled={selected.length === 0}
+            className="mt-4 w-full rounded-full bg-[#0f9f8f] px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+          >
+            Add Selected Codes ({selected.length})
+          </button>
+        </>
+      ) : (
+        <p className={`mt-4 text-sm ${muted}`}>
+          No additional charge suggestions for this procedure yet.
+        </p>
+      )}
+    </div>
   );
 }
 

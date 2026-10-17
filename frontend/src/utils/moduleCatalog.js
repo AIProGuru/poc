@@ -1,6 +1,6 @@
 export const MODULE_OPTIONS = [
   "Price Transparency",
-  "Clinical Documentation Integrity (CDI)",
+  "Clinical Intelligence",
   "Coding Accuracy",
   "Charge Capture",
   "Claim Edits",
@@ -13,7 +13,7 @@ export const MODULE_OPTIONS = [
 
 export const MODULE_CATEGORY_MAP = {
   "Price Transparency": ["Price Transparency"],
-  "Clinical Documentation Integrity (CDI)": ["Clinical Documentation Integrity (CDI)"],
+  "Clinical Intelligence": ["Clinical Intelligence"],
   "Coding Accuracy": ["Coding Accuracy"],
   "Charge Capture": ["Charge Capture"],
   "Claim Edits": ["CH Rejection", "Payer Rejection"],
@@ -51,7 +51,7 @@ export const DASHBOARD_NON_RECOVERABLE_MODULE = "Payment Posting";
 /** Sidebar item id → skillset module name stored on the user profile. */
 export const NAV_ID_TO_MODULE = {
   "price-transparency": "Price Transparency",
-  cdi: "Clinical Documentation Integrity (CDI)",
+  cdi: "Clinical Intelligence",
   "coding-accuracy": "Coding Accuracy",
   "charge-capture": "Charge Capture",
   "claim-edits": "Claim Edits",
@@ -62,12 +62,22 @@ export const NAV_ID_TO_MODULE = {
   "payment-posting": "Payment Posting",
 };
 
+const MODULE_NAME_ALIASES = {
+  "clinical documentation integrity (cdi)": "Clinical Intelligence",
+  "clinical documentation intelligence": "Clinical Intelligence",
+};
+
+export const canonicalModuleName = (name) => {
+  const raw = `${name || ""}`.trim();
+  return MODULE_NAME_ALIASES[raw.toLowerCase()] || raw;
+};
+
 export const isNavModuleAllowed = (navId, modules, privileged) => {
   const moduleName = NAV_ID_TO_MODULE[navId];
   if (!moduleName || privileged) return true;
   if (!Array.isArray(modules) || modules.length === 0) return true;
-  const allowed = new Set(modules.map((name) => `${name || ""}`.trim().toLowerCase()));
-  return allowed.has(moduleName.toLowerCase());
+  const allowed = new Set(modules.map((name) => canonicalModuleName(name).toLowerCase()));
+  return allowed.has(canonicalModuleName(moduleName).toLowerCase());
 };
 
 const CATEGORY_TO_MODULE = (() => {
@@ -107,7 +117,7 @@ export const isCategoryInAssignedSkills = (category, { modules, denialCategory, 
 
   if (assignedModules.length > 0) {
     const moduleName = getModuleForCategory(lookupCategory);
-    const allowedModules = new Set(assignedModules.map((name) => name.toLowerCase()));
+    const allowedModules = new Set(assignedModules.map((name) => canonicalModuleName(name).toLowerCase()));
     if (!moduleName || !allowedModules.has(moduleName.toLowerCase())) return false;
   }
 

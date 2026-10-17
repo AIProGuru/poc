@@ -25,7 +25,7 @@ const NON_CLAIM_APP_TITLES = new Set([
   "Appeal Templates",
   "Account Settings",
   "Price Transparency",
-  "Clinical Documentation Integrity (CDI)",
+  "Clinical Intelligence",
   "Coding Accuracy",
   "Charge Capture",
 ]);

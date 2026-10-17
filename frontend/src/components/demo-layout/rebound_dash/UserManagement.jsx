@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { auth } from '../../../FirebaseConfig';
 import { SERVER_URL } from '../../../utils/config';
-import { MODULE_OPTIONS, MODULE_CATEGORY_MAP } from "../../../utils/moduleCatalog";
+import { MODULE_OPTIONS, MODULE_CATEGORY_MAP, canonicalModuleName } from "../../../utils/moduleCatalog";
 import { ROLE_OPTIONS, ROLE_STANDARD, normalizeRole } from "../../../utils/roles";
 import { setRole, setFirstname, setLastname, setEmail } from '../../../redux/reducers/auth.reducer';
 import {
@@ -135,7 +135,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
     }
     const allowed = new Set();
     modules.forEach((module) => {
-      const categories = MODULE_CATEGORY_MAP[module] || [];
+      const categories = MODULE_CATEGORY_MAP[canonicalModuleName(module)] || [];
       categories.forEach((category) => allowed.add(category));
     });
     const allowedList = Array.from(allowed).sort();
@@ -772,7 +772,7 @@ const UserManagement = ({ embedded = false, view = 'actions', editUserId = null 
       status: getStatusValue(editingUser.status),
       access_level: editingUser.access_level || 0,
       tenant: resolvePlatformTenantFromHint(editingUser.tenant || editingUser.appType),
-      client: editingUser.client || [],
+      client: (editingUser.client || []).map((name) => canonicalModuleName(name)),
       facility: editingUser.facility || [],
       clientState: editingUser.clientState || [],
       denialCategory: editingUser.denialCategory || [],
