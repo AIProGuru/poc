@@ -934,7 +934,7 @@ const ReboundDetailView = () => {
   };
 
   const shouldMaskField = (label) => /^(facility|patient control #|patient account #)$/i.test(`${label || ""}`.trim());
-  const isIdentifierLabel = (label) => {
+  const isIdentifierLabel = (label) =>
     /\b(id|npi|tax id|taxonomy|policy|control #|claim number|dx|authorization|type of bill)\b/i.test(
       `${label || ""}`
     );
