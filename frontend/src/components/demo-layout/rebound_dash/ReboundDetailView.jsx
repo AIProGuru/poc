@@ -1391,7 +1391,6 @@ const ReboundDetailView = () => {
       .then((res) => {
         const payload = res?.data?.response || res?.data || {};
         setOptumResponse(payload);
-        setDetailShowStatus(0);
         toast.success("277 response received.");
       })
       .catch((err) => {
@@ -1702,40 +1701,6 @@ const ReboundDetailView = () => {
                       - 277 pending from Payer
                     </li>
                   </ul>
-                  {optumResponse ? (
-                    <div className={`mt-4 rounded-xl border p-4 ${isDark ? "border-[#2A4A70] bg-[#0D1829]" : "border-slate-200 bg-slate-50"}`}>
-                      <p className={`text-sm font-semibold ${isDark ? "text-gray-100" : "text-slate-900"}`}>277 response</p>
-                      <p className={`mt-2 text-xs ${isDark ? "text-gray-400" : "text-slate-600"}`}>
-                        Control number: {optumResponse.controlNumber || "N/A"}
-                      </p>
-                      {(optumResponse.claims || []).length === 0 ? (
-                        <p className={`mt-2 text-sm ${isDark ? "text-gray-300" : "text-slate-700"}`}>
-                          No claim status was returned.
-                        </p>
-                      ) : (optumResponse.claims || []).map((claim, idx) => {
-                        const status = claim?.claimStatus || {};
-                        const statusValue = status.statusCategoryCodeValue || status.statusCodeValue || "";
-                        return (
-                          <div key={`insight-277-${idx}`} className="mt-3 text-sm">
-                            <p className={`font-semibold ${emphasisTextClass}`}>
-                              {getInsightStatusLabel(statusValue) || "Pending"}
-                            </p>
-                            <p className={bodyTextClass}>{statusValue || "No status description available."}</p>
-                            <p className={`text-xs ${isDark ? "text-gray-400" : "text-slate-600"}`}>
-                              Status code: {[status.statusCategoryCode, status.statusCode].filter(Boolean).join(":") || "N/A"}
-                              {" · "}
-                              Effective date: {status.effectiveDate || "N/A"}
-                            </p>
-                          </div>
-                        );
-                      })}
-                      {optumResponse.x12 ? (
-                        <pre className={`mt-3 overflow-x-auto whitespace-pre-wrap text-xs ${isDark ? "text-gray-300" : "text-slate-700"}`}>
-                          {optumResponse.x12}
-                        </pre>
-                      ) : null}
-                    </div>
-                  ) : null}
                 </>
               ) : (
                 <>

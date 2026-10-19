@@ -870,37 +870,25 @@ def claim_status_optum():
     conn = None
     cursor = None
     try:
-        claim_id = payload.get("claimId") or payload.get("claimNo")
-        try:
-            conn, cursor, _ = get_connection(request)
-        except Exception as exc:
-            logger.warning("277 continuing without a database connection: %s", exc)
-            conn = None
-            cursor = None
+        conn, cursor, _ = get_connection(request)
 
-        if claim_id and cursor is not None:
+        claim_id = payload.get("claimId") or payload.get("claimNo")
+        if claim_id:
             try:
                 payload = _build_optum_request_from_claim(cursor, claim_id)
-            except Exception as exc:
+            except ValueError as exc:
                 logger.warning("Using a sample 277 payload for %s: %s", claim_id, exc)
                 payload = _fallback_277_payload(claim_id)
-                if conn is not None:
-                    try:
-                        conn.rollback()
-                    except Exception:
-                        logger.warning("Could not reset the database connection after the 277 lookup.")
-        elif claim_id:
-            payload = _fallback_277_payload(claim_id)
 
         response = _obtain_277_response(payload)
         request_id = None
         response_id = None
-        if cursor is not None and conn is not None:
-            try:
-                request_id, response_id = _store_277(cursor, payload, response)
-                conn.commit()
-            except Exception as exc:
-                logger.warning("277 response was not stored: %s", exc)
+        try:
+            request_id, response_id = _store_277(cursor, payload, response)
+            conn.commit()
+        except Exception as exc:
+            logger.warning("277 response was not stored: %s", exc)
+            if conn:
                 conn.rollback()
 
         return jsonify(
