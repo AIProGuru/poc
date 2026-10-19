@@ -870,25 +870,37 @@ def claim_status_optum():
     conn = None
     cursor = None
     try:
-        conn, cursor, _ = get_connection(request)
-
         claim_id = payload.get("claimId") or payload.get("claimNo")
-        if claim_id:
+        try:
+            conn, cursor, _ = get_connection(request)
+        except Exception as exc:
+            logger.warning("277 continuing without a database connection: %s", exc)
+            conn = None
+            cursor = None
+
+        if claim_id and cursor is not None:
             try:
                 payload = _build_optum_request_from_claim(cursor, claim_id)
-            except ValueError as exc:
+            except Exception as exc:
                 logger.warning("Using a sample 277 payload for %s: %s", claim_id, exc)
                 payload = _fallback_277_payload(claim_id)
+                if conn is not None:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        logger.warning("Could not reset the database connection after the 277 lookup.")
+        elif claim_id:
+            payload = _fallback_277_payload(claim_id)
 
         response = _obtain_277_response(payload)
         request_id = None
         response_id = None
-        try:
-            request_id, response_id = _store_277(cursor, payload, response)
-            conn.commit()
-        except Exception as exc:
-            logger.warning("277 response was not stored: %s", exc)
-            if conn:
+        if cursor is not None and conn is not None:
+            try:
+                request_id, response_id = _store_277(cursor, payload, response)
+                conn.commit()
+            except Exception as exc:
+                logger.warning("277 response was not stored: %s", exc)
                 conn.rollback()
 
         return jsonify(

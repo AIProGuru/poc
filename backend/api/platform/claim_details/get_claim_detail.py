@@ -297,26 +297,6 @@ def get_rebound_claim():
             logger.warning(f"Failed to compute pend flags: {pend_error}")
         ret["Claim"]["Data"]["Pend277"] = pend277
         ret["Claim"]["Data"]["Pend835"] = pend835
-        ret["Claim"]["Data"]["Optum277"] = None
-        try:
-            cursor.execute(
-                """
-                SELECT r.raw_json
-                FROM optum_claim_status_response r
-                JOIN optum_claim_status_request_encounter e ON e.request_id = r.request_id
-                WHERE e.trading_partner_claim_number = %s
-                ORDER BY r.id DESC
-                LIMIT 1
-                """,
-                (ret["Claim"]["Data"]["ClaimNo"],),
-            )
-            stored = cursor.fetchone()
-            raw_json = stored.get("raw_json") if stored else None
-            if isinstance(raw_json, str):
-                raw_json = json.loads(raw_json)
-            ret["Claim"]["Data"]["Optum277"] = raw_json
-        except Exception as optum_error:
-            logger.warning(f"Failed to load stored 277: {optum_error}")
 
         claim_no_splits = ret["Claim"]["Data"]["ClaimNo"].split('-')
 
