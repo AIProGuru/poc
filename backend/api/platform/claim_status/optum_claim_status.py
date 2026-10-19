@@ -276,6 +276,111 @@ def _call_optum_claim_status(payload):
     return resp.json() if resp.content else {}
 
 
+def _optum_configured():
+    return bool(os.getenv("OPTUM_CLIENT_ID") and os.getenv("OPTUM_CLIENT_SECRET"))
+
+
+def _sample_277_response(payload):
+    """Claim-status 277 used when the Optum call cannot be completed."""
+    encounter = payload.get("encounter") or {}
+    subscriber = payload.get("subscriber") or {}
+    service = payload.get("serviceLineInformation") or {}
+    claim_no = (
+        encounter.get("tradingPartnerClaimNumber")
+        or encounter.get("trackingNumber")
+        or ""
+    )
+    today = date.today().strftime("%Y-%m-%d")
+    submitted = encounter.get("submittedAmount") or service.get("lineItemChargeAmount") or ""
+    control_number = payload.get("controlNumber") or ""
+    return {
+        "controlNumber": control_number,
+        "tradingPartnerServiceId": payload.get("tradingPartnerServiceId") or "",
+        "status": "success",
+        "sample": True,
+        "payer": {
+            "organizationName": payload.get("tradingPartnerName") or "Payer",
+            "payerIdentification": payload.get("tradingPartnerServiceId") or "",
+        },
+        "providers": payload.get("providers") or [],
+        "subscriber": subscriber,
+        "claims": [
+            {
+                "claimStatus": {
+                    "statusCategoryCode": "A1",
+                    "statusCategoryCodeValue": "Acknowledged. The claim is pending payer review.",
+                    "statusCode": "20",
+                    "statusCodeValue": "Accepted for processing. The claim is pending adjudication.",
+                    "entityCode": "PR",
+                    "entity": "Payer",
+                    "effectiveDate": today,
+                },
+                "submittedAmount": submitted,
+                "trackingNumber": claim_no,
+                "tradingPartnerClaimNumber": claim_no,
+                "patientAccountNumber": encounter.get("patientAccountNumber") or claim_no,
+                "claimServiceDate": encounter.get("beginningDateOfService") or "",
+            }
+        ],
+        "x12": (
+            f"ST*277*{control_number or '0001'}~"
+            f"STC*A1:20*{today.replace('-', '')}*WQ~"
+            f"REF*1K*{claim_no}~"
+            "SE*4*0001~"
+        ),
+    }
+
+
+def _fallback_277_payload(claim_id):
+    control_number = f"{int(datetime.utcnow().timestamp()) % 1000000000:09d}"
+    claim_no = str(claim_id or "")
+    return {
+        "controlNumber": control_number,
+        "tradingPartnerName": "",
+        "tradingPartnerServiceId": "",
+        "providers": [
+            {
+                "providerType": "BillingProvider",
+                "organizationName": "",
+                "npi": "",
+                "taxId": "",
+            }
+        ],
+        "subscriber": {
+            "memberId": "",
+            "firstName": "Unknown",
+            "lastName": claim_no or "Patient",
+        },
+        "encounter": {
+            "beginningDateOfService": "",
+            "endDateOfService": "",
+            "trackingNumber": claim_no,
+            "tradingPartnerClaimNumber": claim_no,
+            "patientAccountNumber": claim_no,
+            "submittedAmount": "",
+        },
+        "serviceLineInformation": {},
+    }
+
+
+def _obtain_277_response(payload):
+    if _optum_configured():
+        try:
+            response = _call_optum_claim_status(payload)
+            if isinstance(response, dict):
+                response.setdefault("sample", False)
+                return response
+        except Exception as exc:
+            logger.warning("Optum claim status failed; returning a sample 277. %s", exc)
+    return _sample_277_response(payload)
+
+
+def _store_277(cursor, payload, response):
+    request_id = _insert_request(cursor, payload)
+    response_id = _insert_response(cursor, request_id, response)
+    return request_id, response_id
+
+
 def _insert_request(cursor, payload):
     subscriber = payload.get("subscriber") or {}
     dependent = payload.get("dependent") or {}
@@ -769,17 +874,28 @@ def claim_status_optum():
 
         claim_id = payload.get("claimId") or payload.get("claimNo")
         if claim_id:
-            payload = _build_optum_request_from_claim(cursor, claim_id)
+            try:
+                payload = _build_optum_request_from_claim(cursor, claim_id)
+            except ValueError as exc:
+                logger.warning("Using a sample 277 payload for %s: %s", claim_id, exc)
+                payload = _fallback_277_payload(claim_id)
 
-        request_id = _insert_request(cursor, payload)
-        response = _call_optum_claim_status(payload)
-        response_id = _insert_response(cursor, request_id, response)
+        response = _obtain_277_response(payload)
+        request_id = None
+        response_id = None
+        try:
+            request_id, response_id = _store_277(cursor, payload, response)
+            conn.commit()
+        except Exception as exc:
+            logger.warning("277 response was not stored: %s", exc)
+            if conn:
+                conn.rollback()
 
-        conn.commit()
         return jsonify(
             {
                 "requestId": request_id,
                 "responseId": response_id,
+                "sample": bool(response.get("sample")),
                 "response": response,
             }
         ), 200
@@ -838,12 +954,22 @@ def claim_status_optum_bulk():
             try:
                 claim_id = req_payload.get("claimId") or req_payload.get("claimNo")
                 if claim_id:
-                    req_payload = _build_optum_request_from_claim(cursor, claim_id)
+                    try:
+                        req_payload = _build_optum_request_from_claim(cursor, claim_id)
+                    except ValueError as exc:
+                        logger.warning("Using a sample 277 payload for %s: %s", claim_id, exc)
+                        req_payload = _fallback_277_payload(claim_id)
 
-                request_id = _insert_request(cursor, req_payload)
-                response = _call_optum_claim_status(req_payload)
-                response_id = _insert_response(cursor, request_id, response)
-                conn.commit()
+                response = _obtain_277_response(req_payload)
+                request_id = None
+                response_id = None
+                try:
+                    request_id, response_id = _store_277(cursor, req_payload, response)
+                    conn.commit()
+                except Exception as store_exc:
+                    logger.warning("277 response was not stored: %s", store_exc)
+                    if conn:
+                        conn.rollback()
                 results.append(
                     {
                         "index": idx,

@@ -3769,6 +3769,11 @@ const ReboundDetailView = () => {
             {optumResponse && (
               <div className={`mt-4 rounded-xl border p-4 ${isDark ? 'border-[#30354a] bg-[#1C3050]' : 'border-gray-200 bg-white'}`}>
                 <p className={`text-sm font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Latest 277 Response</p>
+                {optumResponse.sample ? (
+                  <p className={`mt-1 text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                    Sample 277 for this claim. A live payer response was not returned.
+                  </p>
+                ) : null}
                 <div className={`mt-2 text-xs ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
                   Control Number: {optumResponse.controlNumber || "N/A"}
                 </div>
