@@ -28,9 +28,13 @@ const computeTickleDate = (tickleTime) => {
 
 /** Derive follow-up date from governance tickle_time values on selected action codes. */
 const resolveTickleFromActions = (checkedActions) => {
-  const withTickle = (checkedActions || []).filter((item) => item.tickleTime);
-  if (withTickle.length === 0) {
+  const selected = checkedActions || [];
+  if (selected.length === 0) {
     return { tickleTime: "", tickleDate: "", sourceLabel: "" };
+  }
+  const withTickle = selected.filter((item) => item.tickleTime);
+  if (withTickle.length === 0) {
+    return { tickleTime: "", tickleDate: computeTickleDate("7 days"), sourceLabel: "Default (7 days)" };
   }
 
   const longest = withTickle.reduce((best, item) => {
@@ -385,8 +389,9 @@ const BulkDenialsPanel = ({
                     type="date"
                     value={tickleDate}
                     onChange={(event) => {
-                      setTickleDateManual(true);
-                      setTickleDate(event.target.value);
+                      const next = event.target.value;
+                      setTickleDate(next);
+                      setTickleDateManual(next !== (resolvedTickle.tickleDate || ""));
                     }}
                     className={`w-full rounded-lg border px-3 py-2 text-sm ${
                       isDarkMode

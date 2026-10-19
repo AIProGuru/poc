@@ -74,6 +74,9 @@ export const computeTickleDate = (tickleTime) => {
 };
 
 export const resolveTickleFromActions = (checkedActions = []) => {
+  if (checkedActions.length === 0) {
+    return { tickleTime: "", tickleDate: "", sourceLabel: "" };
+  }
   const withTickle = checkedActions.filter((item) => item.tickleTime);
   if (withTickle.length === 0) {
     return { tickleTime: "", tickleDate: computeTickleDate("7 days"), sourceLabel: "Default (7 days)" };

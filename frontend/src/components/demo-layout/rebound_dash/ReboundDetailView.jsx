@@ -2495,6 +2495,11 @@ const ReboundDetailView = () => {
                                   </svg>
                                 </span>
                                 <span className={isDark ? 'text-gray-200' : 'text-gray-700'}>{action.label}</span>
+                                {action.tickleTime ? (
+                                  <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    · {action.tickleTime}
+                                  </span>
+                                ) : null}
                               </label>
                               {transactionOptions.length > 0 && action.checked && (
                                 <div
@@ -2603,8 +2608,9 @@ const ReboundDetailView = () => {
                           type="date"
                           value={tickleDate}
                           onChange={(e) => {
-                            setTickleDate(e.target.value);
-                            setTickleDateManual(true);
+                            const next = e.target.value;
+                            setTickleDate(next);
+                            setTickleDateManual(next !== (resolvedTickle.tickleDate || ""));
                           }}
                           className={triageFieldClass}
                         />
