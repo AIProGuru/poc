@@ -175,6 +175,25 @@
   background: #ea580c;
 }
 
+.contact-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.contact-error {
+  color: #fecaca;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.contact-success p {
+  margin: 0;
+  max-width: 28rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
 @media (min-width: 960px) {
   .contact-main {
     padding: 7rem 1.75rem 3rem;

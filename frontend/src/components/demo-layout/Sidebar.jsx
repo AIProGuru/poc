@@ -131,16 +131,16 @@ const Sidebar = () => {
         badge: POINT_OF_CARE_CONTENT_COUNTS.cdi,
       },
       {
-        id: "coding-accuracy",
-        title: "Coding Accuracy",
-        icon: "list",
-        badge: POINT_OF_CARE_CONTENT_COUNTS["coding-accuracy"],
-      },
-      {
         id: "charge-capture",
         title: "Charge Capture",
         icon: "card",
         badge: POINT_OF_CARE_CONTENT_COUNTS["charge-capture"],
+      },
+      {
+        id: "coding-accuracy",
+        title: "Coding Accuracy",
+        icon: "list",
+        badge: POINT_OF_CARE_CONTENT_COUNTS["coding-accuracy"],
       },
       {
         id: "claim-edits",

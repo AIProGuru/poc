@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
+import { sendInquiry } from "../utils/sendInquiry";
 import "./Home.css";
 import "./Pricing.css";
 
@@ -43,6 +44,7 @@ const Pricing = () => {
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const onChange = (event) => {
     const { name, value } = event.target;
@@ -94,12 +96,38 @@ const Pricing = () => {
     return next;
   };
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault();
     const next = validate();
     setErrors(next);
-    if (Object.keys(next).length > 0) return;
-    setSubmitted(true);
+    if (Object.keys(next).length > 0 || sending) return;
+
+    setSending(true);
+    try {
+      await sendInquiry({
+        kind: "pricing",
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        confirmEmail: form.confirmEmail.trim(),
+        providerName: form.providerName.trim(),
+        city: form.city.trim(),
+        state: form.state.trim(),
+        zip: form.zip.trim(),
+        modules: form.modules,
+        revenue: form.revenue,
+        providers: form.providers.trim(),
+        practices: form.practices.trim(),
+      });
+      setSubmitted(true);
+    } catch (error) {
+      setErrors({
+        ...(error.fields || {}),
+        form: error.fields ? undefined : error.message,
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -289,8 +317,9 @@ const Pricing = () => {
                 </div>
               </fieldset>
 
-              <button type="submit" className="pricing-submit">
-                Submit
+              {errors.form ? <p className="pricing-error">{errors.form}</p> : null}
+              <button type="submit" className="pricing-submit" disabled={sending}>
+                {sending ? "Sending..." : "Submit"}
               </button>
             </form>
           )}

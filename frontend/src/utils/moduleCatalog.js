@@ -1,8 +1,8 @@
 export const MODULE_OPTIONS = [
   "Price Transparency",
   "Clinical Intelligence",
-  "Coding Accuracy",
   "Charge Capture",
+  "Coding Accuracy",
   "Claim Edits",
   "Claim Status",
   "Denials",

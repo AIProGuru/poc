@@ -220,6 +220,11 @@
   background: #ea580c;
 }
 
+.pricing-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 .pricing-success {
   padding: 2.2rem 1.5rem;
 }

@@ -19,8 +19,8 @@ import { setSelectedTags } from "../redux/reducers/tag.reducer";
 export const POINT_OF_CARE_NAV_IDS = [
   "price-transparency",
   "cdi",
-  "coding-accuracy",
   "charge-capture",
+  "coding-accuracy",
 ];
 
 export const isPointOfCareNav = (navId) => POINT_OF_CARE_NAV_IDS.includes(navId);

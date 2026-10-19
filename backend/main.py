@@ -4,6 +4,7 @@ from flask_restful import Api
 from flasgger import Swagger
 from config import ApplicationConfig
 from api.auth.users import users_bp
+from api.public.inquiries import inquiries_bp
 from api.auth.refresh import refresh_bp
 from api.platform.launchpad.tags import (
     rebound_api_tags,
@@ -173,6 +174,7 @@ def create_app():
         "https://test.heliorcm.ai",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://[::1]:3000",
     ]
 
     CORS(app, resources={
@@ -198,6 +200,7 @@ def create_app():
     # Register blueprints
     app.register_blueprint(demo_api)
     app.register_blueprint(users_bp, url_prefix='/api/v1')
+    app.register_blueprint(inquiries_bp, url_prefix='/api/v1')
     app.register_blueprint(refresh_bp, url_prefix='/api/v1')
     app.register_blueprint(rebound_api_tags)
     app.register_blueprint(medevolve_api_tags)

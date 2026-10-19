@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
+import { sendInquiry } from "../utils/sendInquiry";
 import "./Home.css";
 import "./Contact.css";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const Contact = () => {
   const [form, setForm] = useState({
@@ -13,6 +16,9 @@ const Contact = () => {
     provider: "",
     message: "",
   });
+  const [errors, setErrors] = useState({});
+  const [sending, setSending] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const onChange = (event) => {
     const { name, type, checked, value } = event.target;
@@ -20,10 +26,37 @@ const Contact = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    if (name === "name" || name === "email") {
+      setErrors((prev) => ({ ...prev, [name]: undefined, form: undefined }));
+    }
   };
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault();
+    const next = {};
+    if (!form.name.trim()) next.name = "Enter a name.";
+    if (!form.email.trim()) next.email = "Enter an email.";
+    else if (!EMAIL_PATTERN.test(form.email.trim())) next.email = "Enter a valid email.";
+    setErrors(next);
+    if (Object.keys(next).length > 0 || sending) return;
+
+    setSending(true);
+    try {
+      await sendInquiry({
+        kind: "demo",
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        provider: form.provider.trim(),
+        message: form.message.trim(),
+        updates: form.updates,
+      });
+      setSubmitted(true);
+    } catch (error) {
+      setErrors(error.fields || { form: error.message });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -60,7 +93,12 @@ const Contact = () => {
 
           <section className="contact-form-card">
             <h2 className="contact-form-card__title">Request a Demo</h2>
-            <form className="contact-form" onSubmit={onSubmit}>
+            {submitted ? (
+              <div className="contact-success" aria-live="polite">
+                <p>Thanks. We received your demo request and will be in touch.</p>
+              </div>
+            ) : (
+            <form className="contact-form" onSubmit={onSubmit} noValidate>
               <label className="contact-field">
                 <span>Name</span>
                 <input
@@ -69,7 +107,9 @@ const Contact = () => {
                   value={form.name}
                   onChange={onChange}
                   autoComplete="name"
+                  aria-invalid={errors.name ? "true" : undefined}
                 />
+                {errors.name ? <small className="contact-error">{errors.name}</small> : null}
               </label>
 
               <label className="contact-check">
@@ -91,7 +131,9 @@ const Contact = () => {
                     value={form.email}
                     onChange={onChange}
                     autoComplete="email"
+                    aria-invalid={errors.email ? "true" : undefined}
                   />
+                  {errors.email ? <small className="contact-error">{errors.email}</small> : null}
                 </label>
                 <label className="contact-field">
                   <span>Phone (Optional)</span>
@@ -125,10 +167,12 @@ const Contact = () => {
                 />
               </label>
 
-              <button type="submit" className="contact-submit">
-                Submit
+              {errors.form ? <p className="contact-error">{errors.form}</p> : null}
+              <button type="submit" className="contact-submit" disabled={sending}>
+                {sending ? "Sending..." : "Submit"}
               </button>
             </form>
+            )}
           </section>
         </div>
       </main>

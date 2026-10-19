@@ -15,7 +15,7 @@ const HomeScreen = ({ isDark }) => (
       markSize="h-16 w-16"
     />
     <p className={`text-center text-xl font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>
-      Simple RCM, AI Precision, Powerful Results
+      Simple RCM. AI Precision. Powerful Results.
     </p>
   </div>
 );

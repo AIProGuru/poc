@@ -231,8 +231,8 @@ const ReboundDash = () => {
     { id: 'dashboard', label: 'Dashboard', badge: null, icon: 'dashboard' },
     { id: 'price-transparency', label: 'Price Transparency', badge: null, icon: 'chart' },
     { id: 'cdi', label: 'Clinical Intelligence', badge: null, icon: 'clipboard' },
-    { id: 'coding-accuracy', label: 'Coding Accuracy', badge: null, icon: 'list' },
     { id: 'charge-capture', label: 'Charge Capture', badge: null, icon: 'card' },
+    { id: 'coding-accuracy', label: 'Coding Accuracy', badge: null, icon: 'list' },
     {
       id: 'claim-edits',
       label: 'Claim Edits',

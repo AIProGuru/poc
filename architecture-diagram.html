@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Application architecture and security</title>
+  <style>
+    :root {
+      --ink: #122033;
+      --muted: #5c6b7e;
+      --line: #d5deea;
+      --paper: #f4f7fb;
+      --white: #ffffff;
+      --navy: #16324f;
+      --navy-deep: #0e2744;
+      --green: #1c7a52;
+      --orange: #e36a1e;
+      --sage: #e7eee9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    .slide {
+      width: min(1180px, calc(100% - 32px));
+      margin: 24px auto 40px;
+      padding: 28px 28px 22px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+
+    .kicker {
+      margin: 0;
+      color: #6d7c72;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 6px 0 18px;
+      font-size: 32px;
+      line-height: 1.15;
+      font-weight: 650;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: 168px minmax(0, 1fr) 230px;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--white);
+    }
+
+    .box header {
+      padding: 10px 12px 8px;
+    }
+
+    .box header p,
+    .lane header p {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .box header h2,
+    .lane header h2,
+    .services > p {
+      margin: 2px 0 0;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .box ul,
+    .lane ul {
+      margin: 0;
+      padding: 10px 12px 12px 28px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .users {
+      background: var(--sage);
+      border-color: #d3dfd6;
+    }
+
+    .users header p { color: #5f7468; }
+
+    .access {
+      background: var(--navy);
+      color: var(--white);
+      border-color: var(--navy);
+    }
+
+    .access header p { color: #b7c7d8; }
+
+    .access ul { color: #f4f7fb; }
+
+    .flow {
+      margin: 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .aws {
+      border: 1px solid #c5d2e2;
+      border-radius: 14px;
+      padding: 12px;
+      background: #f8fafc;
+    }
+
+    .aws > p {
+      margin: 0 0 10px;
+      color: #607086;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    .lanes {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);
+      align-items: stretch;
+    }
+
+    .lane {
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--white);
+      border: 1px solid var(--line);
+      min-width: 0;
+    }
+
+    .lane header { color: var(--white); }
+
+    .lane.front header { background: var(--navy); }
+    .lane.api header { background: var(--green); }
+    .lane.data header { background: var(--orange); }
+
+    .lane ul { color: #243246; }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #7d8da1;
+      font-size: 18px;
+    }
+
+    .aws .note {
+      margin: 10px 2px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .services {
+      padding: 12px;
+      background: #fbfcfd;
+    }
+
+    .services > p {
+      color: #607086;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .services h2 {
+      margin: 2px 0 10px;
+      font-size: 16px;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .service + .service { margin-top: 10px; }
+
+    .service strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .service span {
+      display: block;
+      margin-top: 1px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .security {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .security div {
+      padding: 12px 8px;
+      border-radius: 8px;
+      background: var(--navy-deep);
+      color: var(--white);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.3;
+    }
+
+    @media (max-width: 980px) {
+      .board,
+      .lanes,
+      .security {
+        grid-template-columns: 1fr;
+      }
+
+      .arrow { transform: rotate(90deg); height: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <p class="kicker">ARCHITECTURE AND SECURITY</p>
+    <h1>Application architecture and security</h1>
+
+    <section class="board">
+      <div class="side">
+        <article class="box users">
+          <header>
+            <p>Who</p>
+            <h2>Users</h2>
+          </header>
+          <ul>
+            <li>Customers and partners</li>
+          </ul>
+        </article>
+        <p class="flow">sign in</p>
+        <article class="box access">
+          <header>
+            <p>Access</p>
+            <h2>Secure access</h2>
+          </header>
+          <ul>
+            <li>Firebase email sign-in</li>
+            <li>Access by assigned skills</li>
+          </ul>
+        </article>
+      </div>
+
+      <section class="aws">
+        <p>AWS CLOUD PLATFORM</p>
+        <div class="lanes">
+          <article class="lane front">
+            <header>
+              <p>App</p>
+              <h2>Frontend</h2>
+            </header>
+            <ul>
+              <li>React 19</li>
+              <li>Vite</li>
+              <li>Tailwind</li>
+              <li>Redux</li>
+              <li>React Router</li>
+              <li>Axios</li>
+              <li>Charts</li>
+            </ul>
+          </article>
+          <div class="arrow" aria-hidden="true">↔</div>
+          <article class="lane api">
+            <header>
+              <p>API</p>
+              <h2>Backend</h2>
+            </header>
+            <ul>
+              <li>Flask API</li>
+              <li>Python on EC2</li>
+              <li>MySQL connector</li>
+            </ul>
+          </article>
+          <div class="arrow" aria-hidden="true">↔</div>
+          <article class="lane data">
+            <header>
+              <p>Store</p>
+              <h2>Data</h2>
+            </header>
+            <ul>
+              <li>MySQL on Amazon RDS</li>
+              <li>277s, 837s, 835s</li>
+              <li>S3: EDI files</li>
+            </ul>
+          </article>
+        </div>
+        <p class="note">The browser calls the Flask API. The API reads and writes MySQL and EDI files in S3.</p>
+      </section>
+
+      <aside class="box services">
+        <p>Alongside the app</p>
+        <h2>Platform services</h2>
+        <div class="service">
+          <strong>Firebase Authentication</strong>
+          <span>Email and password sign-in</span>
+        </div>
+        <div class="service">
+          <strong>Firestore</strong>
+          <span>Profiles and skill sets</span>
+        </div>
+        <div class="service">
+          <strong>OpenAI</strong>
+          <span>Appeal and chat drafts</span>
+        </div>
+        <div class="service">
+          <strong>SendGrid</strong>
+          <span>Welcome and password reset. Demo and pricing requests go to vanessa@heliorcm.ai.</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="security" aria-label="Security controls">
+      <div>Encrypted in transit</div>
+      <div>Firebase sign-in</div>
+      <div>Skill-based access</div>
+      <div>AI uses supplied claim facts</div>
+      <div>A person reviews before send</div>
+    </section>
+  </main>
+</body>
+</html>

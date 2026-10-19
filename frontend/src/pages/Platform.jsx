@@ -68,15 +68,38 @@ const SECTION_COPY = {
     title: "Pre-Care",
     copy: "What happens before the visit, from scheduling through an estimate.",
   },
-  "point-of-care": {
-    title: "Point-of-Care",
-    copy: "What happens during the visit, while the patient is still in front of the team.",
-  },
 };
+
+const POINT_OF_CARE = [
+  {
+    title: "Price Transparency",
+    detail: "AI-powered pricing intelligence that uses procedure codes, diagnosis codes, and payer pricing data to help providers give patients pricing information.",
+    icon: "price",
+    tone: "teal",
+  },
+  {
+    title: "Clinical Intelligence (CDI)",
+    detail: "AI analyzes clinical documentation to identify gaps in specificity, severity, and medical necessity, helping providers strengthen clinical accuracy and reduce preventable claim denials.",
+    icon: "clinical",
+    tone: "cyan",
+  },
+  {
+    title: "Charge Capture",
+    detail: "AI identifies billable services, procedures, diagnoses, and supplies documented in the clinical record but potentially missing from charges, helping coders complete the claim and reduce revenue leakage.",
+    icon: "capture",
+    tone: "gold",
+  },
+  {
+    title: "Coding Accuracy",
+    detail: "AI recommends more specific, current ICD-10 codes and the information those codes require, improving coding accuracy and reducing coding-related denials.",
+    icon: "coding",
+    tone: "violet",
+  },
+];
 
 const Platform = () => {
   const { section } = useParams();
-  const activeSection = section === "post-care" || SECTION_COPY[section] ? section : null;
+  const activeSection = section === "post-care" || section === "point-of-care" || SECTION_COPY[section] ? section : null;
 
   return (
     <div className="platform-page">
@@ -160,6 +183,38 @@ const Platform = () => {
                 <h3>Automated Cash Posting</h3>
                 <p>Automate Posting of Payments, Contractual Adjustments, &amp; Write-Offs Directly into your EHR</p>
               </div>
+            </article>
+          </div>
+          ) : activeSection === "point-of-care" ? (
+          <div className="platform-poc">
+            <article className="platform-card platform-poc-intro">
+              <p className="platform-kicker">Platform overview · Before the claim · In development now</p>
+              <h2>Point-of-Care modules</h2>
+              <p>What happens during the visit, before the claim is sent.</p>
+            </article>
+
+            <div className="platform-opp">
+              <p className="platform-opp__title">Preventable Revenue Loss</p>
+              <p className="platform-opp__tagline">Get the data right before the claim goes out</p>
+            </div>
+
+            <div className="platform-chips platform-poc-chips">
+              {POINT_OF_CARE.map((item, index) => (
+                <article key={item.title} className={`platform-chip platform-chip--${item.tone} platform-poc-chip`}>
+                  <OpportunityIcon name={item.icon} />
+                  <h3>{index + 1}. {item.title}</h3>
+                  <p>{item.detail}</p>
+                </article>
+              ))}
+            </div>
+
+            <article className="platform-card platform-poc-why">
+              <h3>Why it matters</h3>
+              <p>
+                Getting the data right at the point of care raises clean claim rates earlier in the
+                revenue cycle and prevents the denials, underpayments, and rework that the Post-Care
+                modules would otherwise have to chase.
+              </p>
             </article>
           </div>
           ) : activeSection ? (
@@ -336,6 +391,63 @@ function OpportunityIcon({ name }) {
           <rect x="22" y="42" width="16" height="4" rx="2" fill="#ede9fe" />
           <circle cx="54" cy="50" r="11" fill="#34d399" />
           <path d="M49 50.2 52.4 53.6 59.2 46" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+    );
+  }
+
+  if (name === "price") {
+    return (
+      <span className="platform-icon">
+        <svg {...svg}>
+          <rect x="16" y="18" width="48" height="40" rx="10" fill="#2dd4bf" />
+          <rect x="16" y="18" width="48" height="14" rx="10" fill="#99f6e4" />
+          <rect x="16" y="26" width="48" height="6" fill="#99f6e4" />
+          <circle cx="40" cy="46" r="9" fill="#ecfdf5" />
+          <path d="M40 40.5v11M37.2 43.2c.6-1.2 1.6-1.8 2.8-1.8 1.8 0 3 1 3 2.4 0 1.3-1 2.1-3.2 2.5l-1.2.2c-2.4.4-3.6 1.3-3.6 2.8 0 1.6 1.4 2.6 3.4 2.6 1.4 0 2.5-.5 3.1-1.6" stroke="#115e59" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </span>
+    );
+  }
+
+  if (name === "clinical") {
+    return (
+      <span className="platform-icon">
+        <svg {...svg}>
+          <rect x="20" y="12" width="32" height="44" rx="6" fill="#38bdf8" />
+          <rect x="26" y="20" width="20" height="3" rx="1.5" fill="#e0f2fe" />
+          <rect x="26" y="27" width="16" height="3" rx="1.5" fill="#e0f2fe" />
+          <rect x="26" y="34" width="18" height="3" rx="1.5" fill="#e0f2fe" />
+          <circle cx="54" cy="50" r="14" fill="#22d3ee" />
+          <path d="M54 43.5v13M47.5 50h13" stroke="#083344" strokeWidth="2.6" strokeLinecap="round" />
+        </svg>
+      </span>
+    );
+  }
+
+  if (name === "capture") {
+    return (
+      <span className="platform-icon">
+        <svg {...svg}>
+          <rect x="18" y="16" width="36" height="46" rx="7" fill="#facc15" />
+          <rect x="26" y="12" width="20" height="8" rx="3" fill="#fde68a" />
+          <rect x="26" y="28" width="20" height="3" rx="1.5" fill="#78350f" />
+          <rect x="26" y="36" width="16" height="3" rx="1.5" fill="#78350f" />
+          <circle cx="54" cy="52" r="13" fill="#f97316" />
+          <path d="M54 46v12M48 52h12" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" />
+        </svg>
+      </span>
+    );
+  }
+
+  if (name === "coding") {
+    return (
+      <span className="platform-icon">
+        <svg {...svg}>
+          <rect x="16" y="18" width="40" height="44" rx="8" fill="#a78bfa" />
+          <path d="M26 32h20M26 40h14M26 48h16" stroke="#f5f3ff" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="54" cy="50" r="13" fill="#34d399" />
+          <path d="M48 50.2 52.2 54.4 60 46" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
     );

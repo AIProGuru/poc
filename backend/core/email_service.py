@@ -12,13 +12,20 @@ PLATFORM_NAME = os.environ.get("PLATFORM_NAME", "Helio RCM")
 EMAIL_FROM = os.environ.get("EMAIL_FROM", "noreply@heliorcm.ai")
 EMAIL_FROM_NAME = os.environ.get("EMAIL_FROM_NAME", "Helio RCM")
 EMAIL_REPLY_TO = os.environ.get("EMAIL_REPLY_TO", "davida@heliorcm.ai")
+INQUIRY_EMAIL = os.environ.get("INQUIRY_EMAIL", "vanessa@heliorcm.ai")
 EMAIL_SIGNATURE = os.environ.get("EMAIL_SIGNATURE", "Helio Support Team")
 PLATFORM_LOGIN_URL = os.environ.get("PLATFORM_LOGIN_URL", "https://heliorcm.ai/signin")
 PASSWORD_RESET_CONTINUE_URL = os.environ.get("PASSWORD_RESET_CONTINUE_URL", PLATFORM_LOGIN_URL)
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
 
 
-def _send_html_email(*, to_email: str, subject: str, html_content: str) -> None:
+def _send_html_email(
+    *,
+    to_email: str,
+    subject: str,
+    html_content: str,
+    reply_to: Optional[str] = None,
+) -> None:
     if not SENDGRID_API_KEY:
         raise RuntimeError("Email service is not configured (missing SENDGRID_API_KEY).")
 
@@ -32,8 +39,9 @@ def _send_html_email(*, to_email: str, subject: str, html_content: str) -> None:
         subject=subject,
         html_content=html_content,
     )
-    if EMAIL_REPLY_TO:
-        message.reply_to = ReplyTo(EMAIL_REPLY_TO)
+    reply_address = (reply_to if reply_to is not None else EMAIL_REPLY_TO or "").strip()
+    if reply_address:
+        message.reply_to = ReplyTo(reply_address)
 
     client = SendGridAPIClient(SENDGRID_API_KEY)
     response = client.send(message)
@@ -41,10 +49,15 @@ def _send_html_email(*, to_email: str, subject: str, html_content: str) -> None:
         raise RuntimeError(f"SendGrid returned status {response.status_code}")
 
 
-def _email_shell(*, title: str, body_html: str) -> str:
+def _email_shell(*, title: str, body_html: str, closing: Optional[str] = None) -> str:
     safe_platform = html.escape(PLATFORM_NAME)
     safe_title = html.escape(title)
     safe_signature = html.escape(EMAIL_SIGNATURE)
+    closing_html = (
+        f"Thanks,<br />{safe_signature}"
+        if closing is None
+        else html.escape(closing).replace("\n", "<br />")
+    )
 
     return f"""
 <!DOCTYPE html>
@@ -60,8 +73,7 @@ def _email_shell(*, title: str, body_html: str) -> str:
                 <h1 style="margin:0 0 16px;font-size:24px;line-height:1.3;color:#111827;">{safe_title}</h1>
                 {body_html}
                 <p style="margin:24px 0 0;font-size:15px;line-height:1.6;color:#374151;">
-                  Thanks,<br />
-                  {safe_signature}
+                  {closing_html}
                 </p>
               </td>
             </tr>
@@ -174,6 +186,53 @@ def _build_password_reset_email_html(*, email: str, reset_link: str) -> str:
     """
 
     return _email_shell(title="Reset your password", body_html=body_html)
+
+
+def _inquiry_value(value: str) -> str:
+    escaped = html.escape(value or "").strip()
+    return escaped.replace("\n", "<br />") if escaped else "—"
+
+
+def send_form_inquiry_email(*, kind: str, reply_to: str, fields: list[tuple[str, str]]) -> None:
+    """Email a website request form to the inquiry inbox."""
+    recipient = (INQUIRY_EMAIL or "").strip().lower()
+    if not recipient:
+        raise ValueError("Inquiry inbox is not configured.")
+
+    requester = (reply_to or "").strip().lower()
+    if not requester:
+        raise ValueError("Reply-to email is required.")
+
+    title = "Demo request" if kind == "demo" else "Pricing inquiry"
+    who = next((value.strip() for _label, value in fields if value and value.strip()), requester)
+    subject = " ".join(f"{title} from {who}".split())[:180]
+    rows = "".join(
+        "<tr>"
+        f"<td style=\"padding:8px 16px 8px 0;font-size:14px;font-weight:700;vertical-align:top;color:#111827;\">{html.escape(label)}</td>"
+        f"<td style=\"padding:8px 0;font-size:14px;line-height:1.5;color:#374151;\">{_inquiry_value(value)}</td>"
+        "</tr>"
+        for label, value in fields
+    )
+    body_html = f"""
+                <p style="margin:0 0 16px;font-size:16px;line-height:1.6;">
+                  A new {html.escape(title.lower())} was submitted on the website.
+                </p>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:8px 0 0;">
+                  {rows}
+                </table>
+    """
+    html_content = _email_shell(
+        title=title,
+        body_html=body_html,
+        closing="Reply to this email to respond to the person who submitted the form.",
+    )
+    _send_html_email(
+        to_email=recipient,
+        subject=subject,
+        html_content=html_content,
+        reply_to=requester,
+    )
+    logger.info("%s sent to %s", title, recipient)
 
 
 def send_password_reset_email(*, to_email: str, reset_link: str) -> None:

@@ -187,6 +187,58 @@
   border-bottom-color: rgba(255, 255, 255, 0.5);
 }
 
+.platform-kicker {
+  margin: 0 0 0.55rem;
+  color: rgba(226, 236, 246, 0.62);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.platform-poc {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+}
+
+.platform-poc-intro h2 {
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
+}
+
+.platform-poc-intro p:last-child {
+  max-width: 28rem;
+}
+
+.platform-poc-chip {
+  align-items: flex-start;
+  text-align: left;
+  padding: 1.15rem 1.05rem 1.2rem;
+}
+
+.platform-poc-chip .platform-icon {
+  margin: 0;
+}
+
+.platform-poc-chip h3 {
+  font-size: 1rem;
+  margin-top: 0.7rem;
+}
+
+.platform-poc-chip p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.platform-poc-why h3 {
+  font-size: 1.15rem;
+}
+
+.platform-poc-why p {
+  max-width: 62rem;
+  font-size: 1rem;
+}
+
 .platform-section {
   border: 1px solid rgba(190, 214, 236, 0.22);
   border-radius: 1.15rem;
@@ -457,6 +509,10 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .platform-poc-chips {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .platform-roster {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -518,5 +574,22 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+  }
+
+  .platform-poc {
+    grid-template-columns: 22rem minmax(0, 1fr);
+    grid-template-areas:
+      "intro banner"
+      "mods mods"
+      "why why";
+  }
+
+  .platform-poc-intro { grid-area: intro; }
+  .platform-poc .platform-opp { grid-area: banner; }
+  .platform-poc-chips { grid-area: mods; }
+  .platform-poc-why { grid-area: why; }
+
+  .platform-poc-chips {
+    grid-template-columns: repeat(4, 1fr);
   }
 }

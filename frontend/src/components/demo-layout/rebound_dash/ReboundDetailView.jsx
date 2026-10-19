@@ -1503,6 +1503,25 @@ const ReboundDetailView = () => {
   const isPend277 = pend277Flag || [routeTitle, appTitle, routeCategory, claimCategory]
     .filter(Boolean)
     .some((value) => normalizePend(value).includes("pend277"));
+  const pend835Flag = Boolean(currentClaim?.Claim?.Data?.Pend835);
+  const isPend835 = pend835Flag || [routeTitle, appTitle, routeCategory, claimCategory]
+    .filter(Boolean)
+    .some((value) => normalizePend(value).includes("pend835"));
+  const hideAppealTab = isPend277 || isPend835;
+  const detailTabs = [
+    { id: 0, label: "Insights" },
+    { id: 1, label: "Claim", badge: "837" },
+    { id: 2, label: "Payments", badge: "835" },
+    { id: 3, label: "Related Encounters" },
+    { id: 4, label: "Triage" },
+    { id: 5, label: "AI Appeal" },
+  ].filter((tab) => !(hideAppealTab && tab.id === 5));
+
+  useEffect(() => {
+    if (hideAppealTab && detailShowStatus === 5) {
+      setDetailShowStatus(0);
+    }
+  }, [hideAppealTab, detailShowStatus]);
   const isEligibility = [routeTitle, appTitle, routeCategory, claimCategory]
     .filter(Boolean)
     .some((value) => normalizePend(value).includes("eligibility"));
@@ -1633,14 +1652,7 @@ const ReboundDetailView = () => {
           </div>
           <div className={`overflow-x-auto border-b ${isDark ? "border-white/10" : "border-slate-200"}`}>
             <div className="helio-tab-row">
-              {[
-                { id: 0, label: "Insights" },
-                { id: 1, label: "Claim", badge: "837" },
-                { id: 2, label: "Payments", badge: "835" },
-                { id: 3, label: "Related Encounters" },
-                { id: 4, label: "Triage" },
-                { id: 5, label: "AI Appeal" },
-              ].map((tab) => {
+              {detailTabs.map((tab) => {
                 const active = detailShowStatus === tab.id;
                 return (
                   <button
@@ -2840,7 +2852,7 @@ const ReboundDetailView = () => {
             </div>
           )}
 
-          {detailShowStatus == 5 && (
+          {detailShowStatus == 5 && !hideAppealTab && (
             <AppealGenerationAgent
               apiUrl={apiUrl}
               claimNo={claimNo}
