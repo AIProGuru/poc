@@ -318,6 +318,9 @@ const ReboundDash = () => {
     'claim-status:pend-835': { IncludeAllCategories: true, Pend835: true },
   }), []);
   const navTagFilters = useMemo(() => ({
+    'claim-edits': ['CH Rejection', 'Payer Rejection'],
+    'claim-edits:ch-rejection': ['CH Rejection'],
+    'claim-edits:payer-rejection': ['Payer Rejection'],
     'claim-status': ['Pend 277', 'Delinquent'],
     'claim-status:pend-277': [],
     'claim-status:pend-835': [],

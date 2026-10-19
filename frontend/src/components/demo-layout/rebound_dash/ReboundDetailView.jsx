@@ -1369,7 +1369,18 @@ const ReboundDetailView = () => {
       Array.isArray(currentClaim.SupportingDocuments) ? currentClaim.SupportingDocuments : []
     );
     setOptumRequest(buildOptumRequestFromClaim(currentClaim));
-    setOptumResponse(null);
+    const stored277 = currentClaim?.Claim?.Data?.Optum277;
+    setOptumResponse(
+      typeof stored277 === "string"
+        ? (() => {
+            try {
+              return JSON.parse(stored277);
+            } catch {
+              return null;
+            }
+          })()
+        : stored277 || null
+    );
     setOptumError("");
     setEligibilityRequest(buildEligibilityRequestFromClaim(currentClaim));
     setEligibilityResponse(null);
@@ -1391,6 +1402,8 @@ const ReboundDetailView = () => {
       .then((res) => {
         const payload = res?.data?.response || res?.data || {};
         setOptumResponse(payload);
+        setDetailShowStatus(0);
+        setShowOptumDetails(false);
         toast.success("277 response received.");
       })
       .catch((err) => {
@@ -1696,11 +1709,46 @@ const ReboundDetailView = () => {
                   <p className={`mt-4 text-sm ${bodyTextClass}`}>
                     This requires <span className="text-[#FF5C5C] font-semibold">REVIEW</span> for:
                   </p>
-                  <ul className="mt-3 space-y-2 text-sm">
-                    <li className={emphasisTextClass}>
-                      - 277 pending from Payer
-                    </li>
-                  </ul>
+                  {optumResponse ? (
+                    <div className="mt-3 space-y-3 text-sm">
+                      {optumResponse.sample ? (
+                        <p className={`text-xs ${isDark ? "text-gray-400" : "text-slate-500"}`}>
+                          Sample 277 for this claim. A live payer response was not returned.
+                        </p>
+                      ) : null}
+                      <p className={emphasisTextClass}>
+                        Control Number: {optumResponse.controlNumber || "N/A"}
+                      </p>
+                      {(optumResponse.claims || []).length === 0 ? (
+                        <p className={emphasisTextClass}>- 277 received. No status lines were included.</p>
+                      ) : (
+                        (optumResponse.claims || []).map((statusClaim, idx) => {
+                          const status = statusClaim?.claimStatus || {};
+                          const statusValue = status.statusCategoryCodeValue || status.statusCodeValue || "";
+                          const insightLabel = getInsightStatusLabel(statusValue);
+                          return (
+                            <div key={`insight-277-${idx}`} className="space-y-1">
+                              <p className={emphasisTextClass}>
+                                - {insightLabel || "Pending"}
+                              </p>
+                              <p className={bodyTextClass}>
+                                {statusValue || "No status description available."}
+                              </p>
+                              <p className={bodyTextClass}>
+                                Effective Date: {status.effectiveDate || "N/A"}
+                              </p>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  ) : (
+                    <ul className="mt-3 space-y-2 text-sm">
+                      <li className={emphasisTextClass}>
+                        - 277 pending from Payer
+                      </li>
+                    </ul>
+                  )}
                 </>
               ) : (
                 <>
