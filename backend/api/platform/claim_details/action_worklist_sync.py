@@ -170,3 +170,73 @@ def sync_custom_all_after_action(
         f"UPDATE CUSTOM_ALL SET {', '.join(set_parts)} WHERE ClaimNo = %s",
         tuple(params),
     )
+
+
+def undo_recent_claim(cursor, db_name: str, claimno: str) -> str:
+    """Remove the triage hold so the claim returns to its category worklist."""
+    custom_all_columns = get_existing_columns(cursor, db_name, "CUSTOM_ALL")
+    action_taken_column = first_existing_column(custom_all_columns, ACTION_TAKEN_CANDIDATES)
+    action_date_column = first_existing_column(custom_all_columns, ACTION_DATE_CANDIDATES)
+    tickle_column = resolve_tickle_column(custom_all_columns)
+    if not action_taken_column:
+        raise ValueError("This claim cannot be returned.")
+
+    cursor.execute(
+        f"""
+        SELECT
+            `{action_taken_column}` AS ActionTaken,
+            COALESCE(NULLIF(TRIM(Category), ''), '') AS Category
+        FROM CUSTOM_ALL
+        WHERE ClaimNo = %s
+        """,
+        (claimno,),
+    )
+    claim = cursor.fetchone()
+    if not claim:
+        raise ValueError("Claim was not found.")
+    if str(claim.get("ActionTaken") or "").strip().lower() != "triage":
+        raise ValueError("This claim is not in Recent Claims.")
+
+    cursor.execute(
+        """
+        SELECT id, action_date, claim_status
+        FROM actions
+        WHERE ClaimNo = %s
+        ORDER BY id DESC
+        """,
+        (claimno,),
+    )
+    history = cursor.fetchall() or []
+    triage_action = next(
+        (
+            item
+            for item in history
+            if str(item.get("claim_status") or "").strip().lower() == "triage"
+        ),
+        None,
+    )
+    if not triage_action:
+        raise ValueError("This claim is not in Recent Claims.")
+
+    cursor.execute("DELETE FROM actions WHERE id = %s", (triage_action["id"],))
+    previous = next((item for item in history if item.get("id") != triage_action["id"]), None)
+    previous_was_triage = (
+        previous is not None
+        and str(previous.get("claim_status") or "").strip().lower() == "triage"
+    )
+
+    set_parts = [f"`{action_taken_column}` = NULL"]
+    params: List[Any] = []
+    if tickle_column:
+        set_parts.append(f"`{tickle_column}` = NULL")
+    if action_date_column:
+        set_parts.append(f"`{action_date_column}` = %s")
+        params.append(previous.get("action_date") if previous_was_triage else None)
+    params.append(claimno)
+    cursor.execute(
+        f"UPDATE CUSTOM_ALL SET {', '.join(set_parts)} WHERE ClaimNo = %s",
+        tuple(params),
+    )
+
+    category = str(claim.get("Category") or "").strip()
+    return category or "Delinquent"

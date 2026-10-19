@@ -89,6 +89,7 @@ const DataTable = (props) => {
   const [bulk277Loading, setBulk277Loading] = useState(false);
   const [bulk277Progress, setBulk277Progress] = useState({ total: 0, done: 0, failed: 0 });
   const [bulk277Errors, setBulk277Errors] = useState([]);
+  const [returningClaimNo, setReturningClaimNo] = useState("");
   const [order, _setOrder] = useState(isRecentClaimsView ? "TickleDate" : "Priority");
   const displayedTableData = useMemo(() => {
     if (!isRecentClaimsView || !tableData?.length) return tableData;
@@ -112,6 +113,20 @@ const DataTable = (props) => {
   const theme = useSelector((state) => state.app.theme);
   const isDarkMode = theme === 'dark';
   const tableBackground = isDarkMode ? '#111F35' : '#ffffff';
+  const returnRecentClaim = async (claimNo) => {
+    if (!claimNo || returningClaimNo) return;
+    setReturningClaimNo(claimNo);
+    try {
+      const response = await axios.post(`${apiUrl}/return_recent_claim`, { claimno: claimNo });
+      toast.success(response.data?.message || "Claim returned to its original module.");
+      dispatch(setTableLoading(true));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Unable to return this claim.");
+    } finally {
+      setReturningClaimNo("");
+    }
+  };
+
   const formatDateSafe = (value) => {
     if (!value) return '';
     const dateObj = new Date(value);
@@ -1162,6 +1177,11 @@ const DataTable = (props) => {
                         Triaged On
                       </TableCell>
                     )}
+                    {isRecentClaimsView && (
+                      <TableCell style={{ ...headerCellStyle, minWidth: "110px" }}>
+                        Return
+                      </TableCell>
+                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody className="relative">
@@ -1291,6 +1311,21 @@ const DataTable = (props) => {
                       {isRecentClaimsView && (
                         <TableCell onClick={() => showDetail(row.ClaimNo, row.Category)} style={{ ...bodyCellStyle, minWidth: "140px" }}>
                           {formatDateSafe(row.TriageActionDate)}
+                        </TableCell>
+                      )}
+                      {isRecentClaimsView && (
+                        <TableCell style={{ ...bodyCellStyle, minWidth: "110px" }}>
+                          <button
+                            type="button"
+                            className="rounded-full bg-[#f97316] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              returnRecentClaim(row.ClaimNo);
+                            }}
+                            disabled={Boolean(returningClaimNo)}
+                          >
+                            {returningClaimNo === row.ClaimNo ? "Returning..." : "Return"}
+                          </button>
                         </TableCell>
                       )}
                     </TableRow>)

@@ -3,6 +3,7 @@ import os
 
 from flask import Blueprint, jsonify, request
 
+from api.platform.claim_details.action_worklist_sync import undo_recent_claim
 from api.platform.launchpad.stratification_details import (
     get_custom_all_patient_payment_expr,
 )
@@ -203,5 +204,41 @@ def get_recent_claims():
     except Exception as exc:
         logger.error("[RECENT CLAIMS ERROR]: %s", exc)
         return jsonify({"error": "Internal server Error"}), 500
+    finally:
+        close_connection(cursor, conn)
+
+
+@rebound_api_recent_claims.route("/return_recent_claim", methods=["POST"])
+@medevolve_api_recent_claims.route("/return_recent_claim", methods=["POST"])
+@pilotcustomer_api_recent_claims.route("/return_recent_claim", methods=["POST"])
+@betacustomer_api_recent_claims.route("/return_recent_claim", methods=["POST"])
+def return_recent_claim():
+    conn = None
+    cursor = None
+    try:
+        if not request.is_json:
+            return jsonify({"error": "Unsupported Media Type"}), 415
+        payload = request.get_json(silent=True) or {}
+        claimno = str(payload.get("claimno") or "").strip()
+        if not claimno:
+            return jsonify({"error": "claimno is required"}), 400
+
+        conn, cursor, db_name = get_connection(request)
+        category = undo_recent_claim(cursor, db_name, claimno)
+        conn.commit()
+        return jsonify({
+            "message": "Claim returned to its original module.",
+            "claimno": claimno,
+            "category": category,
+        }), 200
+    except ValueError as exc:
+        if conn:
+            conn.rollback()
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        logger.error("[RETURN RECENT CLAIM ERROR]: %s", exc)
+        if conn:
+            conn.rollback()
+        return jsonify({"error": "Unable to return this claim."}), 500
     finally:
         close_connection(cursor, conn)
