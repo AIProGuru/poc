@@ -26,15 +26,9 @@ import {
   WORKLIST_TAB_INDEX,
 } from "../../utils/worklistNav";
 import { priceTransparencyItemCount } from "./rebound_dash/PriceTransparency";
-import { chargeCaptureItemCount } from "./rebound_dash/PointOfCareBoard";
+import { usePointOfCareEncounters } from "./rebound_dash/PointOfCareBoard";
 import { clinicalIntelligenceItemCount } from "./rebound_dash/ClinicalIntelligence";
 
-const POINT_OF_CARE_CONTENT_COUNTS = {
-  "price-transparency": priceTransparencyItemCount,
-  cdi: clinicalIntelligenceItemCount,
-  "coding-accuracy": 0,
-  "charge-capture": chargeCaptureItemCount,
-};
 const readStoredTenantBase = () => {
   try {
     const value = localStorage.getItem("lastTenantBase");
@@ -104,6 +98,14 @@ const Sidebar = () => {
     return Number.isFinite(numeric) ? numeric : 0;
   }, [counts, navBadges]);
 
+  const [pointOfCareEncounters] = usePointOfCareEncounters();
+  const pointOfCareCounts = useMemo(() => ({
+    "price-transparency": priceTransparencyItemCount,
+    cdi: clinicalIntelligenceItemCount,
+    "charge-capture": pointOfCareEncounters.filter((encounter) => encounter.moduleId === "charge-capture").length,
+    "coding-accuracy": pointOfCareEncounters.filter((encounter) => encounter.moduleId === "coding-accuracy").length,
+  }), [pointOfCareEncounters]);
+
   const navItems = useMemo(() => {
     const skillAccess = {
       modules: accessModules,
@@ -122,25 +124,25 @@ const Sidebar = () => {
         id: "price-transparency",
         title: "Price Transparency",
         icon: "chart",
-        badge: POINT_OF_CARE_CONTENT_COUNTS["price-transparency"],
+        badge: pointOfCareCounts["price-transparency"],
       },
       {
         id: "cdi",
         title: "Clinical Intelligence",
         icon: "clipboard",
-        badge: POINT_OF_CARE_CONTENT_COUNTS.cdi,
+        badge: pointOfCareCounts.cdi,
       },
       {
         id: "charge-capture",
         title: "Charge Capture",
         icon: "card",
-        badge: POINT_OF_CARE_CONTENT_COUNTS["charge-capture"],
+        badge: pointOfCareCounts["charge-capture"],
       },
       {
         id: "coding-accuracy",
         title: "Coding Accuracy",
         icon: "list",
-        badge: POINT_OF_CARE_CONTENT_COUNTS["coding-accuracy"],
+        badge: pointOfCareCounts["coding-accuracy"],
       },
       {
         id: "claim-edits",
@@ -202,7 +204,7 @@ const Sidebar = () => {
     return baseItems.filter((item) =>
       isNavModuleAllowed(item.id, accessModules, isPrivilegedRole)
     );
-  }, [denialsCount, models, patientResponsibilityCount, role, accessDenialCategory, accessModules, isPrivilegedRole]);
+  }, [denialsCount, models, patientResponsibilityCount, pointOfCareCounts, role, accessDenialCategory, accessModules, isPrivilegedRole]);
 
   const canSeeWorklists = canAccessWorklists(role);
   const navBootstrapReady = useMemo(() => {
@@ -703,9 +705,9 @@ const Sidebar = () => {
               ? item.children.reduce((sum, child) => sum + (navBadges[child.id] ?? 0), 0)
               : 0;
             const parentBadge = navBadges[item.id];
-            const contentCount = POINT_OF_CARE_CONTENT_COUNTS[item.id];
+            const contentCount = pointOfCareCounts[item.id];
             const isContentCount = Object.prototype.hasOwnProperty.call(
-              POINT_OF_CARE_CONTENT_COUNTS,
+              pointOfCareCounts,
               item.id
             );
             const computedBadge = isContentCount

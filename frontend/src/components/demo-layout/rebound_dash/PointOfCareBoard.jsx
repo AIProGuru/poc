@@ -54,7 +54,52 @@ const INITIAL_ENCOUNTERS = [
   { id: "cc-11", moduleId: "charge-capture", status: "review", serviceDate: localDate(20), name: "E. Novak", diagnosisCode: "M51.26", diagnosis: "Other intervertebral disc displacement", facility: "Mayo Clinic", code: "63047", provider: "Dr. Patel", visit: "Surgery" },
 ];
 
-export const chargeCaptureItemCount = INITIAL_ENCOUNTERS.length;
+const CPT_DESCRIPTIONS = {
+  20610: "Injection or aspiration of a major joint, such as the knee, without ultrasound guidance.",
+  22840: "Posterior non-segmental spinal instrumentation.",
+  22842: "Posterior segmental instrumentation, 3 to 6 vertebral segments.",
+  22853: "Insertion of an interbody biomechanical device.",
+  27130: "Total hip replacement.",
+  27447: "Total knee replacement.",
+  29827: "Shoulder arthroscopy with rotator cuff repair.",
+  29888: "Arthroscopic anterior cruciate ligament reconstruction.",
+  62323: "Lumbar or sacral epidural injection with imaging guidance.",
+  63030: "Lumbar laminotomy with nerve-root decompression.",
+  63047: "Lumbar decompression, first segment.",
+  63048: "Each additional lumbar decompression segment.",
+  72100: "Lumbar spine X-ray, 2 or 3 views.",
+  72148: "MRI of the lumbar spine without contrast.",
+  76000: "Fluoroscopy, up to one hour.",
+  99214: "Established patient office visit, moderate complexity.",
+};
+
+const SIDE_LABELS = { RT: "Right side.", LT: "Left side." };
+
+const listeners = new Set();
+let encountersState = INITIAL_ENCOUNTERS.map((encounter) => (
+  encounter.status === "done"
+    ? { ...encounter, moduleId: "coding-accuracy", status: "review" }
+    : encounter
+));
+
+function setEncountersState(updater) {
+  encountersState = updater(encountersState);
+  listeners.forEach((listener) => listener());
+}
+
+export function usePointOfCareEncounters() {
+  const [encounters, setEncounters] = useState(encountersState);
+  useEffect(() => {
+    const listener = () => setEncounters(encountersState);
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  }, []);
+  return [encounters, setEncountersState];
+}
+
+export const chargeCaptureItemCount = INITIAL_ENCOUNTERS.filter(
+  (encounter) => encounter.status !== "done"
+).length;
 
 const buildColumns = (encounters, oldestFirst) => {
   const today = startOfToday();
@@ -96,15 +141,60 @@ const buildColumns = (encounters, oldestFirst) => {
   return oldestFirst ? [olderColumn, ...recentColumns] : [...recentColumns, olderColumn];
 };
 
+export function CodingAccuracy({ isDark }) {
+  const [encounters] = usePointOfCareEncounters();
+  const [selectedId, setSelectedId] = useState(null);
+  const items = encounters.filter((encounter) => encounter.moduleId === "coding-accuracy");
+  const selected = items.find((encounter) => encounter.id === selectedId) || null;
+
+  if (selected) {
+    return (
+      <CodingDetail
+        encounter={selected}
+        isDark={isDark}
+        onBack={() => setSelectedId(null)}
+      />
+    );
+  }
+
+  return (
+    <section className="flex min-h-0 flex-col gap-4 pb-6">
+      <div>
+        <h2 className={`text-2xl font-bold tracking-tight sm:text-3xl ${isDark ? "text-white" : "text-slate-950"}`}>
+          Coding accuracy
+        </h2>
+        <p className={`mt-1 text-sm sm:text-base ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+          Encounters sent from charge capture.
+        </p>
+      </div>
+      {items.length === 0 ? (
+        <p className={`rounded-2xl px-4 py-10 text-center text-sm ${isDark ? "bg-[#111F35] text-slate-400" : "bg-white text-slate-500"}`}>
+          No encounters have been sent to coding yet.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {items.map((encounter) => (
+            <PatientCard
+              key={encounter.id}
+              encounter={encounter}
+              isDark={isDark}
+              showDate
+              onOpen={() => setSelectedId(encounter.id)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function PointOfCareBoard({ navId, isDark }) {
   const module = MODULES[navId] || MODULES["charge-capture"];
-  const [encounters, setEncounters] = useState(INITIAL_ENCOUNTERS);
-  const [tab, setTab] = useState("review");
+  const [encounters, setEncounters] = usePointOfCareEncounters();
   const [selectedId, setSelectedId] = useState(null);
   const [activeColumnId, setActiveColumnId] = useState(null);
 
   useEffect(() => {
-    setTab("review");
     setSelectedId(null);
     setActiveColumnId(null);
   }, [navId]);
@@ -113,26 +203,38 @@ export default function PointOfCareBoard({ navId, isDark }) {
     () => encounters.filter((encounter) => encounter.moduleId === navId),
     [encounters, navId]
   );
-  const reviewCount = moduleEncounters.filter((encounter) => encounter.status === "review").length;
-  const doneCount = moduleEncounters.length - reviewCount;
-  const visible = moduleEncounters.filter((encounter) => encounter.status === tab);
   const oldestFirst = navId === "charge-capture";
-  const columns = useMemo(() => buildColumns(visible, oldestFirst), [visible, oldestFirst]);
+  const columns = useMemo(
+    () => buildColumns(moduleEncounters, oldestFirst),
+    [moduleEncounters, oldestFirst]
+  );
   const columnKey = columns.map((column) => column.id).join("|");
   const activeColumn = columns.find((column) => column.id === activeColumnId) || columns[0] || null;
   const selected = moduleEncounters.find((encounter) => encounter.id === selectedId) || null;
 
   useEffect(() => {
     setActiveColumnId(columns[0]?.id ?? null);
-  }, [columnKey, tab, navId]);
+  }, [columnKey, navId]);
 
   const openPatient = (encounter) => setSelectedId(encounter.id);
 
+  const addCodes = (encounter, codes) => {
+    setEncounters((current) => current.map((item) => {
+      if (item.id !== encounter.id) return item;
+      const addedCodes = [...(item.addedCodes || [])];
+      codes.forEach((code) => {
+        if (!addedCodes.includes(code)) addedCodes.push(code);
+      });
+      return { ...item, addedCodes };
+    }));
+  };
+
   const complete = (encounter) => {
-    setEncounters((current) =>
-      current.map((item) => (item.id === encounter.id ? { ...item, status: "done" } : item))
-    );
-    setTab("done");
+    setEncounters((current) => current.map((item) => (
+      item.id === encounter.id
+        ? { ...item, moduleId: "coding-accuracy", status: "review" }
+        : item
+    )));
     setSelectedId(null);
   };
 
@@ -143,6 +245,7 @@ export default function PointOfCareBoard({ navId, isDark }) {
         module={module}
         isDark={isDark}
         onBack={() => setSelectedId(null)}
+        onAddCodes={(codes) => addCodes(selected, codes)}
         onComplete={() => complete(selected)}
       />
     );
@@ -150,7 +253,6 @@ export default function PointOfCareBoard({ navId, isDark }) {
 
   return (
     <section className="flex min-h-0 flex-col gap-4 pb-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className={`text-2xl font-bold tracking-tight sm:text-3xl ${isDark ? "text-white" : "text-slate-950"}`}>
             {module.title}
@@ -159,27 +261,10 @@ export default function PointOfCareBoard({ navId, isDark }) {
             {module.subtitle}
           </p>
         </div>
-        <div className={`inline-flex w-full rounded-full p-1 sm:w-auto ${isDark ? "bg-[#111F35]" : "bg-slate-200/80"}`}>
-          <TabButton
-            active={tab === "review"}
-            isDark={isDark}
-            label={module.reviewLabel}
-            count={reviewCount}
-            onClick={() => setTab("review")}
-          />
-          <TabButton
-            active={tab === "done"}
-            isDark={isDark}
-            label={module.doneLabel}
-            count={doneCount}
-            onClick={() => setTab("done")}
-          />
-        </div>
-      </div>
 
       {columns.length === 0 ? (
         <p className={`rounded-2xl px-4 py-10 text-center text-sm ${isDark ? "bg-[#111F35] text-slate-400" : "bg-white text-slate-500"}`}>
-          No patients {tab === "review" ? "to review" : `in ${module.doneLabel.toLowerCase()}`}.
+          No patients to review.
         </p>
       ) : (
         <div className="flex min-h-0 flex-col gap-4">
@@ -236,25 +321,6 @@ export default function PointOfCareBoard({ navId, isDark }) {
   );
 }
 
-function TabButton({ active, isDark, label, count, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition sm:flex-none ${
-        active
-          ? "bg-[#0f9f8f] text-white"
-          : isDark
-            ? "text-slate-300 hover:text-white"
-            : "text-slate-600 hover:text-slate-900"
-      }`}
-    >
-      {label}
-      <span className={active ? "text-white/80" : isDark ? "text-slate-500" : "text-slate-400"}> · {count}</span>
-    </button>
-  );
-}
-
 function PatientCard({ encounter, isDark, showDate, onOpen }) {
   return (
     <button
@@ -283,12 +349,12 @@ function PatientCard({ encounter, isDark, showDate, onOpen }) {
             {formatServiceDate(encounter.serviceDate)}
           </span>
         ) : null}
-        <span className={`mt-2 inline-flex rounded-lg px-2 py-1 text-xs font-semibold ${
-          isDark ? "bg-[#0D1829] text-slate-200" : "bg-slate-100 text-slate-700"
-        }`}
-        >
-          {encounter.code}
-        </span>
+        <CptCode
+          code={encounter.code}
+          className={`mt-2 inline-flex rounded-lg px-2 py-1 text-xs font-semibold ${
+            isDark ? "bg-[#0D1829] text-slate-200" : "bg-slate-100 text-slate-700"
+          }`}
+        />
       </span>
       <ChevronIcon className={isDark ? "text-slate-500" : "text-slate-400"} />
     </button>
@@ -329,15 +395,37 @@ const MISSED_CHARGE_REVIEWS = {
 
 const procedureBase = (code) => `${code || ""}`.split("-")[0].replace(/[A-Za-z]+$/, "");
 
-function PatientDetail({ encounter, module, isDark, onBack, onComplete }) {
+function cptDescription(code) {
+  const description = CPT_DESCRIPTIONS[procedureBase(code)];
+  if (!description) return "";
+  const side = SIDE_LABELS[`${code || ""}`.split("-")[1]] || "";
+  return side ? `${description} ${side}` : description;
+}
+
+function CptCode({ code, className = "" }) {
+  const description = cptDescription(code);
+  return (
+    <span title={description || undefined} className={`group/cpt relative inline-flex ${className}`}>
+      {code}
+      {description ? (
+        <span
+          role="tooltip"
+          className="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-1 w-56 rounded-lg bg-slate-950 px-2.5 py-2 text-left text-xs font-normal leading-snug text-white group-hover/cpt:visible"
+        >
+          {description}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+function PatientDetail({ encounter, module, isDark, onBack, onAddCodes, onComplete }) {
   const rows = [
     ["Date of service", formatServiceDate(encounter.serviceDate)],
     ["Diagnosis", `${encounter.diagnosisCode} ${encounter.diagnosis}`],
     ["Facility", encounter.facility],
-    [module.codeLabel || "Code", encounter.code],
     ["Provider", encounter.provider],
     ["Visit", encounter.visit],
-    ["Status", encounter.status === "review" ? module.reviewLabel : module.doneLabel],
   ];
   const review = MISSED_CHARGE_REVIEWS[procedureBase(encounter.code)] || null;
 
@@ -372,6 +460,22 @@ function PatientDetail({ encounter, module, isDark, onBack, onComplete }) {
                 <dd className={`text-right font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>{value}</dd>
               </div>
             ))}
+            <div className="flex items-start justify-between gap-4 py-3 text-sm">
+              <dt className={isDark ? "text-slate-400" : "text-slate-500"}>{module.codeLabel || "Code"}</dt>
+              <dd className={`text-right font-semibold ${isDark ? "text-white" : "text-slate-900"}`}>
+                <CptCode code={encounter.code} />
+              </dd>
+            </div>
+            {(encounter.addedCodes || []).length > 0 ? (
+              <div className="flex items-start justify-between gap-4 py-3 text-sm">
+                <dt className={isDark ? "text-slate-400" : "text-slate-500"}>Added codes</dt>
+                <dd className="flex flex-col items-end gap-1 font-semibold">
+                  {encounter.addedCodes.map((code) => (
+                    <CptCode key={code} code={code} className={isDark ? "text-white" : "text-slate-900"} />
+                  ))}
+                </dd>
+              </div>
+            ) : null}
           </dl>
           {encounter.status === "review" ? (
             <button
@@ -383,15 +487,59 @@ function PatientDetail({ encounter, module, isDark, onBack, onComplete }) {
             </button>
           ) : null}
         </div>
-        <MissedCharges encounter={encounter} review={review} isDark={isDark} />
+        <MissedCharges encounter={encounter} review={review} isDark={isDark} onAddCodes={onAddCodes} />
       </div>
     </section>
   );
 }
 
-function MissedCharges({ encounter, review, isDark }) {
+function CodingDetail({ encounter, isDark, onBack }) {
+  const codes = [encounter.code, ...(encounter.addedCodes || [])];
+  return (
+    <section className="flex w-full flex-col gap-4">
+      <button
+        type="button"
+        onClick={onBack}
+        className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold ${
+          isDark ? "bg-[#111F35] text-white hover:bg-[#1C3050]" : "bg-white text-slate-800 ring-1 ring-slate-200 hover:bg-slate-50"
+        }`}
+      >
+        <ChevronIcon className="rotate-180" />
+        Back to list
+      </button>
+      <div className={`max-w-xl rounded-2xl border p-5 sm:p-6 ${isDark ? "border-white/10 bg-[#15263C]" : "border-slate-200 bg-white"}`}>
+        <p className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+          {formatServiceDate(encounter.serviceDate)}
+        </p>
+        <h2 className={`mt-1 text-2xl font-bold ${isDark ? "text-white" : "text-slate-950"}`}>
+          {encounter.name}
+        </h2>
+        <p className="mt-2 text-sm">
+          <span className="font-semibold text-[#0f9f8f]">{encounter.diagnosisCode}</span>{" "}
+          <span className={isDark ? "text-slate-300" : "text-slate-600"}>{encounter.diagnosis}</span>
+        </p>
+        <p className={`mt-4 text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+          {encounter.facility} · {encounter.provider} · {encounter.visit}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {codes.map((code) => (
+            <CptCode
+              key={code}
+              code={code}
+              className={`rounded-lg px-2 py-1 text-xs font-semibold ${
+                isDark ? "bg-[#0D1829] text-slate-200" : "bg-slate-100 text-slate-700"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MissedCharges({ encounter, review, isDark, onAddCodes }) {
   const [selected, setSelected] = useState([]);
-  const [added, setAdded] = useState([]);
+  const added = encounter.addedCodes || [];
   const card = isDark ? "border-white/10 bg-[#15263C]" : "border-slate-200 bg-white";
   const muted = isDark ? "text-slate-400" : "text-slate-500";
   const title = isDark ? "text-white" : "text-slate-950";
@@ -403,7 +551,7 @@ function MissedCharges({ encounter, review, isDark }) {
   };
 
   const addSelected = () => {
-    setAdded((current) => [...current, ...selected.filter((code) => !current.includes(code))]);
+    onAddCodes(selected.filter((code) => !added.includes(code)));
     setSelected([]);
   };
 
@@ -413,7 +561,7 @@ function MissedCharges({ encounter, review, isDark }) {
         <div>
           <h3 className={`text-lg font-bold ${title}`}>Potential Missed Charges</h3>
           <p className={`mt-1 text-sm ${muted}`}>
-            CPT {procedureBase(encounter.code) || encounter.code} · Diagnosis {encounter.diagnosisCode}
+            CPT <CptCode code={procedureBase(encounter.code) || encounter.code} /> · Diagnosis {encounter.diagnosisCode}
           </p>
         </div>
         <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -449,7 +597,7 @@ function MissedCharges({ encounter, review, isDark }) {
                           onChange={() => toggle(item.code)}
                         />
                         <span>
-                          <span className={`block text-sm font-semibold ${title}`}>{item.code}</span>
+                          <CptCode code={item.code} className={`text-sm font-semibold ${title}`} />
                           <span className={`mt-0.5 block text-sm ${muted}`}>{item.label}</span>
                         </span>
                       </label>
@@ -461,7 +609,7 @@ function MissedCharges({ encounter, review, isDark }) {
           </div>
           {added.length > 0 ? (
             <p className={`text-sm ${muted}`}>
-              Added for this review: {added.join(", ")}. These stay on the encounter until you leave the page.
+              Added for this review: {added.join(", ")}. These go with the encounter when it is sent to coding.
             </p>
           ) : null}
           <button

@@ -35,7 +35,7 @@ import { buildAccessExtra, isPrivilegedRole } from "../../../utils/accessFilters
 import { getAccessibleModelCount } from "../../../utils/moduleCatalog";
 import { buildExcludeAiModels } from "../../../utils/aiModelFilters";
 import { isPointOfCareNav } from "../../../utils/worklistNav";
-import PointOfCareBoard from "./PointOfCareBoard";
+import PointOfCareBoard, { CodingAccuracy } from "./PointOfCareBoard";
 import PriceTransparency from "./PriceTransparency";
 import ClinicalIntelligence from "./ClinicalIntelligence";
 
@@ -842,7 +842,9 @@ const ReboundDash = () => {
                 <PointOfCareBoard navId={selectedNav} isDark={isDark} />
               ) : selectedNav === "cdi" ? (
                 <ClinicalIntelligence isDark={isDark} />
-              ) : selectedNav === "coding-accuracy" ? null : showPlaceholder ? (
+              ) : selectedNav === "coding-accuracy" ? (
+                <CodingAccuracy isDark={isDark} />
+              ) : showPlaceholder ? (
                 <div
                   className={`rounded-2xl border px-6 py-10 text-center text-lg font-semibold ${isDark ? 'bg-[var(--helio-surface)] border-[var(--helio-border)] text-gray-200' : 'bg-white border-gray-200 text-gray-700'
                     }`}
