@@ -1369,7 +1369,7 @@ const ReboundDetailView = () => {
       Array.isArray(currentClaim.SupportingDocuments) ? currentClaim.SupportingDocuments : []
     );
     setOptumRequest(buildOptumRequestFromClaim(currentClaim));
-    setOptumResponse(null);
+    setOptumResponse(currentClaim?.Claim?.Data?.Status277 || null);
     setOptumError("");
     setEligibilityRequest(buildEligibilityRequestFromClaim(currentClaim));
     setEligibilityResponse(null);
@@ -1691,7 +1691,36 @@ const ReboundDetailView = () => {
             <div className={`rounded-2xl border p-6 ${isDark ? 'bg-[#111F35] border-[#2A4A70] text-gray-100 shadow-[0_16px_40px_rgba(0,0,0,0.35)]' : 'bg-white border-gray-200 text-slate-900 shadow-[0_14px_36px_rgba(0,0,0,0.08)]'}`}>
               <p className={`text-lg font-semibold ${isDark ? 'text-gray-100' : 'text-slate-900'}`}>Insights</p>
               <div className={`mt-3 h-px w-full ${isDark ? 'bg-white/20' : 'bg-gray-200'}`} />
-              {isPend277 ? (
+              {optumResponse ? (
+                <div className="mt-4 text-sm">
+                  <p className={`font-semibold ${isDark ? 'text-gray-100' : 'text-slate-900'}`}>277 Response</p>
+                  <p className={`mt-2 text-xs ${bodyTextClass}`}>
+                    Control Number: {optumResponse.controlNumber || "N/A"}
+                  </p>
+                  {(optumResponse.claims || []).length === 0 ? (
+                    <p className={`mt-3 ${bodyTextClass}`}>No claim status was returned.</p>
+                  ) : (
+                    (optumResponse.claims || []).map((statusClaim, idx) => {
+                      const status = statusClaim?.claimStatus || {};
+                      const statusValue = status.statusCategoryCodeValue || status.statusCodeValue || "";
+                      const insightLabel = getInsightStatusLabel(statusValue);
+                      return (
+                        <div key={`insight-277-${idx}`} className="mt-3">
+                          <p className={`font-semibold ${emphasisTextClass}`}>
+                            Status: {insightLabel || "Pending"}
+                          </p>
+                          <p className={bodyTextClass}>
+                            {statusValue || "No status description available."}
+                          </p>
+                          <p className={bodyTextClass}>
+                            Effective Date: {status.effectiveDate || "N/A"}
+                          </p>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              ) : isPend277 ? (
                 <>
                   <p className={`mt-4 text-sm ${bodyTextClass}`}>
                     This requires <span className="text-[#FF5C5C] font-semibold">REVIEW</span> for:
