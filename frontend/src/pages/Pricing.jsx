@@ -132,7 +132,7 @@ const Pricing = () => {
 
   return (
     <div className="pricing-page">
-      <SiteHeader variant="static" />
+      <SiteHeader variant="overlay" />
 
       <main className="pricing-main">
         <div className="pricing-stage">

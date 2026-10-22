@@ -1,5 +1,11 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
+import {
+  CodeBracketSquareIcon,
+  DocumentMagnifyingGlassIcon,
+  DocumentPlusIcon,
+  ReceiptPercentIcon,
+} from "@heroicons/react/24/outline";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import HelioBrand from "../components/layout/HelioBrand";
@@ -73,28 +79,50 @@ const SECTION_COPY = {
 const POINT_OF_CARE = [
   {
     title: "Price Transparency",
-    detail: "AI-powered pricing intelligence that uses procedure codes, diagnosis codes, and payer pricing data to help providers give patients pricing information.",
-    icon: "price",
+    icon: ReceiptPercentIcon,
     tone: "teal",
+    points: [
+      "AI-powered pricing from contracts, published fee schedules, and payer data",
+      "Eligibility checks confirm patient benefits",
+      "Procedure-specific cost estimates",
+    ],
   },
   {
     title: "Clinical Intelligence (CDI)",
-    detail: "AI analyzes clinical documentation to identify gaps in specificity, severity, and medical necessity, helping providers strengthen clinical accuracy and reduce preventable claim denials.",
-    icon: "clinical",
+    icon: DocumentMagnifyingGlassIcon,
     tone: "cyan",
+    points: [
+      "AI reviews documentation and imaging",
+      "Flags specificity and necessity gaps",
+      "Stronger coding, fewer denials",
+    ],
   },
   {
     title: "Charge Capture",
-    detail: "AI identifies billable services, procedures, diagnoses, and supplies documented in the clinical record but potentially missing from charges, helping coders complete the claim and reduce revenue leakage.",
-    icon: "capture",
+    icon: DocumentPlusIcon,
     tone: "gold",
+    points: [
+      "AI finds billable services and supplies",
+      "Flags missing charges",
+      "Less leakage, more compliance",
+    ],
   },
   {
     title: "Coding Accuracy",
-    detail: "AI recommends more specific, current ICD-10 codes and the information those codes require, improving coding accuracy and reducing coding-related denials.",
-    icon: "coding",
+    icon: CodeBracketSquareIcon,
     tone: "violet",
+    points: [
+      "AI recommends current ICD-10 and HCPCS codes",
+      "Surfaces pre-requisite information",
+      "Fewer denials, maximum compliant payment",
+    ],
   },
+];
+
+const POINT_OF_CARE_AI = [
+  "Conversational AI helpdesk (ChatGPT)",
+  "Machine learning regulatory, code set and bundling rules",
+  "Machine learning contract and payer policy mining",
 ];
 
 const Platform = () => {
@@ -187,35 +215,53 @@ const Platform = () => {
           </div>
           ) : activeSection === "point-of-care" ? (
           <div className="platform-poc">
-            <article className="platform-card platform-poc-intro">
-              <p className="platform-kicker">Platform overview · Before the claim · In development now</p>
-              <h2>Point-of-Care modules</h2>
-              <p>What happens during the visit, before the claim is sent.</p>
-            </article>
-
-            <div className="platform-opp">
-              <p className="platform-opp__title">Preventable Revenue Loss</p>
-              <p className="platform-opp__tagline">Get the data right before the claim goes out</p>
+            <h2 className="platform-poc-title">Point-of-Care</h2>
+            <div className="platform-poc-banner">
+              <p>Preventable Revenue Loss</p>
             </div>
 
-            <div className="platform-chips platform-poc-chips">
-              {POINT_OF_CARE.map((item, index) => (
-                <article key={item.title} className={`platform-chip platform-chip--${item.tone} platform-poc-chip`}>
-                  <OpportunityIcon name={item.icon} />
-                  <h3>{index + 1}. {item.title}</h3>
-                  <p>{item.detail}</p>
+            <div className="platform-poc-chips">
+              {POINT_OF_CARE.map((item) => {
+                const Icon = item.icon;
+                return (
+                <article key={item.title} className={`platform-poc-chip platform-poc-chip--${item.tone}`}>
+                  <span className="platform-poc-icon">
+                    <Icon aria-hidden="true" />
+                  </span>
+                  <h3>{item.title}</h3>
+                  <ul>
+                    {item.points.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ul>
                 </article>
-              ))}
+                );
+              })}
             </div>
 
-            <article className="platform-card platform-poc-why">
+            <article className="platform-poc-why">
               <h3>Why it matters</h3>
-              <p>
-                Getting the data right at the point of care raises clean claim rates earlier in the
-                revenue cycle and prevents the denials, underpayments, and rework that the Post-Care
-                modules would otherwise have to chase.
-              </p>
+              <ul>
+                <li>Getting the data right at the point of care raises clean claim rates earlier in the revenue cycle.</li>
+                <li>Prevents denials, underpayments, and rework that the Post-Care modules would otherwise have to chase.</li>
+              </ul>
             </article>
+
+            <section className="platform-poc-ai" aria-label="AI capabilities">
+              <p className="platform-poc-ai__label">AI at the core</p>
+              <div className="platform-poc-ai__agent">
+                <span aria-hidden="true">C</span>
+                <div>
+                  <strong>Carl</strong>
+                  <em>Capturer</em>
+                </div>
+              </div>
+              <ul>
+                {POINT_OF_CARE_AI.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
           </div>
           ) : activeSection ? (
             <section className="platform-section">

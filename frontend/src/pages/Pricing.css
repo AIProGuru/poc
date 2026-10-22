@@ -6,12 +6,14 @@
   color: #ffffff;
   background:
     radial-gradient(900px 420px at 50% -10%, rgba(249, 115, 22, 0.16), transparent 60%),
-    #070d18;
+    #0f172b;
 }
 
 .pricing-main {
+  position: relative;
+  z-index: 1;
   flex: 1;
-  padding: 2.25rem 1.25rem 3.5rem;
+  padding: 6.75rem 1.25rem 3.5rem;
 }
 
 .pricing-stage {
@@ -52,7 +54,9 @@
 .pricing-card {
   border: 1px solid rgba(190, 214, 236, 0.16);
   border-radius: 1.4rem;
-  background: linear-gradient(180deg, rgba(18, 32, 54, 0.92), rgba(10, 18, 32, 0.92));
+  background: linear-gradient(180deg, rgba(36, 54, 84, 0.72), rgba(15, 23, 43, 0.66));
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 24px 50px rgba(2, 8, 20, 0.35);
@@ -106,7 +110,7 @@
   width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0.8rem;
-  background: rgba(7, 13, 24, 0.72);
+  background: rgba(15, 23, 43, 0.55);
   color: #ffffff;
   font: inherit;
   font-size: 0.95rem;
@@ -155,7 +159,7 @@
   text-align: left;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0.9rem;
-  background: rgba(7, 13, 24, 0.55);
+  background: rgba(15, 23, 43, 0.45);
   color: #ffffff;
   font: inherit;
   font-size: 0.92rem;
