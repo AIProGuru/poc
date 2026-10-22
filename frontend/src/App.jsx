@@ -371,7 +371,7 @@ function App() {
               role="alert"
               className="shrink-0 border-b border-amber-400/40 bg-amber-950 px-4 py-3 text-amber-50"
             >
-              <div className="mx-auto flex max-w-[1920px] items-center justify-between gap-4">
+              <div className="mx-auto flex w-full items-center justify-between gap-4">
                 <p className="text-sm leading-5">{bootstrapError}</p>
                 <button
                   type="button"

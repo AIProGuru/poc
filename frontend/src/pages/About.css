@@ -21,7 +21,6 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1920px;
   padding: 0 clamp(0.5rem, 3vw, 3rem);
   margin: 0 auto;
   display: grid;

@@ -61,7 +61,6 @@
 .home-header__inner {
   position: relative;
   width: 100%;
-  max-width: 1920px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -249,7 +248,6 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 1920px;
   margin: 0 auto;
   padding: 6.5rem clamp(1.5rem, 5vw, 6rem) 4.5rem;
   display: grid;
@@ -415,7 +413,6 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.75rem;
-  max-width: 1920px;
   margin: 0 auto 2.75rem;
 }
 
@@ -466,7 +463,6 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.15rem;
-  max-width: 1920px;
   margin: 0 auto;
 }
 
@@ -556,7 +552,6 @@
 
 .home-footer__inner {
   width: 100%;
-  max-width: 1920px;
   margin: 0 auto;
   padding: 0 clamp(0.25rem, 2vw, 2.5rem);
   display: flex;
