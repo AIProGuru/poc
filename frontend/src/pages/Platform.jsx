@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   CodeBracketSquareIcon,
@@ -129,6 +129,19 @@ const Platform = () => {
   const { section } = useParams();
   const activeSection = section === "post-care" || section === "point-of-care" || SECTION_COPY[section] ? section : null;
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    const previousRoot = root.style.backgroundColor;
+    const previousBody = body.style.backgroundColor;
+    root.style.backgroundColor = "#0f172b";
+    body.style.backgroundColor = "#0f172b";
+    return () => {
+      root.style.backgroundColor = previousRoot;
+      body.style.backgroundColor = previousBody;
+    };
+  }, []);
+
   return (
     <div className="platform-page">
       <SiteHeader variant="overlay" />
@@ -215,7 +228,6 @@ const Platform = () => {
           </div>
           ) : activeSection === "point-of-care" ? (
           <div className="platform-poc">
-            <h2 className="platform-poc-title">Point-of-Care</h2>
             <div className="platform-poc-banner">
               <p>Preventable Revenue Loss</p>
             </div>

@@ -197,11 +197,33 @@
   text-transform: uppercase;
 }
 
+.platform-page:has(.platform-poc) {
+  min-height: 100%;
+}
+
+.platform-page:has(.platform-poc) > .home-footer {
+  margin-top: auto;
+}
+
+.platform-main:has(.platform-poc) {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0.85rem;
+}
+
+.platform-stage:has(.platform-poc) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .platform-poc {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.85rem;
 }
 
 .platform-poc::before {
@@ -210,7 +232,7 @@
   z-index: 0;
   left: 6%;
   right: 6%;
-  top: 4.2rem;
+  top: 2.4rem;
   height: 15rem;
   pointer-events: none;
   background: radial-gradient(ellipse at 50% 45%, rgba(196, 216, 242, 0.42), transparent 72%);
@@ -220,15 +242,6 @@
 .platform-poc > * {
   position: relative;
   z-index: 1;
-}
-
-.platform-poc-title {
-  margin: 0;
-  color: #ffffff;
-  font-size: clamp(1.35rem, 2vw, 1.7rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
 }
 
 .platform-poc-banner {
