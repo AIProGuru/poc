@@ -1,3 +1,6 @@
+// Keep this first. Vite's prebundle can run MUI Popper before styled is
+// initialized, which throws "styled_default is not a function" after login.
+import "@mui/material/styles";
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Provider } from "react-redux";

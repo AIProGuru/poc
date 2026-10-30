@@ -41,7 +41,8 @@ const ESTIMATES = {
     copay: 50,
     deductible: 2500,
     deductibleMet: 1250,
-    estimateDue: 750,
+    estimateDue: 1300,
+    payerLiability: 700,
   },
 };
 
@@ -194,6 +195,12 @@ function EstimateForm({ patient, isDark, onBack }) {
             isDark={isDark}
             strong
           />
+          <ResultRow
+            label="Estimated Payer Liability"
+            value={money(estimate.payerLiability)}
+            isDark={isDark}
+            bold
+          />
         </dl>
       ) : asked ? (
         <p className={`mt-6 text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
@@ -205,13 +212,14 @@ function EstimateForm({ patient, isDark, onBack }) {
   );
 }
 
-function ResultRow({ label, value, isDark, strong }) {
+function ResultRow({ label, value, isDark, strong, bold }) {
+  const weight = bold ? "font-bold" : strong ? "font-semibold" : "";
   return (
     <div className="flex items-start justify-between gap-4 py-2.5">
-      <dt className={strong ? `font-semibold ${isDark ? "text-white" : "text-slate-950"}` : isDark ? "text-slate-300" : "text-slate-600"}>
+      <dt className={weight ? `${weight} ${isDark ? "text-white" : "text-slate-950"}` : isDark ? "text-slate-300" : "text-slate-600"}>
         {label}
       </dt>
-      <dd className={`shrink-0 tabular-nums ${strong ? "font-semibold" : ""} ${isDark ? "text-white" : "text-slate-950"}`}>
+      <dd className={`shrink-0 tabular-nums ${weight} ${isDark ? "text-white" : "text-slate-950"}`}>
         {value}
       </dd>
     </div>
